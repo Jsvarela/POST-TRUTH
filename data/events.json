@@ -212,5 +212,134 @@
         }
       }
     ]
+  },
+  {
+    "id": "video-debate-editado",
+    "title": "Video editado del debate",
+    "content": "Circula un clip donde una candidata parece insultar a un barrio, pero el video esta recortado.",
+    "kind": "contenido_manipulado",
+    "truth_level": 35,
+    "root_effect": {
+      "verified_information": 0,
+      "trust": -2,
+      "coexistence": -1,
+      "digital_wellbeing": -1,
+      "misinformation": 4,
+      "conflicts": 3,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir con enojo",
+        "description": "El mensaje se comparte con una frase agresiva y aumenta la pelea.",
+        "effect": {
+          "verified_information": -5,
+          "trust": -9,
+          "coexistence": -10,
+          "digital_wellbeing": -6,
+          "misinformation": 13,
+          "conflicts": 12,
+          "score": -12
+        }
+      },
+      {
+        "action": "Buscar video completo",
+        "description": "Se revisa la transmision original antes de reaccionar.",
+        "effect": {
+          "verified_information": 13,
+          "trust": 6,
+          "coexistence": 6,
+          "digital_wellbeing": 4,
+          "misinformation": -9,
+          "conflicts": -7,
+          "score": 14
+        },
+        "children": [
+          {
+            "action": "Explicar el contexto",
+            "description": "Se publica una aclaracion breve con el enlace completo.",
+            "effect": {
+              "verified_information": 8,
+              "trust": 5,
+              "coexistence": 7,
+              "digital_wellbeing": 4,
+              "misinformation": -6,
+              "conflicts": -6,
+              "score": 9
+            }
+          }
+        ]
+      },
+      {
+        "action": "Reportar manipulacion",
+        "description": "Se marca el clip como posible edicion enganosa.",
+        "effect": {
+          "verified_information": 5,
+          "trust": 2,
+          "coexistence": 4,
+          "digital_wellbeing": 2,
+          "misinformation": -6,
+          "conflicts": -4,
+          "score": 7
+        }
+      }
+    ]
+  },
+  {
+    "id": "campana-convivencia",
+    "title": "Campana de convivencia digital",
+    "content": "Un grupo de vecinos propone una campana para debatir sin ataques personales durante la eleccion.",
+    "kind": "campana_civica",
+    "truth_level": 95,
+    "root_effect": {
+      "verified_information": 1,
+      "trust": 2,
+      "coexistence": 2,
+      "digital_wellbeing": 2,
+      "misinformation": -1,
+      "conflicts": -1,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Apoyar campana",
+        "description": "El jugador invita a participar y refuerza normas de dialogo.",
+        "effect": {
+          "verified_information": 4,
+          "trust": 6,
+          "coexistence": 10,
+          "digital_wellbeing": 8,
+          "misinformation": -3,
+          "conflicts": -6,
+          "score": 11
+        }
+      },
+      {
+        "action": "Convertirlo en ataque",
+        "description": "Se usa la campana para burlarse de otros candidatos.",
+        "effect": {
+          "verified_information": -1,
+          "trust": -6,
+          "coexistence": -8,
+          "digital_wellbeing": -5,
+          "misinformation": 5,
+          "conflicts": 9,
+          "score": -7
+        }
+      },
+      {
+        "action": "Invitar a verificar",
+        "description": "Se conecta la campana con fuentes y reglas claras de publicacion.",
+        "effect": {
+          "verified_information": 9,
+          "trust": 5,
+          "coexistence": 7,
+          "digital_wellbeing": 5,
+          "misinformation": -5,
+          "conflicts": -4,
+          "score": 10
+        }
+      }
+    ]
   }
 ]

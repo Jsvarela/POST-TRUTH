@@ -67,11 +67,28 @@ aplica el resultado al estado de Ciudad Nova. El rol del jugador modifica el
 impacto para que Ciudadano, Periodista, Influencer y Candidato no tengan el
 mismo peso en la simulacion.
 
+## Interfaz de la entrega
+
+La pantalla principal se organizo como un tablero de juego:
+
+- Feed de Civitas: muestra la publicacion activa, su tipo y nivel de veracidad.
+- Decisiones disponibles: cada tarjeta representa una ruta del arbol y muestra
+  el impacto esperado antes de confirmar.
+- Mapa visual del arbol: dibuja la raiz, ramas y subramas, resaltando la ruta
+  elegida por el jugador.
+- Ciudad Nova: muestra zonas de la ciudad y cambia el estado general segun los
+  indicadores.
+- Indicadores: barras visuales para informacion verificada, confianza,
+  convivencia, bienestar, desinformacion, conflictos y puntaje.
+- Modo sustentacion: permite ejecutar DFS, BFS, insertar una rama demo y
+  eliminar decisiones sin saturar la pantalla principal.
+- Accesibilidad: incluye modo de alto contraste.
+
 ## Archivos importantes
 
 - `src/post_truth/decision_tree.py`: estructura de arbol n-ario.
 - `src/post_truth/models.py`: impacto, roles y publicacion.
 - `src/post_truth/game_state.py`: indicadores de Ciudad Nova.
-- `src/post_truth/app.py`: interfaz grafica preliminar.
+- `src/post_truth/app.py`: tablero visual del juego.
 - `data/events.json`: eventos cargados dinamicamente.
 - `tests/test_decision_tree.py`: pruebas de insercion, eliminacion, DFS y BFS.
