@@ -1,0 +1,216 @@
+[
+  {
+    "id": "colegio-cerrado",
+    "title": "Rumor sobre el colegio",
+    "content": "El candidato Juan quiere cerrar el colegio central si gana la alcaldia.",
+    "kind": "rumor",
+    "truth_level": 25,
+    "root_effect": {
+      "verified_information": 0,
+      "trust": 0,
+      "coexistence": 0,
+      "digital_wellbeing": 0,
+      "misinformation": 2,
+      "conflicts": 1,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir",
+        "description": "Se publica sin verificar y llega a mas ciudadanos.",
+        "effect": {
+          "verified_information": -3,
+          "trust": -7,
+          "coexistence": -5,
+          "digital_wellbeing": -4,
+          "misinformation": 12,
+          "conflicts": 8,
+          "score": -8
+        },
+        "children": [
+          {
+            "action": "Pedir disculpas",
+            "description": "El jugador reconoce el error despues de ver la reaccion.",
+            "effect": {
+              "verified_information": 3,
+              "trust": 2,
+              "coexistence": 2,
+              "digital_wellbeing": 1,
+              "misinformation": -4,
+              "conflicts": -2,
+              "score": 3
+            }
+          }
+        ]
+      },
+      {
+        "action": "Verificar",
+        "description": "Se consulta una fuente oficial antes de actuar.",
+        "effect": {
+          "verified_information": 12,
+          "trust": 7,
+          "coexistence": 4,
+          "digital_wellbeing": 4,
+          "misinformation": -8,
+          "conflicts": -3,
+          "score": 12
+        },
+        "children": [
+          {
+            "action": "Publicar aclaracion",
+            "description": "La verificacion se comparte con contexto y fuente.",
+            "effect": {
+              "verified_information": 9,
+              "trust": 6,
+              "coexistence": 5,
+              "digital_wellbeing": 4,
+              "misinformation": -7,
+              "conflicts": -4,
+              "score": 10
+            }
+          }
+        ]
+      },
+      {
+        "action": "Ignorar",
+        "description": "No se amplifica el rumor, pero tampoco se corrige.",
+        "effect": {
+          "verified_information": 0,
+          "trust": -1,
+          "coexistence": 0,
+          "digital_wellbeing": 1,
+          "misinformation": 2,
+          "conflicts": 0,
+          "score": 1
+        }
+      },
+      {
+        "action": "Reportar",
+        "description": "La publicacion se marca como sospechosa para moderacion.",
+        "effect": {
+          "verified_information": 5,
+          "trust": 3,
+          "coexistence": 3,
+          "digital_wellbeing": 2,
+          "misinformation": -6,
+          "conflicts": -2,
+          "score": 7
+        }
+      }
+    ]
+  },
+  {
+    "id": "parques-cerrados",
+    "title": "Alerta viral sobre parques",
+    "content": "Manana cerraran todos los parques por orden de la alcaldia.",
+    "kind": "fake_news",
+    "truth_level": 10,
+    "root_effect": {
+      "verified_information": 0,
+      "trust": -1,
+      "coexistence": 0,
+      "digital_wellbeing": 0,
+      "misinformation": 3,
+      "conflicts": 1,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir",
+        "description": "El mensaje se vuelve tendencia en Civitas.",
+        "effect": {
+          "verified_information": -4,
+          "trust": -8,
+          "coexistence": -6,
+          "digital_wellbeing": -5,
+          "misinformation": 15,
+          "conflicts": 7,
+          "score": -10
+        }
+      },
+      {
+        "action": "Verificar",
+        "description": "Se revisa el comunicado oficial de la alcaldia.",
+        "effect": {
+          "verified_information": 14,
+          "trust": 6,
+          "coexistence": 4,
+          "digital_wellbeing": 5,
+          "misinformation": -9,
+          "conflicts": -3,
+          "score": 13
+        }
+      },
+      {
+        "action": "Reportar",
+        "description": "Se reduce el alcance de la publicacion sospechosa.",
+        "effect": {
+          "verified_information": 6,
+          "trust": 2,
+          "coexistence": 2,
+          "digital_wellbeing": 2,
+          "misinformation": -7,
+          "conflicts": -2,
+          "score": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "propuesta-transporte",
+    "title": "Propuesta de transporte",
+    "content": "La candidata Maria propone ampliar las rutas nocturnas de buses.",
+    "kind": "true_news",
+    "truth_level": 90,
+    "root_effect": {
+      "verified_information": 2,
+      "trust": 1,
+      "coexistence": 0,
+      "digital_wellbeing": 0,
+      "misinformation": 0,
+      "conflicts": 0,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir",
+        "description": "La propuesta verificada llega a mas ciudadanos.",
+        "effect": {
+          "verified_information": 6,
+          "trust": 5,
+          "coexistence": 3,
+          "digital_wellbeing": 3,
+          "misinformation": -2,
+          "conflicts": -1,
+          "score": 7
+        }
+      },
+      {
+        "action": "Verificar",
+        "description": "Se revisa el plan de gobierno antes de comentar.",
+        "effect": {
+          "verified_information": 10,
+          "trust": 4,
+          "coexistence": 3,
+          "digital_wellbeing": 3,
+          "misinformation": -3,
+          "conflicts": -1,
+          "score": 9
+        }
+      },
+      {
+        "action": "Ignorar",
+        "description": "La informacion no cambia mucho el debate publico.",
+        "effect": {
+          "verified_information": 0,
+          "trust": 0,
+          "coexistence": 0,
+          "digital_wellbeing": 0,
+          "misinformation": 0,
+          "conflicts": 0,
+          "score": 0
+        }
+      }
+    ]
+  }
+]
