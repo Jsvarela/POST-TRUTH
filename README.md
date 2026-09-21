@@ -1,4 +1,4 @@
-# POST&TRUTH
+# POST-TRUTH
 
 Videojuego educativo para Estructura de Datos II basado en el laboratorio
 "Alcalde Digital". La primera entrega implementa la mecanica central con
@@ -52,4 +52,6 @@ tests/test_decision_tree.py      Pruebas de arboles
 ## Lenguaje elegido
 
 Python, porque permite una GUI preliminar con Tkinter sin dependencias externas
-y deja visibles las estructuras de datos para sustentarlas con claridad.
+y deja visibles las estructuras de datos para sustentarlas con claridad. En
+entregas posteriores se puede migrar o ampliar la interfaz a Pygame si el equipo
+quiere una experiencia mas cercana a videojuego.
