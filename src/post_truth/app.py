@@ -4,6 +4,7 @@ import random
 import tkinter as tk
 from pathlib import Path
 from tkinter import messagebox, ttk
+from post_truth.sustentation import SustentationWindow
 
 from post_truth.decision_tree import DecisionNode, DecisionTree, load_trees
 from post_truth.game_state import CityState
@@ -300,6 +301,14 @@ class DecisionGameApp(tk.Tk):
         ).pack(
             side="right",
             padx=10
+        )
+        self._button(
+              header,
+               "Sustentación",
+              self._open_sustentation,
+               False
+        ).pack(
+                side="right"
         )
 
         body = tk.Frame(
@@ -1106,7 +1115,15 @@ class DecisionGameApp(tk.Tk):
     # -------------------------------------------------
     # AYUDA
     # -------------------------------------------------
+    def _open_sustentation(self) -> None:
 
+         if self.current_tree is None:
+             return
+
+         SustentationWindow(
+               self,
+               self.current_tree
+            )
     def _open_help(self) -> None:
 
         messagebox.showinfo(
