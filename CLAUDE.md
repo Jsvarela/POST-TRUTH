@@ -66,12 +66,12 @@ POST-TRUTH/
 ├── src/post_truth/
 │   ├── pygame_app.py                # game loop (clase App), 60 FPS, dt en segundos
 │   ├── config.py                    # constantes sin dependencias de pygame
-│   ├── models.py                    # Impact, NewsEvent, Role (entrega 1, se reutiliza)
+│   ├── models/                      # logica pura: dominio.py (Impact, NewsEvent, Role), personaje.py (Personaje, Genero)
 │   ├── game_state.py                # CityState: indicadores (ya incluye conflictos)
 │   ├── decision_tree.py             # DecisionTree N-ario, DFS/BFS (entrega 1, se reutiliza)
 │   ├── structures/                  # grafo_social.py, grafo_ciudad.py (entrega 2)
-│   ├── views/                       # theme.py, menu_view.py, game_view.py
-│   ├── controllers/                 # base_state, state_manager, menu_state, game_state
+│   ├── views/                       # theme, componentes (Boton, Panel, CajaDialogo), personaje_view, seleccion_view, escena_view, menu_view
+│   ├── controllers/                 # base_state, state_manager, menu_state, seleccion_state, escena_state (game_state: prototipo previo)
 │   └── app.py                       # version Tkinter (tag tkinter-entrega1), a retirar
 ├── data/events.json                 # eventos y ramas de decision
 └── tests/
@@ -114,7 +114,8 @@ Estados previstos: `MenuState`, `GameState`, `CivitasFeedState`, `HelpState`, y 
 
 Hecho:
 - Esqueleto Pygame: `main.py`, StateManager, estados Menu y Juego, temas de accesibilidad.
-- Modelo base: `Noticia`, `Impacto`, `Accion`, `EstadoCiudad`.
+- Modelo base: `Impact`, `NewsEvent`, `Role`, `CityState` (con conflictos) y `DecisionTree` de la entrega 1.
+- Componentes UI (`views/componentes.py`), seleccion de rol/personaje y escena de dialogo alimentada por `DecisionTree` (rama `feature/escena-dialogo`). Los items 1-3 de la lista siguiente quedan hechos; el item 5 esta cubierto por `decision_tree.py` (sin mover a `structures/`).
 
 Siguiente (orden sugerido; la entrega 2 evalua grafos pero la profesora pide ante todo que se vea como juego, asi que el aspecto de juego avanza en paralelo):
 1. Componentes UI reutilizables (`views/componentes.py`): Boton, Panel, Temporizador, caja de dialogo.
