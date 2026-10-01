@@ -100,5 +100,14 @@ class RumoresTest(unittest.TestCase):
         self.assertEqual(copia.to_dict(), r.to_dict())
 
 
+class EventosEnZonasTest(unittest.TestCase):
+    def test_cada_evento_pertenece_a_una_zona_que_existe(self) -> None:
+        from post_truth.config import RUTA_EVENTOS
+        from post_truth.decision_tree import load_trees
+        g = ciudad()
+        for arbol in load_trees(RUTA_EVENTOS):
+            self.assertIn(arbol.event.zone, g, arbol.event.event_id)
+
+
 if __name__ == "__main__":
     unittest.main()

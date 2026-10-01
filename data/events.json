@@ -1,6 +1,7 @@
 [
   {
     "id": "colegio-cerrado",
+    "zona": "colegio",
     "title": "Rumor sobre el colegio",
     "content": "El candidato Juan quiere cerrar el colegio central si gana la alcaldia.",
     "kind": "rumor",
@@ -105,6 +106,7 @@
   },
   {
     "id": "parques-cerrados",
+    "zona": "parque",
     "title": "Alerta viral sobre parques",
     "content": "Manana cerraran todos los parques por orden de la alcaldia.",
     "kind": "fake_news",
@@ -165,6 +167,7 @@
   },
   {
     "id": "propuesta-transporte",
+    "zona": "plaza",
     "title": "Propuesta de transporte",
     "content": "La candidata Maria propone ampliar las rutas nocturnas de buses.",
     "kind": "true_news",
@@ -225,6 +228,7 @@
   },
   {
     "id": "video-debate-editado",
+    "zona": "alcaldia",
     "title": "Video editado del debate",
     "content": "Circula un clip donde una candidata parece insultar a un barrio, pero el video esta recortado.",
     "kind": "contenido_manipulado",
@@ -300,6 +304,7 @@
   },
   {
     "id": "campana-convivencia",
+    "zona": "barrio",
     "title": "Campana de convivencia digital",
     "content": "Un grupo de vecinos propone una campana para debatir sin ataques personales durante la eleccion.",
     "kind": "campana_civica",

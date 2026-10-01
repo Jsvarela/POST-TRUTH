@@ -84,3 +84,4 @@ class NewsEvent:
     content: str
     kind: str
     truth_level: int
+    zone: str = ""  # id de la zona de la ciudad donde ocurre (ver structures/grafo_ciudad.py)
