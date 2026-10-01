@@ -7,6 +7,7 @@ import pygame
 from post_truth.models import Impact
 from post_truth.models.personaje import Personaje
 from post_truth.views.componentes import Boton, CajaDialogo, Fuentes, Panel, dibujar_texto_ajustado
+from post_truth.views.grafo_view import AnimacionPropagacion
 from post_truth.views.personaje_view import dibujar_personaje
 from post_truth.views.theme import Tema
 
@@ -74,17 +75,21 @@ def _dibujar_consecuencias(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tem
 
 def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, personaje: Personaje,
                    animo: int, filas: list[tuple[str, int]], titulo_panel: str, texto_panel: str,
-                   impacto: Impact | None, dialogo: CajaDialogo, botones: list[Boton]) -> None:
+                   impacto: Impact | None, dialogo: CajaDialogo, botones: list[Boton],
+                   animacion: AnimacionPropagacion | None = None) -> None:
     pantalla.fill(tema.fondo)
     _dibujar_hud(pantalla, fuentes, tema, filas)
     pygame.draw.rect(pantalla, tema.panel, (0, RECT_PERSONAJE.bottom - 4, 320, 8), border_radius=4)  # suelo
     dibujar_personaje(pantalla, personaje, tema, RECT_PERSONAJE, animo)
-    panel = Panel(RECT_PANEL, titulo_panel)
-    panel.draw(pantalla, fuentes, tema)
-    if impacto is None:
-        dibujar_texto_ajustado(pantalla, fuentes.normal, texto_panel, tema.texto, panel.interior)
+    if animacion is not None:  # la propagacion ocupa el lugar del panel de noticia
+        animacion.draw(pantalla, fuentes, tema, RECT_PANEL)
     else:
-        _dibujar_consecuencias(pantalla, fuentes, tema, panel.interior, impacto)
+        panel = Panel(RECT_PANEL, titulo_panel)
+        panel.draw(pantalla, fuentes, tema)
+        if impacto is None:
+            dibujar_texto_ajustado(pantalla, fuentes.normal, texto_panel, tema.texto, panel.interior)
+        else:
+            _dibujar_consecuencias(pantalla, fuentes, tema, panel.interior, impacto)
     dialogo.draw(pantalla, fuentes, tema)
     for boton in botones:
         boton.draw(pantalla, fuentes.normal, tema)
