@@ -46,6 +46,7 @@ class DecisionTree:
             content=data["content"],
             kind=data["kind"],
             truth_level=data["truth_level"],
+            zone=data.get("zona", ""),
         )
         root = DecisionNode(
             node_id=f"{event.event_id}:root",
