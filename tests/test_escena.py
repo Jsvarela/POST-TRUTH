@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import pygame
 
-from post_truth.controllers.escena_state import CONSECUENCIA, DECIDIENDO, FIN
+from post_truth.controllers.escena_state import CONSECUENCIA, DECIDIENDO, FIN, PROPAGACION
 from post_truth.models import Role
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.pygame_app import App
@@ -17,6 +17,14 @@ from post_truth.pygame_app import App
 
 def tecla(app: App, k: int) -> None:
     app.estados.handle_event(pygame.event.Event(pygame.KEYDOWN, key=k))
+
+
+def saltar_propagacion(app: App) -> None:
+    """Si la decision desencadeno la animacion del grafo, la salta y pasa a las consecuencias."""
+    if app.estados._actual.fase == PROPAGACION:
+        tecla(app, pygame.K_RETURN)      # "Saltar animacion"
+        app.estados.update(0.016)        # el boton cambia a "Ver consecuencias"
+        tecla(app, pygame.K_RETURN)
 
 
 def clic(app: App, pos: tuple[int, int]) -> None:
@@ -59,6 +67,9 @@ class FlujoEscenaTest(unittest.TestCase):
         self.assertEqual(escena.fase, DECIDIENDO)
         antes = escena.ciudad.as_display_rows()
         tecla(self.app, pygame.K_1)
+        self.assertEqual(escena.fase, PROPAGACION)             # primero se ve como viaja la noticia
+        self.assertEqual(escena.ciudad.as_display_rows(), antes)  # y los indicadores aun no cambian
+        saltar_propagacion(self.app)
         self.assertEqual(escena.fase, CONSECUENCIA)
         self.assertNotEqual(escena.ciudad.as_display_rows(), antes)
         self.assertEqual(escena.dialogo.hablante, "Consecuencia")
@@ -68,6 +79,7 @@ class FlujoEscenaTest(unittest.TestCase):
         self._a_la_escena()
         escena = self.app.estados._actual
         clic(self.app, escena.botones[1].rect.center)
+        saltar_propagacion(self.app)
         self.assertEqual(escena.fase, CONSECUENCIA)
 
     def test_botones_salen_del_arbol(self) -> None:
@@ -84,6 +96,7 @@ class FlujoEscenaTest(unittest.TestCase):
             self._a_la_escena(tecla_rol)
             escena = self.app.estados._actual
             tecla(self.app, pygame.K_1)  # Compartir / primera rama
+            saltar_propagacion(self.app)
             resultados[nombre] = abs(escena.impacto.misinformation)
             self.app.estados.cambiar("menu")
         self.assertGreater(resultados["influencer"], resultados["ciudadano"])
@@ -93,6 +106,7 @@ class FlujoEscenaTest(unittest.TestCase):
         escena = self.app.estados._actual
         for _ in range(len(escena.arboles)):
             tecla(self.app, pygame.K_1)       # decidir
+            saltar_propagacion(self.app)
             self.app.estados.update(0.016)
             self.app.estados.draw(self.app.pantalla)
             tecla(self.app, pygame.K_RETURN)  # continuar
