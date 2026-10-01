@@ -79,6 +79,12 @@ aplica sus consecuencias. Compartir parte del jugador (su rol amplifica), Verifi
 frena la difusion de una noticia falsa (baja el peso de las conexiones) y Reportar
 corta las conexiones de su autor. Los cortes duran toda la partida.
 
+Ciudad: cada noticia ocurre en una zona (`data/grafo_ciudad.json`) y el jugador se mueve
+entre zonas conectadas (clic en el minimapa o teclas Q W E R). Moverse y decidir cuestan una
+ronda; Verificar y Reportar solo se pueden hacer en la zona de la noticia. Una noticia falsa
+que no se atiende se convierte en rumor y se expande a las zonas vecinas cada ronda, con
+una penalizacion; "Desmentir aqui" lo elimina estando en una zona infectada.
+
 Flujo actual: Menu (ENTER) -> Seleccion de rol y personaje -> Escena de dialogo
 con las publicaciones de `data/events.json`. Teclas: 1-4 para decidir, Enter para
 continuar, Espacio para saltar el texto, T (en el menu) para cambiar de tema, ESC

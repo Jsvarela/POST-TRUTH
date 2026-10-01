@@ -69,12 +69,13 @@ POST-TRUTH/
 │   ├── models/                      # logica pura: dominio.py (Impact, NewsEvent, Role), personaje.py (Personaje, Genero)
 │   ├── game_state.py                # CityState: indicadores (ya incluye conflictos)
 │   ├── decision_tree.py             # DecisionTree N-ario, DFS/BFS (entrega 1, se reutiliza)
-│   ├── structures/                  # grafo_social.py (GrafoSocial), propagacion.py (reglas de Compartir/Verificar/Reportar); grafo_ciudad.py pendiente
+│   ├── structures/                  # grafo_social.py (GrafoSocial), propagacion.py (reglas de Compartir/Verificar/Reportar), grafo_ciudad.py (zonas y BFS), rumores_ciudad.py (rumores por ronda)
 │   ├── views/                       # theme, componentes (Boton, Panel, CajaDialogo), personaje_view, seleccion_view, escena_view, menu_view
 │   ├── controllers/                 # base_state, state_manager, menu_state, seleccion_state, escena_state (game_state: prototipo previo)
 │   └── app.py                       # version Tkinter (tag tkinter-entrega1), a retirar
 ├── data/events.json                 # eventos y ramas de decision (cada decision lleva su "tipo")
 ├── data/grafo_social.json           # 14 ciudadanos y 37 relaciones del grafo social de ejemplo
+├── data/grafo_ciudad.json           # 5 zonas (Colegio, Barrio, Parque, Plaza, Alcaldia) y sus conexiones
 └── tests/
 ```
 
@@ -116,7 +117,8 @@ Estados previstos: `MenuState`, `GameState`, `CivitasFeedState`, `HelpState`, y 
 Hecho:
 - Esqueleto Pygame: `main.py`, StateManager, estados Menu y Juego, temas de accesibilidad.
 - Modelo base: `Impact`, `NewsEvent`, `Role`, `CityState` (con conflictos) y `DecisionTree` de la entrega 1.
-- Grafo social (`structures/grafo_social.py`): lista de adyacencia dirigida y ponderada; propagacion con BFS por olas (O(V+E)) y Dijkstra con costo 1/peso para el tiempo de llegada (O(E log V)); vista animada en `views/grafo_view.py`, integrada en la escena (Compartir/Verificar/Reportar). Falta `grafo_ciudad.py`.
+- Grafo social (`structures/grafo_social.py`): lista de adyacencia dirigida y ponderada; propagacion con BFS por olas (O(V+E)) y Dijkstra con costo 1/peso para el tiempo de llegada (O(E log V)); vista animada en `views/grafo_view.py`, integrada en la escena (Compartir/Verificar/Reportar).
+- Grafo de la ciudad (`structures/grafo_ciudad.py`, `rumores_ciudad.py`): zonas conectadas (no dirigido, sin pesos); BFS para `camino` y `expuestas` por anillos (O(V+E)). Cada evento tiene `zona`; el jugador se mueve entre zonas vecinas (cada movimiento y cada decision es una ronda); Verificar/Reportar exigen estar en la zona de la noticia; un rumor sin atender se expande un anillo por ronda y penaliza; `Desmentir aqui` limpia rumores viejos. Vistas: fondo por zona (`views/zona_view.py`) y minimapa (`views/mapa_view.py`).
 - Componentes UI (`views/componentes.py`), seleccion de rol/personaje y escena de dialogo alimentada por `DecisionTree` (rama `feature/escena-dialogo`). Los items 1-3 de la lista siguiente quedan hechos; el item 5 esta cubierto por `decision_tree.py` (sin mover a `structures/`).
 
 Siguiente (orden sugerido; la entrega 2 evalua grafos pero la profesora pide ante todo que se vea como juego, asi que el aspecto de juego avanza en paralelo):
