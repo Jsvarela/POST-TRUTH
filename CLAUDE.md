@@ -31,12 +31,12 @@ Como encajan las estructuras: el arbol de decisiones define las ramas de cada es
 
 ## 2. Estado actual y fechas
 
-- Stack: Python 3.x + Pygame. Repo: github.com/Jsvarela/POST-TRUTH (rama main).
-- Se migra el prototipo de Tkinter a Pygame manteniendo MVC. El esqueleto base ya existe (ver seccion 4). Todo codigo nuevo va sobre el game loop de Pygame.
+- Stack: Python 3.x + Pygame. Repo: github.com/Jsvarela/POST-TRUTH. Rama de trabajo: `migracion-pygame` (todo se actualiza en esa unica rama; `main` y `jose-redesign` no se tocan).
+- El prototipo de Tkinter (tag `tkinter-entrega1`, `src/post_truth/app.py`) esta obsoleto; todo codigo nuevo va sobre el game loop de Pygame manteniendo MVC.
 - Entregas (cada una vale 10%):
   - Entrega 1, semana 8 (14-18 sep 2026): arboles. Ya paso.
-  - Entrega 2, semana 12 (19-23 oct 2026): grafos, operaciones sobre grafos, integracion con arboles y con la mecanica, visualizacion grafica. PRIORIDAD ACTUAL.
-  - Entrega final, semana 16 (16-20 nov 2026): todo integrado y estable.
+  - Entrega 2, semana 12 (19-23 oct 2026): grafos, operaciones sobre grafos, integracion con arboles y con la mecanica, visualizacion grafica. CERRADA: ver `docs/entrega2_grafos.md`.
+  - Entrega final, semana 16 (16-20 nov 2026): todo integrado y estable. PRIORIDAD ACTUAL (ver hoja de ruta, seccion 7).
   - VI Feria Gamer: 26 nov 2026.
 - El repositorio debe mostrar commits de cada integrante: commits pequenos, frecuentes y con mensajes claros.
 
@@ -44,19 +44,21 @@ Como encajan las estructuras: el arbol de decisiones define las ramas de cada es
 
 Cada estructura debe resolver un problema real del juego, no estar solo para cumplir el requisito. Todos los integrantes deben poder defender: que problema resuelve, por que esa estructura, que variante, como se inserta/elimina y como se recorre.
 
-### 3.1 Arbol de decisiones (N-ario) - `structures/arbol_decision.py`
+### 3.1 Arbol de decisiones (N-ario) - `decision_tree.py` (HECHO)
 - Modela noticias/eventos y la ramificacion de consecuencias segun la accion elegida (Compartir, Verificar, Ignorar, Reportar). Ejemplo del laboratorio: PUBLICACION -> que hacer -> Verificar -> es verdadera? -> Si: Compartir / No: Reportar.
 - Insercion dinamica de ramas; eliminacion de subarboles.
 - Recorridos: DFS para acumular el impacto de una cadena de decisiones; BFS para explorar eventos por nivel.
-- Nodo base: `Noticia` con `hijos: dict[Accion, Noticia]` (ya implementado en `models/noticia.py`).
+- Implementado en `decision_tree.py` (`DecisionTree`, `DecisionNode` con `Impact` y `tipo`), cargado desde `data/events.json`. Se quedo ahi en vez de moverlo a `structures/` para no romper imports ni pruebas.
 
-### 3.2 Grafo social - `structures/grafo_social.py`
+### 3.2 Grafo social - `structures/grafo_social.py` (HECHO)
 - Lista de adyacencia dirigida y ponderada. Vertices: ciudadanos con rol (Ciudadano, Periodista, Influencer, Candidato). Aristas: amistad, confianza o seguimiento; el peso es la probabilidad/velocidad de propagacion.
 - Funcion en el juego: simular como se propaga una publicacion al compartirla. Debe determinar: quien la recibe, cuantas personas, que tan rapido, si es verdadera o falsa y que consecuencias genera.
 - Algoritmos: BFS por olas (nivel = ola de propagacion), DFS, Dijkstra para rutas/velocidad. Elegir segun la necesidad y explicar por que.
+- Implementado: BFS por olas O(V+E) para quien recibe y cuantos; Dijkstra (costo 1/peso) O(E log V) solo para el tiempo de llegada; DFS no se usa. Reglas de cada decision en `structures/propagacion.py`.
 
-### 3.3 Grafo de la ciudad - `structures/grafo_ciudad.py`
+### 3.3 Grafo de la ciudad - `structures/grafo_ciudad.py` (HECHO)
 - Vertices: zonas (Colegio, Barrio, Parque, Plaza, Alcaldia). Aristas: conexiones fisicas. Debe tener un uso real en la mecanica (por ejemplo, donde se concentra un rumor o por donde se mueve el jugador).
+- Implementado: no dirigido y sin pesos; BFS para `camino` y `expuestas` por anillos, O(V+E). Cada noticia tiene zona; el jugador se mueve entre zonas vecinas; Verificar/Reportar exigen estar en la zona; los rumores (`rumores_ciudad.py`) se expanden un anillo por ronda.
 
 ## 4. Arquitectura (MVC + patron State)
 
@@ -70,20 +72,21 @@ POST-TRUTH/
 │   ├── game_state.py                # CityState: indicadores (ya incluye conflictos)
 │   ├── decision_tree.py             # DecisionTree N-ario, DFS/BFS (entrega 1, se reutiliza)
 │   ├── structures/                  # grafo_social.py (GrafoSocial), propagacion.py (reglas de Compartir/Verificar/Reportar), grafo_ciudad.py (zonas y BFS), rumores_ciudad.py (rumores por ronda)
-│   ├── views/                       # theme, componentes (Boton, Panel, CajaDialogo), personaje_view, seleccion_view, escena_view, menu_view
+│   ├── views/                       # theme, componentes (Boton, Panel, CajaDialogo), personaje_view, seleccion_view, escena_view, grafo_view (animacion de propagacion), mapa_view (minimapa), zona_view (fondos), menu_view
 │   ├── controllers/                 # base_state, state_manager, menu_state, seleccion_state, escena_state (game_state: prototipo previo)
 │   └── app.py                       # version Tkinter (tag tkinter-entrega1), a retirar
 ├── data/events.json                 # eventos y ramas de decision (cada decision lleva su "tipo")
 ├── data/grafo_social.json           # 14 ciudadanos y 37 relaciones del grafo social de ejemplo
 ├── data/grafo_ciudad.json           # 5 zonas (Colegio, Barrio, Parque, Plaza, Alcaldia) y sus conexiones
-└── tests/
+├── docs/                            # entrega1_arboles.md, entrega2_grafos.md (guias de sustentacion)
+└── tests/                           # unitarias, integracion y test_partida_completa.py (bot que juega partidas)
 ```
 
-Modelos nuevos previstos en `models/`: `Rol`, `Personaje` (rol, genero, id de apariencia, habilidad), `Pista` (incluye llamada filtrada), `Escena` (noticia, pistas, opciones).
+Modelos en `models/`: `Role` (ya existia) y `Personaje` (rol, genero, id de apariencia) estan hechos. Pendientes: habilidad por rol, `Pista` (incluye llamada filtrada) y `Escena` (noticia, pistas, opciones).
 
 Reglas de dependencia: `models` y `structures` no importan nada de `views` ni `controllers`. Las vistas leen datos, nunca los modifican. Los controladores conectan eventos con el modelo.
 
-Estados previstos: `MenuState`, `GameState`, `CivitasFeedState`, `HelpState`, y mas adelante `ResultadoState` (eleccion del alcalde).
+Estados: hechos `MenuState`, `SeleccionState` y `EscenaState` (`GameState` es el prototipo previo, ya fuera del flujo). Previstos: `HelpState` y `ResultadoState` (eleccion del alcalde); `CivitasFeedState` se integra en la escena si hace falta.
 
 ## 5. Requisitos del laboratorio que el codigo debe cubrir
 
@@ -114,29 +117,30 @@ Estados previstos: `MenuState`, `GameState`, `CivitasFeedState`, `HelpState`, y 
 
 ## 7. Hoja de ruta
 
-Hecho:
-- Esqueleto Pygame: `main.py`, StateManager, estados Menu y Juego, temas de accesibilidad.
-- Modelo base: `Impact`, `NewsEvent`, `Role`, `CityState` (con conflictos) y `DecisionTree` de la entrega 1.
-- Grafo social (`structures/grafo_social.py`): lista de adyacencia dirigida y ponderada; propagacion con BFS por olas (O(V+E)) y Dijkstra con costo 1/peso para el tiempo de llegada (O(E log V)); vista animada en `views/grafo_view.py`, integrada en la escena (Compartir/Verificar/Reportar).
-- Grafo de la ciudad (`structures/grafo_ciudad.py`, `rumores_ciudad.py`): zonas conectadas (no dirigido, sin pesos); BFS para `camino` y `expuestas` por anillos (O(V+E)). Cada evento tiene `zona`; el jugador se mueve entre zonas vecinas (cada movimiento y cada decision es una ronda); Verificar/Reportar exigen estar en la zona de la noticia; un rumor sin atender se expande un anillo por ronda y penaliza; `Desmentir aqui` limpia rumores viejos. Vistas: fondo por zona (`views/zona_view.py`) y minimapa (`views/mapa_view.py`).
-- Componentes UI (`views/componentes.py`), seleccion de rol/personaje y escena de dialogo alimentada por `DecisionTree` (rama `feature/escena-dialogo`). Los items 1-3 de la lista siguiente quedan hechos; el item 5 esta cubierto por `decision_tree.py` (sin mover a `structures/`).
+Hecho (entregas 1 y 2):
+- Esqueleto Pygame: game loop, StateManager (con `al_entrar`), temas de accesibilidad (normal, alto contraste, daltonismo).
+- Modelo: `Impact`, `NewsEvent`, `Role`, `Personaje`, `CityState` (con conflictos) y `DecisionTree`.
+- Componentes UI (`views/componentes.py`), seleccion de rol y personaje (4 roles x hombre/mujer dibujados con formas) y escena de dialogo alimentada por el `DecisionTree`.
+- Grafo social: propagacion BFS por olas + Dijkstra, vista animada, integrada con Compartir/Verificar/Reportar.
+- Grafo de la ciudad: zonas, movimiento por el minimapa, fondos por zona, rondas y rumores que se expanden, Verificar/Reportar en la zona, "Desmentir aqui".
+- Pruebas: unitarias, de integracion y partidas completas con un bot (`tests/test_partida_completa.py`). Documentacion de sustentacion en `docs/`.
 
-Siguiente (orden sugerido; la entrega 2 evalua grafos pero la profesora pide ante todo que se vea como juego, asi que el aspecto de juego avanza en paralelo):
-1. Componentes UI reutilizables (`views/componentes.py`): Boton, Panel, Temporizador, caja de dialogo.
-2. Seleccion de rol y personaje (`seleccion_state.py`) con personajes dibujados por codigo, hombre y mujer por rol.
-3. Escena de dialogo (`escena_state.py`): personaje a un costado, texto y opciones abajo, HUD de indicadores compacto.
-4. Noticia como tarjeta de Civitas con pistas clicables y llamadas filtradas.
-5. `structures/arbol_decision.py`: arbol N-ario (insercion, eliminacion, DFS/BFS) que alimenta las escenas en lugar de la noticia fija de `GameState`.
-6. `structures/grafo_social.py`: lista de adyacencia ponderada; propagacion por olas con BFS; Dijkstra para velocidad. Vista que anima la propagacion.
-7. `structures/grafo_ciudad.py` y su uso en la mecanica.
-8. Agregar indicador `conflictos`, puntuacion, eventos aleatorios y HelpState.
-
-Despues (entrega final): roles con habilidades, eleccion del alcalde, sonidos/animaciones/logros, servidor y clientes con sockets.
+Siguiente (entrega final, en este orden sugerido; el aspecto de juego sigue siendo prioridad):
+1. Roles con habilidades propias de verdad (hoy el rol solo escala el impacto y la propagacion): p. ej. el Periodista investiga pistas y detecta falsas.
+2. Noticia como tarjeta de Civitas con pistas clicables y llamadas filtradas (seccion 1.1, pilar 3) y temporizador en noticias virales (`dt`).
+3. Eventos aleatorios (noticia falsa, publicacion viral, rumor sobre un candidato, discusion, campana de convivencia, reporte) y mas contenido: eventos, zonas y ciudadanos. Balancear: con solo 5 publicaciones, jugar al azar o ignorar satura la desinformacion en 100 (ver `docs/entrega2_grafos.md`, seccion 8).
+4. Puntuacion individual por jugador, logros y eleccion del alcalde (`ResultadoState`) calculada con confianza, reputacion, participacion, pocos conflictos e informacion verificada.
+5. `HelpState` (AYUDA: objetivo, reglas, botones, personajes, como ganar, indicadores), mensajes guia durante la partida y documentar la inclusividad (alto contraste y daltonismo).
+6. Sonidos, animaciones y efectos al ganar/perder que aporten a la experiencia.
+7. Multijugador local cliente-servidor con sockets: el servidor mantiene el estado; el modelo ya es serializable (`to_dict`/`from_dict`).
+8. Modo de sustentacion en Pygame (arbol y grafos): hoy solo existe el panel Tkinter del arbol; los grafos se demuestran con los fragmentos de `docs/entrega2_grafos.md`.
+9. Retirar el codigo Tkinter (`app.py`) y el prototipo `GameState` cuando ya no hagan falta.
 
 ## 8. Comandos utiles
 
 ```
-pip install pygame
-python main.py
-SDL_VIDEODRIVER=dummy python -c "from main import App; App()"   # prueba sin ventana (Linux/macOS)
+pip install -r requirements.txt
+python src/main.py
+python -m unittest discover -s tests              # todas las pruebas, sin ventana
+SDL_VIDEODRIVER=dummy python -m unittest tests.test_partida_completa   # Linux/macOS (en Windows las pruebas ya fijan el driver dummy)
 ```
