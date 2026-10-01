@@ -1,37 +1,58 @@
 # POST-TRUTH
 
 Videojuego educativo para Estructura de Datos II basado en el laboratorio
-"Alcalde Digital". La primera entrega implementa la mecanica central con
-arboles: cada publicacion genera decisiones, consecuencias y recorridos que
-modifican el estado de Ciudad Nova.
+"Alcalde Digital" (Universidad del Norte). Ciudad Nova esta en elecciones y el
+jugador decide que hacer con cada publicacion de la red Civitas: Compartir,
+Verificar, Ignorar o Reportar. Las decisiones y sus consecuencias, no las
+preguntas, ensenan a verificar antes de compartir y a no amplificar rumores.
 
-## Entrega 1 - Arboles
+## Estado del proyecto
 
-Incluye:
+| Entrega | Contenido | Estado |
+|---|---|---|
+| 1 - Arboles | Arbol n-ario de decisiones, insercion, eliminacion, DFS y BFS | Hecha (version Tkinter en el tag `tkinter-entrega1`) |
+| 2 - Grafos | Grafo social, grafo de la ciudad, operaciones, integracion con el arbol y la mecanica, visualizacion | Hecha, en Pygame |
+| Final | Todo integrado y estable (ver la hoja de ruta de `CLAUDE.md`) | En curso |
 
-- Arbol n-ario de decisiones para publicaciones de Civitas.
-- Insercion dinamica de eventos desde `data/events.json`.
-- Eliminacion de ramas de decision.
-- Recorrido DFS para calcular trayectorias completas de consecuencias.
-- Recorrido BFS para mostrar el orden de evaluacion por niveles.
-- Interfaz grafica reorganizada como tablero de juego en Tkinter.
-- Feed de Civitas con publicaciones, veracidad y temporizador de turno.
-- Tarjetas de decision con ruta, impacto esperado y confirmacion.
-- Mapa visual del arbol para sustentar la estructura sin mostrar ids tecnicos.
-- Vista de Ciudad Nova con zonas, estado general y barras de indicadores.
-- Bitacora de acciones, ayuda integrada y modo de alto contraste.
-- Indicadores de ciudad: informacion verificada, confianza, convivencia,
-  bienestar, desinformacion y conflictos.
+El juego se migro de Tkinter a Pygame. El codigo Tkinter (`src/post_truth/app.py`) esta
+obsoleto: se conserva solo como referencia.
+
+## Estructuras de datos
+
+| Estructura | Donde | Para que |
+|---|---|---|
+| Arbol n-ario de decisiones | `decision_tree.py`, `data/events.json` | Ramas de cada publicacion y sus consecuencias (DFS acumula el impacto, BFS recorre por niveles) |
+| Grafo social (dirigido, ponderado) | `structures/grafo_social.py`, `data/grafo_social.json` | Como se propaga una publicacion al compartirla: BFS por olas y Dijkstra para el tiempo |
+| Grafo de la ciudad (no dirigido) | `structures/grafo_ciudad.py`, `structures/rumores_ciudad.py`, `data/grafo_ciudad.json` | Zonas, movimiento del jugador y expansion de rumores: BFS |
+
+La justificacion completa (problema, estructura, variante, insercion y eliminacion,
+recorridos y complejidad, efecto de la decision) esta en
+[`docs/entrega2_grafos.md`](docs/entrega2_grafos.md); la del arbol, en
+[`docs/entrega1_arboles.md`](docs/entrega1_arboles.md).
+
+## Como se juega
+
+Flujo: Menu -> Seleccion de rol y personaje -> Escena -> Fin.
+
+- Se elige un rol (Ciudadano, Periodista, Influencer, Candidato) y un personaje.
+- Cada publicacion ocurre en una zona de la ciudad. Se decide con los botones (teclas 1-4).
+- **Compartir, Verificar o Reportar** muestran como viaja la noticia por la red social,
+  ola por ola, y despues sus consecuencias. Compartir parte del jugador (el Influencer
+  amplifica), Verificar frena la difusion de una noticia falsa y Reportar corta las
+  conexiones de su autor.
+- **Verificar y Reportar solo se pueden hacer en la zona de la noticia.** El jugador se
+  mueve por el minimapa (clic en una zona vecina o teclas Q W E R). Moverse y decidir cuestan
+  una ronda: una noticia falsa sin atender es un rumor que se expande a las zonas vecinas y
+  penaliza. "Desmentir aqui" lo elimina estando en una zona infectada.
+- Otras teclas: Enter para continuar, Espacio para saltar el texto, T en el menu para cambiar
+  de tema (normal, alto contraste, daltonismo), ESC para volver.
 
 ## Ejecutar
 
-Requisitos:
-
-- Python 3.10 o superior.
-
-Comando:
+Requisitos: Python 3.10 o superior y Pygame.
 
 ```bash
+pip install -r requirements.txt
 python src/main.py
 ```
 
@@ -41,51 +62,34 @@ python src/main.py
 python -m unittest discover -s tests
 ```
 
+Las pruebas corren sin ventana (SDL en modo `dummy`). Incluyen pruebas unitarias de cada
+estructura, de las vistas y de la integracion, y `tests/test_partida_completa.py`, donde un
+jugador automatico juega partidas completas con teclado y mouse.
+
 ## Estructura
 
 ```text
-data/events.json                 Eventos iniciales del juego
-docs/entrega1_arboles.md         Guia de sustentacion de la entrega 1
-src/main.py                      Punto de entrada
-src/post_truth/app.py            Tablero visual del juego
-src/post_truth/decision_tree.py  Arbol n-ario y recorridos
-src/post_truth/game_state.py     Estado de Ciudad Nova
-src/post_truth/models.py         Modelos del dominio
-tests/test_decision_tree.py      Pruebas de arboles
+src/main.py                              Punto de entrada (Pygame)
+src/post_truth/pygame_app.py             Game loop (60 FPS, dt en segundos) y recursos compartidos
+src/post_truth/config.py                 Constantes y rutas de los datos
+src/post_truth/models/                   Logica pura: dominio (Impact, NewsEvent, Role) y personaje
+src/post_truth/game_state.py             CityState: indicadores de Ciudad Nova
+src/post_truth/decision_tree.py          Arbol n-ario, DFS y BFS
+src/post_truth/structures/               grafo_social, propagacion, grafo_ciudad, rumores_ciudad
+src/post_truth/controllers/              Estados: menu, seleccion, escena (patron State)
+src/post_truth/views/                    Tema, componentes, personajes, escena, grafo, mapa, fondos por zona
+src/post_truth/app.py                    Version Tkinter de la entrega 1 (obsoleta)
+data/                                    events.json, grafo_social.json, grafo_ciudad.json
+docs/                                    Guias de sustentacion de las entregas 1 y 2
+tests/                                   Pruebas unitarias, de integracion y de partida completa
 ```
+
+Reglas de arquitectura: `models` y `structures` son logica pura (sin pygame) y serializable;
+las vistas solo dibujan; los controladores conectan eventos con el modelo. Todos los colores
+salen de `views/theme.py` (alto contraste y daltonismo).
 
 ## Lenguaje elegido
 
-Python, porque permite una GUI en Tkinter sin dependencias externas y deja
-visibles las estructuras de datos para sustentarlas con claridad. La interfaz se
-organizo como tablero de simulacion para que no parezca un formulario tecnico.
-En entregas posteriores se puede migrar o ampliar la interfaz a Pygame si el
-equipo quiere una experiencia mas cercana a videojuego.
-
-## Migracion a Pygame (rama migracion-pygame)
-
-La interfaz Tkinter de la entrega 1 queda en el tag `tkinter-entrega1`. En esta
-rama `python src/main.py` abre la version Pygame, que reutiliza
-`decision_tree.py`, `models.py`, `game_state.py` y `data/events.json`.
-
-```bash
-pip install -r requirements.txt
-python src/main.py
-```
-
-Grafo social: al elegir Compartir, Verificar o Reportar la escena muestra como viaja
-la noticia por la red de Civitas (`data/grafo_social.json`), ola por ola, y despues
-aplica sus consecuencias. Compartir parte del jugador (su rol amplifica), Verificar
-frena la difusion de una noticia falsa (baja el peso de las conexiones) y Reportar
-corta las conexiones de su autor. Los cortes duran toda la partida.
-
-Ciudad: cada noticia ocurre en una zona (`data/grafo_ciudad.json`) y el jugador se mueve
-entre zonas conectadas (clic en el minimapa o teclas Q W E R). Moverse y decidir cuestan una
-ronda; Verificar y Reportar solo se pueden hacer en la zona de la noticia. Una noticia falsa
-que no se atiende se convierte en rumor y se expande a las zonas vecinas cada ronda, con
-una penalizacion; "Desmentir aqui" lo elimina estando en una zona infectada.
-
-Flujo actual: Menu (ENTER) -> Seleccion de rol y personaje -> Escena de dialogo
-con las publicaciones de `data/events.json`. Teclas: 1-4 para decidir, Enter para
-continuar, Espacio para saltar el texto, T (en el menu) para cambiar de tema, ESC
-para volver.
+Python. En la entrega 1 se uso Tkinter por no tener dependencias externas; para la entrega 2
+se migro a Pygame, que da una experiencia de juego (escenas, animaciones, personajes dibujados
+con formas) manteniendo la logica de las estructuras de datos separada de la interfaz.
