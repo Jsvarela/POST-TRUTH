@@ -2,6 +2,63 @@
   {
     "id": "colegio-cerrado",
     "zona": "colegio",
+    "autor": {
+      "nombre": "@vecina_barrio",
+      "avatar": {
+        "tipo": "anonimo",
+        "color": 2
+      }
+    },
+    "fuente": "Mensaje reenviado, sin enlace",
+    "fecha": "hoy, 6:12",
+    "imagen": {
+      "motivo": "colegio",
+      "pie": "Obras en el colegio central"
+    },
+    "likes": 240,
+    "comentarios": 57,
+    "pistas": [
+      {
+        "id": "cuenta-sospechosa",
+        "zona": "autor",
+        "titulo": "Cuenta sospechosa",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "La cuenta tiene 2 dias de creada y solo comparte rumores sobre candidatos."
+      },
+      {
+        "id": "sin-fuente",
+        "zona": "fuente",
+        "titulo": "Sin fuente",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "El mensaje no cita ningun comunicado de la alcaldia ni de la campana de Juan Ardila."
+      },
+      {
+        "id": "imagen-reutilizada",
+        "zona": "imagen",
+        "titulo": "Imagen reutilizada",
+        "senal": "falsa",
+        "costo": 2,
+        "hallazgo": "La foto es de unas obras de 2021: no muestra ningun cierre."
+      },
+      {
+        "id": "comentarios-repetidos",
+        "zona": "estadisticas",
+        "titulo": "Comentarios repetidos",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "Muchos comentarios son copias casi identicas: parecen cuentas automaticas."
+      },
+      {
+        "id": "hora-normal",
+        "zona": "fecha",
+        "titulo": "Hora normal",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Se publico esta manana; la hora no tiene nada raro."
+      }
+    ],
     "title": "Rumor sobre el colegio",
     "content": "El candidato Juan quiere cerrar el colegio central si gana la alcaldia.",
     "kind": "rumor",
@@ -20,6 +77,27 @@
         "action": "Compartir",
         "tipo": "compartir",
         "description": "Se publica sin verificar y llega a mas ciudadanos.",
+        "variantes": [
+          {
+            "si": [
+              "imagen-reutilizada"
+            ],
+            "texto": "Habias descubierto que la foto era de 2021 y aun asi la compartiste: el rumor se riega con tu nombre detras."
+          },
+          {
+            "si": [
+              "cuenta-sospechosa",
+              "sin-fuente"
+            ],
+            "texto": "Sabias que la cuenta era nueva y no citaba fuente, y la compartiste igual. Tus contactos lo notan."
+          },
+          {
+            "si": [
+              "cuenta-sospechosa"
+            ],
+            "texto": "Dudabas de la cuenta y aun asi la compartiste. Ya no es un error de buena fe."
+          }
+        ],
         "effect": {
           "verified_information": -3,
           "trust": -7,
@@ -49,6 +127,21 @@
         "action": "Verificar",
         "tipo": "verificar",
         "description": "Se consulta una fuente oficial antes de actuar.",
+        "variantes": [
+          {
+            "si": [
+              "imagen-reutilizada",
+              "sin-fuente"
+            ],
+            "texto": "Tus pistas ya lo mostraban y la verificacion lo confirma: no hay ningun cierre. Publicas la aclaracion con pruebas."
+          },
+          {
+            "si": [
+              "imagen-reutilizada"
+            ],
+            "texto": "La foto de 2021 que encontraste es la prueba perfecta: tu aclaracion convence mas rapido."
+          }
+        ],
         "effect": {
           "verified_information": 12,
           "trust": 7,
@@ -78,6 +171,15 @@
         "action": "Ignorar",
         "tipo": "ignorar",
         "description": "No se amplifica el rumor, pero tampoco se corrige.",
+        "variantes": [
+          {
+            "si": [
+              "cuenta-sospechosa",
+              "imagen-reutilizada"
+            ],
+            "texto": "Tenias pruebas de que era falso y lo dejaste correr. El rumor sigue creciendo sin que nadie lo desmienta."
+          }
+        ],
         "effect": {
           "verified_information": 0,
           "trust": -1,
@@ -92,6 +194,14 @@
         "action": "Reportar",
         "tipo": "reportar",
         "description": "La publicacion se marca como sospechosa para moderacion.",
+        "variantes": [
+          {
+            "si": [
+              "cuenta-sospechosa"
+            ],
+            "texto": "Reportas una cuenta que ya habias visto sospechosa: la plataforma la suspende y el rumor se frena."
+          }
+        ],
         "effect": {
           "verified_information": 5,
           "trust": 3,
@@ -107,6 +217,63 @@
   {
     "id": "parques-cerrados",
     "zona": "parque",
+    "autor": {
+      "nombre": "Alerta Total Nova",
+      "avatar": {
+        "tipo": "institucional",
+        "color": 1
+      }
+    },
+    "fuente": "Pagina sin direccion de contacto",
+    "fecha": "hace 20 min",
+    "imagen": {
+      "motivo": "parque",
+      "pie": "Cinta de cierre en un parque"
+    },
+    "likes": 1300,
+    "comentarios": 214,
+    "pistas": [
+      {
+        "id": "pagina-sin-historial",
+        "zona": "autor",
+        "titulo": "Pagina sin historial",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "Se creo ayer y no tiene publicaciones anteriores ni datos de contacto."
+      },
+      {
+        "id": "urgencia-sin-dato",
+        "zona": "texto",
+        "titulo": "Urgencia sin dato",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "Dice \"manana\" pero no da hora, decreto ni numero de resolucion."
+      },
+      {
+        "id": "imagen-otra-ciudad",
+        "zona": "imagen",
+        "titulo": "Imagen de otra ciudad",
+        "senal": "falsa",
+        "costo": 2,
+        "hallazgo": "La cinta y el parque son de otra ciudad: la foto sale en una nota de hace 3 anos."
+      },
+      {
+        "id": "sin-comunicado",
+        "zona": "fuente",
+        "titulo": "Sin comunicado oficial",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "La alcaldia no ha publicado ningun decreto de cierre de parques."
+      },
+      {
+        "id": "muy-viral",
+        "zona": "estadisticas",
+        "titulo": "Muy viral",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Que tenga muchas reacciones no prueba que sea cierto."
+      }
+    ],
     "title": "Alerta viral sobre parques",
     "content": "Manana cerraran todos los parques por orden de la alcaldia.",
     "kind": "fake_news",
@@ -125,6 +292,20 @@
         "action": "Compartir",
         "tipo": "compartir",
         "description": "El mensaje se vuelve tendencia en Civitas.",
+        "variantes": [
+          {
+            "si": [
+              "imagen-otra-ciudad"
+            ],
+            "texto": "La imagen era de otra ciudad y lo sabias. Compartirla deja en ridiculo a quien confia en ti."
+          },
+          {
+            "si": [
+              "sin-comunicado"
+            ],
+            "texto": "Sabias que la alcaldia no habia anunciado nada, y aun asi la compartiste. Pesa."
+          }
+        ],
         "effect": {
           "verified_information": -4,
           "trust": -8,
@@ -139,6 +320,21 @@
         "action": "Verificar",
         "tipo": "verificar",
         "description": "Se revisa el comunicado oficial de la alcaldia.",
+        "variantes": [
+          {
+            "si": [
+              "sin-comunicado",
+              "imagen-otra-ciudad"
+            ],
+            "texto": "Sin comunicado y con una foto de otra ciudad, la verificacion lo cierra: el cierre de parques no existe."
+          },
+          {
+            "si": [
+              "sin-comunicado"
+            ],
+            "texto": "Ya habias visto que no existia comunicado: la verificacion lo confirma y calmas a tus contactos."
+          }
+        ],
         "effect": {
           "verified_information": 14,
           "trust": 6,
@@ -153,6 +349,14 @@
         "action": "Reportar",
         "tipo": "reportar",
         "description": "Se reduce el alcance de la publicacion sospechosa.",
+        "variantes": [
+          {
+            "si": [
+              "pagina-sin-historial"
+            ],
+            "texto": "Reportas una pagina que ya sabias sospechosa: la retiran y el cierre inventado se detiene."
+          }
+        ],
         "effect": {
           "verified_information": 6,
           "trust": 2,
@@ -168,6 +372,63 @@
   {
     "id": "propuesta-transporte",
     "zona": "plaza",
+    "autor": {
+      "nombre": "Noticias de Nova",
+      "avatar": {
+        "tipo": "institucional",
+        "color": 3
+      }
+    },
+    "fuente": "Comunicado de la campana de Maria Lozano",
+    "fecha": "ayer, 18:30",
+    "imagen": {
+      "motivo": "plaza",
+      "pie": "Bus nocturno en la plaza"
+    },
+    "likes": 86,
+    "comentarios": 12,
+    "pistas": [
+      {
+        "id": "medio-con-historial",
+        "zona": "autor",
+        "titulo": "Medio con historial",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Lleva anos publicando noticias locales y corrige sus errores."
+      },
+      {
+        "id": "cita-el-plan",
+        "zona": "fuente",
+        "titulo": "Cita el plan oficial",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "El comunicado enlaza al plan de transporte que presento la campana."
+      },
+      {
+        "id": "coincide-con-el-debate",
+        "zona": "fecha",
+        "titulo": "Coincide con el debate",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Se publico justo despues del debate donde Maria Lozano presento la propuesta."
+      },
+      {
+        "id": "foto-de-archivo",
+        "zona": "imagen",
+        "titulo": "Foto de archivo",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "La foto es de archivo, pero eso no desmiente la propuesta."
+      },
+      {
+        "id": "pocas-reacciones",
+        "zona": "estadisticas",
+        "titulo": "Pocas reacciones",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Tiene pocas reacciones; una noticia cierta no siempre es viral."
+      }
+    ],
     "title": "Propuesta de transporte",
     "content": "La candidata Maria propone ampliar las rutas nocturnas de buses.",
     "kind": "true_news",
@@ -186,6 +447,21 @@
         "action": "Compartir",
         "tipo": "compartir",
         "description": "La propuesta verificada llega a mas ciudadanos.",
+        "variantes": [
+          {
+            "si": [
+              "medio-con-historial",
+              "cita-el-plan"
+            ],
+            "texto": "Comprobaste el medio y la fuente antes de compartir: tu aporte informa de verdad y suma confianza."
+          },
+          {
+            "si": [
+              "cita-el-plan"
+            ],
+            "texto": "Viste que citaba el plan oficial. Compartirla con esa seguridad refuerza tu credibilidad."
+          }
+        ],
         "effect": {
           "verified_information": 6,
           "trust": 5,
@@ -200,6 +476,14 @@
         "action": "Verificar",
         "tipo": "verificar",
         "description": "Se revisa el plan de gobierno antes de comentar.",
+        "variantes": [
+          {
+            "si": [
+              "cita-el-plan"
+            ],
+            "texto": "Ya habias visto que citaba el plan oficial, y la verificacion lo confirma: era cierta, y verificar nunca sobra."
+          }
+        ],
         "effect": {
           "verified_information": 10,
           "trust": 4,
@@ -214,6 +498,15 @@
         "action": "Ignorar",
         "tipo": "ignorar",
         "description": "La informacion no cambia mucho el debate publico.",
+        "variantes": [
+          {
+            "si": [
+              "medio-con-historial",
+              "cita-el-plan"
+            ],
+            "texto": "Tenias evidencia de que era cierta y la dejaste pasar. Perdiste la oportunidad de informar."
+          }
+        ],
         "effect": {
           "verified_information": 0,
           "trust": 0,
@@ -229,6 +522,70 @@
   {
     "id": "video-debate-editado",
     "zona": "alcaldia",
+    "autor": {
+      "nombre": "@clips_nova",
+      "avatar": {
+        "tipo": "retrato",
+        "color": 0,
+        "aspecto": {
+          "piel": 0,
+          "cabello": 1,
+          "peinado": "corto",
+          "accesorio": "barba",
+          "color": 0
+        }
+      }
+    },
+    "fuente": "Clip de 14 segundos sin enlace al original",
+    "fecha": "hace 1 h",
+    "imagen": {
+      "motivo": "alcaldia",
+      "pie": "Fragmento del debate"
+    },
+    "likes": 530,
+    "comentarios": 140,
+    "pistas": [
+      {
+        "id": "clip-recortado",
+        "zona": "imagen",
+        "titulo": "Clip recortado",
+        "senal": "falsa",
+        "costo": 2,
+        "hallazgo": "El video completo dura 12 minutos; el fragmento corta la frase anterior."
+      },
+      {
+        "id": "cuenta-de-ataque",
+        "zona": "autor",
+        "titulo": "Cuenta de ataque",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "La cuenta solo publica clips contra una candidata."
+      },
+      {
+        "id": "sin-original",
+        "zona": "fuente",
+        "titulo": "No enlaza el original",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "No muestra el debate completo ni dice quien lo grabo."
+      },
+      {
+        "id": "comentarios-coordinados",
+        "zona": "estadisticas",
+        "titulo": "Comentarios coordinados",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "Decenas de comentarios identicos aparecieron en pocos minutos."
+      },
+      {
+        "id": "debate-de-ayer",
+        "zona": "fecha",
+        "titulo": "Debate de ayer",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "El debate fue ayer; que sea reciente no lo vuelve cierto."
+      }
+    ],
     "title": "Video editado del debate",
     "content": "Circula un clip donde una candidata parece insultar a un barrio, pero el video esta recortado.",
     "kind": "contenido_manipulado",
@@ -247,6 +604,20 @@
         "action": "Compartir con enojo",
         "tipo": "compartir",
         "description": "El mensaje se comparte con una frase agresiva y aumenta la pelea.",
+        "variantes": [
+          {
+            "si": [
+              "clip-recortado"
+            ],
+            "texto": "Sabias que el clip estaba recortado y lo compartiste con enojo. Un barrio entero paga por un insulto que nunca existio."
+          },
+          {
+            "si": [
+              "cuenta-de-ataque"
+            ],
+            "texto": "Habias visto que la cuenta solo ataca a una candidata. Compartir su clip la ayuda a lograrlo."
+          }
+        ],
         "effect": {
           "verified_information": -5,
           "trust": -9,
@@ -261,6 +632,14 @@
         "action": "Buscar video completo",
         "tipo": "verificar",
         "description": "Se revisa la transmision original antes de reaccionar.",
+        "variantes": [
+          {
+            "si": [
+              "clip-recortado"
+            ],
+            "texto": "Ya sospechabas el recorte y lo confirmas con el video completo: la frase anterior cambia todo el sentido."
+          }
+        ],
         "effect": {
           "verified_information": 13,
           "trust": 6,
@@ -290,6 +669,15 @@
         "action": "Reportar manipulacion",
         "tipo": "reportar",
         "description": "Se marca el clip como posible edicion enganosa.",
+        "variantes": [
+          {
+            "si": [
+              "clip-recortado",
+              "sin-original"
+            ],
+            "texto": "Reportas con pruebas del recorte y de la falta del original: la plataforma lo etiqueta como manipulado."
+          }
+        ],
         "effect": {
           "verified_information": 5,
           "trust": 2,
@@ -305,6 +693,70 @@
   {
     "id": "campana-convivencia",
     "zona": "barrio",
+    "autor": {
+      "nombre": "Vecinos por el dialogo",
+      "avatar": {
+        "tipo": "retrato",
+        "color": 3,
+        "aspecto": {
+          "piel": 1,
+          "cabello": 1,
+          "peinado": "recogido",
+          "accesorio": "aretes",
+          "color": 3
+        }
+      }
+    },
+    "fuente": "Grupo de vecinos del Barrio",
+    "fecha": "hoy, 8:00",
+    "imagen": {
+      "motivo": "barrio",
+      "pie": "Reunion de vecinos"
+    },
+    "likes": 97,
+    "comentarios": 23,
+    "pistas": [
+      {
+        "id": "vecinos-reales",
+        "zona": "autor",
+        "titulo": "Vecinos reales",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "El grupo existe hace anos y sus voceros dan la cara en las reuniones del barrio."
+      },
+      {
+        "id": "propuesta-concreta",
+        "zona": "texto",
+        "titulo": "Propuesta concreta",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Indica donde y cuando es la reunion y pide debatir sin ataques."
+      },
+      {
+        "id": "sin-bandera",
+        "zona": "fuente",
+        "titulo": "Sin bandera politica",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "No apoya a ningun candidato."
+      },
+      {
+        "id": "poca-difusion",
+        "zona": "estadisticas",
+        "titulo": "Poca difusion",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Tiene pocos comentarios; eso no la hace falsa."
+      },
+      {
+        "id": "convocatoria-de-hoy",
+        "zona": "fecha",
+        "titulo": "Convocatoria de hoy",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "La reunion es esta semana, como dice el mensaje."
+      }
+    ],
     "title": "Campana de convivencia digital",
     "content": "Un grupo de vecinos propone una campana para debatir sin ataques personales durante la eleccion.",
     "kind": "campana_civica",
@@ -323,6 +775,15 @@
         "action": "Apoyar campana",
         "tipo": "compartir",
         "description": "El jugador invita a participar y refuerza normas de dialogo.",
+        "variantes": [
+          {
+            "si": [
+              "vecinos-reales",
+              "propuesta-concreta"
+            ],
+            "texto": "Comprobaste quienes eran y que proponian: apoyas con seguridad y la convocatoria se llena."
+          }
+        ],
         "effect": {
           "verified_information": 4,
           "trust": 6,
@@ -337,6 +798,14 @@
         "action": "Convertirlo en ataque",
         "tipo": "compartir",
         "description": "Se usa la campana para burlarse de otros candidatos.",
+        "variantes": [
+          {
+            "si": [
+              "vecinos-reales"
+            ],
+            "texto": "Sabias que eran vecinos reales y aun asi lo convertiste en ataque. Rompes una iniciativa sana."
+          }
+        ],
         "effect": {
           "verified_information": -1,
           "trust": -6,
@@ -351,6 +820,14 @@
         "action": "Invitar a verificar",
         "tipo": "verificar",
         "description": "Se conecta la campana con fuentes y reglas claras de publicacion.",
+        "variantes": [
+          {
+            "si": [
+              "vecinos-reales"
+            ],
+            "texto": "Ya habias comprobado al grupo: invitas a verificar con el ejemplo y mas vecinos se suman."
+          }
+        ],
         "effect": {
           "verified_information": 9,
           "trust": 5,

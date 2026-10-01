@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Iterable
 
 from post_truth.models import Impact, NewsEvent
+from post_truth.models.pistas import Pista, VarianteTexto, texto_consecuencia
 
 
 @dataclass
@@ -19,6 +20,12 @@ class DecisionNode:
     # Accion de juego que representa ("compartir", "verificar", "reportar", "ignorar"); "" si no aplica.
     # Permite que la mecanica no dependa del texto del boton ("Compartir con enojo", ...).
     tipo: str = ""
+    # Textos de consecuencia segun las pistas que el jugador haya descubierto (ver models/pistas.py)
+    variantes: tuple[VarianteTexto, ...] = ()
+
+    def consecuencia(self, descubiertas: list[Pista]) -> str:
+        """Texto de la consecuencia de esta decision, segun lo investigado."""
+        return texto_consecuencia(self.description, self.variantes, descubiertas)
 
     def add_child(self, child: "DecisionNode") -> None:
         self.children.append(child)
@@ -40,14 +47,7 @@ class DecisionTree:
 
     @classmethod
     def from_event_dict(cls, data: dict) -> "DecisionTree":
-        event = NewsEvent(
-            event_id=data["id"],
-            title=data["title"],
-            content=data["content"],
-            kind=data["kind"],
-            truth_level=data["truth_level"],
-            zone=data.get("zona", ""),
-        )
+        event = NewsEvent.from_dict(data)
         root = DecisionNode(
             node_id=f"{event.event_id}:root",
             label=event.title,
@@ -56,7 +56,17 @@ class DecisionTree:
         )
         for decision in data.get("decisions", []):
             root.add_child(_node_from_dict(event.event_id, decision, parent_key="root"))
-        return cls(event=event, root=root)
+        tree = cls(event=event, root=root)
+        tree._validar_variantes()
+        return tree
+
+    def _validar_variantes(self) -> None:
+        """Toda variante debe nombrar pistas que existan en la noticia."""
+        ids = {p.id for p in self.event.clues}
+        for node in self.dfs_nodes():
+            for v in node.variantes:
+                if not v.si <= ids:
+                    raise ValueError(f"{node.node_id}: la variante usa pistas inexistentes {sorted(v.si - ids)}")
 
     def insert_decision(
         self,
@@ -129,6 +139,7 @@ def _node_from_dict(event_id: str, data: dict, parent_key: str) -> DecisionNode:
         description=data.get("description", ""),
         impact=Impact.from_dict(data.get("effect")),
         tipo=data.get("tipo", ""),
+        variantes=tuple(VarianteTexto.from_dict(v) for v in data.get("variantes", [])),
     )
     for child in data.get("children", []):
         node.add_child(_node_from_dict(event_id, child, parent_key=node_id.split(":", 1)[1]))

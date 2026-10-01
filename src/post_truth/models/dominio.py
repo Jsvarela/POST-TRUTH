@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from post_truth.models.pistas import Pista, validar_pistas
+from post_truth.models.publicacion import Autor, Imagen
+
 
 class Role(Enum):
     CITIZEN = "Ciudadano"
@@ -85,3 +88,36 @@ class NewsEvent:
     kind: str
     truth_level: int
     zone: str = ""  # id de la zona de la ciudad donde ocurre (ver structures/grafo_ciudad.py)
+    # Tarjeta de Civitas: quien publica, de donde sale, cuando, imagen y reacciones...
+    author: Autor | None = None
+    source: str = ""
+    date: str = ""
+    image: Imagen | None = None
+    likes: int = 0
+    comments: int = 0
+    # ...y las pistas que se pueden investigar (una por zona de la tarjeta)
+    clues: tuple[Pista, ...] = ()
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "NewsEvent":
+        """Lee un evento de data/events.json (los campos de la tarjeta y las pistas son opcionales)."""
+        return cls(
+            event_id=d["id"], title=d["title"], content=d["content"], kind=d["kind"],
+            truth_level=d["truth_level"], zone=d.get("zona", ""),
+            author=Autor.from_dict(d["autor"]) if d.get("autor") else None,
+            source=d.get("fuente", ""), date=d.get("fecha", ""),
+            image=Imagen.from_dict(d["imagen"]) if d.get("imagen") else None,
+            likes=int(d.get("likes", 0)), comments=int(d.get("comentarios", 0)),
+            clues=validar_pistas(Pista.from_dict(p) for p in d.get("pistas", [])))
+
+    def to_dict(self) -> dict:
+        """Mismo formato que events.json (sin las decisiones, que viven en el arbol)."""
+        d: dict = {"id": self.event_id, "title": self.title, "content": self.content, "kind": self.kind,
+                   "truth_level": self.truth_level, "zona": self.zone}
+        if self.author is not None:
+            d["autor"] = self.author.to_dict()
+        d.update({"fuente": self.source, "fecha": self.date})
+        if self.image is not None:
+            d["imagen"] = self.image.to_dict()
+        d.update({"likes": self.likes, "comentarios": self.comments, "pistas": [p.to_dict() for p in self.clues]})
+        return d
