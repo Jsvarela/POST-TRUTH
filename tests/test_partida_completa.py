@@ -93,7 +93,12 @@ class Bot:
         if self.app.estados._actual is not self.app.estados._estados["menu"]:
             self.app.estados.cambiar("menu")
         self.avanzar()
-        self.tecla(pygame.K_RETURN)                     # menu -> seleccion
+        self.tecla(pygame.K_RETURN)                     # menu -> seleccion (o -> intro la primera vez)
+        intro = self.app.estados._estados["intro"]
+        while self.app.estados._actual is intro:        # pasa la introduccion con clics y dt reales
+            self.clic((500, 250))
+            for f in range(12):
+                self.avanzar(1 / 60, dibujar=f == 0)
         sel = self.app.estados._actual
         self.activar(sel.botones[rol])                  # rol
         sel = self.app.estados._actual
@@ -200,6 +205,14 @@ class PartidaCompletaTest(unittest.TestCase):
             for genero in range(2):
                 Bot(self.app, semilla=rol * 10 + genero).partida(rol, genero)
                 self.assertEqual(self.app.personaje.rol, list(self.app.personaje.rol.__class__)[rol])
+
+    def test_partida_completa_desde_cero_con_la_introduccion(self) -> None:
+        """Menu -> Intro -> Seleccion -> Escena -> Fin -> Menu, con la introduccion incluida."""
+        self.app.intro_vista = False
+        for modo in ("teclado", "mouse"):
+            self.app.intro_vista = False
+            Bot(self.app, 77, modo=modo).partida(1, 1)
+            self.assertTrue(self.app.intro_vista)
 
     def test_partida_completa_solo_con_mouse(self) -> None:
         for semilla in range(6):
