@@ -13,6 +13,7 @@ class StateManager:
 
     def cambiar(self, nombre: str) -> None:
         self._actual = self._estados[nombre]
+        self._actual.al_entrar()
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if self._actual:

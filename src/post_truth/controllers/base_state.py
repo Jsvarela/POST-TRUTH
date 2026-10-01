@@ -7,6 +7,10 @@ class BaseState(ABC):
     def __init__(self, app) -> None:
         self.app = app  # acceso al StateManager, temas y fuente compartidos
 
+    def al_entrar(self) -> None:
+        """Se llama cada vez que este estado pasa a ser el activo (reiniciar pantalla, cargar datos).
+        Opcional: por defecto no hace nada."""
+
     @abstractmethod
     def handle_event(self, event: pygame.event.Event) -> None: ...
 
