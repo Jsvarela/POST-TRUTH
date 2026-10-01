@@ -56,8 +56,8 @@ class GrafoCiudad:
         self._ady[zona.id] = []
 
     def eliminar_zona(self, id: str) -> None:
-        """Quita la zona y todas sus conexiones: hay que limpiar su id de las listas de sus
-        vecinos, O(V + E) en el peor caso."""
+        """Quita la zona y todas sus conexiones: hay que borrar su id de la lista de cada vecino
+        (list.remove es O(grado)), o sea O(suma de los grados de sus vecinos), a lo sumo O(E)."""
         self._exigir(id)
         for vecino in self._ady[id]:
             self._ady[vecino].remove(id)
