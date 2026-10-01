@@ -73,6 +73,12 @@ pip install -r requirements.txt
 python src/main.py
 ```
 
+Grafo social: al elegir Compartir, Verificar o Reportar la escena muestra como viaja
+la noticia por la red de Civitas (`data/grafo_social.json`), ola por ola, y despues
+aplica sus consecuencias. Compartir parte del jugador (su rol amplifica), Verificar
+frena la difusion de una noticia falsa (baja el peso de las conexiones) y Reportar
+corta las conexiones de su autor. Los cortes duran toda la partida.
+
 Flujo actual: Menu (ENTER) -> Seleccion de rol y personaje -> Escena de dialogo
 con las publicaciones de `data/events.json`. Teclas: 1-4 para decidir, Enter para
 continuar, Espacio para saltar el texto, T (en el menu) para cambiar de tema, ESC
