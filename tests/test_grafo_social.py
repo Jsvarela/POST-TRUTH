@@ -157,5 +157,22 @@ class PropagacionTest(unittest.TestCase):
             grafo_cadena().propagar("nadie", True)
 
 
+class GrafoDeEjemploTest(unittest.TestCase):
+    def test_carga_el_grafo_de_data(self) -> None:
+        from post_truth.config import RUTA_GRAFO_SOCIAL
+        g = GrafoSocial.cargar(RUTA_GRAFO_SOCIAL)
+        self.assertTrue(12 <= len(g.vertices()) <= 15)
+        self.assertEqual({c.rol for c in g.vertices()}, set(Role))   # estan los 4 roles
+        self.assertIsNotNone(g.vertice("jugador"))
+        for a in g.aristas():                                        # pesos validos
+            self.assertTrue(0 < a.peso <= 1)
+
+    def test_el_ejemplo_propaga_y_llega_lejos_si_todo_se_activa(self) -> None:
+        from post_truth.config import RUTA_GRAFO_SOCIAL
+        g = GrafoSocial.cargar(RUTA_GRAFO_SOCIAL)
+        r = g.propagar("jugador", False, SiempreActiva())
+        self.assertEqual(r.alcanzados, len(g.vertices()) - 1)        # grafo fuertemente alcanzable
+
+
 if __name__ == "__main__":
     unittest.main()

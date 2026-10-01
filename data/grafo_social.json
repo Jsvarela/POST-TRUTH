@@ -1,0 +1,354 @@
+{
+  "ciudadanos": [
+    {
+      "id": "jugador",
+      "nombre": "Tu",
+      "rol": "CITIZEN",
+      "pos": [
+        0.08,
+        0.5
+      ]
+    },
+    {
+      "id": "mateo",
+      "nombre": "Mateo Rivas",
+      "rol": "CITIZEN",
+      "pos": [
+        0.24,
+        0.18
+      ]
+    },
+    {
+      "id": "valentina",
+      "nombre": "Valentina Cruz",
+      "rol": "INFLUENCER",
+      "pos": [
+        0.24,
+        0.5
+      ]
+    },
+    {
+      "id": "camila",
+      "nombre": "Camila Ortega",
+      "rol": "JOURNALIST",
+      "pos": [
+        0.24,
+        0.84
+      ]
+    },
+    {
+      "id": "tomas",
+      "nombre": "Tomas Beltran",
+      "rol": "CITIZEN",
+      "pos": [
+        0.42,
+        0.12
+      ]
+    },
+    {
+      "id": "sofia",
+      "nombre": "Sofia Paredes",
+      "rol": "CITIZEN",
+      "pos": [
+        0.42,
+        0.38
+      ]
+    },
+    {
+      "id": "andres",
+      "nombre": "Andres Quintero",
+      "rol": "CANDIDATE",
+      "pos": [
+        0.42,
+        0.64
+      ]
+    },
+    {
+      "id": "nicolas",
+      "nombre": "Nicolas Duarte",
+      "rol": "CITIZEN",
+      "pos": [
+        0.42,
+        0.9
+      ]
+    },
+    {
+      "id": "isabela",
+      "nombre": "Isabela Mora",
+      "rol": "CITIZEN",
+      "pos": [
+        0.6,
+        0.22
+      ]
+    },
+    {
+      "id": "julian",
+      "nombre": "Julian Arce",
+      "rol": "JOURNALIST",
+      "pos": [
+        0.6,
+        0.52
+      ]
+    },
+    {
+      "id": "daniela",
+      "nombre": "Daniela Pinto",
+      "rol": "CITIZEN",
+      "pos": [
+        0.6,
+        0.84
+      ]
+    },
+    {
+      "id": "esteban",
+      "nombre": "Esteban Lara",
+      "rol": "INFLUENCER",
+      "pos": [
+        0.78,
+        0.14
+      ]
+    },
+    {
+      "id": "renata",
+      "nombre": "Renata Solano",
+      "rol": "CITIZEN",
+      "pos": [
+        0.78,
+        0.48
+      ]
+    },
+    {
+      "id": "gael",
+      "nombre": "Gael Montes",
+      "rol": "CITIZEN",
+      "pos": [
+        0.92,
+        0.8
+      ]
+    }
+  ],
+  "relaciones": [
+    {
+      "origen": "jugador",
+      "destino": "mateo",
+      "peso": 0.7,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "jugador",
+      "destino": "valentina",
+      "peso": 0.5,
+      "tipo": "seguimiento"
+    },
+    {
+      "origen": "jugador",
+      "destino": "camila",
+      "peso": 0.6,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "mateo",
+      "destino": "tomas",
+      "peso": 0.6,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "mateo",
+      "destino": "sofia",
+      "peso": 0.5,
+      "tipo": "confianza"
+    },
+    {
+      "origen": "mateo",
+      "destino": "jugador",
+      "peso": 0.5,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "valentina",
+      "destino": "sofia",
+      "peso": 0.8,
+      "tipo": "seguimiento"
+    },
+    {
+      "origen": "valentina",
+      "destino": "andres",
+      "peso": 0.5,
+      "tipo": "seguimiento"
+    },
+    {
+      "origen": "valentina",
+      "destino": "mateo",
+      "peso": 0.4,
+      "tipo": "seguimiento"
+    },
+    {
+      "origen": "valentina",
+      "destino": "julian",
+      "peso": 0.6,
+      "tipo": "seguimiento"
+    },
+    {
+      "origen": "valentina",
+      "destino": "esteban",
+      "peso": 0.5,
+      "tipo": "seguimiento"
+    },
+    {
+      "origen": "camila",
+      "destino": "andres",
+      "peso": 0.4,
+      "tipo": "confianza"
+    },
+    {
+      "origen": "camila",
+      "destino": "julian",
+      "peso": 0.7,
+      "tipo": "confianza"
+    },
+    {
+      "origen": "camila",
+      "destino": "nicolas",
+      "peso": 0.5,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "tomas",
+      "destino": "isabela",
+      "peso": 0.6,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "tomas",
+      "destino": "sofia",
+      "peso": 0.4,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "sofia",
+      "destino": "isabela",
+      "peso": 0.5,
+      "tipo": "confianza"
+    },
+    {
+      "origen": "sofia",
+      "destino": "julian",
+      "peso": 0.4,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "sofia",
+      "destino": "andres",
+      "peso": 0.5,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "andres",
+      "destino": "julian",
+      "peso": 0.5,
+      "tipo": "confianza"
+    },
+    {
+      "origen": "andres",
+      "destino": "daniela",
+      "peso": 0.6,
+      "tipo": "seguimiento"
+    },
+    {
+      "origen": "andres",
+      "destino": "nicolas",
+      "peso": 0.5,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "andres",
+      "destino": "valentina",
+      "peso": 0.3,
+      "tipo": "confianza"
+    },
+    {
+      "origen": "nicolas",
+      "destino": "daniela",
+      "peso": 0.7,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "nicolas",
+      "destino": "camila",
+      "peso": 0.4,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "isabela",
+      "destino": "esteban",
+      "peso": 0.6,
+      "tipo": "seguimiento"
+    },
+    {
+      "origen": "isabela",
+      "destino": "renata",
+      "peso": 0.5,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "julian",
+      "destino": "renata",
+      "peso": 0.6,
+      "tipo": "confianza"
+    },
+    {
+      "origen": "julian",
+      "destino": "daniela",
+      "peso": 0.4,
+      "tipo": "confianza"
+    },
+    {
+      "origen": "julian",
+      "destino": "esteban",
+      "peso": 0.3,
+      "tipo": "confianza"
+    },
+    {
+      "origen": "daniela",
+      "destino": "gael",
+      "peso": 0.6,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "daniela",
+      "destino": "renata",
+      "peso": 0.4,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "esteban",
+      "destino": "renata",
+      "peso": 0.7,
+      "tipo": "seguimiento"
+    },
+    {
+      "origen": "esteban",
+      "destino": "gael",
+      "peso": 0.5,
+      "tipo": "seguimiento"
+    },
+    {
+      "origen": "renata",
+      "destino": "gael",
+      "peso": 0.6,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "renata",
+      "destino": "isabela",
+      "peso": 0.3,
+      "tipo": "amistad"
+    },
+    {
+      "origen": "gael",
+      "destino": "daniela",
+      "peso": 0.4,
+      "tipo": "amistad"
+    }
+  ]
+}
