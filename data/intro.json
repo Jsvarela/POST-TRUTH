@@ -1,0 +1,85 @@
+{
+  "laminas": [
+    {
+      "id": "ciudad",
+      "tipo": "ciudad",
+      "titulo": "Ciudad Nova",
+      "texto": "Ciudad Nova vota por un nuevo alcalde. Durante una semana cada vecino hablara, compartira y opinara, y cada mensaje puede unir a la ciudad o dividirla."
+    },
+    {
+      "id": "zonas",
+      "tipo": "zonas",
+      "titulo": "Una ciudad, cinco zonas",
+      "texto": "Cinco zonas forman la ciudad: Colegio, Barrio, Parque, Plaza y Alcaldia. Estan conectadas, y lo que pasa en una pronto llega a las demas."
+    },
+    {
+      "id": "civitas",
+      "tipo": "civitas",
+      "titulo": "Civitas",
+      "texto": "Civitas es la red donde Nova se informa. Tambien es donde nacen los primeros rumores: unos son verdad, otros no, y cuesta distinguirlos."
+    },
+    {
+      "id": "candidatos-1",
+      "tipo": "candidatos",
+      "titulo": "Los candidatos (1 de 2)",
+      "texto": "Cuatro candidatos buscan la alcaldia. Juan Ardila y Maria Lozano abren la contienda con ideas muy distintas.",
+      "candidatos": ["juan", "maria"]
+    },
+    {
+      "id": "candidatos-2",
+      "tipo": "candidatos",
+      "titulo": "Los candidatos (2 de 2)",
+      "texto": "Andres Quintero y Lucia Barrera completan la lista. Sobre todos ya circulan historias que nadie ha comprobado.",
+      "candidatos": ["andres", "lucia"]
+    },
+    {
+      "id": "cierre",
+      "tipo": "cierre",
+      "titulo": "Tu papel",
+      "texto": "Elegiras tu papel: ciudadano, periodista, influencer o candidato. Verifica antes de compartir y decide con que ciudad quieres quedarte."
+    }
+  ],
+  "zonas": [
+    { "id": "colegio",  "descripcion": "Donde estudian los hijos de Nova. Un rumor aqui llega rapido a las familias." },
+    { "id": "barrio",   "descripcion": "Casas, tiendas y vecinos que se conocen. Las noticias corren de puerta en puerta." },
+    { "id": "parque",   "descripcion": "El lugar de encuentro de todos. Si el parque se llena de rumores, la ciudad lo siente." },
+    { "id": "plaza",    "descripcion": "El corazon de la ciudad y cruce de todos los caminos. Lo que nace aqui llega a cualquier parte." },
+    { "id": "alcaldia", "descripcion": "Sede del gobierno. Quien la gane decide el futuro de Nova." }
+  ],
+  "candidatos": [
+    {
+      "id": "juan",
+      "nombre": "Juan Ardila",
+      "lema": "Menos gasto, mas orden",
+      "propuesta": "Fusionar colegios pequenos en sedes grandes y bien equipadas.",
+      "aspecto": { "piel": 0, "cabello": 0, "peinado": "corto", "accesorio": "corbata", "color": 0 }
+    },
+    {
+      "id": "maria",
+      "nombre": "Maria Lozano",
+      "lema": "Mas rutas, mas oportunidades",
+      "propuesta": "Ampliar las rutas nocturnas de buses hacia todos los barrios.",
+      "aspecto": { "piel": 1, "cabello": 0, "peinado": "largo", "accesorio": "aretes", "color": 2 }
+    },
+    {
+      "id": "andres",
+      "nombre": "Andres Quintero",
+      "lema": "Tecnologia con los vecinos",
+      "propuesta": "Internet gratuito en parques y plazas, y talleres digitales.",
+      "aspecto": { "piel": 0, "cabello": 1, "peinado": "rizado", "accesorio": "lentes", "color": 3 }
+    },
+    {
+      "id": "lucia",
+      "nombre": "Lucia Barrera",
+      "lema": "Hablemos claro",
+      "propuesta": "Debates abiertos y una oficina que verifique las noticias de la ciudad.",
+      "aspecto": { "piel": 1, "cabello": 1, "peinado": "recogido", "accesorio": "bufanda", "color": 1 }
+    }
+  ],
+  "publicaciones": [
+    { "autor": "@vecina_barrio",       "texto": "Dicen que cierran el colegio central!!", "tipo": "rumor", "reacciones": 240 },
+    { "autor": "Noticias del Parque",  "texto": "La alcaldia aclara: los parques siguen abiertos.", "tipo": "verdad", "reacciones": 58 },
+    { "autor": "@el_chisme_nova",      "texto": "Mi primo vio un video: una candidata insulta a todo un barrio.", "tipo": "rumor", "reacciones": 512 },
+    { "autor": "Vecinos por el dialogo", "texto": "Proponemos debatir sin ataques personales.", "tipo": "verdad", "reacciones": 97 }
+  ]
+}
