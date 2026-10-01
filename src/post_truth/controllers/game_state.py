@@ -3,16 +3,15 @@
 Reutiliza el modelo de la entrega 1 (no se duplica): `DecisionTree` carga
 data/events.json, `CityState` guarda los indicadores e `Impact` son los deltas.
 """
-from pathlib import Path
-
 import pygame
 
+from post_truth.config import RUTA_EVENTOS
 from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import DecisionNode, DecisionTree, load_trees
 from post_truth.game_state import CityState
 from post_truth.views.game_view import dibujar_juego
 
-EVENTS_PATH = Path(__file__).resolve().parents[3] / "data" / "events.json"
+EVENTS_PATH = RUTA_EVENTOS
 TECLAS = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
 
 
