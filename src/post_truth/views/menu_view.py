@@ -5,7 +5,7 @@ from post_truth.views.theme import Tema
 
 def dibujar_menu(pantalla: pygame.Surface, fuente: pygame.font.Font, tema: Tema) -> None:
     pantalla.fill(tema.fondo)
-    lineas = ["POST & TRUTH", "ENTER: jugar", "T: cambiar tema (accesibilidad)", "ESC: salir"]
+    lineas = ["POST & TRUTH", "ENTER: jugar", "I: ver la introduccion", "T: cambiar tema (accesibilidad)", "ESC: salir"]
     for i, txt in enumerate(lineas):
         color = tema.acento if i == 0 else tema.texto
         img = fuente.render(txt, True, color)

@@ -30,6 +30,7 @@ def clic(app: App, pos: tuple[int, int]) -> None:
 class ZonasEnEscenaTest(unittest.TestCase):
     def setUp(self) -> None:
         self.app = App()
+        self.app.intro_vista = True   # estas pruebas empiezan en Menu -> Seleccion
 
     def tearDown(self) -> None:
         pygame.quit()

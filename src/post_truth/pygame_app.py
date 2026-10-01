@@ -4,6 +4,7 @@ import pygame
 from post_truth.config import ANCHO, ALTO, FPS, TITULO
 from post_truth.controllers.escena_state import EscenaState
 from post_truth.controllers.game_state import GameState
+from post_truth.controllers.intro_state import IntroState
 from post_truth.controllers.menu_state import MenuState
 from post_truth.controllers.seleccion_state import SeleccionState
 from post_truth.controllers.state_manager import StateManager
@@ -24,9 +25,11 @@ class App:
         self.fuentes = Fuentes.crear()  # tamanos extra para la UI de novela visual
         self.temas = GestorTemas()
         self.corriendo = True
+        self.intro_vista = False  # la introduccion se muestra sola la primera vez de la sesion
         self.personaje: Personaje | None = None  # lo fija SeleccionState, lo lee EscenaState
         self.estados = StateManager()
         self.estados.registrar("menu", MenuState(self))
+        self.estados.registrar("intro", IntroState(self))
         self.estados.registrar("seleccion", SeleccionState(self))
         self.estados.registrar("escena", EscenaState(self))
         self.estados.registrar("juego", GameState(self))  # prototipo anterior, ya fuera del flujo
