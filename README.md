@@ -40,7 +40,13 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
   letra por letra) y ESC la salta. Sus textos, candidatos y zonas estan en `data/intro.json`.
 
 - Se elige un rol (Ciudadano, Periodista, Influencer, Candidato) y un personaje.
-- Cada publicacion ocurre en una zona de la ciudad. Se decide con los botones (teclas 1-4).
+- Cada publicacion es una **tarjeta de Civitas** (autor con avatar, fuente, fecha, texto, imagen, likes y
+  comentarios) que ocurre en una zona de la ciudad. Se decide con los botones (teclas 1-4).
+- **Investigar:** las partes de la tarjeta (autor, fuente, fecha, imagen, texto, reacciones) son zonas
+  clicables (o teclas A S D F G) que esconden pistas: una cuenta sospechosa, una fecha antigua, una imagen
+  reutilizada... Revisar una pista revela su hallazgo y gasta energia (3 por publicacion; hay mas pistas que
+  energia, asi que hay que elegir; algunas son neutras y no prueban nada). Lo investigado cambia el texto de
+  la consecuencia de la decision, no los puntajes.
 - **Compartir, Verificar o Reportar** muestran como viaja la noticia por la red social,
   ola por ola, y despues sus consecuencias. Compartir parte del jugador (el Influencer
   amplifica), Verificar frena la difusion de una noticia falsa y Reportar corta las
@@ -77,12 +83,12 @@ jugador automatico juega partidas completas con teclado y mouse.
 src/main.py                              Punto de entrada (Pygame)
 src/post_truth/pygame_app.py             Game loop (60 FPS, dt en segundos) y recursos compartidos
 src/post_truth/config.py                 Constantes y rutas de los datos
-src/post_truth/models/                   Logica pura: dominio (Impact, NewsEvent, Role), personaje e intro
+src/post_truth/models/                   Logica pura: dominio (Impact, NewsEvent, Role), personaje, intro, publicacion y pistas
 src/post_truth/game_state.py             CityState: indicadores de Ciudad Nova
 src/post_truth/decision_tree.py          Arbol n-ario, DFS y BFS
 src/post_truth/structures/               grafo_social, propagacion, grafo_ciudad, rumores_ciudad
 src/post_truth/controllers/              Estados: menu, intro, seleccion, escena (patron State)
-src/post_truth/views/                    Tema, componentes, personajes, retratos, intro, escena, grafo, mapa, fondos por zona
+src/post_truth/views/                    Tema, componentes, personajes, retratos, intro, escena, tarjeta de Civitas, grafo, mapa, fondos por zona
 src/post_truth/app.py                    Version Tkinter de la entrega 1 (obsoleta)
 data/                                    events.json, grafo_social.json, grafo_ciudad.json, intro.json
 docs/                                    Guias de sustentacion de las entregas 1 y 2

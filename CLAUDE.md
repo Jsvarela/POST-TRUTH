@@ -68,14 +68,14 @@ POST-TRUTH/
 ├── src/post_truth/
 │   ├── pygame_app.py                # game loop (clase App), 60 FPS, dt en segundos
 │   ├── config.py                    # constantes sin dependencias de pygame
-│   ├── models/                      # logica pura: dominio.py (Impact, NewsEvent, Role), personaje.py (Personaje, Genero), intro.py (Intro, Lamina, Candidato)
+│   ├── models/                      # logica pura: dominio.py (Impact, NewsEvent, Role), personaje.py (Personaje, Genero), intro.py (Intro, Lamina, Candidato), publicacion.py (Autor, Avatar, Imagen), pistas.py (Pista, Investigacion, VarianteTexto)
 │   ├── game_state.py                # CityState: indicadores (ya incluye conflictos)
 │   ├── decision_tree.py             # DecisionTree N-ario, DFS/BFS (entrega 1, se reutiliza)
 │   ├── structures/                  # grafo_social.py (GrafoSocial), propagacion.py (reglas de Compartir/Verificar/Reportar), grafo_ciudad.py (zonas y BFS), rumores_ciudad.py (rumores por ronda)
-│   ├── views/                       # theme, componentes (Boton, Panel, CajaDialogo), personaje_view, seleccion_view, escena_view, grafo_view (animacion de propagacion), mapa_view (minimapa), zona_view (fondos), retrato_view (candidatos), intro_view (laminas con fundido), menu_view
+│   ├── views/                       # theme, componentes (Boton, Panel, CajaDialogo), personaje_view, seleccion_view, escena_view, grafo_view (animacion de propagacion), mapa_view (minimapa), zona_view (fondos), retrato_view (candidatos), intro_view (laminas con fundido), tarjeta_civitas_view (post con pistas clicables), menu_view
 │   ├── controllers/                 # base_state, state_manager, menu_state, intro_state, seleccion_state, escena_state (game_state: prototipo previo)
 │   └── app.py                       # version Tkinter (tag tkinter-entrega1), a retirar
-├── data/events.json                 # eventos y ramas de decision (cada decision lleva su "tipo")
+├── data/events.json                 # eventos, tarjeta de Civitas (autor, fuente, fecha, imagen, pistas) y ramas de decision (con "tipo" y variantes de texto)
 ├── data/grafo_social.json           # 14 ciudadanos y 37 relaciones del grafo social de ejemplo
 ├── data/grafo_ciudad.json           # 5 zonas (Colegio, Barrio, Parque, Plaza, Alcaldia) y sus conexiones
 ├── data/intro.json                  # textos de la introduccion, zonas, 4 candidatos y publicaciones del feed
@@ -125,11 +125,12 @@ Hecho (entregas 1 y 2):
 - Grafo social: propagacion BFS por olas + Dijkstra, vista animada, integrada con Compartir/Verificar/Reportar.
 - Grafo de la ciudad: zonas, movimiento por el minimapa, fondos por zona, rondas y rumores que se expanden, Verificar/Reportar en la zona, "Desmentir aqui".
 - Introduccion (etapa 5): 6 laminas con fundidos y texto letra por letra (`IntroState`, `intro_view`, `retrato_view`, `models/intro.py`, `data/intro.json`). Flujo Menu -> Intro -> Seleccion -> Escena: sale sola la primera vez de la sesion, con I desde el menu se repite y con ESC se salta. Los cuatro candidatos (Juan, Maria, Andres, Lucia) conectan con las noticias y el grafo social; la futura eleccion del alcalde los usara.
+- Noticias interactivas (etapa 6): cada publicacion es una tarjeta de Civitas (`views/tarjeta_civitas_view.py`) con zonas clicables que esconden pistas (`models/pistas.py`, `models/publicacion.py`, `events.json`). Investigar gasta energia (3 por publicacion; hay mas pistas que energia; hay pistas neutras); las pistas descubiertas cambian el texto de consecuencia (variantes en `events.json`) pero no los puntajes. Se usa energia y no rondas para que investigar no delate las noticias falsas por el avance de los rumores. La tarjeta no muestra el titulo del evento (por la misma razon).
 - Pruebas: unitarias, de integracion y partidas completas con un bot (`tests/test_partida_completa.py`). Documentacion de sustentacion en `docs/`.
 
 Siguiente (entrega final, en este orden sugerido; el aspecto de juego sigue siendo prioridad):
-1. Roles con habilidades propias de verdad (hoy el rol solo escala el impacto y la propagacion): p. ej. el Periodista investiga pistas y detecta falsas.
-2. Noticia como tarjeta de Civitas con pistas clicables y llamadas filtradas (seccion 1.1, pilar 3) y temporizador en noticias virales (`dt`).
+1. Roles con habilidades propias de verdad (hoy el rol solo escala el impacto y la propagacion): p. ej. el Periodista investiga pistas con descuento de energia y detecta falsas.
+2. Llamadas filtradas (audios o llamadas con subtitulos, como un tipo de pista que se desbloquea con ciertas acciones o con el rol Periodista) y temporizador en noticias virales (`dt`). La tarjeta de Civitas con pistas clicables ya esta hecha (etapa 6).
 3. Eventos aleatorios (noticia falsa, publicacion viral, rumor sobre un candidato, discusion, campana de convivencia, reporte) y mas contenido: eventos, zonas y ciudadanos. Balancear: con solo 5 publicaciones, jugar al azar o ignorar satura la desinformacion en 100 (ver `docs/entrega2_grafos.md`, seccion 8).
 4. Puntuacion individual por jugador, logros y eleccion del alcalde (`ResultadoState`) calculada con confianza, reputacion, participacion, pocos conflictos e informacion verificada.
 5. `HelpState` (AYUDA: objetivo, reglas, botones, personajes, como ganar, indicadores), mensajes guia durante la partida y documentar la inclusividad (alto contraste y daltonismo).
