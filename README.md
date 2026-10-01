@@ -32,7 +32,12 @@ recorridos y complejidad, efecto de la decision) esta en
 
 ## Como se juega
 
-Flujo: Menu -> Seleccion de rol y personaje -> Escena -> Fin.
+Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
+
+- La **introduccion** (6 laminas: Ciudad Nova, las zonas, Civitas y los primeros rumores, los cuatro
+  candidatos y el cierre) se muestra sola la primera vez de la sesion y se puede ver de nuevo con la
+  tecla I en el menu. Clic o cualquier tecla avanzan (el primer clic completa el texto que se escribe
+  letra por letra) y ESC la salta. Sus textos, candidatos y zonas estan en `data/intro.json`.
 
 - Se elige un rol (Ciudadano, Periodista, Influencer, Candidato) y un personaje.
 - Cada publicacion ocurre en una zona de la ciudad. Se decide con los botones (teclas 1-4).
@@ -44,7 +49,7 @@ Flujo: Menu -> Seleccion de rol y personaje -> Escena -> Fin.
   mueve por el minimapa (clic en una zona vecina o teclas Q W E R). Moverse y decidir cuestan
   una ronda: una noticia falsa sin atender es un rumor que se expande a las zonas vecinas y
   penaliza. "Desmentir aqui" lo elimina estando en una zona infectada.
-- Otras teclas: Enter para continuar, Espacio para saltar el texto, T en el menu para cambiar
+- Otras teclas: Enter para continuar, Espacio para saltar el texto, I en el menu para ver la introduccion, T en el menu para cambiar
   de tema (normal, alto contraste, daltonismo), ESC para volver.
 
 ## Ejecutar
@@ -72,14 +77,14 @@ jugador automatico juega partidas completas con teclado y mouse.
 src/main.py                              Punto de entrada (Pygame)
 src/post_truth/pygame_app.py             Game loop (60 FPS, dt en segundos) y recursos compartidos
 src/post_truth/config.py                 Constantes y rutas de los datos
-src/post_truth/models/                   Logica pura: dominio (Impact, NewsEvent, Role) y personaje
+src/post_truth/models/                   Logica pura: dominio (Impact, NewsEvent, Role), personaje e intro
 src/post_truth/game_state.py             CityState: indicadores de Ciudad Nova
 src/post_truth/decision_tree.py          Arbol n-ario, DFS y BFS
 src/post_truth/structures/               grafo_social, propagacion, grafo_ciudad, rumores_ciudad
-src/post_truth/controllers/              Estados: menu, seleccion, escena (patron State)
-src/post_truth/views/                    Tema, componentes, personajes, escena, grafo, mapa, fondos por zona
+src/post_truth/controllers/              Estados: menu, intro, seleccion, escena (patron State)
+src/post_truth/views/                    Tema, componentes, personajes, retratos, intro, escena, grafo, mapa, fondos por zona
 src/post_truth/app.py                    Version Tkinter de la entrega 1 (obsoleta)
-data/                                    events.json, grafo_social.json, grafo_ciudad.json
+data/                                    events.json, grafo_social.json, grafo_ciudad.json, intro.json
 docs/                                    Guias de sustentacion de las entregas 1 y 2
 tests/                                   Pruebas unitarias, de integracion y de partida completa
 ```

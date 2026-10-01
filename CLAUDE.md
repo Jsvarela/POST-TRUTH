@@ -68,16 +68,17 @@ POST-TRUTH/
 ├── src/post_truth/
 │   ├── pygame_app.py                # game loop (clase App), 60 FPS, dt en segundos
 │   ├── config.py                    # constantes sin dependencias de pygame
-│   ├── models/                      # logica pura: dominio.py (Impact, NewsEvent, Role), personaje.py (Personaje, Genero)
+│   ├── models/                      # logica pura: dominio.py (Impact, NewsEvent, Role), personaje.py (Personaje, Genero), intro.py (Intro, Lamina, Candidato)
 │   ├── game_state.py                # CityState: indicadores (ya incluye conflictos)
 │   ├── decision_tree.py             # DecisionTree N-ario, DFS/BFS (entrega 1, se reutiliza)
 │   ├── structures/                  # grafo_social.py (GrafoSocial), propagacion.py (reglas de Compartir/Verificar/Reportar), grafo_ciudad.py (zonas y BFS), rumores_ciudad.py (rumores por ronda)
-│   ├── views/                       # theme, componentes (Boton, Panel, CajaDialogo), personaje_view, seleccion_view, escena_view, grafo_view (animacion de propagacion), mapa_view (minimapa), zona_view (fondos), menu_view
-│   ├── controllers/                 # base_state, state_manager, menu_state, seleccion_state, escena_state (game_state: prototipo previo)
+│   ├── views/                       # theme, componentes (Boton, Panel, CajaDialogo), personaje_view, seleccion_view, escena_view, grafo_view (animacion de propagacion), mapa_view (minimapa), zona_view (fondos), retrato_view (candidatos), intro_view (laminas con fundido), menu_view
+│   ├── controllers/                 # base_state, state_manager, menu_state, intro_state, seleccion_state, escena_state (game_state: prototipo previo)
 │   └── app.py                       # version Tkinter (tag tkinter-entrega1), a retirar
 ├── data/events.json                 # eventos y ramas de decision (cada decision lleva su "tipo")
 ├── data/grafo_social.json           # 14 ciudadanos y 37 relaciones del grafo social de ejemplo
 ├── data/grafo_ciudad.json           # 5 zonas (Colegio, Barrio, Parque, Plaza, Alcaldia) y sus conexiones
+├── data/intro.json                  # textos de la introduccion, zonas, 4 candidatos y publicaciones del feed
 ├── docs/                            # entrega1_arboles.md, entrega2_grafos.md (guias de sustentacion)
 └── tests/                           # unitarias, integracion y test_partida_completa.py (bot que juega partidas)
 ```
@@ -86,7 +87,7 @@ Modelos en `models/`: `Role` (ya existia) y `Personaje` (rol, genero, id de apar
 
 Reglas de dependencia: `models` y `structures` no importan nada de `views` ni `controllers`. Las vistas leen datos, nunca los modifican. Los controladores conectan eventos con el modelo.
 
-Estados: hechos `MenuState`, `SeleccionState` y `EscenaState` (`GameState` es el prototipo previo, ya fuera del flujo). Previstos: `HelpState` y `ResultadoState` (eleccion del alcalde); `CivitasFeedState` se integra en la escena si hace falta.
+Estados: hechos `MenuState`, `IntroState`, `SeleccionState` y `EscenaState` (`GameState` es el prototipo previo, ya fuera del flujo). Previstos: `HelpState` y `ResultadoState` (eleccion del alcalde); `CivitasFeedState` se integra en la escena si hace falta.
 
 ## 5. Requisitos del laboratorio que el codigo debe cubrir
 
@@ -123,6 +124,7 @@ Hecho (entregas 1 y 2):
 - Componentes UI (`views/componentes.py`), seleccion de rol y personaje (4 roles x hombre/mujer dibujados con formas) y escena de dialogo alimentada por el `DecisionTree`.
 - Grafo social: propagacion BFS por olas + Dijkstra, vista animada, integrada con Compartir/Verificar/Reportar.
 - Grafo de la ciudad: zonas, movimiento por el minimapa, fondos por zona, rondas y rumores que se expanden, Verificar/Reportar en la zona, "Desmentir aqui".
+- Introduccion (etapa 5): 6 laminas con fundidos y texto letra por letra (`IntroState`, `intro_view`, `retrato_view`, `models/intro.py`, `data/intro.json`). Flujo Menu -> Intro -> Seleccion -> Escena: sale sola la primera vez de la sesion, con I desde el menu se repite y con ESC se salta. Los cuatro candidatos (Juan, Maria, Andres, Lucia) conectan con las noticias y el grafo social; la futura eleccion del alcalde los usara.
 - Pruebas: unitarias, de integracion y partidas completas con un bot (`tests/test_partida_completa.py`). Documentacion de sustentacion en `docs/`.
 
 Siguiente (entrega final, en este orden sugerido; el aspecto de juego sigue siendo prioridad):
