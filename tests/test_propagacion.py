@@ -75,5 +75,18 @@ class SimularDecisionTest(unittest.TestCase):
         self.assertGreater(verdadera.verified_information, 0)
 
 
+class EventosTest(unittest.TestCase):
+    def test_toda_decision_raiz_tiene_tipo_y_la_veracidad_se_clasifica(self) -> None:
+        from post_truth.config import RUTA_EVENTOS
+        from post_truth.decision_tree import load_trees
+        from post_truth.structures.propagacion import es_falsa
+        arboles = load_trees(RUTA_EVENTOS)
+        for arbol in arboles:
+            for nodo in arbol.root.children:
+                self.assertIn(nodo.tipo, {COMPARTIR, VERIFICAR, REPORTAR, IGNORAR}, nodo.label)
+        falsas = {a.event.event_id for a in arboles if es_falsa(a.event.truth_level)}
+        self.assertEqual(falsas, {"colegio-cerrado", "parques-cerrados", "video-debate-editado"})
+
+
 if __name__ == "__main__":
     unittest.main()

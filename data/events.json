@@ -17,6 +17,7 @@
     "decisions": [
       {
         "action": "Compartir",
+        "tipo": "compartir",
         "description": "Se publica sin verificar y llega a mas ciudadanos.",
         "effect": {
           "verified_information": -3,
@@ -45,6 +46,7 @@
       },
       {
         "action": "Verificar",
+        "tipo": "verificar",
         "description": "Se consulta una fuente oficial antes de actuar.",
         "effect": {
           "verified_information": 12,
@@ -73,6 +75,7 @@
       },
       {
         "action": "Ignorar",
+        "tipo": "ignorar",
         "description": "No se amplifica el rumor, pero tampoco se corrige.",
         "effect": {
           "verified_information": 0,
@@ -86,6 +89,7 @@
       },
       {
         "action": "Reportar",
+        "tipo": "reportar",
         "description": "La publicacion se marca como sospechosa para moderacion.",
         "effect": {
           "verified_information": 5,
@@ -117,6 +121,7 @@
     "decisions": [
       {
         "action": "Compartir",
+        "tipo": "compartir",
         "description": "El mensaje se vuelve tendencia en Civitas.",
         "effect": {
           "verified_information": -4,
@@ -130,6 +135,7 @@
       },
       {
         "action": "Verificar",
+        "tipo": "verificar",
         "description": "Se revisa el comunicado oficial de la alcaldia.",
         "effect": {
           "verified_information": 14,
@@ -143,6 +149,7 @@
       },
       {
         "action": "Reportar",
+        "tipo": "reportar",
         "description": "Se reduce el alcance de la publicacion sospechosa.",
         "effect": {
           "verified_information": 6,
@@ -174,6 +181,7 @@
     "decisions": [
       {
         "action": "Compartir",
+        "tipo": "compartir",
         "description": "La propuesta verificada llega a mas ciudadanos.",
         "effect": {
           "verified_information": 6,
@@ -187,6 +195,7 @@
       },
       {
         "action": "Verificar",
+        "tipo": "verificar",
         "description": "Se revisa el plan de gobierno antes de comentar.",
         "effect": {
           "verified_information": 10,
@@ -200,6 +209,7 @@
       },
       {
         "action": "Ignorar",
+        "tipo": "ignorar",
         "description": "La informacion no cambia mucho el debate publico.",
         "effect": {
           "verified_information": 0,
@@ -231,6 +241,7 @@
     "decisions": [
       {
         "action": "Compartir con enojo",
+        "tipo": "compartir",
         "description": "El mensaje se comparte con una frase agresiva y aumenta la pelea.",
         "effect": {
           "verified_information": -5,
@@ -244,6 +255,7 @@
       },
       {
         "action": "Buscar video completo",
+        "tipo": "verificar",
         "description": "Se revisa la transmision original antes de reaccionar.",
         "effect": {
           "verified_information": 13,
@@ -272,6 +284,7 @@
       },
       {
         "action": "Reportar manipulacion",
+        "tipo": "reportar",
         "description": "Se marca el clip como posible edicion enganosa.",
         "effect": {
           "verified_information": 5,
@@ -303,6 +316,7 @@
     "decisions": [
       {
         "action": "Apoyar campana",
+        "tipo": "compartir",
         "description": "El jugador invita a participar y refuerza normas de dialogo.",
         "effect": {
           "verified_information": 4,
@@ -316,6 +330,7 @@
       },
       {
         "action": "Convertirlo en ataque",
+        "tipo": "compartir",
         "description": "Se usa la campana para burlarse de otros candidatos.",
         "effect": {
           "verified_information": -1,
@@ -329,6 +344,7 @@
       },
       {
         "action": "Invitar a verificar",
+        "tipo": "verificar",
         "description": "Se conecta la campana con fuentes y reglas claras de publicacion.",
         "effect": {
           "verified_information": 9,
