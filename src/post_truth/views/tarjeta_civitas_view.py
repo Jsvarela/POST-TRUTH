@@ -11,6 +11,8 @@ circulo con guion (neutra), asi que no depende solo del color (daltonismo).
 Ojo: el titulo del evento NO se muestra en la tarjeta. Titulos como "Rumor sobre el colegio" delatarian
 que la noticia es falsa antes de investigar.
 """
+from dataclasses import dataclass
+
 import pygame
 
 from post_truth.models import NewsEvent
@@ -24,6 +26,14 @@ from post_truth.views.zona_view import dibujar_fondo_zona
 TECLAS_PISTA = "ASDFG"   # tecla de la 1.a, 2.a... pista de la noticia (como Q W E R para moverse)
 MAX_LINEAS_TEXTO = 3
 RESERVA_INSIGNIA = 70    # px a la derecha de fuente y texto que se dejan libres para la insignia y el costo
+
+
+@dataclass
+class EstadoTarjeta:
+    """Lo que la vista necesita para dibujar la tarjeta de la publicacion actual."""
+    evento: NewsEvent
+    investigacion: Investigacion
+    hover: ZonaTarjeta | None = None   # zona con pista bajo el mouse
 
 
 def _layout(rect: pygame.Rect) -> dict[ZonaTarjeta, pygame.Rect]:

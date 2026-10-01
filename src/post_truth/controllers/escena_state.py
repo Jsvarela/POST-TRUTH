@@ -4,6 +4,11 @@ Flujo por publicacion: DECIDIENDO (noticia + botones) -> [PROPAGACION] -> CONSEC
 (mensaje + efecto en la ciudad) -> siguiente publicacion ... -> FIN. Todo el contenido sale
 del DecisionTree cargado desde data/events.json; aqui no hay noticias fijas.
 
+INVESTIGAR: cada publicacion es una tarjeta de Civitas con zonas clicables (autor, fuente, fecha,
+imagen, texto, estadisticas) que esconden pistas. Revisar una pista revela su hallazgo y gasta
+ENERGIA (3 por publicacion; hay mas pistas que energia, asi que hay que elegir). Lo investigado
+cambia el texto de consecuencia de la decision (models/pistas.py), no los puntajes.
+
 ZONAS Y RONDAS: cada noticia ocurre en una zona del GrafoCiudad y el jugador esta en otra (o en la
 misma). Moverse a una zona vecina (clic en el mapa o Q W E R) y cada decision cuestan una RONDA, y en
 cada ronda los rumores sin atender se expanden un anillo (RumoresCiudad). Verificar y Reportar
@@ -23,15 +28,17 @@ from post_truth.decision_tree import DecisionNode, DecisionTree, load_trees
 from post_truth.game_state import CityState
 from post_truth.models import Impact, Role
 from post_truth.models.personaje import Genero, Personaje
+from post_truth.models.pistas import Investigacion, Pista
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
 from post_truth.structures.propagacion import (COMPARTIR, REPORTAR, VERIFICAR, SimulacionDecision, es_falsa,
                                                simular_decision)
 from post_truth.structures.rumores_ciudad import RumoresCiudad
 from post_truth.views.componentes import Boton, CajaDialogo
-from post_truth.views.escena_view import RECT_MAPA, dibujar_escena
+from post_truth.views.escena_view import RECT_MAPA, RECT_TARJETA, dibujar_escena
 from post_truth.views.grafo_view import AnimacionPropagacion
 from post_truth.views.mapa_view import EstadoMapa, zona_en
+from post_truth.views.tarjeta_civitas_view import EstadoTarjeta, pista_con_tecla, zona_en as zona_de_tarjeta
 
 DECIDIENDO, PROPAGACION, CONSECUENCIA, FIN = "decidiendo", "propagacion", "consecuencia", "fin"
 JUGADOR = "jugador"  # id del vertice del grafo social que representa al jugador
@@ -39,6 +46,8 @@ RECT_DIALOGO = pygame.Rect(24, 404, 976, 132)
 ATAJOS = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5]
 TECLAS_MOVER = [pygame.K_q, pygame.K_w, pygame.K_e, pygame.K_r]  # ir a la 1.a, 2.a, 3.a o 4.a zona vecina
 Y_BOTONES, ALTO_BOTONES, MARGEN, SEPARACION = 546, 62, 24, 14
+# Teclas para investigar la 1.a, 2.a... pista de la tarjeta (letras de views/tarjeta_civitas_view.TECLAS_PISTA)
+TECLAS_INVESTIGAR = {pygame.K_a: "A", pygame.K_s: "S", pygame.K_d: "D", pygame.K_f: "F", pygame.K_g: "G"}
 TIPOS_EN_SITIO = {VERIFICAR, REPORTAR}  # acciones que exigen estar en la zona de la noticia
 # Premio por ir a una zona infectada y desmentir el rumor (accion responsable: suma confianza y puntos)
 DESMENTIR_PREMIO = Impact(verified_information=4, trust=3, score=4)
@@ -74,6 +83,9 @@ class EscenaState(BaseState):
         self.zona = ""
         self.ronda = 0
         self._titulos: dict[str, str] = {}
+        # Investigacion de la publicacion actual (energia y pistas descubiertas): se reinicia en cada una
+        self.investigacion = Investigacion(())
+        self._hover = None
 
     @property
     def personaje(self) -> Personaje:
@@ -127,6 +139,18 @@ class EscenaState(BaseState):
             partes = ["Los rumores siguen activos."]
         return self.rumores.penalizacion(), " ".join(partes[:2])
 
+    def _investigar(self, pista: Pista) -> None:
+        """Revisa una pista: gasta energia, revela el hallazgo en el dialogo y marca la zona de la tarjeta."""
+        if self.fase != DECIDIENDO:
+            return
+        r = self.investigacion.investigar(pista.id)
+        if r.estado == "sin_energia":
+            aviso = (f"No te queda energia para revisar eso: cuesta {pista.costo} y tienes "
+                     f"{self.investigacion.energia}. Decide con lo que sabes, o relee una pista ya revisada.")
+        else:
+            aviso = f"{pista.titulo}: {pista.hallazgo}"   # "repetida" no cuesta nada: se relee
+        self._decir_en_sitio(aviso)
+
     def _mover(self, destino: str) -> None:
         if self.fase != DECIDIENDO or destino not in self.mapa.vecinos(self.zona):
             return
@@ -160,6 +184,8 @@ class EscenaState(BaseState):
     def _cargar_evento(self) -> None:
         self.fase, self.impacto, self.animo = DECIDIENDO, None, 0
         evento = self.arbol.event
+        self.investigacion = Investigacion(evento.clues)   # energia completa y ninguna pista descubierta
+        self._hover = None
         self.dialogo.set_texto(evento.content, "Civitas")
         # Una noticia falsa es un rumor desde que aparece, pero el mapa no lo muestra hasta que
         # empieza a correr (si no, delataria cual es falsa sin investigar).
@@ -229,7 +255,8 @@ class EscenaState(BaseState):
         self.ciudad.apply(impacto)
         self.animo = (impacto.score > 0) - (impacto.score < 0)
         self.fase = CONSECUENCIA
-        mensaje = nodo.description or "Nada cambia por ahora."
+        # El texto cambia segun lo investigado (variante escrita en events.json o "Habias revisado: ...")
+        mensaje = nodo.consecuencia(self.investigacion.pistas_descubiertas()) or "Nada cambia por ahora."
         self.dialogo.set_texto(f"{mensaje}\n{aviso}" if aviso else mensaje, "Consecuencia")
         self.botones = [Boton(pygame.Rect(362, Y_BOTONES, 300, ALTO_BOTONES), "Continuar (Enter)",
                               self._continuar, atajo=pygame.K_RETURN)]
@@ -266,6 +293,7 @@ class EscenaState(BaseState):
             self.dialogo.completar()
         if self.fase == DECIDIENDO:
             self._manejar_movimiento(event)
+            self._manejar_investigacion(event)
         for boton in list(self.botones):  # copia: un clic reemplaza self.botones
             if boton.handle_event(event):
                 break
@@ -281,6 +309,22 @@ class EscenaState(BaseState):
             vecinos = self.mapa.vecinos(self.zona)
             if i < len(vecinos):
                 self._mover(vecinos[i])
+
+    def _manejar_investigacion(self, event: pygame.event.Event) -> None:
+        """Investigar: clic sobre una zona de la tarjeta con pista, o su letra (A S D F G); el mouse
+        encima la resalta."""
+        evento = self.arbol.event
+        if event.type == pygame.MOUSEMOTION:
+            self._hover = zona_de_tarjeta(RECT_TARJETA, event.pos, evento)
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            zona = zona_de_tarjeta(RECT_TARJETA, event.pos, evento)
+            pista = self.investigacion.pista_en(zona) if zona is not None else None
+            if pista is not None:
+                self._investigar(pista)
+        elif event.type == pygame.KEYDOWN and event.key in TECLAS_INVESTIGAR:
+            pista = pista_con_tecla(evento, TECLAS_INVESTIGAR[event.key])
+            if pista is not None:
+                self._investigar(pista)
 
     def update(self, dt: float) -> None:
         self.dialogo.update(dt)
@@ -300,14 +344,13 @@ class EscenaState(BaseState):
         elif self.fase == CONSECUENCIA:
             titulo, texto = "Consecuencias en Ciudad Nova", ""
         else:
-            titulo = self.arbol.event.title
-            texto = (f"La noticia viene de: {self._nombre_zona(self.arbol.event.zone)}.\n"
-                     "Verificar y Reportar: solo en esa zona.\n"
-                     "Moverse (mapa o Q W E R) cuesta una ronda y los rumores avanzan.\n"
-                     f"Tu rol: {self.personaje.rol.value}.")
+            # Al decidir se ve la tarjeta de Civitas (sin titulo: "Rumor sobre..." delataria la noticia)
+            titulo, texto = "", ""
         en_mapa = self.fase in (DECIDIENDO, CONSECUENCIA)
         dibujar_escena(pantalla, self.app.fuentes, self.app.temas.actual, self.personaje, self.animo,
                        self.ciudad.as_display_rows(), titulo, texto, self.impacto, self.dialogo, self.botones,
                        self.animacion if self.fase == PROPAGACION else None, self.zona,
                        self._nombre_zona(self.zona) if self.zona else "",
-                       self._estado_mapa() if en_mapa else None)
+                       self._estado_mapa() if en_mapa else None,
+                       EstadoTarjeta(self.arbol.event, self.investigacion, self._hover)
+                       if self.fase == DECIDIENDO else None)

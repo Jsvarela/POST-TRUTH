@@ -9,6 +9,7 @@ from post_truth.models.personaje import Personaje
 from post_truth.views.componentes import Boton, CajaDialogo, Fuentes, Panel, dibujar_texto_ajustado
 from post_truth.views.grafo_view import AnimacionPropagacion
 from post_truth.views.mapa_view import EstadoMapa, dibujar_mapa
+from post_truth.views.tarjeta_civitas_view import EstadoTarjeta, dibujar_tarjeta
 from post_truth.views.personaje_view import dibujar_personaje
 from post_truth.views.theme import Tema
 from post_truth.views.zona_view import dibujar_fondo_zona
@@ -35,7 +36,9 @@ RECT_HUD = pygame.Rect(0, 0, 1024, 56)
 RECT_PERSONAJE = pygame.Rect(40, 64, 260, 336)
 RECT_PANEL = pygame.Rect(330, 68, 664, 328)
 RECT_ESCENA = pygame.Rect(0, 57, 1024, 347)      # area del fondo de la zona (entre el HUD y el dialogo)
-RECT_MAPA = pygame.Rect(RECT_PANEL.right - 290, RECT_PANEL.y + 46, 272, 272)  # minimapa dentro del panel
+RECT_TARJETA = pygame.Rect(RECT_PANEL.x + 12, RECT_PANEL.y + 8, 372, 312)   # tarjeta de Civitas (a la izquierda)
+RECT_MAPA = pygame.Rect(RECT_PANEL.right - 10 - 252, RECT_PANEL.y + 8, 252, 312)  # minimapa (a la derecha)
+AYUDA = "Investigar: clic en la publicacion o A S D F G   |   Moverse: clic en el mapa o Q W E R   |   Decidir: 1-4"
 RECT_TEXTO_PANEL = pygame.Rect(RECT_PANEL.x + 18, RECT_PANEL.y + 52, 340, 256)  # texto a la izquierda del mapa
 ALFA_PANEL = 205  # el panel deja ver un poco el fondo de la zona
 
@@ -79,11 +82,24 @@ def _dibujar_consecuencias(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tem
         y += fuentes.normal.get_linesize() + 6
 
 
+def _dibujar_energia(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, inv, y: int) -> None:
+    """Etiqueta "Energia" con un punto por cada unidad: lleno si queda, vacio si ya se gasto."""
+    etiqueta = fuentes.normal.render("Energia", True, tema.texto)
+    ancho = etiqueta.get_width() + 20 + inv.energia_max * 22 + 4
+    marco = pygame.Rect(16, y, ancho, 32)
+    pygame.draw.rect(pantalla, tema.panel, marco, border_radius=8)
+    pygame.draw.rect(pantalla, tema.acento, marco, width=2, border_radius=8)
+    pantalla.blit(etiqueta, (marco.x + 10, marco.y + 4))
+    for i in range(inv.energia_max):
+        centro = (marco.x + 10 + etiqueta.get_width() + 16 + i * 22, marco.centery)
+        pygame.draw.circle(pantalla, tema.acento, centro, 8, 0 if i < inv.energia else 2)
+
+
 def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, personaje: Personaje,
                    animo: int, filas: list[tuple[str, int]], titulo_panel: str, texto_panel: str,
                    impacto: Impact | None, dialogo: CajaDialogo, botones: list[Boton],
                    animacion: AnimacionPropagacion | None = None, zona_id: str = "", nombre_zona: str = "",
-                   mapa: EstadoMapa | None = None) -> None:
+                   mapa: EstadoMapa | None = None, tarjeta: EstadoTarjeta | None = None) -> None:
     pantalla.fill(tema.fondo)
     dibujar_fondo_zona(pantalla, zona_id, tema, RECT_ESCENA)  # el escenario cambia con la zona
     _dibujar_hud(pantalla, fuentes, tema, filas)
@@ -94,13 +110,18 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
         pygame.draw.rect(pantalla, tema.panel, marco, border_radius=8)
         pygame.draw.rect(pantalla, tema.acento, marco, width=2, border_radius=8)
         pantalla.blit(etiqueta, etiqueta.get_rect(center=marco.center))
+    if tarjeta is not None:  # energia que queda para investigar esta publicacion
+        _dibujar_energia(pantalla, fuentes, tema, tarjeta.investigacion, RECT_ESCENA.y + 52)
     if animacion is not None:  # la propagacion ocupa el lugar del panel de noticia
         animacion.draw(pantalla, fuentes, tema, RECT_PANEL)
     else:
-        panel = Panel(RECT_PANEL, titulo_panel, alfa=ALFA_PANEL)
+        # Con tarjeta no hay titulo: titulos como "Rumor sobre el colegio" delatarian que es falsa
+        panel = Panel(RECT_PANEL, "" if tarjeta is not None else titulo_panel, alfa=ALFA_PANEL)
         panel.draw(pantalla, fuentes, tema)
         area = RECT_TEXTO_PANEL if mapa is not None else panel.interior
-        if impacto is None:
+        if tarjeta is not None:
+            dibujar_tarjeta(pantalla, fuentes, tema, RECT_TARJETA, tarjeta.evento, tarjeta.investigacion, tarjeta.hover)
+        elif impacto is None:
             dibujar_texto_ajustado(pantalla, fuentes.normal, texto_panel, tema.texto, area)
         else:
             _dibujar_consecuencias(pantalla, fuentes, tema, area, impacto)
@@ -109,3 +130,6 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
     dialogo.draw(pantalla, fuentes, tema)
     for boton in botones:
         boton.draw(pantalla, fuentes.normal, tema)
+    if tarjeta is not None:  # recordatorio de controles bajo los botones
+        ayuda = fuentes.chica.render(AYUDA, True, tema.texto)
+        pantalla.blit(ayuda, ayuda.get_rect(midbottom=(pantalla.get_width() // 2, pantalla.get_height() - 6)))
