@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import pygame
 
-from post_truth.views.componentes import Boton, CajaDialogo, Fuentes, ajustar_texto
+from post_truth.views.componentes import Boton, CajaDialogo, Fuentes, Panel, ajustar_texto
 from post_truth.views.theme import TEMAS
 
 
@@ -48,6 +48,25 @@ class ComponentesTest(unittest.TestCase):
         b = Boton(pygame.Rect(0, 0, 50, 20), "x", lambda: clics.append(1), atajo=pygame.K_1)
         b.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_1))
         self.assertEqual(clics, [1])
+
+    def test_boton_deshabilitado_no_responde_ni_a_clic_ni_a_atajo(self) -> None:
+        clics: list[int] = []
+        b = Boton(pygame.Rect(10, 10, 100, 40), "No", lambda: clics.append(1), atajo=pygame.K_1)
+        b.habilitado = False
+        b.handle_event(pygame.event.Event(pygame.MOUSEBUTTONDOWN, pos=(20, 20), button=1))
+        b.handle_event(pygame.event.Event(pygame.MOUSEBUTTONUP, pos=(20, 20), button=1))
+        b.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_1))
+        self.assertEqual(clics, [])
+        for tema in TEMAS.values():
+            b.draw(self.pantalla, self.fuentes.normal, tema)
+
+    def test_panel_semitransparente_deja_ver_el_fondo(self) -> None:
+        tema = TEMAS["normal"]
+        self.pantalla.fill((255, 0, 0))
+        Panel(pygame.Rect(20, 20, 200, 100), alfa=128).draw(self.pantalla, self.fuentes, tema)
+        mezcla = self.pantalla.get_at((100, 70))[:3]
+        self.assertNotEqual(mezcla, tema.panel)       # no es opaco
+        self.assertNotEqual(mezcla, (255, 0, 0))      # ni transparente del todo
 
     def test_dialogo_se_revela_con_dt(self) -> None:
         d = CajaDialogo(pygame.Rect(0, 0, 300, 100), caracteres_por_segundo=10)
