@@ -153,8 +153,9 @@ class GrafoSocial:
         self._ady[ciudadano.id] = {}
 
     def eliminar_vertice(self, id: str) -> None:
-        """Quita el vertice y TODAS sus aristas, salientes y entrantes. Las entrantes viven en
-        las listas de los demas, asi que hay que recorrerlas: O(V + E)."""
+        """Quita el vertice y TODAS sus aristas, salientes y entrantes. Las salientes se van con
+        su diccionario (O(1)); las entrantes viven en los diccionarios de los demas vertices, asi
+        que se hace un pop O(1) en cada uno: O(V) en total."""
         self._exigir(id)
         del self._vertices[id]
         del self._ady[id]
