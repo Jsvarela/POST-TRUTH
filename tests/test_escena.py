@@ -78,15 +78,18 @@ class FlujoEscenaTest(unittest.TestCase):
     def test_clic_con_mouse_en_boton(self) -> None:
         self._a_la_escena()
         escena = self.app.estados._actual
-        clic(self.app, escena.botones[1].rect.center)
+        boton = next(b for b in escena.botones if b.habilitado)   # Verificar/Reportar exigen estar en la zona
+        clic(self.app, boton.rect.center)
         saltar_propagacion(self.app)
         self.assertEqual(escena.fase, CONSECUENCIA)
 
     def test_botones_salen_del_arbol(self) -> None:
         self._a_la_escena()
         escena = self.app.estados._actual
-        self.assertEqual([b.texto.split(". ", 1)[1] for b in escena.botones],
-                         [n.label for n in escena.arbol.root.children[:4]])
+        ramas = [n.label for n in escena.arbol.root.children[:4]]
+        self.assertEqual(len(escena.botones), len(ramas))
+        for boton, etiqueta in zip(escena.botones, ramas):   # puede llevar el sufijo "(ir a <zona>)"
+            self.assertTrue(boton.texto.split(". ", 1)[1].startswith(etiqueta))
 
     def test_rol_cambia_el_resultado(self) -> None:
         """Mismo evento y misma decision: el influencer amplifica mas que el ciudadano."""

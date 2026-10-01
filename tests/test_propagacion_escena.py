@@ -35,6 +35,8 @@ class PropagacionEnEscenaTest(unittest.TestCase):
         tecla(self.app, pygame.K_2)
         escena.indice = next(i for i, a in enumerate(escena.arboles) if a.event.event_id == evento)
         escena._cargar_evento()
+        escena.zona = escena.arbol.event.zone   # el jugador ya esta en el lugar: Verificar/Reportar disponibles
+        escena._construir_botones()
         return escena
 
     def _decidir_tipo(self, escena, tipo: str) -> None:
