@@ -69,10 +69,13 @@ class Boton:
         self.al_hacer_clic = al_hacer_clic
         self.atajo = atajo  # constante pygame.K_*, opcional
         self.hover = False
+        self.habilitado = True  # deshabilitado: se ve apagado y no responde a clics ni atajos
         self._presionado = False
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Devuelve True si el evento disparo el boton."""
+        if not self.habilitado:
+            return False
         if event.type == pygame.MOUSEMOTION:
             self.hover = self.rect.collidepoint(event.pos)
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -89,11 +92,17 @@ class Boton:
         return False
 
     def draw(self, pantalla: pygame.Surface, fuente: pygame.font.Font, tema: Tema) -> None:
-        relleno = tema.boton_hover if self.hover else tema.boton
-        borde = tema.acento if self.hover else tema.borde
-        pygame.draw.rect(pantalla, relleno, self.rect, border_radius=10)
-        pygame.draw.rect(pantalla, borde, self.rect, width=3 if self.hover else 2, border_radius=10)
-        img = fuente.render(self.texto, True, tema.boton_texto)
+        if not self.habilitado:
+            pygame.draw.rect(pantalla, tema.boton_off, self.rect, border_radius=10)
+            pygame.draw.rect(pantalla, tema.texto_off, self.rect, width=1, border_radius=10)
+            color_texto = tema.texto_off
+        else:
+            relleno = tema.boton_hover if self.hover else tema.boton
+            borde = tema.acento if self.hover else tema.borde
+            pygame.draw.rect(pantalla, relleno, self.rect, border_radius=10)
+            pygame.draw.rect(pantalla, borde, self.rect, width=3 if self.hover else 2, border_radius=10)
+            color_texto = tema.boton_texto
+        img = fuente.render(self.texto, True, color_texto)
         maximo = self.rect.width - 16
         if img.get_width() > maximo:  # textos largos se reducen en vez de salirse del boton
             alto = max(1, img.get_height() * maximo // img.get_width())
@@ -104,9 +113,10 @@ class Boton:
 class Panel:
     """Rectangulo redondeado con titulo opcional; contenedor visual para agrupar informacion."""
 
-    def __init__(self, rect: pygame.Rect, titulo: str = "") -> None:
+    def __init__(self, rect: pygame.Rect, titulo: str = "", alfa: int = 255) -> None:
         self.rect = rect
         self.titulo = titulo
+        self.alfa = alfa  # < 255 deja ver el fondo de la zona a traves del panel
 
     @property
     def interior(self) -> pygame.Rect:
@@ -116,7 +126,12 @@ class Panel:
                            self.rect.width - 36, self.rect.height - margen_sup - 16)
 
     def draw(self, pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema) -> None:
-        pygame.draw.rect(pantalla, tema.panel, self.rect, border_radius=14)
+        if self.alfa >= 255:
+            pygame.draw.rect(pantalla, tema.panel, self.rect, border_radius=14)
+        else:
+            velo = pygame.Surface(self.rect.size, pygame.SRCALPHA)
+            pygame.draw.rect(velo, (*tema.panel, self.alfa), velo.get_rect(), border_radius=14)
+            pantalla.blit(velo, self.rect.topleft)
         pygame.draw.rect(pantalla, tema.borde, self.rect, width=2, border_radius=14)
         if self.titulo:
             img = fuentes.grande.render(self.titulo, True, tema.acento)
