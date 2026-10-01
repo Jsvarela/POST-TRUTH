@@ -72,3 +72,8 @@ rama `python src/main.py` abre la version Pygame, que reutiliza
 pip install -r requirements.txt
 python src/main.py
 ```
+
+Flujo actual: Menu (ENTER) -> Seleccion de rol y personaje -> Escena de dialogo
+con las publicaciones de `data/events.json`. Teclas: 1-4 para decidir, Enter para
+continuar, Espacio para saltar el texto, T (en el menu) para cambiar de tema, ESC
+para volver.
