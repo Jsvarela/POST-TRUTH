@@ -19,8 +19,9 @@ import pygame
 
 from post_truth.controllers.escena_state import CONSECUENCIA, DECIDIENDO, FIN, PROPAGACION
 from post_truth.pygame_app import App
-from post_truth.views.escena_view import RECT_MAPA
+from post_truth.views.escena_view import RECT_MAPA, RECT_TARJETA
 from post_truth.views.mapa_view import _posiciones
+from post_truth.views.tarjeta_civitas_view import _layout as _layout_tarjeta
 
 FASES = {DECIDIENDO, PROPAGACION, CONSECUENCIA, FIN}
 TECLAS_ROL = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
@@ -81,6 +82,11 @@ class Bot:
         assert e.ronda >= self.ronda_previa, "las rondas no pueden retroceder"
         self.ronda_previa = e.ronda
         assert e.dialogo.texto, "la caja de dialogo no puede quedar vacia"
+        inv = e.investigacion
+        assert 0 <= inv.energia <= inv.energia_max, f"energia fuera de rango: {inv.energia}"
+        assert set(inv.descubiertas) <= {pista.id for pista in inv.pistas}, "pistas descubiertas desconocidas"
+        gastado = sum(inv.pista(id).costo for id in inv.descubiertas)
+        assert gastado + inv.energia == inv.energia_max, "la energia gastada no coincide con las pistas reveladas"
         assert e.botones, f"sin botones en la fase {e.fase}"
         if e.fase == DECIDIENDO:
             assert any(b.habilitado for b in e.botones), "todas las acciones bloqueadas: bloqueo del juego"
@@ -113,8 +119,31 @@ class Bot:
         i = self.escena.botones.index(boton)
         return ramas[i].tipo if i < len(ramas) else "desmentir"
 
+    def investigar_pistas(self) -> None:
+        """Gasta la energia en las pistas mas baratas, con clic en la tarjeta o con su letra."""
+        e = self.escena
+        for pista in sorted(e.investigacion.pistas, key=lambda x: x.costo):
+            if e.investigacion.energia < pista.costo:
+                continue
+            if self.modo == "mouse":
+                self.clic(_layout_tarjeta(RECT_TARJETA)[pista.zona].center)
+            else:
+                letra = "ASDFG"[e.investigacion.pistas.index(pista)]
+                self.tecla({"A": pygame.K_a, "S": pygame.K_s, "D": pygame.K_d, "F": pygame.K_f, "G": pygame.K_g}[letra])
+            self.avanzar(dibujar=False)
+        assert e.investigacion.energia >= 0
+
     def elegir(self, habilitados: list) -> object:
         por_tipo = {self.tipo(b): b for b in habilitados}
+        if self.politica == "informado":     # decide segun lo que mostraron las pistas
+            primero: dict[str, object] = {}
+            for b in habilitados:
+                primero.setdefault(self.tipo(b), b)
+            if self.escena.investigacion.veredicto() == "verdadera" and "compartir" in primero:
+                return primero["compartir"]
+            for tipo in ("desmentir", "verificar", "reportar", "ignorar"):
+                if tipo in primero:
+                    return primero[tipo]
         if self.politica == "compartir":
             return por_tipo.get("compartir", habilitados[0])
         if self.politica == "ignorar":
@@ -147,14 +176,25 @@ class Bot:
         e = self.escena
         self.ir_a(self.rng.choice(e.mapa.vecinos(e.zona)))
 
+    def necesita_ir_al_sitio(self) -> bool:
+        """Verificar/Reportar exigen estar en la zona: se viaja salvo que ya haya algo mejor que hacer."""
+        e = self.escena
+        if "desmentir" in {self.tipo(b) for b in e.botones if b.habilitado}:
+            return False
+        if self.politica == "informado" and e.investigacion.veredicto() == "verdadera":
+            return False                               # una noticia cierta se comparte: no hace falta ir
+        return True
+
     def jugar_publicacion(self) -> None:
         e, movimientos = self.escena, 0
+        if self.politica == "informado":
+            self.investigar_pistas()
         while e.fase == DECIDIENDO:
             if self.politica == "azar" and movimientos < 3 and self.rng.random() < 0.3:
                 self.mover()
                 movimientos += 1
-            elif (self.politica == "investigar" and "desmentir" not in
-                  {self.tipo(b) for b in e.botones if b.habilitado} and self.ir_a_la_zona_de_la_noticia()):
+            elif (self.politica in ("investigar", "informado") and self.necesita_ir_al_sitio()
+                  and self.ir_a_la_zona_de_la_noticia()):
                 movimientos += 1
             else:
                 self.activar(self.elegir([b for b in e.botones if b.habilitado]))
@@ -254,6 +294,22 @@ class PartidaCompletaTest(unittest.TestCase):
             e = bot.escena
             self.assertEqual(e.rumores.activos(), [], "quedaron rumores sin atender")
             self.assertLess(e.ciudad.misinformation, 100)
+
+    def test_partida_informada_investiga_las_pistas_y_decide_con_ellas(self) -> None:
+        for rol in range(4):
+            bot = Bot(self.app, 400 + rol, politica="informado", modo="mouse" if rol % 2 else "teclado")
+            bot.partida(rol, 0)
+            self.assertEqual(bot.escena.rumores.activos(), [], "quedaron rumores sin atender")
+
+    def test_investigar_las_pistas_antes_de_decidir_supera_a_ignorar_y_al_azar(self) -> None:
+        puntaje = {"informado": 0, "ignorar": 0, "azar": 0}
+        for politica in puntaje:
+            for semilla in range(8):
+                bot = Bot(self.app, 500 + semilla, politica=politica)
+                bot.partida(semilla % 4, 0)
+                puntaje[politica] += bot.escena.ciudad.score
+        self.assertGreater(puntaje["informado"], puntaje["ignorar"])
+        self.assertGreater(puntaje["informado"], puntaje["azar"])
 
     def test_la_habilidad_importa_investigar_supera_a_ignorar(self) -> None:
         """Mismas condiciones (rol y semilla): quien investiga y verifica termina con mejor puntaje
