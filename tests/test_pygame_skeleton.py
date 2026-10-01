@@ -18,7 +18,7 @@ class PygameSkeletonTest(unittest.TestCase):
         from post_truth.pygame_app import App
 
         app = App()
-        app.estados.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_RETURN))
+        app.estados.cambiar("juego")  # GameState ya no esta en el flujo del menu, se prueba directo
         juego = app.estados._actual
         antes = juego.ciudad.verified_information
         app.estados.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_2))  # Verificar
