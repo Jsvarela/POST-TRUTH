@@ -16,6 +16,9 @@ class DecisionNode:
     description: str
     impact: Impact = field(default_factory=Impact)
     children: list["DecisionNode"] = field(default_factory=list)
+    # Accion de juego que representa ("compartir", "verificar", "reportar", "ignorar"); "" si no aplica.
+    # Permite que la mecanica no dependa del texto del boton ("Compartir con enojo", ...).
+    tipo: str = ""
 
     def add_child(self, child: "DecisionNode") -> None:
         self.children.append(child)
@@ -124,6 +127,7 @@ def _node_from_dict(event_id: str, data: dict, parent_key: str) -> DecisionNode:
         label=label,
         description=data.get("description", ""),
         impact=Impact.from_dict(data.get("effect")),
+        tipo=data.get("tipo", ""),
     )
     for child in data.get("children", []):
         node.add_child(_node_from_dict(event_id, child, parent_key=node_id.split(":", 1)[1]))

@@ -23,7 +23,13 @@ COMPARTIR, VERIFICAR, REPORTAR, IGNORAR = "compartir", "verificar", "reportar", 
 FRENO_AUTOR = 0.35      # el peso de las aristas del autor se multiplica por esto al verificar
 FRENO_CONTACTOS = 0.6   # y el de las aristas de sus contactos directos (contencion a 2 saltos)
 
+UMBRAL_FALSA = 50       # truth_level por debajo de esto se trata como noticia falsa (rumor, fake, manipulada)
+
 Arista = tuple[str, str]
+
+
+def es_falsa(truth_level: int) -> bool:
+    return truth_level < UMBRAL_FALSA
 
 
 @dataclass(frozen=True)
