@@ -1,0 +1,18 @@
+{
+  "zonas": [
+    { "id": "colegio",  "nombre": "Colegio",  "pos": [0.15, 0.22] },
+    { "id": "barrio",   "nombre": "Barrio",   "pos": [0.17, 0.80] },
+    { "id": "parque",   "nombre": "Parque",   "pos": [0.55, 0.84] },
+    { "id": "plaza",    "nombre": "Plaza",    "pos": [0.50, 0.45] },
+    { "id": "alcaldia", "nombre": "Alcaldia", "pos": [0.86, 0.26] }
+  ],
+  "conexiones": [
+    ["colegio", "plaza"],
+    ["colegio", "barrio"],
+    ["barrio", "plaza"],
+    ["barrio", "parque"],
+    ["parque", "plaza"],
+    ["plaza", "alcaldia"]
+  ],
+  "zona_inicial": "plaza"
+}
