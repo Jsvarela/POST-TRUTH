@@ -61,3 +61,14 @@ visibles las estructuras de datos para sustentarlas con claridad. La interfaz se
 organizo como tablero de simulacion para que no parezca un formulario tecnico.
 En entregas posteriores se puede migrar o ampliar la interfaz a Pygame si el
 equipo quiere una experiencia mas cercana a videojuego.
+
+## Migracion a Pygame (rama migracion-pygame)
+
+La interfaz Tkinter de la entrega 1 queda en el tag `tkinter-entrega1`. En esta
+rama `python src/main.py` abre la version Pygame, que reutiliza
+`decision_tree.py`, `models.py`, `game_state.py` y `data/events.json`.
+
+```bash
+pip install -r requirements.txt
+python src/main.py
+```
