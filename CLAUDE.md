@@ -61,29 +61,20 @@ Cada estructura debe resolver un problema real del juego, no estar solo para cum
 ## 4. Arquitectura (MVC + patron State)
 
 ```
-POST_TRUTH/
-├── main.py                  # game loop (clase App), 60 FPS, dt en segundos
-├── config.py                # constantes sin dependencias de pygame
-├── models/                  # logica pura, SIN pygame/tkinter
-│   ├── noticia.py           # Accion, Impacto, Noticia
-│   └── estado_ciudad.py     # indicadores y reglas de derrota
-├── structures/              # ArbolDecision, GrafoSocial, GrafoCiudad (logica pura)
-├── views/                   # solo dibujan a partir de datos del modelo
-│   ├── theme.py             # temas: normal, alto contraste, daltonismo
-│   ├── menu_view.py
-│   ├── game_view.py         # (a reemplazar por escena_view.py)
-│   ├── personaje_view.py    # PENDIENTE: personajes dibujados con codigo
-│   ├── dialogo_view.py      # PENDIENTE: caja de texto + opciones
-│   ├── tarjeta_civitas_view.py  # PENDIENTE: noticia tipo post
-│   └── componentes.py       # PENDIENTE: Boton, Panel, Temporizador
-├── controllers/             # un estado por pantalla
-│   ├── base_state.py        # interfaz: handle_event, update(dt), draw
-│   ├── state_manager.py
-│   ├── menu_state.py
-│   ├── game_state.py
-│   ├── seleccion_state.py   # PENDIENTE: elegir rol y personaje
-│   └── escena_state.py      # PENDIENTE: escena de dialogo y decisiones
-└── assets/
+POST-TRUTH/
+├── src/main.py                      # entrada: lanza la App de Pygame
+├── src/post_truth/
+│   ├── pygame_app.py                # game loop (clase App), 60 FPS, dt en segundos
+│   ├── config.py                    # constantes sin dependencias de pygame
+│   ├── models.py                    # Impact, NewsEvent, Role (entrega 1, se reutiliza)
+│   ├── game_state.py                # CityState: indicadores (ya incluye conflictos)
+│   ├── decision_tree.py             # DecisionTree N-ario, DFS/BFS (entrega 1, se reutiliza)
+│   ├── structures/                  # grafo_social.py, grafo_ciudad.py (entrega 2)
+│   ├── views/                       # theme.py, menu_view.py, game_view.py
+│   ├── controllers/                 # base_state, state_manager, menu_state, game_state
+│   └── app.py                       # version Tkinter (tag tkinter-entrega1), a retirar
+├── data/events.json                 # eventos y ramas de decision
+└── tests/
 ```
 
 Modelos nuevos previstos en `models/`: `Rol`, `Personaje` (rol, genero, id de apariencia, habilidad), `Pista` (incluye llamada filtrada), `Escena` (noticia, pistas, opciones).
@@ -95,7 +86,7 @@ Estados previstos: `MenuState`, `GameState`, `CivitasFeedState`, `HelpState`, y 
 ## 5. Requisitos del laboratorio que el codigo debe cubrir
 
 - Jugadores y roles: 2 a 4 jugadores; roles con habilidades distintas. Ciudadano (interactua con responsabilidad), Periodista (investiga y detecta falsas), Influencer (mayor alcance al compartir), Candidato (construye confianza y enfrenta rumores).
-- Indicadores de Ciudad Nova (todos entre 0 y 100): Informacion verificada, Confianza, Convivencia, Bienestar digital, Desinformacion y Conflictos. NOTA: `EstadoCiudad` aun no tiene `conflictos`; agregarlo.
+- Indicadores de Ciudad Nova (todos entre 0 y 100): Informacion verificada, Confianza, Convivencia, Bienestar digital, Desinformacion y Conflictos. `CityState` (game_state.py) ya incluye `conflictos`.
 - Propagacion de publicaciones por el grafo social (seccion 3.2).
 - Aleatoriedad: eventos como noticia falsa, publicacion viral, rumor sobre un candidato, discusion entre ciudadanos, noticia verdadera, campana de convivencia, reporte de contenido. El resultado debe variar entre partidas, pero tambien debe haber componentes que dependan de la habilidad del jugador, no solo del azar.
 - Habilidad: decisiones con tiempo limitado (ejemplo: "Informacion viral, tiempo restante 10 s" con botones Verificar/Compartir/Reportar/Ignorar). Usar `dt` o `pygame.time.get_ticks()`.
