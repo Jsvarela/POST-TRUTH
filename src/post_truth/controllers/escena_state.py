@@ -62,7 +62,7 @@ class EscenaState(BaseState):
     def _cargar_evento(self) -> None:
         self.fase, self.impacto, self.animo = DECIDIENDO, None, 0
         evento = self.arbol.event
-        self.dialogo.set_texto(evento.content, evento.title)
+        self.dialogo.set_texto(evento.content, "Civitas")
         # Un boton por rama del evento: las acciones cambian segun la noticia
         # ("Verificar", "Buscar video completo", ...), por eso salen del arbol y no de un enum.
         ramas = self.arbol.root.children[: len(ATAJOS)]
@@ -117,6 +117,7 @@ class EscenaState(BaseState):
             titulo, texto = "Consecuencias en Ciudad Nova", ""
         else:
             titulo = self.arbol.event.title
-            texto = "Una publicacion circula en Civitas. Decide que hacer con ella."
+            texto = ("Una publicacion circula en Civitas. Decide que hacer con ella.\n\n"
+                     f"Tu rol: {self.personaje.rol.value}. {self.personaje.descripcion_rol}")
         dibujar_escena(pantalla, self.app.fuentes, self.app.temas.actual, self.personaje, self.animo,
                        self.ciudad.as_display_rows(), titulo, texto, self.impacto, self.dialogo, self.botones)

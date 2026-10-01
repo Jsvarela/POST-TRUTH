@@ -68,8 +68,8 @@ def dibujar_personaje(pantalla: pygame.Surface, personaje: Personaje, tema: Tema
     boca = r(42, 60, 16, 10)
     if animo > 0:      # sonrisa: arco inferior
         pygame.draw.arc(pantalla, tema.fondo, boca, math.pi, 2 * math.pi, max(2, round(2 * s)))
-    elif animo < 0:    # ceno: arco superior, mas abajo
-        pygame.draw.arc(pantalla, tema.fondo, r(42, 64, 16, 10), 0, math.pi, max(2, round(2 * s)))
+    elif animo < 0:    # ceno: arco superior (n invertida), fino para que no parezca bigote
+        pygame.draw.arc(pantalla, tema.fondo, r(44, 63, 12, 8), 0, math.pi, max(2, round(1.5 * s)))
     else:
         pygame.draw.line(pantalla, tema.fondo, p(44, 64), p(56, 64), max(2, round(2 * s)))
 
