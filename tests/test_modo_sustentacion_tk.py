@@ -38,6 +38,11 @@ class ModoSustentacionTkTest(unittest.TestCase):
         for parche in getattr(self, "parches", []):
             parche.stop()
         if hasattr(self, "app"):
+            # Cancela los temporizadores `after` del panel (turnos, animaciones) para que no se
+            # disparen despues de destruir la ventana y ensucien la salida de las pruebas.
+            for pendiente in self.app.tk.call("after", "info"):
+                self.app.after_cancel(pendiente)
+            self.app.update_idletasks()   # ttk deja tareas "idle" (ThemeChanged) que fallan si la ventana ya no existe
             self.app.destroy()
 
     def test_dfs_y_bfs_se_muestran(self) -> None:
