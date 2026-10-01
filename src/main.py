@@ -1,9 +1,8 @@
-from post_truth.app import DecisionGameApp
+from post_truth.pygame_app import App
 
 
 def main() -> None:
-    app = DecisionGameApp()
-    app.mainloop()
+    App().run()
 
 
 if __name__ == "__main__":
