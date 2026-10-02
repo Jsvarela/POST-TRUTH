@@ -16,7 +16,8 @@ from post_truth.views.componentes import CajaDialogo, Fuentes
 from post_truth.views.intro_view import TAMANO_LIENZO, _horizonte, dibujar_intro
 from post_truth.views.theme import TEMAS
 
-RECT_SUB = pygame.Rect(24, 492, 976, 116)
+from post_truth.config import ALTO, ANCHO
+from post_truth.controllers.intro_state import RECT_SUBTITULO as RECT_SUB   # el subtitulo real de la introduccion
 INSTANTES = (0.0, 0.3, 1.0, 2.5, 5.0, 9.0, 20.0)  # entrando, apareciendo, mantenida, mapa en otra zona...
 
 
@@ -24,7 +25,7 @@ class IntroVistaTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         pygame.init()
-        cls.pantalla = pygame.display.set_mode((1024, 640))
+        cls.pantalla = pygame.display.set_mode((ANCHO, ALTO))
         cls.fuentes = Fuentes.crear()
         cls.intro = Intro.cargar(RUTA_INTRO)
         cls.ciudad = GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD)
@@ -67,7 +68,7 @@ class IntroVistaTest(unittest.TestCase):
         self.pantalla.fill((9, 9, 9))
         dibujar_intro(self.pantalla, self.lienzo, self.fuentes, tema, self.intro, self.ciudad, 0, 3.0, 0,
                       self._dialogo_completo(0), "pie")
-        self.assertEqual(self.pantalla.get_at((500, 250))[:3], tema.fondo)
+        self.assertEqual(self.pantalla.get_at((ANCHO // 2, ALTO // 3))[:3], tema.fondo)
         # ...y la caja del subtitulo se pinta igual (con el color de panel del tema)
         self.assertEqual(self.pantalla.get_at((RECT_SUB.x + 40, RECT_SUB.bottom - 8))[:3], tema.panel)
 

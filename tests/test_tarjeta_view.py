@@ -17,14 +17,17 @@ from post_truth.views.tarjeta_civitas_view import (TECLAS_PISTA, _avatar, _layou
                                                    zona_en)
 from post_truth.views.theme import TEMAS
 
-RECT = pygame.Rect(10, 10, 372, 312)
+from post_truth.config import px
+from post_truth.views.escena_view import RECT_TARJETA
+
+RECT = pygame.Rect(px(10), px(10), RECT_TARJETA.width, RECT_TARJETA.height)   # el tamano real de la tarjeta
 
 
 class TarjetaViewTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         pygame.init()
-        cls.pantalla = pygame.display.set_mode((400, 340))
+        cls.pantalla = pygame.display.set_mode((RECT.right + px(20), RECT.bottom + px(20)))
         cls.fuentes = Fuentes.crear()
         cls.eventos = [a.event for a in load_trees(RUTA_EVENTOS)]
 
@@ -77,7 +80,7 @@ class TarjetaViewTest(unittest.TestCase):
         self.assertTrue(sin_pista)
         for zona in sin_pista:
             self.assertIsNone(zona_en(RECT, _layout(RECT)[zona].center, e))
-        self.assertIsNone(zona_en(RECT, (5, 5), e))
+        self.assertIsNone(zona_en(RECT, (1, 1), e))
         self.assertIsNone(zona_en(RECT, (RECT.right + 50, RECT.centery), e))
 
     def test_las_zonas_no_se_pisan_y_caben_en_la_tarjeta(self) -> None:

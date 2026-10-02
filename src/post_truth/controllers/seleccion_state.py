@@ -5,7 +5,7 @@ parcial (el rol elegido) y ESC solo debe retroceder una fase.
 """
 import pygame
 
-from post_truth.config import ANCHO, ALTO
+from post_truth.config import ALTO, px
 from post_truth.controllers.base_state import BaseState
 from post_truth.models import Role
 from post_truth.models.personaje import Genero, Personaje
@@ -32,17 +32,17 @@ class SeleccionState(BaseState):
     def _construir(self) -> None:
         if self.fase == FASE_ROL:
             self.botones = [
-                Boton(pygame.Rect(60, 140 + i * 88, 340, 64), f"{i + 1}. {rol.value}",
+                Boton(pygame.Rect(px(60), px(140 + i * 88), px(340), px(64)), f"{i + 1}. {rol.value}",
                       lambda r=rol: self._elegir_rol(r), atajo=ATAJOS[i])
                 for i, rol in enumerate(Role)
             ]
         else:
             self.botones = [
-                Boton(pygame.Rect(130 + 60, 450, 240, 56), "1. Hombre",
+                Boton(pygame.Rect(px(190), px(450), px(240), px(56)), "1. Hombre",
                       lambda: self._elegir_genero(Genero.HOMBRE), atajo=pygame.K_1),
-                Boton(pygame.Rect(534 + 60, 450, 240, 56), "2. Mujer",
+                Boton(pygame.Rect(px(594), px(450), px(240), px(56)), "2. Mujer",
                       lambda: self._elegir_genero(Genero.MUJER), atajo=pygame.K_2),
-                Boton(pygame.Rect(30, ALTO - 84, 160, 50), "Volver", self._volver),
+                Boton(pygame.Rect(px(30), ALTO - px(84), px(160), px(50)), "Volver", self._volver),
             ]
 
     def _elegir_rol(self, rol: Role) -> None:
@@ -79,19 +79,20 @@ class SeleccionState(BaseState):
             # La vista previa sigue al mouse (hover); si no hay hover, muestra el primer rol.
             idx = next((i for i, b in enumerate(self.botones) if b.hover), 0)
             rol = list(Role)[idx]
-            panel = Panel(pygame.Rect(440, 130, 544, 420), rol.value)
+            panel = Panel(pygame.Rect(px(440), px(130), px(544), px(420)), rol.value)
             ejemplo = Personaje(rol, Genero.HOMBRE)  # la vista previa del rol; el genero se elige luego
             dibujar_seleccion(
                 pantalla, fuentes, tema, "Elige tu rol", "Cada rol decide distinto en Civitas",
-                [panel], [(ejemplo, pygame.Rect(470, 190, 190, 330))],
-                (pygame.Rect(680, 190, 280, 300), ejemplo.descripcion_rol),
+                [panel], [(ejemplo, pygame.Rect(px(470), px(190), px(190), px(330)))],
+                (pygame.Rect(px(680), px(190), px(280), px(300)), ejemplo.descripcion_rol),
                 self.botones, "Clic o teclas 1-4  |  ESC: volver")
         else:
             assert self.rol is not None
-            paneles = [Panel(pygame.Rect(130, 130, 360, 400)), Panel(pygame.Rect(534, 130, 360, 400))]
+            paneles = [Panel(pygame.Rect(px(130), px(130), px(360), px(400))),
+                       Panel(pygame.Rect(px(534), px(130), px(360), px(400)))]
             previas = [
-                (Personaje(self.rol, Genero.HOMBRE), pygame.Rect(160, 150, 300, 290)),
-                (Personaje(self.rol, Genero.MUJER), pygame.Rect(564, 150, 300, 290)),
+                (Personaje(self.rol, Genero.HOMBRE), pygame.Rect(px(160), px(150), px(300), px(290))),
+                (Personaje(self.rol, Genero.MUJER), pygame.Rect(px(564), px(150), px(300), px(290))),
             ]
             dibujar_seleccion(
                 pantalla, fuentes, tema, "Elige tu personaje", f"Rol: {self.rol.value}",

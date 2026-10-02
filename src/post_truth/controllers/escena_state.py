@@ -25,7 +25,7 @@ import random
 
 import pygame
 
-from post_truth.config import RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL
+from post_truth.config import ANCHO, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, px
 from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import DecisionNode, DecisionTree, load_trees
 from post_truth.game_state import CityState
@@ -45,13 +45,17 @@ from post_truth.views.tarjeta_civitas_view import EstadoTarjeta, pista_con_tecla
 
 DECIDIENDO, PROPAGACION, CONSECUENCIA, FIN = "decidiendo", "propagacion", "consecuencia", "fin"
 JUGADOR = "jugador"  # id del vertice del grafo social que representa al jugador
-RECT_DIALOGO = pygame.Rect(24, 404, 976, 132)
+RECT_DIALOGO = pygame.Rect(px(24), px(404), ANCHO - 2 * px(24), px(132))
 ATAJOS = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
-Y_BOTONES, ALTO_BOTONES, MARGEN, SEPARACION = 546, 62, 24, 14
+Y_BOTONES, ALTO_BOTONES, MARGEN, SEPARACION = px(546), px(62), px(24), px(14)
 # Teclas para investigar la 1.a, 2.a... pista de la tarjeta (letras de views/tarjeta_civitas_view.TECLAS_PISTA)
 TECLAS_INVESTIGAR = {pygame.K_a: "A", pygame.K_s: "S", pygame.K_d: "D", pygame.K_f: "F", pygame.K_g: "G"}
 # Teclas para viajar a la 1.a, 2.a... zona del mapa (letras de views/mapa_view.TECLAS_VIAJE)
 TECLAS_VIAJAR = {pygame.K_q: "Q", pygame.K_w: "W", pygame.K_e: "E", pygame.K_r: "R", pygame.K_t: "T"}
+
+
+# Boton unico (Continuar, Saltar, Ver consecuencias...): centrado bajo el dialogo
+RECT_BOTON_CENTRAL = pygame.Rect((ANCHO - px(300)) // 2, Y_BOTONES, px(300), ALTO_BOTONES)
 
 
 def _rects_botones(n: int) -> list[pygame.Rect]:
@@ -127,7 +131,8 @@ class EscenaState(BaseState):
             ruta=ruta, costo_ruta=costo if ruta else None,
             pendientes=self.investigacion.lugares_pendientes() if decidiendo else set(),
             revisadas=self.investigacion.lugares_revisados(),
-            hover=self._hover_zona if decidiendo else None, teclas=decidiendo)
+            hover=self._hover_zona if decidiendo else None, teclas=decidiendo,
+            mostrar_ayuda=decidiendo)   # la franja de ayuda solo sirve mientras se decide
 
     def _viajar(self, destino: str) -> None:
         """Ir a una zona cualquiera: cuesta la distancia del camino mas corto (Dijkstra) y, si la
@@ -235,7 +240,7 @@ class EscenaState(BaseState):
         self.animo = 0
         self._narracion = self.animacion.narracion()
         self.dialogo.set_texto(self._narracion, "Civitas")
-        self.botones = [Boton(pygame.Rect(362, Y_BOTONES, 300, ALTO_BOTONES), "Saltar animacion (Enter)",
+        self.botones = [Boton(RECT_BOTON_CENTRAL, "Saltar animacion (Enter)",
                               self.animacion.saltar, atajo=pygame.K_RETURN)]
 
     def _simular(self, nodo: DecisionNode, respaldo: int) -> SimulacionDecision | None:
@@ -255,7 +260,7 @@ class EscenaState(BaseState):
         # El texto cambia segun lo hallado (variante escrita en events.json o "Habias revisado: ...")
         mensaje = nodo.consecuencia(self.investigacion.pistas_descubiertas()) or "Nada cambia por ahora."
         self.dialogo.set_texto(f"{mensaje}\n{aviso}" if aviso else mensaje, "Consecuencia")
-        self.botones = [Boton(pygame.Rect(362, Y_BOTONES, 300, ALTO_BOTONES), "Continuar (Enter)",
+        self.botones = [Boton(RECT_BOTON_CENTRAL, "Continuar (Enter)",
                               self._continuar, atajo=pygame.K_RETURN)]
 
     def _terminar_propagacion(self) -> None:
@@ -273,7 +278,7 @@ class EscenaState(BaseState):
             return
         self.fase, self.impacto, self.animo = FIN, None, 1 if self.ciudad.score >= 0 else -1
         self.dialogo.set_texto(f"Termino la jornada en Ciudad Nova. Tu puntaje final es {self.ciudad.score}.", "Fin")
-        self.botones = [Boton(pygame.Rect(362, Y_BOTONES, 300, ALTO_BOTONES), "Volver al menu (Enter)",
+        self.botones = [Boton(RECT_BOTON_CENTRAL, "Volver al menu (Enter)",
                               lambda: self.app.estados.cambiar("menu"), atajo=pygame.K_RETURN)]
 
     # --- ciclo del estado ---------------------------------------------------------------
@@ -317,14 +322,14 @@ class EscenaState(BaseState):
                 self._narracion = narracion
                 self.dialogo.set_texto(narracion, "Civitas")
             if self.animacion.terminada and self.botones[0].texto.startswith("Saltar"):
-                self.botones = [Boton(pygame.Rect(362, Y_BOTONES, 300, ALTO_BOTONES), "Ver consecuencias (Enter)",
+                self.botones = [Boton(RECT_BOTON_CENTRAL, "Ver consecuencias (Enter)",
                                       self._terminar_propagacion, atajo=pygame.K_RETURN)]
 
     def draw(self, pantalla: pygame.Surface) -> None:
         if self.fase == FIN:
             titulo, texto = "Fin de la jornada", "Gracias por cuidar Ciudad Nova."
         elif self.fase == CONSECUENCIA:
-            titulo, texto = "Consecuencias en Ciudad Nova", ""
+            titulo, texto = "Consecuencias", ""
         else:
             # Al decidir se ve la tarjeta de Civitas (sin titulo: "Rumor sobre..." delataria la noticia)
             titulo, texto = "", ""
