@@ -61,12 +61,12 @@ class DecisionTree:
         return tree
 
     def _validar_variantes(self) -> None:
-        """Toda variante debe nombrar pistas que existan en la noticia."""
-        ids = {p.id for p in self.event.clues}
+        """Toda variante debe nombrar pistas o evidencias que existan en la noticia."""
+        ids = {p.id for p in self.event.clues} | {e.id for e in self.event.evidences}
         for node in self.dfs_nodes():
             for v in node.variantes:
                 if not v.si <= ids:
-                    raise ValueError(f"{node.node_id}: la variante usa pistas inexistentes {sorted(v.si - ids)}")
+                    raise ValueError(f"{node.node_id}: la variante usa hallazgos inexistentes {sorted(v.si - ids)}")
 
     def insert_decision(
         self,

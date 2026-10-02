@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from enum import Enum
 
-from post_truth.models.pistas import Pista, validar_pistas
+from post_truth.models.pistas import Evidencia, Pista, validar_evidencias, validar_pistas
 from post_truth.models.publicacion import Autor, Imagen
 
 
@@ -57,6 +57,17 @@ class Impact:
             score=round(self.score * factor),
         )
 
+    def atenuar_beneficios(self, factor: float) -> "Impact":
+        """Escala por `factor` (0..1) SOLO los efectos beneficiosos (sube informacion verificada,
+        confianza, convivencia, bienestar o puntaje; baja desinformacion o conflictos). Los efectos
+        perjudiciales no se tocan: equivocarse no se vuelve mas barato por tener poco respaldo."""
+        valores = {}
+        for campo in fields(self):
+            v = getattr(self, campo.name)
+            bueno = v < 0 if campo.name in ("misinformation", "conflicts") else v > 0
+            valores[campo.name] = round(v * factor) if bueno else v
+        return Impact(**valores)
+
     def __add__(self, other: "Impact") -> "Impact":
         return Impact(
             verified_information=self.verified_information + other.verified_information,
@@ -97,6 +108,8 @@ class NewsEvent:
     comments: int = 0
     # ...y las pistas que se pueden investigar (una por zona de la tarjeta)
     clues: tuple[Pista, ...] = ()
+    # Evidencia repartida por el mapa de la ciudad (una por zona): se halla viajando hasta alli
+    evidences: tuple[Evidencia, ...] = ()
 
     @classmethod
     def from_dict(cls, d: dict) -> "NewsEvent":
@@ -108,7 +121,8 @@ class NewsEvent:
             source=d.get("fuente", ""), date=d.get("fecha", ""),
             image=Imagen.from_dict(d["imagen"]) if d.get("imagen") else None,
             likes=int(d.get("likes", 0)), comments=int(d.get("comentarios", 0)),
-            clues=validar_pistas(Pista.from_dict(p) for p in d.get("pistas", [])))
+            clues=validar_pistas(Pista.from_dict(p) for p in d.get("pistas", [])),
+            evidences=validar_evidencias(Evidencia.from_dict(e) for e in d.get("evidencias", [])))
 
     def to_dict(self) -> dict:
         """Mismo formato que events.json (sin las decisiones, que viven en el arbol)."""
@@ -119,5 +133,6 @@ class NewsEvent:
         d.update({"fuente": self.source, "fecha": self.date})
         if self.image is not None:
             d["imagen"] = self.image.to_dict()
-        d.update({"likes": self.likes, "comentarios": self.comments, "pistas": [p.to_dict() for p in self.clues]})
+        d.update({"likes": self.likes, "comentarios": self.comments, "pistas": [p.to_dict() for p in self.clues],
+                  "evidencias": [e.to_dict() for e in self.evidences]})
         return d
