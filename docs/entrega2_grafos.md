@@ -34,7 +34,7 @@ investigar (antes de decidir)
 boton de decision
   1. ARBOL         DFS hasta el nodo elegido -> impacto acumulado, escalado por el rol
   2. RESPALDO      lo hallado (nada / solo tarjeta / evidencia de campo) gradua Verificar
-                   (50% / 75% / 100%) y Reportar (rechazado / limita / corta)
+                   (15% / 40% / 100%) y Reportar (rechazado / limita / corta)
   3. GRAFO SOCIAL  se simula como viaja la publicacion (BFS por olas + Dijkstra) y se anima
   4. CONSECUENCIAS impacto del arbol (atenuado segun el respaldo) + impacto de la propagacion
                    -> CityState; el texto depende de las pistas y evidencias descubiertas
@@ -76,7 +76,7 @@ efecto de la publicacion (`root_effect`) y el de la decision, y lo escala por ro
 (`Impact.scaled_for_role`: el Influencer amplifica 1.35, el Periodista premia verificar, el
 Candidato pesa mas sobre la confianza). Es la reaccion inmediata.
 
-Datos reales: 5 eventos de 4 a 7 nodos y profundidad maxima 3.
+Datos reales: 18 eventos de 4 a 7 nodos y profundidad maxima 2 (cada partida juega 8, sorteados).
 
 ## 2. Grafo social
 
@@ -204,7 +204,8 @@ numero de saltos); aqui se usa solo para comprobar que el mapa sea conexo. Con d
 Dijkstra seria incorrecto: por eso se exige que sean enteros positivos.
 
 Costos reales desde la Plaza: Parque 1, Colegio 2, Barrio 2, Alcaldia 2. El viaje mas largo
-(Alcaldia - Barrio, Alcaldia - Colegio) cuesta 4 de los 5 de energia.
+(Alcaldia - Barrio, Alcaldia - Colegio) cuesta 4: mas que los 3 de energia de una publicacion, asi
+que se llega por tramos a lo largo de varias publicaciones (la posicion se conserva).
 
 **Evidencia por zona** (`models/pistas.py`, datos en `data/events.json`). Cada noticia deja de 2 a 3
 evidencias, cada una en una zona distinta: `{id, lugar, tipo (testigo, documento, grabacion), titulo,
@@ -212,9 +213,9 @@ hallazgo, senal (falsa/verdadera/neutra)}`. Al llegar a la zona (o al abrir la n
 esta ahi) la evidencia se revela como una pista mas: entra en el mismo registro que las pistas de la
 tarjeta, en el veredicto y en el texto de la consecuencia, y se puede editar sin tocar codigo.
 
-**Energia y costo.** Hay una sola energia por publicacion (5). Revisar una pista de la tarjeta cuesta 1
+**Energia y costo.** Hay una sola energia por publicacion (3). Revisar una pista de la tarjeta cuesta 1
 o 2 y viajar cuesta la distancia del camino mas corto. Por revisar hay mas que energia (la tarjeta
-sola cuesta 6), asi que hay que elegir. Decidir cuesta 0: las cuatro acciones siempre estan
+sola cuesta 6 o mas), asi que hay que elegir. Decidir cuesta 0: las cuatro acciones siempre estan
 disponibles, aunque la energia llegue a 0.
 
 **Como afecta la decision.** Verificar y Reportar NO exigen estar en ninguna zona: su resultado depende
@@ -223,8 +224,8 @@ campo (la del mapa). Solo se atenuan los beneficios; los perjuicios de equivocar
 
 | Respaldo | Verificar (beneficios y friccion sobre el grafo social) | Reportar |
 |---|---|---|
-| 0 nada | 50% | Rechazado: no pasa nada en el grafo y baja la confianza |
-| 1 tarjeta | 75% | Limita al autor (sus conexiones pierden la mitad del peso) |
+| 0 nada | 15% | Rechazado: no pasa nada en el grafo y baja la confianza |
+| 1 tarjeta | 40% | Limita al autor (sus conexiones conservan el 60% del peso; los beneficios del reporte, 30%) |
 | 2 campo | 100% | Aceptado: se cortan las conexiones del autor |
 
 Reportar cuenta solo lo que apunta a FALSA (lo que justifica un reporte); Verificar cuenta cualquier
@@ -233,29 +234,37 @@ senal que no sea neutra. Por eso reportar una noticia verdadera siempre se recha
 ## 4. Como se combinan en una decision
 
 Ejemplo: noticia falsa de la tarjeta "@vecina_barrio" (el colegio se cierra), jugador en la Plaza con
-5 de energia.
+3 de energia.
 
-1. Mira la tarjeta: revisa la cuenta sospechosa (1). Le quedan 4.
+1. Mira la tarjeta: revisa la cuenta sospechosa (1). Le quedan 2.
 2. Viaja al Colegio (Dijkstra: Plaza - Colegio, costo 2). Al llegar se revela el testigo (la directora:
-   no hay ninguna orden de cierre). Le quedan 2. Ya tiene respaldo de campo (2).
+   no hay ninguna orden de cierre). Le quedan 0. Ya tiene respaldo de campo (2).
 3. Elige Reportar: el arbol aporta sus beneficios completos, el grafo social corta las conexiones del
    autor y se anima la propagacion; el texto de la consecuencia usa la variante de la directora.
 4. Si hubiera decidido sin investigar, Reportar se habria rechazado (pierde confianza) y Verificar
-   habria rendido la mitad.
+   habria rendido el 15%.
 
-Resultados de 40 partidas por estilo de juego (jugador automatico, roles y semillas repetidos),
-promedio al final:
+### 4.1 Balance (etapa 8)
 
-| Estilo | Puntaje | Desinformacion | Conflictos | Info verificada |
-|---|---|---|---|---|
-| Siempre compartir | -37.5 | 98.7 | 82.5 | 69.5 |
-| Siempre ignorar | -15.2 | 90.3 | 51.3 | 62.7 |
-| Azar (explora y decide sin criterio) | +30.7 | 41.3 | 27.6 | 92.6 |
-| Viajar a la evidencia y verificar/reportar | +55.7 | 12.2 | 12.0 | 99.8 |
-| Informado (tarjeta, evidencia si apunta a falsa, decide con el veredicto) | +63.0 | 16.2 | 9.8 | 99.2 |
+Medido con `tools/balance.py` (300 partidas por politica, semillas fijas, rol Ciudadano). Se gana una
+partida si termina con desinformacion < 40 e informacion verificada > 50.
 
-El resultado depende de la habilidad: investigar con criterio y decidir con el respaldo supera con
-claridad a compartir o ignorar sin mirar.
+| Politica | Antes: desinf. | Antes: verif. | Antes: gana | Despues: desinf. | Despues: verif. | Despues: gana |
+|---|---|---|---|---|---|---|
+| Ignorar siempre | 88.0 | 61.3 | 0% | 75.3 | 67.4 | 3% |
+| Compartir siempre | 97.5 | 72.9 | 0% | 96.7 | 85.1 | 0% |
+| Verificar siempre (a ciegas) | 29.8 | 97.0 | 94% | 44.6 | 97.0 | 43% |
+| Investigar con criterio | 19.0 | 98.1 | 100% | 28.7 | 99.3 | 82% |
+
+"Antes" son los 5 eventos, energia 5 y Verificar 50/75/100%; "despues" son 18 eventos (8 por partida),
+energia 3 y los factores nuevos. Con los otros tres roles, "gana" para investigar con criterio queda entre
+86% y 91%, verificar a ciegas entre 52% y 53% e ignorar entre 2% y 12% (el Periodista).
+
+El resultado depende de la habilidad: investigar con criterio y decidir con el respaldo gana la mayoria
+de las partidas pero no todas, verificar a ciegas queda a medio camino y compartir o ignorar sin mirar
+pierden. Lo que se ajusto, sin cambiar la estructura: `FUERZA_VERIFICAR` (0.5/0.75/1 -> 0.15/0.4/1),
+`FUERZA_REPORTAR` (0/0.6/1 -> 0/0.3/1), `FACTOR_LIMITE_REPORTE` (0.5 -> 0.6), `ENERGIA_POR_NOTICIA`
+(5 -> 3) y el tope de desinformacion de una propagacion falsa (12 -> 24, `PROPAGACION_FALSA`).
 
 ## 5. Preguntas tipicas de sustentacion
 
@@ -338,6 +347,8 @@ demostracion de cada operacion.
 ```bash
 python -m unittest discover -s tests                 # todas las pruebas, sin ventana (SDL dummy)
 python -m unittest tests.test_partida_completa       # partidas completas del jugador automatico
+python tools/balance.py 300                          # tabla de balance: 300 partidas por politica (unos 10 s)
+python tools/balance.py 300 --rol 1                  # con otro rol (0 Ciudadano, 1 Periodista, 2 Influencer, 3 Candidato)
 ```
 
 `tests/test_partida_completa.py` juega el flujo Menu -> Seleccion -> Escena -> Fin con teclado y
@@ -348,9 +359,14 @@ el total. `tests/test_viajes_escena.py` prueba los viajes, la evidencia y el res
 
 ## 8. Limites conocidos
 
-- Compartir o ignorar siempre sigue llevando la desinformacion cerca de 100 (ver la tabla de la
-  seccion 4). Los topes y factores estan en constantes (`ResultadoPropagacion.impacto`,
-  `FUERZA_VERIFICAR` / `FUERZA_REPORTAR` en `structures/propagacion.py`) para ajustar el balance final.
+- El balance (seccion 4.1) es un primer ajuste hecho con un jugador automatico, no con personas. Las perillas
+  estan en constantes (`PROPAGACION_FALSA` y `PROPAGACION_VERDADERA` en `structures/grafo_social.py`,
+  `FUERZA_VERIFICAR`, `FUERZA_REPORTAR` y `FACTOR_LIMITE_REPORTE` en `structures/propagacion.py`,
+  `ENERGIA_POR_NOTICIA` en `models/pistas.py`). La informacion verificada final es alta con casi cualquier
+  politica (67 o mas), asi que en la practica la desinformacion es lo que decide si se gana.
+- Ignorar siempre gana 2-3% de las partidas (hasta 12% con el Periodista) cuando el sorteo trae pocas noticias
+  falsas: esa parte depende de los efectos de cada evento, no de las perillas anteriores.
 - El grafo social y el de la ciudad son datos fijos de ejemplo (14 ciudadanos, 5 zonas) y cada noticia
-  tiene solo 2 o 3 evidencias.
+  tiene solo 2 o 3 evidencias. Con 3 de energia algunos lugares quedan a mas de un viaje (por ejemplo
+  Alcaldia - Barrio cuesta 4).
 - Aun no hay modo de sustentacion en Pygame (ver la hoja de ruta en CLAUDE.md).

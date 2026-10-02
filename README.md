@@ -58,7 +58,7 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
   amplifica), Verificar frena la difusion de una noticia falsa y Reportar corta las
   conexiones de su autor.
 - **Verificar y Reportar no exigen estar en ningun lugar:** su resultado depende del respaldo reunido
-  (nada, solo la tarjeta o evidencia de campo). Verificar rinde 50%, 75% o 100%; Reportar sin pruebas se
+  (nada, solo la tarjeta o evidencia de campo). Verificar rinde 15%, 40% o 100%; Reportar sin pruebas se
   rechaza y baja la confianza, con pruebas de la tarjeta limita al autor y con evidencia de campo corta
   sus conexiones. Los rumores se propagan solo por el grafo social (entre personas), no por el mapa.
   Lo investigado tambien cambia el texto de la consecuencia.
@@ -85,6 +85,22 @@ POSTTRUTH_ESCALA=1.0 python src/main.py     # tamano original (1024 x 640)
 POSTTRUTH_ESCALA=1.5 python src/main.py     # mas grande
 ```
 
+## Balance del juego
+
+`tools/balance.py` juega cientos de partidas simuladas, sin ventana y con semillas fijas, con cuatro politicas
+(ignorar siempre, compartir siempre, verificar a ciegas e investigar con criterio) y muestra la desinformacion y
+la informacion verificada finales y el porcentaje de partidas ganadas (desinformacion < 40 e informacion
+verificada > 50):
+
+```bash
+python tools/balance.py 300            # 300 partidas por politica (unos 10 segundos)
+python tools/balance.py 300 --rol 1    # con otro rol: 0 Ciudadano, 1 Periodista, 2 Influencer, 3 Candidato
+```
+
+Resultado actual con el rol Ciudadano: ignorar gana 3%, compartir 0%, verificar a ciegas 43% e investigar
+con criterio 82%. La tabla antes y despues del ajuste esta en `docs/entrega2_grafos.md` (seccion 4.1).
+Cada partida juega 8 publicaciones sorteadas entre las 18 de `data/events.json`.
+
 ## Ejecutar pruebas
 
 ```bash
@@ -108,7 +124,8 @@ src/post_truth/structures/               grafo_social, propagacion, grafo_ciudad
 src/post_truth/controllers/              Estados: menu, intro, seleccion, escena (patron State)
 src/post_truth/views/                    Tema, componentes, personajes, retratos, intro, escena, tarjeta de Civitas, grafo, mapa, fondos por zona
 src/post_truth/app.py                    Version Tkinter de la entrega 1 (obsoleta)
-data/                                    events.json, grafo_social.json, grafo_ciudad.json, intro.json
+data/                                    events.json (18 publicaciones), grafo_social.json, grafo_ciudad.json, intro.json
+tools/                                   balance.py: mide el balance con partidas simuladas
 docs/                                    Guias de sustentacion de las entregas 1 y 2
 tests/                                   Pruebas unitarias, de integracion y de partida completa
 ```
