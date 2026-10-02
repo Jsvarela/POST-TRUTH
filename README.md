@@ -23,7 +23,7 @@ obsoleto: se conserva solo como referencia.
 |---|---|---|
 | Arbol n-ario de decisiones | `decision_tree.py`, `data/events.json` | Ramas de cada publicacion y sus consecuencias (DFS acumula el impacto, BFS recorre por niveles) |
 | Grafo social (dirigido, ponderado) | `structures/grafo_social.py`, `data/grafo_social.json` | Como se propaga una publicacion al compartirla: BFS por olas y Dijkstra para el tiempo |
-| Grafo de la ciudad (no dirigido) | `structures/grafo_ciudad.py`, `structures/rumores_ciudad.py`, `data/grafo_ciudad.json` | Zonas, movimiento del jugador y expansion de rumores: BFS |
+| Grafo de la ciudad (no dirigido, ponderado) | `structures/grafo_ciudad.py`, `data/grafo_ciudad.json` | Mapa de lugares donde se investiga: viajar cuesta energia (la distancia del camino mas corto, con Dijkstra) y cada zona guarda evidencia de la noticia |
 
 La justificacion completa (problema, estructura, variante, insercion y eliminacion,
 recorridos y complejidad, efecto de la decision) esta en
@@ -41,20 +41,25 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
 
 - Se elige un rol (Ciudadano, Periodista, Influencer, Candidato) y un personaje.
 - Cada publicacion es una **tarjeta de Civitas** (autor con avatar, fuente, fecha, texto, imagen, likes y
-  comentarios) que ocurre en una zona de la ciudad. Se decide con los botones (teclas 1-4).
+  comentarios). Se decide con los botones (teclas 1-4).
 - **Investigar:** las partes de la tarjeta (autor, fuente, fecha, imagen, texto, reacciones) son zonas
   clicables (o teclas A S D F G) que esconden pistas: una cuenta sospechosa, una fecha antigua, una imagen
-  reutilizada... Revisar una pista revela su hallazgo y gasta energia (3 por publicacion; hay mas pistas que
-  energia, asi que hay que elegir; algunas son neutras y no prueban nada). Lo investigado cambia el texto de
-  la consecuencia de la decision, no los puntajes.
+  reutilizada... Revisar una pista revela su hallazgo y gasta energia (5 por publicacion; hay mas por revisar
+  que energia, asi que hay que elegir; algunas pistas son neutras y no prueban nada).
+- **Viajar por el mapa:** la noticia tambien deja **evidencia en lugares de la ciudad** (un testigo, un
+  documento, una grabacion). Se puede ir a cualquier zona con un clic en el minimapa (o Q W E R T); el viaje
+  cuesta la distancia del camino mas corto (Dijkstra) en la misma energia, y al llegar se revela la
+  evidencia. En el minimapa cada via muestra su distancia, la ruta elegida se resalta con su costo, el pin
+  marca donde estas y un rombo marca las zonas con evidencia pendiente.
 - **Compartir, Verificar o Reportar** muestran como viaja la noticia por la red social,
   ola por ola, y despues sus consecuencias. Compartir parte del jugador (el Influencer
   amplifica), Verificar frena la difusion de una noticia falsa y Reportar corta las
   conexiones de su autor.
-- **Verificar y Reportar solo se pueden hacer en la zona de la noticia.** El jugador se
-  mueve por el minimapa (clic en una zona vecina o teclas Q W E R). Moverse y decidir cuestan
-  una ronda: una noticia falsa sin atender es un rumor que se expande a las zonas vecinas y
-  penaliza. "Desmentir aqui" lo elimina estando en una zona infectada.
+- **Verificar y Reportar no exigen estar en ningun lugar:** su resultado depende del respaldo reunido
+  (nada, solo la tarjeta o evidencia de campo). Verificar rinde 50%, 75% o 100%; Reportar sin pruebas se
+  rechaza y baja la confianza, con pruebas de la tarjeta limita al autor y con evidencia de campo corta
+  sus conexiones. Los rumores se propagan solo por el grafo social (entre personas), no por el mapa.
+  Lo investigado tambien cambia el texto de la consecuencia.
 - Otras teclas: Enter para continuar, Espacio para saltar el texto, I en el menu para ver la introduccion, T en el menu para cambiar
   de tema (normal, alto contraste, daltonismo), ESC para volver.
 
@@ -86,7 +91,7 @@ src/post_truth/config.py                 Constantes y rutas de los datos
 src/post_truth/models/                   Logica pura: dominio (Impact, NewsEvent, Role), personaje, intro, publicacion y pistas
 src/post_truth/game_state.py             CityState: indicadores de Ciudad Nova
 src/post_truth/decision_tree.py          Arbol n-ario, DFS y BFS
-src/post_truth/structures/               grafo_social, propagacion, grafo_ciudad, rumores_ciudad
+src/post_truth/structures/               grafo_social, propagacion, grafo_ciudad
 src/post_truth/controllers/              Estados: menu, intro, seleccion, escena (patron State)
 src/post_truth/views/                    Tema, componentes, personajes, retratos, intro, escena, tarjeta de Civitas, grafo, mapa, fondos por zona
 src/post_truth/app.py                    Version Tkinter de la entrega 1 (obsoleta)
