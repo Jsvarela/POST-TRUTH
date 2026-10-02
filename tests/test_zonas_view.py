@@ -59,24 +59,100 @@ class ZonasViewTest(unittest.TestCase):
             self.assertEqual(zona_en(estado, RECT_MAPA, punto), id)
         self.assertIsNone(zona_en(estado, RECT_MAPA, (RECT_MAPA.right - 1, RECT_MAPA.centery)))
 
+    # --- minimapa nuevo: lugares de investigacion con distancias --------------------------------
+    def _estado(self, actual: str = "plaza", **kw) -> EstadoMapa:
+        base = {"costos": self.ciudad.costos_desde(actual), "energia": 5}
+        base.update(kw)
+        return EstadoMapa(self.ciudad, actual, **base)
+
+    def _imagen(self, estado: EstadoMapa, tema_id: str = "normal") -> bytes:
+        tema = TEMAS[tema_id]
+        self.pantalla.fill((0, 0, 0))
+        dibujar_mapa(self.pantalla, self.fuentes, tema, RECT_MAPA, estado)
+        return pygame.image.tobytes(self.pantalla.subsurface(RECT_MAPA), "RGB")
+
     def test_mapa_dibuja_todos_los_estados_en_todos_los_temas(self) -> None:
-        estado = EstadoMapa(self.ciudad, "plaza", zona_noticia="colegio", infectadas={"colegio", "barrio"},
-                            en_riesgo={"parque", "plaza"}, alcanzables=self.ciudad.vecinos("plaza"))
-        for tema in TEMAS.values():
-            dibujar_mapa(self.pantalla, self.fuentes, tema, RECT_MAPA, estado)
-            dibujar_mapa(self.pantalla, self.fuentes, tema, RECT_MAPA, EstadoMapa(self.ciudad, "colegio"))
+        ruta = self.ciudad.ruta("plaza", "barrio")
+        estados = [
+            self._estado(),
+            self._estado(pendientes={"colegio", "alcaldia"}, revisadas={"barrio"}, teclas=True),
+            self._estado(ruta=ruta.zonas, costo_ruta=ruta.costo, hover="barrio"),
+            self._estado(energia=0),                        # todo tachado: no alcanza para ningun viaje
+            self._estado("colegio", ruta=("colegio", "plaza"), costo_ruta=2, pendientes={"colegio"}),
+            EstadoMapa(self.ciudad, "colegio"),             # el minimo: la introduccion lo usa asi
+        ]
+        for tema in TEMAS:
+            for estado in estados:
+                self._imagen(estado, tema)
 
     def test_la_zona_actual_se_distingue_de_las_demas(self) -> None:
+        self.assertNotEqual(self._imagen(self._estado("plaza")), self._imagen(self._estado("parque")))
+
+    def test_el_pin_del_jugador_se_dibuja_encima_de_todo_y_se_ve_en_todos_los_temas(self) -> None:
+        """Aunque la zona del jugador tenga evidencia pendiente y la ruta pase por ella, el pin queda visible."""
+        from post_truth.views.mapa_view import RADIO, _posiciones
+        estado = self._estado("plaza", pendientes={"plaza", "colegio"}, ruta=("colegio", "plaza", "alcaldia"),
+                              costo_ruta=4, hover="plaza", teclas=True)
+        x, y = _posiciones(estado, RECT_MAPA)["plaza"]
+        cabeza = (RECT_MAPA.x + x, RECT_MAPA.y + y - RADIO + 2 - 19)
+        for id, tema in TEMAS.items():
+            self._imagen(estado, id)
+            self.assertEqual(self.pantalla.get_at((cabeza[0], cabeza[1]))[:3], tema.fondo, id)        # punto central
+            self.assertEqual(self.pantalla.get_at((cabeza[0] + 7, cabeza[1]))[:3], tema.acento, id)   # cuerpo del pin
+            self.assertEqual(self.pantalla.get_at((cabeza[0] + 10, cabeza[1]))[:3], tema.texto, id)   # contorno claro
+
+    def test_la_evidencia_pendiente_y_la_revisada_se_distinguen_por_forma_no_solo_por_color(self) -> None:
+        from post_truth.views.mapa_view import RADIO, _posiciones
         tema = TEMAS["normal"]
-        a = EstadoMapa(self.ciudad, "plaza")
-        b = EstadoMapa(self.ciudad, "parque")
-        self.pantalla.fill((0, 0, 0))
-        dibujar_mapa(self.pantalla, self.fuentes, tema, RECT_MAPA, a)
-        img_a = pygame.image.tobytes(self.pantalla.subsurface(RECT_MAPA), "RGB")
-        self.pantalla.fill((0, 0, 0))
-        dibujar_mapa(self.pantalla, self.fuentes, tema, RECT_MAPA, b)
-        img_b = pygame.image.tobytes(self.pantalla.subsurface(RECT_MAPA), "RGB")
-        self.assertNotEqual(img_a, img_b)
+        x, y = _posiciones(self._estado(), RECT_MAPA)["alcaldia"]
+        region = pygame.Rect(RECT_MAPA.x + x + RADIO - 6, RECT_MAPA.y + y - 14, 26, 24)
+
+        def pintados(estado: EstadoMapa) -> int:
+            self._imagen(estado)
+            sub = self.pantalla.subsurface(region)
+            fondo = tema.fondo
+            return sum(sub.get_at((i, j))[:3] != fondo for i in range(region.w) for j in range(region.h))
+
+        nada = pintados(self._estado())
+        pendiente = pintados(self._estado(pendientes={"alcaldia"}))
+        revisada = pintados(self._estado(revisadas={"alcaldia"}))
+        self.assertGreater(pendiente, revisada)             # rombo relleno con "?" vs rombo hueco con visto
+        self.assertGreater(revisada, nada)
+        self.assertNotEqual(self._imagen(self._estado(pendientes={"alcaldia"})),
+                            self._imagen(self._estado(revisadas={"alcaldia"})))
+
+    def test_la_ruta_elegida_se_resalta_y_muestra_su_costo(self) -> None:
+        sin = self._imagen(self._estado())
+        con = self._imagen(self._estado(ruta=("plaza", "alcaldia"), costo_ruta=2))
+        otra = self._imagen(self._estado(ruta=("plaza", "parque", "barrio"), costo_ruta=2))
+        self.assertEqual(len({sin, con, otra}), 3)
+        self.assertNotEqual(self._imagen(self._estado(ruta=("plaza", "alcaldia"), costo_ruta=2)),
+                            self._imagen(self._estado(ruta=("plaza", "alcaldia"), costo_ruta=7)))   # el numero cambia
+
+    def test_los_costos_de_viaje_dependen_de_la_energia_que_queda(self) -> None:
+        self.assertNotEqual(self._imagen(self._estado(energia=5)), self._imagen(self._estado(energia=1)))
+        self.assertNotEqual(self._imagen(self._estado(energia=5)), self._imagen(self._estado(energia=None)))
+
+    def test_cada_via_muestra_su_distancia(self) -> None:
+        """Cambiar una distancia del grafo cambia el dibujo: el numero sale de los datos, no de la vista."""
+        copia = GrafoCiudad.from_dict(self.ciudad.to_dict())    # no se toca el grafo compartido de la clase
+        antes = self._imagen(EstadoMapa(copia, "plaza"))
+        copia.eliminar_conexion("barrio", "plaza")
+        copia.agregar_conexion("barrio", "plaza", 7)
+        self.assertNotEqual(antes, self._imagen(EstadoMapa(copia, "plaza")))
+
+    def test_las_letras_de_atajo_aparecen_solo_si_se_pide(self) -> None:
+        self.assertNotEqual(self._imagen(self._estado(teclas=False)), self._imagen(self._estado(teclas=True)))
+
+    def test_colores_del_tema(self) -> None:
+        estado = self._estado(pendientes={"colegio"}, ruta=("plaza", "colegio"), costo_ruta=2)
+        self.assertEqual(len({self._imagen(estado, tema) for tema in TEMAS}), 3)
+
+    def test_zona_de_tecla(self) -> None:
+        from post_truth.views.mapa_view import tecla_de, zona_de_tecla
+        for z in self.ciudad.zonas():
+            self.assertEqual(zona_de_tecla(self.ciudad, tecla_de(self.ciudad, z.id)), z.id)
+        self.assertIsNone(zona_de_tecla(self.ciudad, "Z"))
 
 
 if __name__ == "__main__":
