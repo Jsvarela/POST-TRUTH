@@ -190,7 +190,7 @@ triangulo) y para ir de una a otra hay varios caminos, de distinto costo: no es 
 | Consulta | Metodo | Costo | Para que |
 |---|---|---|---|
 | Camino de menor costo y su costo | `ruta(a, b)` (**Dijkstra**) | O((V + E) log V) | Cuanto cuesta viajar a una zona y por donde se va |
-| Costo a todas las zonas | `costos_desde(origen)` (Dijkstra, una corrida) | O((V + E) log V) | El numero que se muestra dentro de cada zona del mapa |
+| Costo a todas las zonas | `costos_desde(origen)` (Dijkstra, una corrida) | O((V + E) log V) | Saber que viajes alcanzan con la energia que queda; se muestra como rayos al pasar el mouse por un lugar (el jugador no ve numeros ni distancias) |
 | Saltos / conectividad | `saltos`, `es_conexo` (**BFS**) | O(V + E) | Validar al cargar que toda zona sea alcanzable |
 
 **Por que Dijkstra y cuando basta BFS.** El costo de un viaje es la *suma* de distancias, y el camino

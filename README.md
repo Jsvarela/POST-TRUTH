@@ -49,8 +49,10 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
 - **Viajar por el mapa:** la noticia tambien deja **evidencia en lugares de la ciudad** (un testigo, un
   documento, una grabacion). Se puede ir a cualquier zona con un clic en el minimapa (o Q W E R T); el viaje
   cuesta la distancia del camino mas corto (Dijkstra) en la misma energia, y al llegar se revela la
-  evidencia. En el minimapa cada via muestra su distancia, la ruta elegida se resalta con su costo, el pin
-  marca donde estas y un rombo marca las zonas con evidencia pendiente.
+  evidencia. El minimapa es limpio y no muestra cifras: cada lugar tiene su icono y su nombre, el pin marca
+  donde estas, un rombo marca los lugares donde queda algo por descubrir y, al pasar el mouse por un lugar,
+  se resalta el camino y una franja explica "Ir a ... / Cuesta (rayos de energia)". La energia se ve siempre
+  como rayos.
 - **Compartir, Verificar o Reportar** muestran como viaja la noticia por la red social,
   ola por ola, y despues sus consecuencias. Compartir parte del jugador (el Influencer
   amplifica), Verificar frena la difusion de una noticia falsa y Reportar corta las
@@ -70,6 +72,17 @@ Requisitos: Python 3.10 o superior y Pygame.
 ```bash
 pip install -r requirements.txt
 python src/main.py
+```
+
+## Tamano de la interfaz
+
+La interfaz se diseno en 1024 x 640 y se agranda de forma uniforme con una sola escala
+(`config.ESCALA`, por defecto 1.25: ventana de 1280 x 800). `src/main.py` la baja sola en pantallas bajas
+(portatiles de 768 px) para que la ventana quepa, y se puede fijar a mano:
+
+```bash
+POSTTRUTH_ESCALA=1.0 python src/main.py     # tamano original (1024 x 640)
+POSTTRUTH_ESCALA=1.5 python src/main.py     # mas grande
 ```
 
 ## Ejecutar pruebas
