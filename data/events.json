@@ -266,7 +266,7 @@
         "color": 1
       }
     },
-    "fuente": "Pagina sin direccion de contacto",
+    "fuente": "Pagina sin contacto",
     "fecha": "hace 20 min",
     "imagen": {
       "motivo": "parque",
@@ -450,7 +450,7 @@
         "color": 3
       }
     },
-    "fuente": "Comunicado de la campana de Maria Lozano",
+    "fuente": "Comunicado de la campana",
     "fecha": "ayer, 18:30",
     "imagen": {
       "motivo": "plaza",
@@ -636,7 +636,7 @@
         }
       }
     },
-    "fuente": "Clip de 14 segundos sin enlace al original",
+    "fuente": "Clip de 14 s, sin original",
     "fecha": "hace 1 h",
     "imagen": {
       "motivo": "alcaldia",
@@ -823,7 +823,7 @@
   {
     "id": "campana-convivencia",
     "autor": {
-      "nombre": "Vecinos por el dialogo",
+      "nombre": "Vecinos unidos",
       "avatar": {
         "tipo": "retrato",
         "color": 3,
@@ -1466,7 +1466,7 @@
   {
     "id": "agua-contaminada",
     "autor": {
-      "nombre": "@vecino_preocupado",
+      "nombre": "@vecino_alerta",
       "avatar": {
         "tipo": "anonimo",
         "color": 3
@@ -1931,7 +1931,7 @@
   {
     "id": "foto-con-contratista",
     "autor": {
-      "nombre": "@desde_la_sombra",
+      "nombre": "@desde_sombra",
       "avatar": {
         "tipo": "anonimo",
         "color": 1
@@ -2172,7 +2172,7 @@
         }
       }
     },
-    "fuente": "Publicacion de campana, cita las actas",
+    "fuente": "Campana de Lucia, cita actas",
     "fecha": "hoy, 10:20",
     "imagen": {
       "motivo": "alcaldia",
@@ -2559,7 +2559,7 @@
         }
       }
     },
-    "fuente": "Cronograma publicado por la campana",
+    "fuente": "Cronograma de la campana",
     "fecha": "ayer, 17:45",
     "imagen": {
       "motivo": "parque",
@@ -2955,7 +2955,7 @@
   {
     "id": "opinion-colegios",
     "autor": {
-      "nombre": "Marta, madre de familia",
+      "nombre": "Marta (madre)",
       "avatar": {
         "tipo": "retrato",
         "color": 2,
@@ -2968,7 +2968,7 @@
         }
       }
     },
-    "fuente": "Comentario en el grupo del colegio",
+    "fuente": "Grupo del colegio",
     "fecha": "hoy, 6:50",
     "imagen": {
       "motivo": "colegio",
@@ -3119,7 +3119,7 @@
   {
     "id": "opinion-paradas",
     "autor": {
-      "nombre": "Don Ernesto, taxista",
+      "nombre": "Don Ernesto",
       "avatar": {
         "tipo": "retrato",
         "color": 0,
@@ -3132,7 +3132,7 @@
         }
       }
     },
-    "fuente": "Comentario en un grupo de transporte",
+    "fuente": "Grupo de transporte",
     "fecha": "hace 3 h",
     "imagen": {
       "motivo": "plaza",
@@ -3193,7 +3193,7 @@
       }
     ],
     "title": "Buses sin seguridad",
-    "content": "Mas buses de noche, como propone Maria Lozano, esta bien, pero si las paradas siguen a oscuras nadie se va a subir.",
+    "content": "Mas buses de noche, como propone Maria, esta bien, pero con las paradas a oscuras nadie se sube.",
     "kind": "opinion",
     "truth_level": 50,
     "root_effect": {
@@ -3296,7 +3296,7 @@
         }
       }
     },
-    "fuente": "Comentario en el grupo de la plaza",
+    "fuente": "Grupo de la plaza",
     "fecha": "hoy, 12:05",
     "imagen": {
       "motivo": "parque",
@@ -3447,13 +3447,13 @@
   {
     "id": "nova-sin-insultos",
     "autor": {
-      "nombre": "Radios de Barrio",
+      "nombre": "Radios de Nova",
       "avatar": {
         "tipo": "institucional",
         "color": 1
       }
     },
-    "fuente": "Comunicado conjunto del colegio y las radios",
+    "fuente": "Comunicado conjunto",
     "fecha": "hoy, 9:00",
     "imagen": {
       "motivo": "colegio",
@@ -3522,7 +3522,7 @@
       }
     ],
     "title": "Nova sin insultos",
-    "content": "Las radios de barrio y el colegio lanzan 'Nova sin insultos': Juan Ardila, Maria Lozano, Andres Quintero y Lucia Barrera firmaron un pacto para debatir sin agredirse.",
+    "content": "'Nova sin insultos': Juan, Maria, Andres y Lucia firmaron un pacto para debatir sin agredirse.",
     "kind": "campana_civica",
     "truth_level": 94,
     "root_effect": {
