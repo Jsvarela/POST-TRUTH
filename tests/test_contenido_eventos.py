@@ -165,6 +165,29 @@ class ContenidoEventosTest(unittest.TestCase):
             self.assertGreater(por_tipo["verificar"].score, 0, a.event.event_id)
             self.assertGreater(por_tipo["reportar"].score, 0, a.event.event_id)
 
+    def test_el_texto_autor_y_fuente_caben_en_la_tarjeta_sin_recortarse(self) -> None:
+        from post_truth.models.pistas import ZonaTarjeta
+        from post_truth.views import tarjeta_civitas_view as tarjeta
+        from post_truth.views.componentes import Fuentes, ajustar_texto
+        from post_truth.views.escena_view import RECT_TARJETA
+        pygame.init()
+        try:
+            fuentes = Fuentes.crear()
+            zonas = tarjeta._layout(RECT_TARJETA)
+            for a in self.arboles:
+                e = a.event
+                ancho_texto = zonas[ZonaTarjeta.TEXTO].width - tarjeta.RESERVA_INSIGNIA
+                self.assertLessEqual(len(ajustar_texto(e.content, fuentes.chica, ancho_texto)),
+                                     tarjeta.MAX_LINEAS_TEXTO, f"{e.event_id}: el texto se corta")
+                ancho_fuente = zonas[ZonaTarjeta.FUENTE].width - tarjeta.RESERVA_INSIGNIA
+                self.assertLessEqual(fuentes.chica.size(f"Fuente: {e.source}")[0], ancho_fuente,
+                                     f"{e.event_id}: la fuente se corta")
+                ancho_autor = zonas[ZonaTarjeta.AUTOR].width - tarjeta.px(62)
+                self.assertLessEqual(fuentes.normal.size(e.author.nombre)[0], ancho_autor,
+                                     f"{e.event_id}: el nombre del autor se corta")
+        finally:
+            pygame.quit()
+
     def test_el_texto_no_lleva_acentos_ni_caracteres_raros(self) -> None:
         texto = Path(RUTA_EVENTOS).read_text(encoding="utf-8")
         raros = {c for c in texto if ord(c) > 127}
