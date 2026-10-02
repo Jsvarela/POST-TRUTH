@@ -37,6 +37,13 @@ from post_truth.models import Impact, Role
 # y haria infinito el costo 1/peso del Dijkstra.
 PESO_MIN = 0.02
 
+# Efecto de una propagacion segun cuantas personas alcanza (n): cada efecto es COEFICIENTE * n con un TOPE,
+# para que una sola publicacion no decida la partida. Son las perillas de balance (ver tools/balance.py).
+# Falsa: desinformacion, conflictos, confianza perdida y puntaje perdido -> (coeficiente, tope)
+PROPAGACION_FALSA = {"desinformacion": (1.5, 12), "conflictos": (0.8, 8), "confianza": (0.7, 8), "puntaje": (1.0, 10)}
+# Verdadera: informacion verificada, confianza, convivencia y puntaje ganados -> (coeficiente, tope)
+PROPAGACION_VERDADERA = {"verificada": (1.2, 10), "confianza": (0.5, 6), "convivencia": (0.3, 4), "puntaje": (1.0, 10)}
+
 # Cuanto cambia el rol de quien comparte la probabilidad de contagio de sus aristas.
 # El Influencer reutiliza el 1.35 de Impact.scaled_for_role para que ambos modelos coincidan.
 FACTOR_EMISOR: dict[Role, float] = {
@@ -126,11 +133,16 @@ class ResultadoPropagacion:
         n = self.alcanzados
         if n == 0:
             return Impact()
+        def efecto(tabla: dict, clave: str) -> int:
+            coeficiente, tope = tabla[clave]
+            return min(tope, round(coeficiente * n))
         if self.es_falsa:
-            return Impact(misinformation=min(12, round(1.5 * n)), conflicts=min(8, round(0.8 * n)),
-                          trust=-min(8, round(0.7 * n)), score=-min(10, n))
-        return Impact(verified_information=min(10, round(1.2 * n)), trust=min(6, round(0.5 * n)),
-                      coexistence=min(4, round(0.3 * n)), score=min(10, n))
+            f = PROPAGACION_FALSA
+            return Impact(misinformation=efecto(f, "desinformacion"), conflicts=efecto(f, "conflictos"),
+                          trust=-efecto(f, "confianza"), score=-efecto(f, "puntaje"))
+        v = PROPAGACION_VERDADERA
+        return Impact(verified_information=efecto(v, "verificada"), trust=efecto(v, "confianza"),
+                      coexistence=efecto(v, "convivencia"), score=efecto(v, "puntaje"))
 
     def to_dict(self) -> dict:
         return {"origen": self.origen, "es_falsa": self.es_falsa,
