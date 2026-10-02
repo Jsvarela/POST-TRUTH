@@ -11,7 +11,7 @@ introduccion. Al terminar o saltar, el juego sigue a la seleccion de personaje.
 """
 import pygame
 
-from post_truth.config import ANCHO, RUTA_GRAFO_CIUDAD, RUTA_INTRO
+from post_truth.config import ANCHO, RUTA_GRAFO_CIUDAD, RUTA_INTRO, px
 from post_truth.controllers.base_state import BaseState
 from post_truth.models.intro import Intro
 from post_truth.structures.grafo_ciudad import GrafoCiudad
@@ -21,7 +21,7 @@ from post_truth.views.intro_view import TAMANO_LIENZO, dibujar_intro
 ENTRANDO, MANTENIENDO, SALIENDO = "entrando", "manteniendo", "saliendo"
 FADE_ENTRADA, FADE_SALIDA = 0.7, 0.5
 CARACTERES_POR_SEGUNDO = 45.0
-RECT_SUBTITULO = pygame.Rect(24, 492, ANCHO - 48, 116)   # debajo del dibujo (ver intro_view.ALTO_ARTE)
+RECT_SUBTITULO = pygame.Rect(px(24), px(492), ANCHO - 2 * px(24), px(116))   # debajo del dibujo (ver intro_view.ALTO_ARTE)
 PIE = "Clic o tecla: continuar   |   ESC: saltar la introduccion"
 
 

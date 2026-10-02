@@ -1,7 +1,7 @@
 """Game loop de Pygame + StateManager (migracion desde Tkinter)."""
 import pygame
 
-from post_truth.config import ANCHO, ALTO, FPS, TITULO
+from post_truth.config import ANCHO, ALTO, FPS, TITULO, px
 from post_truth.controllers.escena_state import EscenaState
 from post_truth.controllers.game_state import GameState
 from post_truth.controllers.intro_state import IntroState
@@ -21,7 +21,7 @@ class App:
         pygame.display.set_caption(TITULO)
         self.pantalla = pygame.display.set_mode((ANCHO, ALTO))
         self.reloj = pygame.time.Clock()
-        self.fuente = pygame.font.SysFont("arial", 24)
+        self.fuente = pygame.font.SysFont("arial", px(24))
         self.fuentes = Fuentes.crear()  # tamanos extra para la UI de novela visual
         self.temas = GestorTemas()
         self.corriendo = True

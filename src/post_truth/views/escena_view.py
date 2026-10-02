@@ -4,10 +4,12 @@ from dataclasses import fields
 
 import pygame
 
+from post_truth.config import ANCHO, px
 from post_truth.models import Impact
 from post_truth.models.personaje import Personaje
 from post_truth.views.componentes import Boton, CajaDialogo, Fuentes, Panel, dibujar_texto_ajustado
 from post_truth.views.grafo_view import AnimacionPropagacion
+from post_truth.views.iconos import fila_de_rayos
 from post_truth.views.mapa_view import EstadoMapa, dibujar_mapa
 from post_truth.views.tarjeta_civitas_view import EstadoTarjeta, dibujar_tarjeta
 from post_truth.views.personaje_view import dibujar_personaje
@@ -32,32 +34,33 @@ ETIQUETAS_IMPACTO = {
     "score": ("Puntaje", False),
 }
 
-RECT_HUD = pygame.Rect(0, 0, 1024, 56)
-RECT_PERSONAJE = pygame.Rect(40, 64, 260, 336)
-RECT_PANEL = pygame.Rect(330, 68, 664, 328)
-RECT_ESCENA = pygame.Rect(0, 57, 1024, 347)      # area del fondo de la zona (entre el HUD y el dialogo)
-RECT_TARJETA = pygame.Rect(RECT_PANEL.x + 12, RECT_PANEL.y + 8, 372, 312)   # tarjeta de Civitas (a la izquierda)
-RECT_MAPA = pygame.Rect(RECT_PANEL.right - 10 - 252, RECT_PANEL.y + 8, 252, 312)  # minimapa (a la derecha)
+# Toda la geometria se diseno en 1024 x 640 y se escala con px() (ver config.ESCALA)
+RECT_HUD = pygame.Rect(0, 0, ANCHO, px(56))
+RECT_PERSONAJE = pygame.Rect(px(40), px(114), px(260), px(286))
+RECT_PANEL = pygame.Rect(px(330), px(68), px(664), px(328))
+RECT_ESCENA = pygame.Rect(0, px(57), ANCHO, px(404) - px(57))      # fondo de la zona (entre el HUD y el dialogo)
+RECT_TARJETA = pygame.Rect(RECT_PANEL.x + px(12), RECT_PANEL.y + px(8), px(346), px(312))   # tarjeta de Civitas (izquierda)
+RECT_MAPA = pygame.Rect(RECT_PANEL.right - px(10) - px(290), RECT_PANEL.y + px(8), px(290), px(312))  # minimapa (derecha)
 AYUDA = "Investigar: clic en la publicacion o A S D F G   |   Viajar: clic en el mapa o Q W E R T   |   Decidir: 1-4"
-RECT_TEXTO_PANEL = pygame.Rect(RECT_PANEL.x + 18, RECT_PANEL.y + 52, 340, 256)  # texto a la izquierda del mapa
+RECT_TEXTO_PANEL = pygame.Rect(RECT_PANEL.x + px(18), RECT_PANEL.y + px(52), px(340), px(256))  # texto a la izquierda del mapa
 ALFA_PANEL = 205  # el panel deja ver un poco el fondo de la zona
 
 
 def _dibujar_hud(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema,
                  filas: list[tuple[str, int]]) -> None:
     pygame.draw.rect(pantalla, tema.panel, RECT_HUD)
-    pygame.draw.line(pantalla, tema.borde, RECT_HUD.bottomleft, RECT_HUD.bottomright, 2)
-    x = 14
+    pygame.draw.line(pantalla, tema.borde, RECT_HUD.bottomleft, RECT_HUD.bottomright, px(2))
+    x = px(14)
     for nombre, valor in filas:
         if nombre.startswith("Puntaje"):  # no es un indicador 0-100: va como texto
             img = fuentes.normal.render(f"Puntaje {valor}", True, tema.texto)
-            pantalla.blit(img, img.get_rect(midright=(RECT_HUD.right - 16, RECT_HUD.centery)))
+            pantalla.blit(img, img.get_rect(midright=(RECT_HUD.right - px(16), RECT_HUD.centery)))
             continue
-        pantalla.blit(fuentes.chica.render(f"{HUD_NOMBRES.get(nombre, nombre)} {valor}", True, tema.texto), (x, 7))
-        pygame.draw.rect(pantalla, tema.fondo, (x, 32, 126, 10), border_radius=4)
+        pantalla.blit(fuentes.chica.render(f"{HUD_NOMBRES.get(nombre, nombre)} {valor}", True, tema.texto), (x, px(6)))
+        pygame.draw.rect(pantalla, tema.fondo, (x, px(32), px(126), px(10)), border_radius=px(4))
         color = tema.malo if nombre in NEGATIVOS else tema.bueno
-        pygame.draw.rect(pantalla, color, (x, 32, round(1.26 * valor), 10), border_radius=4)
-        x += 138
+        pygame.draw.rect(pantalla, color, (x, px(32), round(px(126) * valor / 100), px(10)), border_radius=px(4))
+        x += px(138)
 
 
 def _dibujar_consecuencias(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema,
@@ -73,26 +76,27 @@ def _dibujar_consecuencias(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tem
         # Triangulo ademas del color: la informacion no depende solo del tono (daltonismo).
         # Se dibuja con poligono, no con un glifo, porque no toda fuente trae flechas.
         cy = y + fuentes.normal.get_linesize() // 2
+        a, b, m = px(6), px(14), px(7)
         if valor > 0:
-            puntos = [(area.x, cy + 6), (area.x + 14, cy + 6), (area.x + 7, cy - 6)]
+            puntos = [(area.x, cy + a), (area.x + b, cy + a), (area.x + m, cy - a)]
         else:
-            puntos = [(area.x, cy - 6), (area.x + 14, cy - 6), (area.x + 7, cy + 6)]
+            puntos = [(area.x, cy - a), (area.x + b, cy - a), (area.x + m, cy + a)]
         pygame.draw.polygon(pantalla, color, puntos)
-        pantalla.blit(fuentes.normal.render(f"{etiqueta} {valor:+}", True, color), (area.x + 24, y))
-        y += fuentes.normal.get_linesize() + 6
+        pantalla.blit(fuentes.normal.render(f"{etiqueta} {valor:+}", True, color), (area.x + px(24), y))
+        y += fuentes.normal.get_linesize() + px(6)
 
 
 def _dibujar_energia(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, inv, y: int) -> None:
     """Etiqueta "Energia" con un punto por cada unidad: lleno si queda, vacio si ya se gasto."""
     etiqueta = fuentes.normal.render("Energia", True, tema.texto)
-    ancho = etiqueta.get_width() + 20 + inv.energia_max * 22 + 4
-    marco = pygame.Rect(16, y, ancho, 32)
-    pygame.draw.rect(pantalla, tema.panel, marco, border_radius=8)
-    pygame.draw.rect(pantalla, tema.acento, marco, width=2, border_radius=8)
-    pantalla.blit(etiqueta, (marco.x + 10, marco.y + 4))
-    for i in range(inv.energia_max):
-        centro = (marco.x + 10 + etiqueta.get_width() + 16 + i * 22, marco.centery)
-        pygame.draw.circle(pantalla, tema.acento, centro, 8, 0 if i < inv.energia else 2)
+    ancho = etiqueta.get_width() + px(24) + inv.energia_max * px(22) + px(8)
+    marco = pygame.Rect(px(16), y, ancho, etiqueta.get_height() + px(10))
+    pygame.draw.rect(pantalla, tema.panel, marco, border_radius=px(8))
+    pygame.draw.rect(pantalla, tema.acento, marco, width=px(2), border_radius=px(8))
+    pantalla.blit(etiqueta, (marco.x + px(10), marco.y + px(5)))
+    # un rayo por cada unidad: relleno si queda, solo contorno si ya se gasto
+    fila_de_rayos(pantalla, tema.acento, marco.x + px(10) + etiqueta.get_width() + px(20), marco.centery,
+                  inv.energia_max, px(10), px(22), llenos=inv.energia)
 
 
 def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, personaje: Personaje,
@@ -106,12 +110,12 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
     dibujar_personaje(pantalla, personaje, tema, RECT_PERSONAJE, animo)
     if nombre_zona:
         etiqueta = fuentes.normal.render(f"Estas en: {nombre_zona}", True, tema.texto)
-        marco = etiqueta.get_rect(topleft=(16, RECT_ESCENA.y + 12)).inflate(20, 10)
-        pygame.draw.rect(pantalla, tema.panel, marco, border_radius=8)
-        pygame.draw.rect(pantalla, tema.acento, marco, width=2, border_radius=8)
+        marco = etiqueta.get_rect(topleft=(px(16), RECT_ESCENA.y + px(12))).inflate(px(20), px(10))
+        pygame.draw.rect(pantalla, tema.panel, marco, border_radius=px(8))
+        pygame.draw.rect(pantalla, tema.acento, marco, width=px(2), border_radius=px(8))
         pantalla.blit(etiqueta, etiqueta.get_rect(center=marco.center))
     if tarjeta is not None:  # energia que queda para investigar esta publicacion
-        _dibujar_energia(pantalla, fuentes, tema, tarjeta.investigacion, RECT_ESCENA.y + 52)
+        _dibujar_energia(pantalla, fuentes, tema, tarjeta.investigacion, RECT_ESCENA.y + px(56))
     if animacion is not None:  # la propagacion ocupa el lugar del panel de noticia
         animacion.draw(pantalla, fuentes, tema, RECT_PANEL)
     else:
@@ -132,4 +136,4 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
         boton.draw(pantalla, fuentes.normal, tema)
     if tarjeta is not None:  # recordatorio de controles bajo los botones
         ayuda = fuentes.chica.render(AYUDA, True, tema.texto)
-        pantalla.blit(ayuda, ayuda.get_rect(midbottom=(pantalla.get_width() // 2, pantalla.get_height() - 6)))
+        pantalla.blit(ayuda, ayuda.get_rect(midbottom=(pantalla.get_width() // 2, pantalla.get_height() - px(6))))
