@@ -148,3 +148,4 @@ python src/main.py
 python -m unittest discover -s tests              # todas las pruebas, sin ventana
 SDL_VIDEODRIVER=dummy python -m unittest tests.test_partida_completa   # Linux/macOS (en Windows las pruebas ya fijan el driver dummy)
 ```
+No agregues líneas Co-Authored-By ni 'Generated with Claude Code' en commits ni pull requests.
