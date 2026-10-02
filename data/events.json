@@ -59,6 +59,32 @@
         "hallazgo": "Se publico esta manana; la hora no tiene nada raro."
       }
     ],
+    "evidencias": [
+      {
+        "id": "testigo-directora",
+        "lugar": "colegio",
+        "tipo": "testigo",
+        "titulo": "La directora del colegio",
+        "hallazgo": "Dice que no hay ninguna orden de cierre: manana hay clases con normalidad.",
+        "senal": "falsa"
+      },
+      {
+        "id": "acta-del-consejo",
+        "lugar": "alcaldia",
+        "tipo": "documento",
+        "titulo": "Acta del consejo municipal",
+        "hallazgo": "La agenda del consejo no incluye ningun cierre de colegios.",
+        "senal": "falsa"
+      },
+      {
+        "id": "testigo-vecina",
+        "lugar": "barrio",
+        "tipo": "testigo",
+        "titulo": "Una vecina del barrio",
+        "hallazgo": "Reconoce la foto: son unas obras de mantenimiento de hace anos.",
+        "senal": "falsa"
+      }
+    ],
     "title": "Rumor sobre el colegio",
     "content": "El candidato Juan quiere cerrar el colegio central si gana la alcaldia.",
     "kind": "rumor",
@@ -96,6 +122,12 @@
               "cuenta-sospechosa"
             ],
             "texto": "Dudabas de la cuenta y aun asi la compartiste. Ya no es un error de buena fe."
+          },
+          {
+            "si": [
+              "testigo-directora"
+            ],
+            "texto": "La directora te lo habia desmentido y aun asi lo compartiste. Las familias se enteran por ti."
           }
         ],
         "effect": {
@@ -140,6 +172,12 @@
               "imagen-reutilizada"
             ],
             "texto": "La foto de 2021 que encontraste es la prueba perfecta: tu aclaracion convence mas rapido."
+          },
+          {
+            "si": [
+              "testigo-directora"
+            ],
+            "texto": "Hablaste con la directora: no hay ninguna orden de cierre. Tu aclaracion lleva nombre y apellido y convence a las familias."
           }
         ],
         "effect": {
@@ -200,6 +238,12 @@
               "cuenta-sospechosa"
             ],
             "texto": "Reportas una cuenta que ya habias visto sospechosa: la plataforma la suspende y el rumor se frena."
+          },
+          {
+            "si": [
+              "acta-del-consejo"
+            ],
+            "texto": "Reportas con el acta del consejo en la mano: la plataforma ve que no hay ningun cierre y retira el mensaje."
           }
         ],
         "effect": {
@@ -274,6 +318,24 @@
         "hallazgo": "Que tenga muchas reacciones no prueba que sea cierto."
       }
     ],
+    "evidencias": [
+      {
+        "id": "testigo-guardaparques",
+        "lugar": "parque",
+        "tipo": "testigo",
+        "titulo": "El guardaparques",
+        "hallazgo": "Asegura que el parque abre como siempre y que nadie le aviso de ningun cierre.",
+        "senal": "falsa"
+      },
+      {
+        "id": "registro-de-decretos",
+        "lugar": "alcaldia",
+        "tipo": "documento",
+        "titulo": "Registro de decretos",
+        "hallazgo": "No existe ningun decreto de cierre de parques en el registro oficial.",
+        "senal": "falsa"
+      }
+    ],
     "title": "Alerta viral sobre parques",
     "content": "Manana cerraran todos los parques por orden de la alcaldia.",
     "kind": "fake_news",
@@ -333,6 +395,12 @@
               "sin-comunicado"
             ],
             "texto": "Ya habias visto que no existia comunicado: la verificacion lo confirma y calmas a tus contactos."
+          },
+          {
+            "si": [
+              "testigo-guardaparques"
+            ],
+            "texto": "El guardaparques te lo confirmo en persona: nadie va a cerrar nada. Tu aclaracion calma a los vecinos."
           }
         ],
         "effect": {
@@ -355,6 +423,12 @@
               "pagina-sin-historial"
             ],
             "texto": "Reportas una pagina que ya sabias sospechosa: la retiran y el cierre inventado se detiene."
+          },
+          {
+            "si": [
+              "registro-de-decretos"
+            ],
+            "texto": "Reportas con el registro de decretos como prueba: no existe ningun cierre y la pagina cae."
           }
         ],
         "effect": {
@@ -429,6 +503,24 @@
         "hallazgo": "Tiene pocas reacciones; una noticia cierta no siempre es viral."
       }
     ],
+    "evidencias": [
+      {
+        "id": "plan-de-transporte",
+        "lugar": "plaza",
+        "tipo": "documento",
+        "titulo": "Plan de transporte de la campana",
+        "hallazgo": "El plan existe y propone ampliar las rutas nocturnas, tal como dice el comunicado.",
+        "senal": "verdadera"
+      },
+      {
+        "id": "testigo-conductor",
+        "lugar": "barrio",
+        "tipo": "testigo",
+        "titulo": "Un conductor de bus",
+        "hallazgo": "Confirma que en la reunion con los transportadores se hablo de rutas nocturnas.",
+        "senal": "verdadera"
+      }
+    ],
     "title": "Propuesta de transporte",
     "content": "La candidata Maria propone ampliar las rutas nocturnas de buses.",
     "kind": "true_news",
@@ -460,6 +552,12 @@
               "cita-el-plan"
             ],
             "texto": "Viste que citaba el plan oficial. Compartirla con esa seguridad refuerza tu credibilidad."
+          },
+          {
+            "si": [
+              "plan-de-transporte"
+            ],
+            "texto": "Leiste el plan antes de compartir: tu aporte es informacion verificada de primera mano."
           }
         ],
         "effect": {
@@ -482,6 +580,12 @@
               "cita-el-plan"
             ],
             "texto": "Ya habias visto que citaba el plan oficial, y la verificacion lo confirma: era cierta, y verificar nunca sobra."
+          },
+          {
+            "si": [
+              "plan-de-transporte"
+            ],
+            "texto": "Tuviste el plan en la mano y era cierto. Verificar de primera mano refuerza tu credibilidad."
           }
         ],
         "effect": {
@@ -586,6 +690,24 @@
         "hallazgo": "El debate fue ayer; que sea reciente no lo vuelve cierto."
       }
     ],
+    "evidencias": [
+      {
+        "id": "grabacion-completa",
+        "lugar": "alcaldia",
+        "tipo": "grabacion",
+        "titulo": "Grabacion completa del debate",
+        "hallazgo": "En el video entero la candidata critica una propuesta, no a un barrio: el clip corta la frase.",
+        "senal": "falsa"
+      },
+      {
+        "id": "testigo-del-debate",
+        "lugar": "barrio",
+        "tipo": "testigo",
+        "titulo": "Una vecina que estuvo en el debate",
+        "hallazgo": "Dice que nadie insulto a ningun barrio en ese debate.",
+        "senal": "falsa"
+      }
+    ],
     "title": "Video editado del debate",
     "content": "Circula un clip donde una candidata parece insultar a un barrio, pero el video esta recortado.",
     "kind": "contenido_manipulado",
@@ -638,6 +760,12 @@
               "clip-recortado"
             ],
             "texto": "Ya sospechabas el recorte y lo confirmas con el video completo: la frase anterior cambia todo el sentido."
+          },
+          {
+            "si": [
+              "grabacion-completa"
+            ],
+            "texto": "Viste la grabacion completa: la candidata criticaba una propuesta, no a un barrio. Tu aclaracion circula con el video entero."
           }
         ],
         "effect": {
@@ -676,6 +804,12 @@
               "sin-original"
             ],
             "texto": "Reportas con pruebas del recorte y de la falta del original: la plataforma lo etiqueta como manipulado."
+          },
+          {
+            "si": [
+              "grabacion-completa"
+            ],
+            "texto": "Reportas con la grabacion completa como prueba: la plataforma etiqueta el clip como manipulado."
           }
         ],
         "effect": {
@@ -745,7 +879,7 @@
         "zona": "estadisticas",
         "titulo": "Poca difusion",
         "senal": "neutra",
-        "costo": 1,
+        "costo": 2,
         "hallazgo": "Tiene pocos comentarios; eso no la hace falsa."
       },
       {
@@ -755,6 +889,24 @@
         "senal": "neutra",
         "costo": 1,
         "hallazgo": "La reunion es esta semana, como dice el mensaje."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "testigo-organizadora",
+        "lugar": "barrio",
+        "tipo": "testigo",
+        "titulo": "La organizadora",
+        "hallazgo": "Confirma la reunion de esta semana y que esta abierta a todos los vecinos.",
+        "senal": "verdadera"
+      },
+      {
+        "id": "acta-reunion",
+        "lugar": "parque",
+        "tipo": "documento",
+        "titulo": "Acta de la reunion anterior",
+        "hallazgo": "El grupo ya se reunio antes en el parque y publico un acta con sus acuerdos.",
+        "senal": "verdadera"
       }
     ],
     "title": "Campana de convivencia digital",
@@ -782,6 +934,12 @@
               "propuesta-concreta"
             ],
             "texto": "Comprobaste quienes eran y que proponian: apoyas con seguridad y la convocatoria se llena."
+          },
+          {
+            "si": [
+              "testigo-organizadora"
+            ],
+            "texto": "Hablaste con la organizadora y apoyas con conocimiento: la convocatoria se llena."
           }
         ],
         "effect": {
@@ -826,6 +984,12 @@
               "vecinos-reales"
             ],
             "texto": "Ya habias comprobado al grupo: invitas a verificar con el ejemplo y mas vecinos se suman."
+          },
+          {
+            "si": [
+              "acta-reunion"
+            ],
+            "texto": "Tuviste el acta en la mano: invitas a verificar con el ejemplo y mas vecinos se suman."
           }
         ],
         "effect": {

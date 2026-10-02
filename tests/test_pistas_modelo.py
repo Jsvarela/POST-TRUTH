@@ -74,27 +74,27 @@ class PublicacionTest(unittest.TestCase):
 
 class InvestigacionTest(unittest.TestCase):
     def test_empieza_con_la_energia_completa_y_sin_pistas(self) -> None:
-        inv = Investigacion(pistas_demo())
-        self.assertEqual((inv.energia, inv.energia_max), (ENERGIA_POR_NOTICIA, ENERGIA_POR_NOTICIA))
+        inv = Investigacion(pistas_demo(), energia_max=3)
+        self.assertEqual((inv.energia, inv.energia_max), (3, 3))
         self.assertEqual(inv.pistas_descubiertas(), [])
         self.assertEqual(inv.veredicto(), "incierta")
 
     def test_investigar_gasta_energia_y_revela(self) -> None:
-        inv = Investigacion(pistas_demo())
+        inv = Investigacion(pistas_demo(), energia_max=3)
         r = inv.investigar("imagen")
         self.assertEqual((r.estado, inv.energia), ("nueva", 1))
         self.assertTrue(inv.esta_descubierta("imagen"))
         self.assertEqual(inv.pistas_descubiertas()[0].id, "imagen")
 
     def test_releer_una_pista_es_gratis(self) -> None:
-        inv = Investigacion(pistas_demo())
+        inv = Investigacion(pistas_demo(), energia_max=3)
         inv.investigar("cuenta")
         r = inv.investigar("cuenta")
-        self.assertEqual((r.estado, inv.energia), ("repetida", ENERGIA_POR_NOTICIA - 1))
+        self.assertEqual((r.estado, inv.energia), ("repetida", 2))
         self.assertEqual(inv.descubiertas, ["cuenta"])
 
     def test_sin_energia_no_cobra_ni_revela(self) -> None:
-        inv = Investigacion(pistas_demo())
+        inv = Investigacion(pistas_demo(), energia_max=3)
         inv.investigar("imagen")           # cuesta 2: quedan 1
         inv.investigar("cuenta")           # cuesta 1: quedan 0
         r = inv.investigar("fecha")
@@ -102,7 +102,7 @@ class InvestigacionTest(unittest.TestCase):
         self.assertFalse(inv.esta_descubierta("fecha"))
 
     def test_una_pista_cara_no_cabe_si_la_energia_no_alcanza_aunque_quede_algo(self) -> None:
-        inv = Investigacion(pistas_demo())
+        inv = Investigacion(pistas_demo(), energia_max=3)
         inv.investigar("cuenta")
         inv.investigar("fecha")            # quedan 1
         r = inv.investigar("imagen")       # cuesta 2
@@ -110,11 +110,11 @@ class InvestigacionTest(unittest.TestCase):
 
     def test_pista_inexistente(self) -> None:
         with self.assertRaises(KeyError):
-            Investigacion(pistas_demo()).investigar("fantasma")
+            Investigacion(pistas_demo(), energia_max=3).investigar("fantasma")
 
     def test_hay_que_elegir_no_alcanza_para_todo(self) -> None:
         pistas = pistas_demo()
-        self.assertGreater(sum(p.costo for p in pistas), ENERGIA_POR_NOTICIA)
+        self.assertGreater(sum(p.costo for p in pistas), 3)
 
     def test_veredicto_segun_las_senales(self) -> None:
         inv = Investigacion(pistas_demo(), energia_max=9)
@@ -128,12 +128,12 @@ class InvestigacionTest(unittest.TestCase):
         self.assertEqual(inv.veredicto(), "falsa")
 
     def test_pista_en_una_zona(self) -> None:
-        inv = Investigacion(pistas_demo())
+        inv = Investigacion(pistas_demo(), energia_max=3)
         self.assertEqual(inv.pista_en(ZonaTarjeta.IMAGEN).id, "imagen")
         self.assertIsNone(inv.pista_en(ZonaTarjeta.TEXTO))
 
     def test_serializacion_del_progreso(self) -> None:
-        inv = Investigacion(pistas_demo())
+        inv = Investigacion(pistas_demo(), energia_max=3)
         inv.investigar("imagen")
         inv.investigar("cuenta")
         copia = Investigacion.from_dict(json.loads(json.dumps(inv.to_dict())), pistas_demo())
