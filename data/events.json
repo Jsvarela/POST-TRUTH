@@ -998,5 +998,2622 @@
         }
       }
     ]
+  },
+  {
+    "id": "wifi-con-recibo",
+    "autor": {
+      "nombre": "@nova_alerta",
+      "avatar": {
+        "tipo": "anonimo",
+        "color": 0
+      }
+    },
+    "fuente": "Captura de pantalla sin enlace",
+    "fecha": "hoy, 7:40",
+    "imagen": {
+      "motivo": "parque",
+      "pie": "Antena de internet en un parque"
+    },
+    "likes": 310,
+    "comentarios": 88,
+    "pistas": [
+      {
+        "id": "cuenta-reciente",
+        "zona": "autor",
+        "titulo": "Cuenta reciente",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "La cuenta se abrio hace 3 dias y solo habla de candidatos."
+      },
+      {
+        "id": "captura-sin-enlace",
+        "zona": "fuente",
+        "titulo": "Captura sin enlace",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "Es una imagen recortada: no enlaza a ningun documento de la campana."
+      },
+      {
+        "id": "foto-de-otra-ciudad",
+        "zona": "imagen",
+        "titulo": "Foto de otra ciudad",
+        "senal": "falsa",
+        "costo": 2,
+        "hallazgo": "La antena de la foto esta en otro pais: se ve en el letrero."
+      },
+      {
+        "id": "reacciones-en-bloque",
+        "zona": "estadisticas",
+        "titulo": "Reacciones en bloque",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "Casi todas las reacciones llegaron en los mismos 10 minutos."
+      },
+      {
+        "id": "hora-normal",
+        "zona": "fecha",
+        "titulo": "Hora normal",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Se publico a una hora normal; eso no dice nada."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "propuesta-impresa",
+        "lugar": "plaza",
+        "tipo": "documento",
+        "titulo": "La propuesta impresa de la campana",
+        "hallazgo": "El documento dice que el internet de los parques sera gratuito y lo pagara un convenio con empresas.",
+        "senal": "falsa"
+      },
+      {
+        "id": "tecnico-del-piloto",
+        "lugar": "parque",
+        "tipo": "testigo",
+        "titulo": "El tecnico del piloto",
+        "hallazgo": "Instalo la prueba en un parque: confirma que nadie paga nada.",
+        "senal": "falsa"
+      }
+    ],
+    "title": "Internet gratis con recibo",
+    "content": "Si Andres Quintero gana, el internet de los parques se cobrara con un recibo mensual a cada hogar.",
+    "kind": "rumor",
+    "truth_level": 20,
+    "root_effect": {
+      "verified_information": 0,
+      "trust": -2,
+      "coexistence": -1,
+      "digital_wellbeing": -1,
+      "misinformation": 4,
+      "conflicts": 3,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir",
+        "tipo": "compartir",
+        "description": "Se publica sin verificar y llega a mas ciudadanos.",
+        "variantes": [
+          {
+            "si": [
+              "foto-de-otra-ciudad"
+            ],
+            "texto": "Sabias que la foto era de otro pais y la compartiste. Los vecinos ya estan molestos con una propuesta que nunca dijo eso."
+          },
+          {
+            "si": [
+              "cuenta-reciente",
+              "captura-sin-enlace"
+            ],
+            "texto": "Sabias que la cuenta era nueva y la captura no tenia enlace, y aun asi la compartiste. Tus contactos lo notan."
+          },
+          {
+            "si": [
+              "propuesta-impresa"
+            ],
+            "texto": "Habias leido la propuesta impresa y la compartiste igual: lo que hiciste ya no es un descuido."
+          }
+        ],
+        "effect": {
+          "verified_information": -3,
+          "trust": -7,
+          "coexistence": -5,
+          "digital_wellbeing": -4,
+          "misinformation": 12,
+          "conflicts": 8,
+          "score": -8
+        }
+      },
+      {
+        "action": "Verificar",
+        "tipo": "verificar",
+        "description": "Se contrasta con una fuente oficial antes de actuar.",
+        "variantes": [
+          {
+            "si": [
+              "captura-sin-enlace",
+              "foto-de-otra-ciudad"
+            ],
+            "texto": "Tus pistas ya lo mostraban y la verificacion lo confirma: no existe ningun recibo. Tu aclaracion circula con pruebas."
+          },
+          {
+            "si": [
+              "propuesta-impresa"
+            ],
+            "texto": "Con la propuesta impresa en la mano, tu aclaracion es imposible de discutir: el internet sera gratuito."
+          },
+          {
+            "si": [
+              "tecnico-del-piloto"
+            ],
+            "texto": "El tecnico del piloto te lo dijo en persona: nadie paga nada. Tu aclaracion calma a las familias."
+          }
+        ],
+        "effect": {
+          "verified_information": 12,
+          "trust": 7,
+          "coexistence": 4,
+          "digital_wellbeing": 4,
+          "misinformation": -8,
+          "conflicts": -3,
+          "score": 12
+        },
+        "children": [
+          {
+            "action": "Publicar aclaracion",
+            "description": "La verificacion se comparte con contexto y fuente.",
+            "effect": {
+              "verified_information": 9,
+              "trust": 6,
+              "coexistence": 5,
+              "digital_wellbeing": 4,
+              "misinformation": -7,
+              "conflicts": -4,
+              "score": 10
+            }
+          }
+        ]
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "No se amplifica, pero tampoco se corrige.",
+        "variantes": [
+          {
+            "si": [
+              "cuenta-reciente",
+              "foto-de-otra-ciudad"
+            ],
+            "texto": "Tenias pruebas de que era un montaje y lo dejaste correr. Sigue creciendo sin que nadie lo desmienta."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": -1,
+          "coexistence": 0,
+          "digital_wellbeing": 1,
+          "misinformation": 2,
+          "conflicts": 0,
+          "score": 1
+        }
+      },
+      {
+        "action": "Reportar",
+        "tipo": "reportar",
+        "description": "La publicacion se marca como sospechosa para moderacion.",
+        "variantes": [
+          {
+            "si": [
+              "cuenta-reciente"
+            ],
+            "texto": "Reportas una cuenta que ya habias visto sospechosa: la plataforma la suspende."
+          },
+          {
+            "si": [
+              "propuesta-impresa"
+            ],
+            "texto": "Reportas con la propuesta impresa como prueba: la plataforma retira el mensaje."
+          }
+        ],
+        "effect": {
+          "verified_information": 5,
+          "trust": 3,
+          "coexistence": 3,
+          "digital_wellbeing": 2,
+          "misinformation": -6,
+          "conflicts": -2,
+          "score": 7
+        }
+      }
+    ]
+  },
+  {
+    "id": "encuesta-inventada",
+    "autor": {
+      "nombre": "Encuestas Nova",
+      "avatar": {
+        "tipo": "retrato",
+        "color": 1,
+        "aspecto": {
+          "piel": 0,
+          "cabello": 0,
+          "peinado": "corto",
+          "accesorio": "corbata",
+          "color": 1
+        }
+      }
+    },
+    "fuente": "Grafico sin ficha tecnica",
+    "fecha": "hace 2 h",
+    "imagen": {
+      "motivo": "plaza",
+      "pie": "Grafico de barras de la encuesta"
+    },
+    "likes": 420,
+    "comentarios": 131,
+    "pistas": [
+      {
+        "id": "sin-ficha-tecnica",
+        "zona": "fuente",
+        "titulo": "Sin ficha tecnica",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "No dice quien pregunto, a cuantas personas ni cuando."
+      },
+      {
+        "id": "grafico-manipulado",
+        "zona": "imagen",
+        "titulo": "Grafico manipulado",
+        "senal": "falsa",
+        "costo": 2,
+        "hallazgo": "Las barras no coinciden con los numeros: 3% se dibuja mas grande que 20%."
+      },
+      {
+        "id": "firma-sin-historial",
+        "zona": "autor",
+        "titulo": "Firma sin historial",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "La cuenta nunca habia publicado encuestas antes de esta."
+      },
+      {
+        "id": "pide-no-votar",
+        "zona": "texto",
+        "titulo": "Pide no votar",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "No informa: solo pide que nadie vote por una candidata."
+      },
+      {
+        "id": "dos-horas",
+        "zona": "fecha",
+        "titulo": "Publicada hace 2 horas",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Es reciente, pero eso no la vuelve cierta."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "registro-de-encuestas",
+        "lugar": "alcaldia",
+        "tipo": "documento",
+        "titulo": "Registro de encuestas",
+        "hallazgo": "La alcaldia no tiene inscrita ninguna encuesta con esos resultados.",
+        "senal": "falsa"
+      },
+      {
+        "id": "profesor-de-estadistica",
+        "lugar": "colegio",
+        "tipo": "testigo",
+        "titulo": "Un profesor de estadistica",
+        "hallazgo": "Explica que sin ficha tecnica un porcentaje no significa nada.",
+        "senal": "falsa"
+      }
+    ],
+    "title": "Encuesta que hunde a Lucia",
+    "content": "Una encuesta dice que Lucia Barrera tiene solo 3% de apoyo y que nadie debe votarla.",
+    "kind": "fake_news",
+    "truth_level": 15,
+    "root_effect": {
+      "verified_information": 0,
+      "trust": -2,
+      "coexistence": -1,
+      "digital_wellbeing": -1,
+      "misinformation": 4,
+      "conflicts": 3,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir",
+        "tipo": "compartir",
+        "description": "Se publica sin verificar y llega a mas ciudadanos.",
+        "variantes": [
+          {
+            "si": [
+              "grafico-manipulado"
+            ],
+            "texto": "Habias notado que las barras no cuadraban y aun asi la compartiste. Ayudaste a hundir a una candidata con un grafico mentiroso."
+          },
+          {
+            "si": [
+              "sin-ficha-tecnica",
+              "firma-sin-historial"
+            ],
+            "texto": "Sabias que no habia ficha tecnica ni historial, y la compartiste. Pierdes credibilidad."
+          },
+          {
+            "si": [
+              "registro-de-encuestas"
+            ],
+            "texto": "El registro oficial no tenia esa encuesta y la compartiste igual. Ya no es un error de buena fe."
+          }
+        ],
+        "effect": {
+          "verified_information": -3,
+          "trust": -8,
+          "coexistence": -6,
+          "digital_wellbeing": -4,
+          "misinformation": 13,
+          "conflicts": 9,
+          "score": -9
+        }
+      },
+      {
+        "action": "Verificar",
+        "tipo": "verificar",
+        "description": "Se contrasta con una fuente oficial antes de actuar.",
+        "variantes": [
+          {
+            "si": [
+              "grafico-manipulado",
+              "sin-ficha-tecnica"
+            ],
+            "texto": "Las pistas ya cantaban y la verificacion lo cierra: la encuesta es inventada. Tu aclaracion trae el grafico corregido."
+          },
+          {
+            "si": [
+              "registro-de-encuestas"
+            ],
+            "texto": "Con el registro de la alcaldia en la mano, tu aclaracion deja la encuesta sin piso."
+          },
+          {
+            "si": [
+              "profesor-de-estadistica"
+            ],
+            "texto": "El profesor te explico por que un numero sin ficha no vale nada. Tu aclaracion se vuelve clase para tus contactos."
+          }
+        ],
+        "effect": {
+          "verified_information": 13,
+          "trust": 8,
+          "coexistence": 4,
+          "digital_wellbeing": 4,
+          "misinformation": -9,
+          "conflicts": -3,
+          "score": 13
+        },
+        "children": [
+          {
+            "action": "Publicar aclaracion",
+            "description": "La verificacion se comparte con contexto y fuente.",
+            "effect": {
+              "verified_information": 10,
+              "trust": 7,
+              "coexistence": 6,
+              "digital_wellbeing": 4,
+              "misinformation": -8,
+              "conflicts": -4,
+              "score": 11
+            }
+          }
+        ]
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "No se amplifica, pero tampoco se corrige.",
+        "variantes": [
+          {
+            "si": [
+              "grafico-manipulado"
+            ],
+            "texto": "Sabias que el grafico estaba manipulado y lo dejaste pasar. La encuesta sigue moviendo opiniones."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": -1,
+          "coexistence": 0,
+          "digital_wellbeing": 1,
+          "misinformation": 2,
+          "conflicts": 0,
+          "score": 1
+        }
+      },
+      {
+        "action": "Reportar",
+        "tipo": "reportar",
+        "description": "La publicacion se marca como sospechosa para moderacion.",
+        "variantes": [
+          {
+            "si": [
+              "sin-ficha-tecnica"
+            ],
+            "texto": "Reportas una encuesta sin ficha tecnica: la plataforma la marca como enganosa."
+          },
+          {
+            "si": [
+              "registro-de-encuestas"
+            ],
+            "texto": "Reportas con el registro de encuestas como prueba: la plataforma la retira."
+          }
+        ],
+        "effect": {
+          "verified_information": 6,
+          "trust": 3,
+          "coexistence": 3,
+          "digital_wellbeing": 2,
+          "misinformation": -7,
+          "conflicts": -2,
+          "score": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "agua-contaminada",
+    "autor": {
+      "nombre": "@vecino_preocupado",
+      "avatar": {
+        "tipo": "anonimo",
+        "color": 3
+      }
+    },
+    "fuente": "Cadena de mensajes reenviada",
+    "fecha": "hoy, 5:55",
+    "imagen": {
+      "motivo": "barrio",
+      "pie": "Grifo de agua en el Barrio"
+    },
+    "likes": 275,
+    "comentarios": 96,
+    "pistas": [
+      {
+        "id": "sin-nombre",
+        "zona": "autor",
+        "titulo": "Sin nombre",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "El mensaje viene firmado solo como un vecino; nadie lo conoce."
+      },
+      {
+        "id": "no-cita-informe",
+        "zona": "fuente",
+        "titulo": "No cita el informe",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "Habla de un informe escondido, pero no dice cual ni donde esta."
+      },
+      {
+        "id": "mensaje-de-miedo",
+        "zona": "texto",
+        "titulo": "Mensaje de miedo",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "Usa mayusculas y pide reenviar a todos: no da ningun dato."
+      },
+      {
+        "id": "agua-turbia-vieja",
+        "zona": "imagen",
+        "titulo": "Agua turbia vieja",
+        "senal": "falsa",
+        "costo": 2,
+        "hallazgo": "La foto del agua turbia circulo hace tres anos en otra ciudad."
+      },
+      {
+        "id": "hora-de-la-manana",
+        "zona": "fecha",
+        "titulo": "Hora de la manana",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Salio temprano; no dice nada sobre si es cierto."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "tendero-del-barrio",
+        "lugar": "barrio",
+        "tipo": "testigo",
+        "titulo": "El tendero de la esquina",
+        "hallazgo": "Dice que el agua llega limpia y que vende la misma de siempre.",
+        "senal": "falsa"
+      },
+      {
+        "id": "control-de-calidad",
+        "lugar": "alcaldia",
+        "tipo": "documento",
+        "titulo": "Informe de calidad del agua",
+        "hallazgo": "El ultimo control es publico y no encontro ningun problema.",
+        "senal": "falsa"
+      },
+      {
+        "id": "enfermera-del-colegio",
+        "lugar": "colegio",
+        "tipo": "testigo",
+        "titulo": "La enfermera del colegio",
+        "hallazgo": "No ha atendido ningun caso de enfermedad por el agua.",
+        "senal": "falsa"
+      }
+    ],
+    "title": "Agua contaminada en el Barrio",
+    "content": "Alerta: el agua del Barrio esta contaminada y el equipo de Juan Ardila escondio el informe.",
+    "kind": "rumor",
+    "truth_level": 22,
+    "root_effect": {
+      "verified_information": 0,
+      "trust": -2,
+      "coexistence": -1,
+      "digital_wellbeing": -1,
+      "misinformation": 4,
+      "conflicts": 3,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir",
+        "tipo": "compartir",
+        "description": "Se publica sin verificar y llega a mas ciudadanos.",
+        "variantes": [
+          {
+            "si": [
+              "agua-turbia-vieja"
+            ],
+            "texto": "Sabias que la foto era vieja y la reenviaste igual. Hay familias comprando agua por miedo."
+          },
+          {
+            "si": [
+              "sin-nombre",
+              "no-cita-informe"
+            ],
+            "texto": "Nadie firmaba el mensaje ni citaba el informe, y aun asi lo reenviaste. Tus contactos se asustan por tu culpa."
+          },
+          {
+            "si": [
+              "control-de-calidad"
+            ],
+            "texto": "El informe oficial decia lo contrario y lo reenviaste igual. Pesa."
+          }
+        ],
+        "effect": {
+          "verified_information": -3,
+          "trust": -6,
+          "coexistence": -4,
+          "digital_wellbeing": -4,
+          "misinformation": 11,
+          "conflicts": 7,
+          "score": -7
+        }
+      },
+      {
+        "action": "Verificar",
+        "tipo": "verificar",
+        "description": "Se contrasta con una fuente oficial antes de actuar.",
+        "variantes": [
+          {
+            "si": [
+              "no-cita-informe",
+              "agua-turbia-vieja"
+            ],
+            "texto": "Sin informe y con una foto vieja, la verificacion lo cierra: el agua esta bien. Tu aclaracion calma al Barrio."
+          },
+          {
+            "si": [
+              "control-de-calidad"
+            ],
+            "texto": "Con el informe de calidad publicado, tu aclaracion es contundente."
+          },
+          {
+            "si": [
+              "tendero-del-barrio"
+            ],
+            "texto": "El tendero te lo dijo en persona: el agua llega limpia. Tu mensaje tiene cara y nombre."
+          }
+        ],
+        "effect": {
+          "verified_information": 11,
+          "trust": 6,
+          "coexistence": 4,
+          "digital_wellbeing": 4,
+          "misinformation": -7,
+          "conflicts": -3,
+          "score": 11
+        },
+        "children": [
+          {
+            "action": "Publicar aclaracion",
+            "description": "La verificacion se comparte con contexto y fuente.",
+            "effect": {
+              "verified_information": 8,
+              "trust": 5,
+              "coexistence": 4,
+              "digital_wellbeing": 4,
+              "misinformation": -6,
+              "conflicts": -4,
+              "score": 9
+            }
+          }
+        ]
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "No se amplifica, pero tampoco se corrige.",
+        "variantes": [
+          {
+            "si": [
+              "no-cita-informe"
+            ],
+            "texto": "Notaste que no citaba ningun informe y lo dejaste correr. El miedo sigue creciendo."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": -1,
+          "coexistence": 0,
+          "digital_wellbeing": 1,
+          "misinformation": 2,
+          "conflicts": 0,
+          "score": 1
+        }
+      },
+      {
+        "action": "Reportar",
+        "tipo": "reportar",
+        "description": "La publicacion se marca como sospechosa para moderacion.",
+        "variantes": [
+          {
+            "si": [
+              "sin-nombre"
+            ],
+            "texto": "Reportas un mensaje sin nombre ni pruebas: la plataforma lo limita."
+          },
+          {
+            "si": [
+              "control-de-calidad"
+            ],
+            "texto": "Reportas con el informe oficial como prueba: la plataforma retira la cadena."
+          }
+        ],
+        "effect": {
+          "verified_information": 4,
+          "trust": 3,
+          "coexistence": 3,
+          "digital_wellbeing": 2,
+          "misinformation": -5,
+          "conflicts": -2,
+          "score": 6
+        }
+      }
+    ]
+  },
+  {
+    "id": "pasajes-gratis",
+    "autor": {
+      "nombre": "Nova Hoy",
+      "avatar": {
+        "tipo": "anonimo",
+        "color": 2
+      }
+    },
+    "fuente": "Volante digital sin firma",
+    "fecha": "hoy, 9:15",
+    "imagen": {
+      "motivo": "plaza",
+      "pie": "Volante con un bus y la cara de una candidata"
+    },
+    "likes": 360,
+    "comentarios": 104,
+    "pistas": [
+      {
+        "id": "pagina-anonima",
+        "zona": "autor",
+        "titulo": "Pagina anonima",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "La pagina no dice quien la maneja ni tiene direccion de contacto."
+      },
+      {
+        "id": "volante-sin-firma",
+        "zona": "fuente",
+        "titulo": "Volante sin firma",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "No lo firma ninguna campana ni empresa de buses."
+      },
+      {
+        "id": "promete-a-cambio-de-voto",
+        "zona": "texto",
+        "titulo": "Promete a cambio de voto",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "Ofrecer un premio por votar es compra de votos: una campana seria no lo publicaria."
+      },
+      {
+        "id": "cara-pegada",
+        "zona": "imagen",
+        "titulo": "Cara pegada",
+        "senal": "falsa",
+        "costo": 2,
+        "hallazgo": "La foto de la candidata esta pegada sobre un bus que no es de Nova."
+      },
+      {
+        "id": "poca-gente-real",
+        "zona": "estadisticas",
+        "titulo": "Pocos comentarios reales",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "Hay pocos comentarios: eso no prueba nada."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "propuesta-de-rutas",
+        "lugar": "plaza",
+        "tipo": "documento",
+        "titulo": "La propuesta de rutas",
+        "hallazgo": "La propuesta de Maria Lozano habla de nuevas rutas nocturnas, no de pasajes gratis.",
+        "senal": "falsa"
+      },
+      {
+        "id": "conductor-del-barrio",
+        "lugar": "barrio",
+        "tipo": "testigo",
+        "titulo": "Un conductor del Barrio",
+        "hallazgo": "Dice que ninguna empresa de buses acepto regalar pasajes por votar.",
+        "senal": "falsa"
+      }
+    ],
+    "title": "Pasajes gratis por votar",
+    "content": "Maria Lozano regalara pasajes de bus gratis a quien muestre que voto por ella.",
+    "kind": "fake_news",
+    "truth_level": 12,
+    "root_effect": {
+      "verified_information": 0,
+      "trust": -2,
+      "coexistence": -1,
+      "digital_wellbeing": -1,
+      "misinformation": 4,
+      "conflicts": 3,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir",
+        "tipo": "compartir",
+        "description": "Se publica sin verificar y llega a mas ciudadanos.",
+        "variantes": [
+          {
+            "si": [
+              "promete-a-cambio-de-voto"
+            ],
+            "texto": "Sabias que prometia premios por votar y lo compartiste. Ayudas a que se hable de compra de votos."
+          },
+          {
+            "si": [
+              "cara-pegada",
+              "volante-sin-firma"
+            ],
+            "texto": "Viste la foto pegada y que nadie firmaba, y aun asi la compartiste. Tus contactos lo notan."
+          },
+          {
+            "si": [
+              "propuesta-de-rutas"
+            ],
+            "texto": "La propuesta real decia otra cosa y la compartiste igual. Ya no es un error de buena fe."
+          }
+        ],
+        "effect": {
+          "verified_information": -3,
+          "trust": -7,
+          "coexistence": -5,
+          "digital_wellbeing": -4,
+          "misinformation": 12,
+          "conflicts": 8,
+          "score": -8
+        }
+      },
+      {
+        "action": "Verificar",
+        "tipo": "verificar",
+        "description": "Se contrasta con una fuente oficial antes de actuar.",
+        "variantes": [
+          {
+            "si": [
+              "volante-sin-firma",
+              "cara-pegada"
+            ],
+            "texto": "Tus pistas ya lo mostraban y la verificacion lo confirma: no hay ningun regalo. Tu aclaracion lleva pruebas."
+          },
+          {
+            "si": [
+              "propuesta-de-rutas"
+            ],
+            "texto": "Con la propuesta real en la mano, tu aclaracion deja el volante sin piso."
+          },
+          {
+            "si": [
+              "conductor-del-barrio"
+            ],
+            "texto": "El conductor te confirmo que ninguna empresa acepto. Tu aclaracion tiene nombre propio."
+          }
+        ],
+        "effect": {
+          "verified_information": 12,
+          "trust": 7,
+          "coexistence": 4,
+          "digital_wellbeing": 4,
+          "misinformation": -8,
+          "conflicts": -3,
+          "score": 12
+        },
+        "children": [
+          {
+            "action": "Publicar aclaracion",
+            "description": "La verificacion se comparte con contexto y fuente.",
+            "effect": {
+              "verified_information": 9,
+              "trust": 6,
+              "coexistence": 5,
+              "digital_wellbeing": 4,
+              "misinformation": -7,
+              "conflicts": -4,
+              "score": 10
+            }
+          }
+        ]
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "No se amplifica, pero tampoco se corrige.",
+        "variantes": [
+          {
+            "si": [
+              "promete-a-cambio-de-voto"
+            ],
+            "texto": "Sabias que era compra de votos disfrazada y lo dejaste correr. Nadie lo desmiente."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": -1,
+          "coexistence": 0,
+          "digital_wellbeing": 1,
+          "misinformation": 2,
+          "conflicts": 0,
+          "score": 1
+        }
+      },
+      {
+        "action": "Reportar",
+        "tipo": "reportar",
+        "description": "La publicacion se marca como sospechosa para moderacion.",
+        "variantes": [
+          {
+            "si": [
+              "pagina-anonima",
+              "volante-sin-firma"
+            ],
+            "texto": "Reportas una pagina anonima y un volante sin firma: la plataforma los baja."
+          },
+          {
+            "si": [
+              "propuesta-de-rutas"
+            ],
+            "texto": "Reportas con la propuesta real como prueba: la plataforma retira el volante."
+          }
+        ],
+        "effect": {
+          "verified_information": 5,
+          "trust": 3,
+          "coexistence": 3,
+          "digital_wellbeing": 2,
+          "misinformation": -6,
+          "conflicts": -2,
+          "score": 7
+        }
+      }
+    ]
+  },
+  {
+    "id": "foto-con-contratista",
+    "autor": {
+      "nombre": "@desde_la_sombra",
+      "avatar": {
+        "tipo": "anonimo",
+        "color": 1
+      }
+    },
+    "fuente": "Foto sin fecha ni lugar",
+    "fecha": "ayer, 22:10",
+    "imagen": {
+      "motivo": "alcaldia",
+      "pie": "Dos hombres hablando frente a un edificio"
+    },
+    "likes": 290,
+    "comentarios": 119,
+    "pistas": [
+      {
+        "id": "cuenta-de-ataque",
+        "zona": "autor",
+        "titulo": "Cuenta de ataque",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "Solo publica contra un candidato desde que empezo la campana."
+      },
+      {
+        "id": "foto-sin-lugar",
+        "zona": "fuente",
+        "titulo": "Foto sin lugar",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "No dice donde ni cuando se tomo."
+      },
+      {
+        "id": "recorte-de-una-audiencia",
+        "zona": "imagen",
+        "titulo": "Recorte de una audiencia",
+        "senal": "falsa",
+        "costo": 2,
+        "hallazgo": "La foto completa muestra decenas de personas: era una audiencia publica."
+      },
+      {
+        "id": "acusa-sin-pruebas",
+        "zona": "texto",
+        "titulo": "Acusa sin pruebas",
+        "senal": "falsa",
+        "costo": 1,
+        "hallazgo": "Dice 'a escondidas', pero no muestra nada que lo pruebe."
+      },
+      {
+        "id": "ayer-de-noche",
+        "zona": "fecha",
+        "titulo": "Ayer de noche",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Hora poco comun, pero no demuestra nada."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "agenda-publica",
+        "lugar": "alcaldia",
+        "tipo": "documento",
+        "titulo": "Agenda publica de la alcaldia",
+        "hallazgo": "La audiencia con el contratista fue publica y abierta a la prensa.",
+        "senal": "falsa"
+      },
+      {
+        "id": "fotografo-local",
+        "lugar": "plaza",
+        "tipo": "testigo",
+        "titulo": "El fotografo local",
+        "hallazgo": "Fue quien tomo la foto: dice que habia 50 personas alrededor.",
+        "senal": "falsa"
+      }
+    ],
+    "title": "Foto de Andres con un contratista",
+    "content": "Una foto muestra a Andres Quintero reunido a escondidas con un contratista de la alcaldia.",
+    "kind": "contenido_manipulado",
+    "truth_level": 30,
+    "root_effect": {
+      "verified_information": 0,
+      "trust": -2,
+      "coexistence": -1,
+      "digital_wellbeing": -1,
+      "misinformation": 4,
+      "conflicts": 3,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir con rabia",
+        "tipo": "compartir",
+        "description": "Se publica sin verificar y llega a mas ciudadanos.",
+        "variantes": [
+          {
+            "si": [
+              "recorte-de-una-audiencia"
+            ],
+            "texto": "Sabias que la foto era un recorte de una audiencia publica y la compartiste. Acusaste a alguien sin pruebas."
+          },
+          {
+            "si": [
+              "cuenta-de-ataque",
+              "foto-sin-lugar"
+            ],
+            "texto": "Viste que era una cuenta de ataque y que no habia lugar ni fecha, y aun asi la compartiste. Pesa."
+          },
+          {
+            "si": [
+              "agenda-publica"
+            ],
+            "texto": "La agenda publica la desmentia y la compartiste igual. Ya no es un error de buena fe."
+          }
+        ],
+        "effect": {
+          "verified_information": -3,
+          "trust": -8,
+          "coexistence": -6,
+          "digital_wellbeing": -4,
+          "misinformation": 13,
+          "conflicts": 9,
+          "score": -9
+        }
+      },
+      {
+        "action": "Pedir la foto completa",
+        "tipo": "verificar",
+        "description": "Se contrasta con una fuente oficial antes de actuar.",
+        "variantes": [
+          {
+            "si": [
+              "recorte-de-una-audiencia",
+              "foto-sin-lugar"
+            ],
+            "texto": "Tus pistas ya lo mostraban y la verificacion lo confirma: era una audiencia publica. Tu aclaracion trae la foto completa."
+          },
+          {
+            "si": [
+              "agenda-publica"
+            ],
+            "texto": "Con la agenda publica en la mano, tu aclaracion deja la acusacion sin piso."
+          },
+          {
+            "si": [
+              "fotografo-local"
+            ],
+            "texto": "El fotografo te dio la foto completa: habia 50 personas. Tu aclaracion es imposible de discutir."
+          }
+        ],
+        "effect": {
+          "verified_information": 13,
+          "trust": 8,
+          "coexistence": 4,
+          "digital_wellbeing": 4,
+          "misinformation": -9,
+          "conflicts": -3,
+          "score": 13
+        },
+        "children": [
+          {
+            "action": "Publicar aclaracion",
+            "description": "La verificacion se comparte con contexto y fuente.",
+            "effect": {
+              "verified_information": 10,
+              "trust": 7,
+              "coexistence": 6,
+              "digital_wellbeing": 4,
+              "misinformation": -8,
+              "conflicts": -4,
+              "score": 11
+            }
+          }
+        ]
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "No se amplifica, pero tampoco se corrige.",
+        "variantes": [
+          {
+            "si": [
+              "recorte-de-una-audiencia"
+            ],
+            "texto": "Tenias la foto completa y dejaste correr el recorte. La sospecha sigue creciendo."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": -1,
+          "coexistence": 0,
+          "digital_wellbeing": 1,
+          "misinformation": 2,
+          "conflicts": 0,
+          "score": 1
+        }
+      },
+      {
+        "action": "Reportar manipulacion",
+        "tipo": "reportar",
+        "description": "La publicacion se marca como sospechosa para moderacion.",
+        "variantes": [
+          {
+            "si": [
+              "cuenta-de-ataque"
+            ],
+            "texto": "Reportas una cuenta de ataque que ya habias visto sospechosa: la plataforma la limita."
+          },
+          {
+            "si": [
+              "agenda-publica"
+            ],
+            "texto": "Reportas con la agenda publica como prueba: la plataforma etiqueta la foto como manipulada."
+          }
+        ],
+        "effect": {
+          "verified_information": 6,
+          "trust": 3,
+          "coexistence": 3,
+          "digital_wellbeing": 2,
+          "misinformation": -7,
+          "conflicts": -2,
+          "score": 8
+        }
+      }
+    ]
+  },
+  {
+    "id": "faltas-de-juan",
+    "autor": {
+      "nombre": "Lucia Barrera",
+      "avatar": {
+        "tipo": "retrato",
+        "color": 1,
+        "aspecto": {
+          "piel": 1,
+          "cabello": 1,
+          "peinado": "recogido",
+          "accesorio": "bufanda",
+          "color": 1
+        }
+      }
+    },
+    "fuente": "Publicacion de campana, cita las actas",
+    "fecha": "hoy, 10:20",
+    "imagen": {
+      "motivo": "alcaldia",
+      "pie": "Sala de sesiones del concejo"
+    },
+    "likes": 330,
+    "comentarios": 150,
+    "pistas": [
+      {
+        "id": "cuenta-de-la-campana",
+        "zona": "autor",
+        "titulo": "Cuenta de la campana",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Es la cuenta oficial de Lucia Barrera, verificada hace meses."
+      },
+      {
+        "id": "cita-las-actas",
+        "zona": "fuente",
+        "titulo": "Cita las actas",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Enlaza a las actas de las sesiones, que son publicas."
+      },
+      {
+        "id": "dato-concreto",
+        "zona": "texto",
+        "titulo": "Dato concreto",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Da cifras y fechas que se pueden comprobar, no insultos."
+      },
+      {
+        "id": "foto-generica",
+        "zona": "imagen",
+        "titulo": "Foto generica",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "Es una foto de la sala: no prueba ni desmiente."
+      },
+      {
+        "id": "muchas-reacciones",
+        "zona": "estadisticas",
+        "titulo": "Muchas reacciones",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Hay muchos comentarios, pero la polemica no la hace cierta."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "actas-del-concejo",
+        "lugar": "alcaldia",
+        "tipo": "documento",
+        "titulo": "Actas del concejo",
+        "hallazgo": "Las actas confirman que Juan Ardila falto a 6 de las 10 sesiones.",
+        "senal": "verdadera"
+      },
+      {
+        "id": "concejal-testigo",
+        "lugar": "colegio",
+        "tipo": "testigo",
+        "titulo": "Una concejal",
+        "hallazgo": "Confirma las ausencias y dice que Juan justifico solo dos.",
+        "senal": "verdadera"
+      }
+    ],
+    "title": "Lucia dice que Juan falto a 6 de 10 sesiones",
+    "content": "Lucia Barrera asegura que Juan Ardila falto a 6 de las 10 ultimas sesiones del concejo.",
+    "kind": "ataque",
+    "truth_level": 80,
+    "root_effect": {
+      "verified_information": 2,
+      "trust": 1,
+      "coexistence": 0,
+      "digital_wellbeing": 0,
+      "misinformation": 0,
+      "conflicts": 0,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir el dato",
+        "tipo": "compartir",
+        "description": "La informacion verificada llega a mas ciudadanos.",
+        "variantes": [
+          {
+            "si": [
+              "cita-las-actas",
+              "dato-concreto"
+            ],
+            "texto": "Comprobaste que citaba las actas y daba datos antes de compartir: informas sin atacar y el debate sube de nivel."
+          },
+          {
+            "si": [
+              "actas-del-concejo"
+            ],
+            "texto": "Leiste las actas antes de compartir: tu aporte es informacion verificada, aunque incomode."
+          },
+          {
+            "si": [
+              "concejal-testigo"
+            ],
+            "texto": "Hablaste con la concejal antes de compartir: tu mensaje lleva un testigo detras."
+          }
+        ],
+        "effect": {
+          "verified_information": 4,
+          "trust": 1,
+          "coexistence": -3,
+          "digital_wellbeing": -1,
+          "misinformation": -1,
+          "conflicts": 4,
+          "score": 3
+        }
+      },
+      {
+        "action": "Revisar las actas",
+        "tipo": "verificar",
+        "description": "Se revisa la fuente antes de comentar.",
+        "variantes": [
+          {
+            "si": [
+              "cita-las-actas"
+            ],
+            "texto": "Ya habias visto que citaba las actas y la verificacion lo confirma: el dato es cierto, y verificar nunca sobra."
+          },
+          {
+            "si": [
+              "actas-del-concejo"
+            ],
+            "texto": "Tuviste las actas en la mano y el dato era cierto. Verificar de primera mano refuerza tu credibilidad."
+          }
+        ],
+        "effect": {
+          "verified_information": 10,
+          "trust": 4,
+          "coexistence": 3,
+          "digital_wellbeing": 3,
+          "misinformation": -3,
+          "conflicts": -1,
+          "score": 9
+        }
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "La informacion no cambia mucho el debate publico.",
+        "variantes": [
+          {
+            "si": [
+              "actas-del-concejo",
+              "cita-las-actas"
+            ],
+            "texto": "Tenias las actas y dejaste pasar un dato cierto. Perdiste la oportunidad de informar."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": 0,
+          "coexistence": 0,
+          "digital_wellbeing": 0,
+          "misinformation": 0,
+          "conflicts": 0,
+          "score": 0
+        }
+      },
+      {
+        "action": "Reportar",
+        "tipo": "reportar",
+        "description": "Se marca como sospechosa una publicacion que no lo es.",
+        "variantes": [
+          {
+            "si": [
+              "muchas-reacciones"
+            ],
+            "texto": "Reportaste una publicacion que traia datos ciertos solo porque era polemica. La plataforma la mantiene y tu confianza baja."
+          }
+        ],
+        "effect": {
+          "verified_information": -2,
+          "trust": -5,
+          "coexistence": -3,
+          "digital_wellbeing": -2,
+          "misinformation": 3,
+          "conflicts": 3,
+          "score": -6
+        }
+      }
+    ]
+  },
+  {
+    "id": "debate-en-el-colegio",
+    "autor": {
+      "nombre": "Radio Nova",
+      "avatar": {
+        "tipo": "institucional",
+        "color": 0
+      }
+    },
+    "fuente": "Comunicado del colegio central",
+    "fecha": "hoy, 8:30",
+    "imagen": {
+      "motivo": "colegio",
+      "pie": "Auditorio del colegio central"
+    },
+    "likes": 150,
+    "comentarios": 31,
+    "pistas": [
+      {
+        "id": "emisora-local",
+        "zona": "autor",
+        "titulo": "Emisora local",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "La emisora tiene anos informando sobre el colegio y las campanas."
+      },
+      {
+        "id": "comunicado-del-colegio",
+        "zona": "fuente",
+        "titulo": "Comunicado del colegio",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Reproduce el comunicado oficial del colegio con la hora y el lugar."
+      },
+      {
+        "id": "fecha-cercana",
+        "zona": "fecha",
+        "titulo": "Fecha cercana",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "El jueves es esta misma semana, como dice el mensaje."
+      },
+      {
+        "id": "foto-del-auditorio",
+        "zona": "imagen",
+        "titulo": "Foto del auditorio",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "Es una foto del auditorio de siempre; no prueba nada."
+      },
+      {
+        "id": "pocas-reacciones",
+        "zona": "estadisticas",
+        "titulo": "Pocas reacciones",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Tiene pocas reacciones; una noticia cierta no siempre es viral."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "directora-confirma",
+        "lugar": "colegio",
+        "tipo": "testigo",
+        "titulo": "La directora del colegio",
+        "hallazgo": "Confirma el debate del jueves y que la entrada es libre.",
+        "senal": "verdadera"
+      },
+      {
+        "id": "permiso-del-evento",
+        "lugar": "alcaldia",
+        "tipo": "documento",
+        "titulo": "Permiso del evento",
+        "hallazgo": "La alcaldia aprobo el permiso para usar el auditorio ese dia.",
+        "senal": "verdadera"
+      }
+    ],
+    "title": "Debate abierto en el colegio",
+    "content": "Lucia Barrera y Juan Ardila debatiran el jueves en el colegio central. La entrada es libre.",
+    "kind": "true_news",
+    "truth_level": 92,
+    "root_effect": {
+      "verified_information": 2,
+      "trust": 1,
+      "coexistence": 0,
+      "digital_wellbeing": 0,
+      "misinformation": 0,
+      "conflicts": 0,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir",
+        "tipo": "compartir",
+        "description": "La informacion verificada llega a mas ciudadanos.",
+        "variantes": [
+          {
+            "si": [
+              "comunicado-del-colegio",
+              "fecha-cercana"
+            ],
+            "texto": "Comprobaste el comunicado y la fecha antes de compartir: tu aviso llena el auditorio."
+          },
+          {
+            "si": [
+              "directora-confirma"
+            ],
+            "texto": "Hablaste con la directora antes de compartir: tu aviso lleva su confirmacion."
+          },
+          {
+            "si": [
+              "permiso-del-evento"
+            ],
+            "texto": "Viste el permiso del evento antes de compartir: tu aviso es informacion de primera mano."
+          }
+        ],
+        "effect": {
+          "verified_information": 6,
+          "trust": 5,
+          "coexistence": 3,
+          "digital_wellbeing": 3,
+          "misinformation": -2,
+          "conflicts": -1,
+          "score": 7
+        }
+      },
+      {
+        "action": "Verificar",
+        "tipo": "verificar",
+        "description": "Se revisa la fuente antes de comentar.",
+        "variantes": [
+          {
+            "si": [
+              "comunicado-del-colegio"
+            ],
+            "texto": "Ya habias visto el comunicado y la verificacion lo confirma: el debate es real."
+          },
+          {
+            "si": [
+              "permiso-del-evento"
+            ],
+            "texto": "Tuviste el permiso en la mano y el debate era real. Verificar de primera mano refuerza tu credibilidad."
+          }
+        ],
+        "effect": {
+          "verified_information": 10,
+          "trust": 4,
+          "coexistence": 3,
+          "digital_wellbeing": 3,
+          "misinformation": -3,
+          "conflicts": -1,
+          "score": 9
+        }
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "La informacion no cambia mucho el debate publico.",
+        "variantes": [
+          {
+            "si": [
+              "directora-confirma",
+              "comunicado-del-colegio"
+            ],
+            "texto": "Tenias la confirmacion de la directora y dejaste pasar el aviso. Menos vecinos se enteran."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": 0,
+          "coexistence": 0,
+          "digital_wellbeing": 0,
+          "misinformation": 0,
+          "conflicts": 0,
+          "score": 0
+        }
+      }
+    ]
+  },
+  {
+    "id": "taller-digital-parque",
+    "autor": {
+      "nombre": "Parque de Todos",
+      "avatar": {
+        "tipo": "retrato",
+        "color": 3,
+        "aspecto": {
+          "piel": 0,
+          "cabello": 1,
+          "peinado": "rizado",
+          "accesorio": "lentes",
+          "color": 3
+        }
+      }
+    },
+    "fuente": "Cronograma publicado por la campana",
+    "fecha": "ayer, 17:45",
+    "imagen": {
+      "motivo": "parque",
+      "pie": "Mesas con computadores en el parque"
+    },
+    "likes": 190,
+    "comentarios": 44,
+    "pistas": [
+      {
+        "id": "grupo-del-parque",
+        "zona": "autor",
+        "titulo": "Grupo del parque",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Es el grupo de vecinos que cuida el parque desde hace anos."
+      },
+      {
+        "id": "cronograma-oficial",
+        "zona": "fuente",
+        "titulo": "Cronograma oficial",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Adjunta el cronograma con fechas, horas y cupos."
+      },
+      {
+        "id": "datos-de-inscripcion",
+        "zona": "texto",
+        "titulo": "Datos de inscripcion",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Explica donde inscribirse y no pide dinero."
+      },
+      {
+        "id": "foto-de-archivo",
+        "zona": "imagen",
+        "titulo": "Foto de archivo",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "La foto es de archivo, pero eso no desmiente el taller."
+      },
+      {
+        "id": "reacciones-normales",
+        "zona": "estadisticas",
+        "titulo": "Reacciones normales",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Reacciones normales para una noticia del barrio."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "instructor-del-taller",
+        "lugar": "parque",
+        "tipo": "testigo",
+        "titulo": "El instructor del taller",
+        "hallazgo": "Confirma que el taller es gratuito y que quedan cupos.",
+        "senal": "verdadera"
+      },
+      {
+        "id": "cronograma-impreso",
+        "lugar": "plaza",
+        "tipo": "documento",
+        "titulo": "Cronograma impreso",
+        "hallazgo": "Un cartel en la plaza repite el mismo cronograma y los mismos cupos.",
+        "senal": "verdadera"
+      }
+    ],
+    "title": "Taller digital en el parque",
+    "content": "Andres Quintero inaugura este sabado un taller digital gratuito para adultos mayores en el parque.",
+    "kind": "true_news",
+    "truth_level": 90,
+    "root_effect": {
+      "verified_information": 2,
+      "trust": 1,
+      "coexistence": 0,
+      "digital_wellbeing": 0,
+      "misinformation": 0,
+      "conflicts": 0,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir",
+        "tipo": "compartir",
+        "description": "La informacion verificada llega a mas ciudadanos.",
+        "variantes": [
+          {
+            "si": [
+              "cronograma-oficial",
+              "datos-de-inscripcion"
+            ],
+            "texto": "Comprobaste el cronograma y como inscribirse antes de compartir: tu aviso llena los cupos."
+          },
+          {
+            "si": [
+              "instructor-del-taller"
+            ],
+            "texto": "Hablaste con el instructor antes de compartir: tu aviso lleva su confirmacion."
+          },
+          {
+            "si": [
+              "cronograma-impreso"
+            ],
+            "texto": "Viste el cartel de la plaza antes de compartir: tu aporte es informacion verificada."
+          }
+        ],
+        "effect": {
+          "verified_information": 6,
+          "trust": 5,
+          "coexistence": 3,
+          "digital_wellbeing": 3,
+          "misinformation": -2,
+          "conflicts": -1,
+          "score": 7
+        }
+      },
+      {
+        "action": "Verificar",
+        "tipo": "verificar",
+        "description": "Se revisa la fuente antes de comentar.",
+        "variantes": [
+          {
+            "si": [
+              "cronograma-oficial"
+            ],
+            "texto": "Ya habias visto el cronograma y la verificacion lo confirma: el taller es real."
+          },
+          {
+            "si": [
+              "instructor-del-taller"
+            ],
+            "texto": "Hablaste con el instructor y el taller era real. Verificar de primera mano refuerza tu credibilidad."
+          }
+        ],
+        "effect": {
+          "verified_information": 10,
+          "trust": 4,
+          "coexistence": 3,
+          "digital_wellbeing": 3,
+          "misinformation": -3,
+          "conflicts": -1,
+          "score": 9
+        }
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "La informacion no cambia mucho el debate publico.",
+        "variantes": [
+          {
+            "si": [
+              "instructor-del-taller",
+              "cronograma-oficial"
+            ],
+            "texto": "Tenias la confirmacion del instructor y dejaste pasar el aviso. Quedan cupos sin llenar."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": 0,
+          "coexistence": 0,
+          "digital_wellbeing": 0,
+          "misinformation": 0,
+          "conflicts": 0,
+          "score": 0
+        }
+      },
+      {
+        "action": "Reportar",
+        "tipo": "reportar",
+        "description": "Se marca como sospechosa una publicacion que no lo es.",
+        "variantes": [
+          {
+            "si": [
+              "reacciones-normales"
+            ],
+            "texto": "Reportaste un taller real solo porque lo promovia una campana. La plataforma lo mantiene y pierdes confianza."
+          }
+        ],
+        "effect": {
+          "verified_information": -2,
+          "trust": -5,
+          "coexistence": -3,
+          "digital_wellbeing": -2,
+          "misinformation": 3,
+          "conflicts": 3,
+          "score": -6
+        }
+      }
+    ]
+  },
+  {
+    "id": "obras-en-la-plaza",
+    "autor": {
+      "nombre": "Alcaldia de Nova",
+      "avatar": {
+        "tipo": "institucional",
+        "color": 2
+      }
+    },
+    "fuente": "Aviso oficial de la alcaldia",
+    "fecha": "hoy, 7:00",
+    "imagen": {
+      "motivo": "plaza",
+      "pie": "Vallas y obreros en la plaza"
+    },
+    "likes": 120,
+    "comentarios": 22,
+    "pistas": [
+      {
+        "id": "cuenta-oficial",
+        "zona": "autor",
+        "titulo": "Cuenta oficial",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Es la cuenta oficial de la alcaldia, verificada."
+      },
+      {
+        "id": "aviso-con-numero",
+        "zona": "fuente",
+        "titulo": "Aviso con numero",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Trae el numero de la resolucion y las fechas del cierre."
+      },
+      {
+        "id": "fecha-de-las-obras",
+        "zona": "fecha",
+        "titulo": "Fecha de las obras",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Las fechas coinciden con el cronograma de obras del drenaje."
+      },
+      {
+        "id": "foto-de-la-plaza",
+        "zona": "imagen",
+        "titulo": "Foto de la plaza",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "La foto muestra la plaza, sin vallas todavia."
+      },
+      {
+        "id": "pocas-interacciones",
+        "zona": "estadisticas",
+        "titulo": "Pocas interacciones",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Pocas reacciones; los avisos oficiales rara vez son virales."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "obrero-de-la-plaza",
+        "lugar": "plaza",
+        "tipo": "testigo",
+        "titulo": "Un obrero",
+        "hallazgo": "Dice que empiezan manana y que cada dia habra un paso peatonal abierto.",
+        "senal": "verdadera"
+      },
+      {
+        "id": "resolucion-del-cierre",
+        "lugar": "alcaldia",
+        "tipo": "documento",
+        "titulo": "Resolucion del cierre",
+        "hallazgo": "La resolucion fija el cierre parcial por tres dias.",
+        "senal": "verdadera"
+      }
+    ],
+    "title": "Cierre parcial de la plaza",
+    "content": "La alcaldia cerrara parcialmente la plaza durante tres dias por obras en el drenaje.",
+    "kind": "true_news",
+    "truth_level": 96,
+    "root_effect": {
+      "verified_information": 2,
+      "trust": 1,
+      "coexistence": 0,
+      "digital_wellbeing": 0,
+      "misinformation": 0,
+      "conflicts": 0,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Compartir",
+        "tipo": "compartir",
+        "description": "La informacion verificada llega a mas ciudadanos.",
+        "variantes": [
+          {
+            "si": [
+              "aviso-con-numero",
+              "fecha-de-las-obras"
+            ],
+            "texto": "Comprobaste el numero de la resolucion y las fechas antes de compartir: tus vecinos se organizan a tiempo."
+          },
+          {
+            "si": [
+              "obrero-de-la-plaza"
+            ],
+            "texto": "Hablaste con un obrero antes de compartir: tu aviso trae el detalle del paso peatonal."
+          },
+          {
+            "si": [
+              "resolucion-del-cierre"
+            ],
+            "texto": "Leiste la resolucion antes de compartir: tu aporte es informacion verificada."
+          }
+        ],
+        "effect": {
+          "verified_information": 5,
+          "trust": 4,
+          "coexistence": 3,
+          "digital_wellbeing": 3,
+          "misinformation": -2,
+          "conflicts": -1,
+          "score": 6
+        }
+      },
+      {
+        "action": "Verificar",
+        "tipo": "verificar",
+        "description": "Se revisa la fuente antes de comentar.",
+        "variantes": [
+          {
+            "si": [
+              "aviso-con-numero"
+            ],
+            "texto": "Ya habias visto el numero de la resolucion y la verificacion lo confirma: el cierre es real."
+          },
+          {
+            "si": [
+              "resolucion-del-cierre"
+            ],
+            "texto": "Tuviste la resolucion en la mano y el cierre era real. Verificar refuerza tu credibilidad."
+          }
+        ],
+        "effect": {
+          "verified_information": 9,
+          "trust": 4,
+          "coexistence": 3,
+          "digital_wellbeing": 3,
+          "misinformation": -3,
+          "conflicts": -1,
+          "score": 8
+        }
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "La informacion no cambia mucho el debate publico.",
+        "variantes": [
+          {
+            "si": [
+              "resolucion-del-cierre",
+              "aviso-con-numero"
+            ],
+            "texto": "Tenias la resolucion y dejaste pasar el aviso. Algunos vecinos se encuentran la plaza cerrada."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": 0,
+          "coexistence": 0,
+          "digital_wellbeing": 0,
+          "misinformation": 0,
+          "conflicts": 0,
+          "score": 0
+        }
+      },
+      {
+        "action": "Reportar",
+        "tipo": "reportar",
+        "description": "Se marca como sospechosa una publicacion que no lo es.",
+        "variantes": [
+          {
+            "si": [
+              "pocas-interacciones"
+            ],
+            "texto": "Reportaste un aviso oficial real. La plataforma lo mantiene y tu confianza baja."
+          }
+        ],
+        "effect": {
+          "verified_information": -2,
+          "trust": -4,
+          "coexistence": -3,
+          "digital_wellbeing": -2,
+          "misinformation": 3,
+          "conflicts": 3,
+          "score": -5
+        }
+      }
+    ]
+  },
+  {
+    "id": "opinion-colegios",
+    "autor": {
+      "nombre": "Marta, madre de familia",
+      "avatar": {
+        "tipo": "retrato",
+        "color": 2,
+        "aspecto": {
+          "piel": 1,
+          "cabello": 0,
+          "peinado": "largo",
+          "accesorio": "aretes",
+          "color": 2
+        }
+      }
+    },
+    "fuente": "Comentario en el grupo del colegio",
+    "fecha": "hoy, 6:50",
+    "imagen": {
+      "motivo": "colegio",
+      "pie": "Un grupo de ninos saliendo de clase"
+    },
+    "likes": 85,
+    "comentarios": 63,
+    "pistas": [
+      {
+        "id": "madre-real",
+        "zona": "autor",
+        "titulo": "Madre de familia",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Es una madre del colegio que opina con nombre propio."
+      },
+      {
+        "id": "mezcla-datos-y-opinion",
+        "zona": "texto",
+        "titulo": "Mezcla datos y opinion",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "Dice 'van a caminar mas': es una prevision, no un hecho."
+      },
+      {
+        "id": "ayer-la-propuesta",
+        "zona": "fecha",
+        "titulo": "Tras la propuesta",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Se publico despues de que Juan Ardila presento su propuesta."
+      },
+      {
+        "id": "debate-largo",
+        "zona": "estadisticas",
+        "titulo": "Debate largo",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "La discusion tiene muchos comentarios, unos amables y otros no."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "coordinadora-explica",
+        "lugar": "colegio",
+        "tipo": "testigo",
+        "titulo": "La coordinadora",
+        "hallazgo": "Explica que la propuesta aun no define como se organizaria el transporte.",
+        "senal": "neutra"
+      },
+      {
+        "id": "vecino-del-barrio-lejano",
+        "lugar": "barrio",
+        "tipo": "testigo",
+        "titulo": "Un vecino del barrio lejano",
+        "hallazgo": "Dice que hoy sus hijos ya caminan 20 minutos hasta el colegio.",
+        "senal": "neutra"
+      }
+    ],
+    "title": "Colegios mas grandes",
+    "content": "Fusionar colegios pequenos suena bien en el papel, pero los chicos de los barrios lejanos van a caminar mas.",
+    "kind": "opinion",
+    "truth_level": 50,
+    "root_effect": {
+      "verified_information": 0,
+      "trust": 0,
+      "coexistence": -1,
+      "digital_wellbeing": 0,
+      "misinformation": 1,
+      "conflicts": 2,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Sumarte a la pelea",
+        "tipo": "",
+        "description": "Se entra a la discusion con el mismo tono.",
+        "variantes": [
+          {
+            "si": [
+              "mezcla-datos-y-opinion"
+            ],
+            "texto": "Entraste a la discusion con el mismo tono y la conversacion se calento: ya nadie escucha a nadie."
+          }
+        ],
+        "effect": {
+          "verified_information": -1,
+          "trust": -3,
+          "coexistence": -7,
+          "digital_wellbeing": -4,
+          "misinformation": 2,
+          "conflicts": 9,
+          "score": -6
+        }
+      },
+      {
+        "action": "Responder con calma",
+        "tipo": "",
+        "description": "Se responde con calma y con datos.",
+        "variantes": [
+          {
+            "si": [
+              "coordinadora-explica"
+            ],
+            "texto": "Respondiste con lo que dijo la coordinadora: tu comentario baja la temperatura y varios vecinos la leen."
+          },
+          {
+            "si": [
+              "vecino-del-barrio-lejano"
+            ],
+            "texto": "Respondiste con el caso real del barrio lejano: la conversacion pasa de gritos a ideas."
+          }
+        ],
+        "effect": {
+          "verified_information": 1,
+          "trust": 3,
+          "coexistence": 6,
+          "digital_wellbeing": 4,
+          "misinformation": -1,
+          "conflicts": -5,
+          "score": 6
+        }
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "Se deja la opinion como esta.",
+        "variantes": [
+          {
+            "si": [
+              "debate-largo"
+            ],
+            "texto": "Viste que el debate era largo y lo dejaste pasar. A veces es lo mejor; otras, la conversacion se enreda sola."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": 0,
+          "coexistence": 0,
+          "digital_wellbeing": 1,
+          "misinformation": 0,
+          "conflicts": 0,
+          "score": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "opinion-paradas",
+    "autor": {
+      "nombre": "Don Ernesto, taxista",
+      "avatar": {
+        "tipo": "retrato",
+        "color": 0,
+        "aspecto": {
+          "piel": 0,
+          "cabello": 0,
+          "peinado": "corto",
+          "accesorio": "barba",
+          "color": 0
+        }
+      }
+    },
+    "fuente": "Comentario en un grupo de transporte",
+    "fecha": "hace 3 h",
+    "imagen": {
+      "motivo": "plaza",
+      "pie": "Una parada de bus de noche"
+    },
+    "likes": 120,
+    "comentarios": 71,
+    "pistas": [
+      {
+        "id": "taxista-real",
+        "zona": "autor",
+        "titulo": "Taxista conocido",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Es un taxista conocido de la plaza, opina con nombre propio."
+      },
+      {
+        "id": "pide-algo-concreto",
+        "zona": "texto",
+        "titulo": "Pide algo concreto",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "Pide mas iluminacion en las paradas, lo cual se puede comprobar."
+      },
+      {
+        "id": "sin-cifras",
+        "zona": "fuente",
+        "titulo": "Sin cifras",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "No cita ninguna cifra de seguridad: es una impresion personal."
+      },
+      {
+        "id": "foto-propia",
+        "zona": "imagen",
+        "titulo": "Foto propia",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "La foto parece tomada por el mismo autor."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "vigilante-de-la-plaza",
+        "lugar": "plaza",
+        "tipo": "testigo",
+        "titulo": "El vigilante de la plaza",
+        "hallazgo": "Dice que varias paradas tienen la luz danada desde hace meses.",
+        "senal": "neutra"
+      },
+      {
+        "id": "tendera-de-la-esquina",
+        "lugar": "barrio",
+        "tipo": "testigo",
+        "titulo": "Una tendera de la esquina",
+        "hallazgo": "Cuenta que sus clientes ya no esperan el bus despues de las 9.",
+        "senal": "neutra"
+      }
+    ],
+    "title": "Buses sin seguridad",
+    "content": "Mas buses de noche esta bien, pero si las paradas siguen a oscuras nadie se va a subir.",
+    "kind": "opinion",
+    "truth_level": 50,
+    "root_effect": {
+      "verified_information": 0,
+      "trust": 0,
+      "coexistence": -1,
+      "digital_wellbeing": 0,
+      "misinformation": 1,
+      "conflicts": 2,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Sumarte a la pelea",
+        "tipo": "",
+        "description": "Se entra a la discusion con el mismo tono.",
+        "variantes": [
+          {
+            "si": [
+              "sin-cifras"
+            ],
+            "texto": "Contestaste con rabia diciendo que exageraba y la discusion se volvio un pleito entre taxistas y pasajeros."
+          }
+        ],
+        "effect": {
+          "verified_information": -1,
+          "trust": -3,
+          "coexistence": -7,
+          "digital_wellbeing": -4,
+          "misinformation": 2,
+          "conflicts": 9,
+          "score": -6
+        }
+      },
+      {
+        "action": "Responder con calma",
+        "tipo": "",
+        "description": "Se responde con calma y con datos.",
+        "variantes": [
+          {
+            "si": [
+              "vigilante-de-la-plaza"
+            ],
+            "texto": "Respondiste con lo que conto el vigilante: la luz de las paradas esta danada. Tu comentario aporta y se comparte."
+          },
+          {
+            "si": [
+              "tendera-de-la-esquina"
+            ],
+            "texto": "Respondiste con lo que ve la tendera cada noche: la conversacion se vuelve concreta."
+          }
+        ],
+        "effect": {
+          "verified_information": 1,
+          "trust": 3,
+          "coexistence": 6,
+          "digital_wellbeing": 4,
+          "misinformation": -1,
+          "conflicts": -5,
+          "score": 6
+        }
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "Se deja la opinion como esta.",
+        "variantes": [
+          {
+            "si": [
+              "pide-algo-concreto"
+            ],
+            "texto": "Dejaste pasar una peticion concreta. Nadie la recoge y la conversacion se apaga."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": 0,
+          "coexistence": 0,
+          "digital_wellbeing": 1,
+          "misinformation": 0,
+          "conflicts": 0,
+          "score": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "opinion-semaforos",
+    "autor": {
+      "nombre": "Camila, estudiante",
+      "avatar": {
+        "tipo": "retrato",
+        "color": 3,
+        "aspecto": {
+          "piel": 1,
+          "cabello": 1,
+          "peinado": "largo",
+          "accesorio": "lentes",
+          "color": 3
+        }
+      }
+    },
+    "fuente": "Comentario en el grupo de la plaza",
+    "fecha": "hoy, 12:05",
+    "imagen": {
+      "motivo": "parque",
+      "pie": "Un semaforo apagado cerca del parque"
+    },
+    "likes": 95,
+    "comentarios": 52,
+    "pistas": [
+      {
+        "id": "estudiante-real",
+        "zona": "autor",
+        "titulo": "Estudiante real",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Es una estudiante que cruza esa esquina cada dia."
+      },
+      {
+        "id": "compara-prioridades",
+        "zona": "texto",
+        "titulo": "Compara prioridades",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "Compara dos cosas: es una opinion sobre que va primero."
+      },
+      {
+        "id": "mediodia",
+        "zona": "fecha",
+        "titulo": "Mediodia",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Salio a mediodia; no importa."
+      },
+      {
+        "id": "apoyo-y-critica",
+        "zona": "estadisticas",
+        "titulo": "Apoyo y critica",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "Tiene apoyos y criticas casi parejos."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "guarda-del-parque",
+        "lugar": "parque",
+        "tipo": "testigo",
+        "titulo": "El guarda del parque",
+        "hallazgo": "Confirma que el semaforo lleva un mes apagado y que casi hubo un accidente.",
+        "senal": "neutra"
+      },
+      {
+        "id": "reporte-de-danos",
+        "lugar": "alcaldia",
+        "tipo": "documento",
+        "titulo": "Reporte de danos",
+        "hallazgo": "La alcaldia tiene el semaforo en su lista de arreglos, sin fecha.",
+        "senal": "neutra"
+      }
+    ],
+    "title": "Internet antes que semaforos",
+    "content": "Internet gratis esta bien, pero primero arreglen los semaforos que llevan un mes danados.",
+    "kind": "opinion",
+    "truth_level": 50,
+    "root_effect": {
+      "verified_information": 0,
+      "trust": 0,
+      "coexistence": -1,
+      "digital_wellbeing": 0,
+      "misinformation": 1,
+      "conflicts": 2,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Sumarte a la pelea",
+        "tipo": "",
+        "description": "Se entra a la discusion con el mismo tono.",
+        "variantes": [
+          {
+            "si": [
+              "compara-prioridades"
+            ],
+            "texto": "Entraste diciendo que el internet no servia para nada y la discusion se volvio un pleito entre bandos."
+          }
+        ],
+        "effect": {
+          "verified_information": -1,
+          "trust": -3,
+          "coexistence": -6,
+          "digital_wellbeing": -4,
+          "misinformation": 2,
+          "conflicts": 8,
+          "score": -5
+        }
+      },
+      {
+        "action": "Responder con calma",
+        "tipo": "",
+        "description": "Se responde con calma y con datos.",
+        "variantes": [
+          {
+            "si": [
+              "guarda-del-parque"
+            ],
+            "texto": "Respondiste con lo que conto el guarda: el semaforo lleva un mes apagado. La conversacion se vuelve util."
+          },
+          {
+            "si": [
+              "reporte-de-danos"
+            ],
+            "texto": "Respondiste con el reporte de danos de la alcaldia: tu comentario aterriza la queja en datos."
+          }
+        ],
+        "effect": {
+          "verified_information": 1,
+          "trust": 3,
+          "coexistence": 5,
+          "digital_wellbeing": 4,
+          "misinformation": -1,
+          "conflicts": -4,
+          "score": 5
+        }
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "Se deja la opinion como esta.",
+        "variantes": [
+          {
+            "si": [
+              "estudiante-real"
+            ],
+            "texto": "Dejaste pasar una queja de una vecina real. Nadie la responde y se pierde."
+          }
+        ],
+        "effect": {
+          "verified_information": 0,
+          "trust": 0,
+          "coexistence": 0,
+          "digital_wellbeing": 1,
+          "misinformation": 0,
+          "conflicts": 0,
+          "score": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "nova-sin-insultos",
+    "autor": {
+      "nombre": "Radios de Barrio",
+      "avatar": {
+        "tipo": "institucional",
+        "color": 1
+      }
+    },
+    "fuente": "Comunicado conjunto del colegio y las radios",
+    "fecha": "hoy, 9:00",
+    "imagen": {
+      "motivo": "colegio",
+      "pie": "Los cuatro candidatos firmando un acuerdo"
+    },
+    "likes": 160,
+    "comentarios": 28,
+    "pistas": [
+      {
+        "id": "grupo-real",
+        "zona": "autor",
+        "titulo": "Radios reales",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Las radios existen hace anos y sus voceros dan la cara."
+      },
+      {
+        "id": "comunicado-conjunto",
+        "zona": "fuente",
+        "titulo": "Comunicado conjunto",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Lo firman el colegio y tres radios, con numero de contacto."
+      },
+      {
+        "id": "norma-concreta",
+        "zona": "texto",
+        "titulo": "Norma concreta",
+        "senal": "verdadera",
+        "costo": 1,
+        "hallazgo": "Dice que se moderaran los insultos y como se reportan."
+      },
+      {
+        "id": "poco-ruido",
+        "zona": "estadisticas",
+        "titulo": "Poco ruido",
+        "senal": "neutra",
+        "costo": 2,
+        "hallazgo": "Tiene pocos comentarios; eso no la hace falsa."
+      },
+      {
+        "id": "esta-semana",
+        "zona": "fecha",
+        "titulo": "Esta semana",
+        "senal": "neutra",
+        "costo": 1,
+        "hallazgo": "Dice que arranca esta semana, como esperaba."
+      }
+    ],
+    "evidencias": [
+      {
+        "id": "profesora-del-colegio",
+        "lugar": "colegio",
+        "tipo": "testigo",
+        "titulo": "Una profesora",
+        "hallazgo": "Confirma que el colegio presto el auditorio para la firma.",
+        "senal": "verdadera"
+      },
+      {
+        "id": "acta-del-pacto",
+        "lugar": "parque",
+        "tipo": "documento",
+        "titulo": "Acta del pacto",
+        "hallazgo": "El acta lleva las cuatro firmas de los candidatos y la fecha de hoy.",
+        "senal": "verdadera"
+      }
+    ],
+    "title": "Nova sin insultos",
+    "content": "Las radios de barrio y el colegio lanzan 'Nova sin insultos': los cuatro candidatos firmaron un pacto para debatir sin agredirse.",
+    "kind": "campana_civica",
+    "truth_level": 94,
+    "root_effect": {
+      "verified_information": 1,
+      "trust": 2,
+      "coexistence": 2,
+      "digital_wellbeing": 2,
+      "misinformation": -1,
+      "conflicts": -1,
+      "score": 0
+    },
+    "decisions": [
+      {
+        "action": "Apoyar el pacto",
+        "tipo": "compartir",
+        "description": "El jugador invita a todos a sumarse y a cumplir las normas.",
+        "variantes": [
+          {
+            "si": [
+              "acta-del-pacto",
+              "grupo-real"
+            ],
+            "texto": "Comprobaste el acuerdo y quienes lo impulsan: apoyas con seguridad y mas vecinos firman."
+          },
+          {
+            "si": [
+              "profesora-del-colegio"
+            ],
+            "texto": "Hablaste con la profesora y apoyas con conocimiento: el pacto se llena de firmas."
+          }
+        ],
+        "effect": {
+          "verified_information": 4,
+          "trust": 6,
+          "coexistence": 10,
+          "digital_wellbeing": 8,
+          "misinformation": -3,
+          "conflicts": -6,
+          "score": 11
+        }
+      },
+      {
+        "action": "Usarlo para burlarte",
+        "tipo": "compartir",
+        "description": "Se usa el pacto para burlarse de un candidato.",
+        "variantes": [
+          {
+            "si": [
+              "acta-del-pacto"
+            ],
+            "texto": "Sabias que los cuatro candidatos lo habian firmado y aun asi lo usaste para burlarte. Rompes una iniciativa sana."
+          }
+        ],
+        "effect": {
+          "verified_information": -1,
+          "trust": -6,
+          "coexistence": -8,
+          "digital_wellbeing": -5,
+          "misinformation": 5,
+          "conflicts": 9,
+          "score": -7
+        }
+      },
+      {
+        "action": "Invitar a verificar",
+        "tipo": "verificar",
+        "description": "Se invita a revisar quien firmo y como se modera.",
+        "variantes": [
+          {
+            "si": [
+              "grupo-real"
+            ],
+            "texto": "Ya habias comprobado al grupo: invitas a verificar con el ejemplo y mas vecinos se suman."
+          },
+          {
+            "si": [
+              "acta-del-pacto"
+            ],
+            "texto": "Tuviste el acta en la mano: invitas a verificar con el ejemplo y mas vecinos se suman."
+          }
+        ],
+        "effect": {
+          "verified_information": 9,
+          "trust": 5,
+          "coexistence": 7,
+          "digital_wellbeing": 5,
+          "misinformation": -5,
+          "conflicts": -4,
+          "score": 10
+        }
+      }
+    ]
   }
 ]

@@ -24,8 +24,8 @@ class NoticiasCargaTest(unittest.TestCase):
     def setUp(self) -> None:
         self.arboles = load_trees(RUTA_EVENTOS)
 
-    def test_las_cinco_noticias_traen_tarjeta_completa(self) -> None:
-        self.assertEqual(len(self.arboles), 5)
+    def test_todas_las_noticias_traen_tarjeta_completa(self) -> None:
+        self.assertGreaterEqual(len(self.arboles), 16)
         for a in self.arboles:
             e = a.event
             self.assertIsNotNone(e.author, e.event_id)
@@ -51,6 +51,9 @@ class NoticiasCargaTest(unittest.TestCase):
     def test_las_pistas_son_coherentes_con_la_veracidad(self) -> None:
         for a in self.arboles:
             senales = [p.senal for p in a.event.clues]
+            if a.event.kind == "opinion":    # una opinion no es verdadera ni falsa: todas sus pistas son neutras
+                self.assertEqual(set(senales), {Senal.NEUTRA}, a.event.event_id)
+                continue
             if es_falsa(a.event.truth_level):
                 self.assertIn(Senal.FALSA, senales, a.event.event_id)
                 self.assertNotIn(Senal.VERDADERA, senales, a.event.event_id)
@@ -65,7 +68,8 @@ class NoticiasCargaTest(unittest.TestCase):
             inv = Investigacion(a.event.clues)
             for p in sorted(a.event.clues, key=lambda p: p.costo):
                 inv.investigar(p.id)
-            self.assertIn(inv.veredicto(), ("falsa", "verdadera"), a.event.event_id)
+            esperado = ("incierta",) if a.event.kind == "opinion" else ("falsa", "verdadera")
+            self.assertIn(inv.veredicto(), esperado, a.event.event_id)
             self.assertLess(len(inv.descubiertas), len(a.event.clues))
 
     def test_las_imagenes_usan_una_zona_conocida_y_el_motivo_coincide_con_la_ciudad(self) -> None:
@@ -86,7 +90,8 @@ class NoticiasCargaTest(unittest.TestCase):
 
     def test_cada_noticia_tiene_variantes_en_su_decision_de_compartir(self) -> None:
         for a in self.arboles:
-            compartir = next(n for n in a.root.children if n.tipo == "compartir")
+            # en una opinion no se "comparte": la primera respuesta (sumarse a la discusion) hace de ese papel
+            compartir = next((n for n in a.root.children if n.tipo == "compartir"), a.root.children[0])
             self.assertTrue(compartir.variantes, a.event.event_id)
 
     def test_las_pistas_cambian_la_consecuencia(self) -> None:

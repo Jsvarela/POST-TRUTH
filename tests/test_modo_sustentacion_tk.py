@@ -58,8 +58,8 @@ class ModoSustentacionTkTest(unittest.TestCase):
         self.app._delete_selected()
         self.assertEqual(len(list(arbol.dfs_nodes())), antes)
 
-    def test_carga_los_cinco_eventos_con_los_campos_nuevos(self) -> None:
-        self.assertEqual(len(self.app.trees), 5)
+    def test_carga_todos_los_eventos_con_los_campos_nuevos(self) -> None:
+        self.assertGreaterEqual(len(self.app.trees), 16)
         for arbol in self.app.trees:
             self.assertTrue(arbol.event.evidences)
 

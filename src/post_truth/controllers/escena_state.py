@@ -25,7 +25,7 @@ import random
 
 import pygame
 
-from post_truth.config import ANCHO, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, px
+from post_truth.config import ANCHO, EVENTOS_POR_PARTIDA, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, px
 from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import DecisionNode, DecisionTree, load_trees
 from post_truth.game_state import CityState
@@ -68,6 +68,7 @@ class EscenaState(BaseState):
     def __init__(self, app) -> None:
         super().__init__(app)
         self.rng = random.Random()  # inyectable en pruebas para fijar el orden
+        self.eventos_por_partida: int | None = EVENTOS_POR_PARTIDA   # None = todas las publicaciones (pruebas)
         self.ciudad = CityState()
         self.arboles: list[DecisionTree] = []
         self.indice = 0
@@ -104,8 +105,9 @@ class EscenaState(BaseState):
 
     def al_entrar(self) -> None:
         self.ciudad = CityState()
-        self.arboles = load_trees(RUTA_EVENTOS)
-        self.rng.shuffle(self.arboles)  # el orden de publicaciones cambia entre partidas
+        todos = load_trees(RUTA_EVENTOS)
+        # Cada partida juega una seleccion al azar (y en orden al azar): el contenido cambia entre partidas
+        self.arboles = self.rng.sample(todos, min(self.eventos_por_partida or len(todos), len(todos)))
         self.indice = 0
         self.grafo = GrafoSocial.cargar(RUTA_GRAFO_SOCIAL)
         self.grafo.cambiar_rol(JUGADOR, self.personaje.rol)  # el rol elegido define cuanto amplifica al compartir

@@ -83,9 +83,12 @@ class EventosTest(unittest.TestCase):
         arboles = load_trees(RUTA_EVENTOS)
         for arbol in arboles:
             for nodo in arbol.root.children:
+                if arbol.event.kind == "opinion" and not nodo.tipo:
+                    continue    # en una opinion responder no mueve la publicacion por el grafo: no hay tipo
                 self.assertIn(nodo.tipo, {COMPARTIR, VERIFICAR, REPORTAR, IGNORAR}, nodo.label)
         falsas = {a.event.event_id for a in arboles if es_falsa(a.event.truth_level)}
-        self.assertEqual(falsas, {"colegio-cerrado", "parques-cerrados", "video-debate-editado"})
+        self.assertEqual(falsas, {"colegio-cerrado", "parques-cerrados", "video-debate-editado", "wifi-con-recibo",
+                                  "encuesta-inventada", "agua-contaminada", "pasajes-gratis", "foto-con-contratista"})
 
 
 if __name__ == "__main__":
