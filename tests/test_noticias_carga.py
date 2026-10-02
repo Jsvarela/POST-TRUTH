@@ -119,7 +119,7 @@ class NoticiasCargaTest(unittest.TestCase):
     def test_el_json_serializado_conserva_los_campos_de_la_tarjeta(self) -> None:
         crudo = datos()[0]
         d = NewsEvent.from_dict(crudo).to_dict()
-        for campo in ("autor", "fuente", "fecha", "imagen", "likes", "comentarios", "pistas", "zona"):
+        for campo in ("autor", "fuente", "fecha", "imagen", "likes", "comentarios", "pistas", "evidencias"):
             self.assertEqual(d[campo], crudo[campo], campo)
 
     def test_un_evento_sin_los_campos_nuevos_sigue_cargando(self) -> None:

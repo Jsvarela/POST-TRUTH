@@ -4,19 +4,22 @@ Flujo por publicacion: DECIDIENDO (noticia + botones) -> [PROPAGACION] -> CONSEC
 (mensaje + efecto en la ciudad) -> siguiente publicacion ... -> FIN. Todo el contenido sale
 del DecisionTree cargado desde data/events.json; aqui no hay noticias fijas.
 
-INVESTIGAR: cada publicacion es una tarjeta de Civitas con zonas clicables (autor, fuente, fecha,
-imagen, texto, estadisticas) que esconden pistas. Revisar una pista revela su hallazgo y gasta
-ENERGIA (3 por publicacion; hay mas pistas que energia, asi que hay que elegir). Lo investigado
-cambia el texto de consecuencia de la decision (models/pistas.py), no los puntajes.
+INVESTIGAR (energia): cada publicacion es una tarjeta de Civitas con zonas clicables (autor, fuente,
+fecha, imagen, texto, estadisticas) que esconden pistas, y ademas deja EVIDENCIA en lugares del mapa
+de la ciudad (un testigo, un documento, una grabacion). Hay UNA energia por publicacion (5) para
+revisar la tarjeta y para viajar, y hay mas por revisar que energia: hay que elegir.
 
-ZONAS Y RONDAS: cada noticia ocurre en una zona del GrafoCiudad y el jugador esta en otra (o en la
-misma). Moverse a una zona vecina (clic en el mapa o Q W E R) y cada decision cuestan una RONDA, y en
-cada ronda los rumores sin atender se expanden un anillo (RumoresCiudad). Verificar y Reportar
-exigen estar en la zona de la noticia; Compartir e Ignorar se pueden hacer desde cualquier parte.
+VIAJAR: el jugador puede ir a CUALQUIER zona (clic en el mapa o Q W E R T). El viaje cuesta la
+distancia del camino mas corto (Dijkstra, ver structures/grafo_ciudad.py) y al llegar se revela la
+evidencia de la noticia que haya alli. La posicion se mantiene entre publicaciones. Los rumores NO
+se propagan por el mapa: eso ocurre solo en el grafo social, entre personas.
+
+VERIFICAR Y REPORTAR no exigen estar en ningun lugar: su resultado depende del RESPALDO reunido
+(Investigacion.respaldo: 0 nada, 1 solo tarjeta, 2 evidencia de campo). Ver structures/propagacion.py.
 
 PROPAGACION solo ocurre si la decision mueve la publicacion por el grafo social (Compartir,
-Verificar, Reportar; Ignorar no). El efecto sobre los indicadores se aplica DESPUES de la
-animacion, para que el jugador vea primero como viaja la noticia y luego sus consecuencias.
+Verificar, Reportar con pruebas; Ignorar no). El efecto sobre los indicadores se aplica DESPUES de
+la animacion, para que el jugador vea primero como viaja la noticia y luego sus consecuencias.
 """
 import random
 
@@ -31,26 +34,24 @@ from post_truth.models.personaje import Genero, Personaje
 from post_truth.models.pistas import Investigacion, Pista
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
-from post_truth.structures.propagacion import (COMPARTIR, REPORTAR, VERIFICAR, SimulacionDecision, es_falsa,
+from post_truth.structures.propagacion import (REPORTAR, REPORTE_INFUNDADO, VERIFICAR, SimulacionDecision, es_falsa,
+                                               fuerza_reportar, fuerza_verificar, mensaje_respaldo, reporte_rechazado,
                                                simular_decision)
-from post_truth.structures.rumores_ciudad import RumoresCiudad
 from post_truth.views.componentes import Boton, CajaDialogo
 from post_truth.views.escena_view import RECT_MAPA, RECT_TARJETA, dibujar_escena
 from post_truth.views.grafo_view import AnimacionPropagacion
-from post_truth.views.mapa_view import EstadoMapa, zona_en
+from post_truth.views.mapa_view import EstadoMapa, zona_de_tecla, zona_en
 from post_truth.views.tarjeta_civitas_view import EstadoTarjeta, pista_con_tecla, zona_en as zona_de_tarjeta
 
 DECIDIENDO, PROPAGACION, CONSECUENCIA, FIN = "decidiendo", "propagacion", "consecuencia", "fin"
 JUGADOR = "jugador"  # id del vertice del grafo social que representa al jugador
 RECT_DIALOGO = pygame.Rect(24, 404, 976, 132)
-ATAJOS = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5]
-TECLAS_MOVER = [pygame.K_q, pygame.K_w, pygame.K_e, pygame.K_r]  # ir a la 1.a, 2.a, 3.a o 4.a zona vecina
+ATAJOS = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
 Y_BOTONES, ALTO_BOTONES, MARGEN, SEPARACION = 546, 62, 24, 14
 # Teclas para investigar la 1.a, 2.a... pista de la tarjeta (letras de views/tarjeta_civitas_view.TECLAS_PISTA)
 TECLAS_INVESTIGAR = {pygame.K_a: "A", pygame.K_s: "S", pygame.K_d: "D", pygame.K_f: "F", pygame.K_g: "G"}
-TIPOS_EN_SITIO = {VERIFICAR, REPORTAR}  # acciones que exigen estar en la zona de la noticia
-# Premio por ir a una zona infectada y desmentir el rumor (accion responsable: suma confianza y puntos)
-DESMENTIR_PREMIO = Impact(verified_information=4, trust=3, score=4)
+# Teclas para viajar a la 1.a, 2.a... zona del mapa (letras de views/mapa_view.TECLAS_VIAJE)
+TECLAS_VIAJAR = {pygame.K_q: "Q", pygame.K_w: "W", pygame.K_e: "E", pygame.K_r: "R", pygame.K_t: "T"}
 
 
 def _rects_botones(n: int) -> list[pygame.Rect]:
@@ -75,17 +76,18 @@ class EscenaState(BaseState):
         # Verificar/Reportar sigue cortado/frenado en las publicaciones siguientes.
         self.grafo = GrafoSocial()
         self.animacion: AnimacionPropagacion | None = None
-        self._pendiente: tuple[DecisionNode, Impact] | None = None  # decision esperando a que termine la animacion
+        # decision esperando a que termine la animacion: (nodo, impacto, aviso sobre el respaldo)
+        self._pendiente: tuple[DecisionNode, Impact, str] | None = None
         self._narracion = ""
-        # Ciudad: la zona del jugador, los rumores y el contador de rondas duran toda la partida.
+        # Mapa de la ciudad: la posicion del jugador dura toda la partida (no se reinicia por publicacion).
         self.mapa = GrafoCiudad()
-        self.rumores = RumoresCiudad(self.mapa)
         self.zona = ""
-        self.ronda = 0
-        self._titulos: dict[str, str] = {}
-        # Investigacion de la publicacion actual (energia y pistas descubiertas): se reinicia en cada una
+        self.ruta_vista: tuple[str, ...] = ()   # ultima ruta recorrida en esta publicacion (se resalta en el mapa)
+        self.costo_ruta_vista = 0
+        # Investigacion de la publicacion actual (energia, pistas y evidencias): se reinicia en cada una
         self.investigacion = Investigacion(())
-        self._hover = None
+        self._hover = None        # zona de la tarjeta bajo el mouse
+        self._hover_zona = None   # zona del mapa bajo el mouse
 
     @property
     def personaje(self) -> Personaje:
@@ -105,42 +107,97 @@ class EscenaState(BaseState):
         self.grafo.cambiar_rol(JUGADOR, self.personaje.rol)  # el rol elegido define cuanto amplifica al compartir
         self.animacion = None
         self.mapa = GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD)
-        self.rumores = RumoresCiudad(self.mapa)
-        self.zona, self.ronda = self.mapa.zona_inicial, 0
-        self._titulos = {a.event.event_id: a.event.title for a in self.arboles}
+        self.zona = self.mapa.zona_inicial
         self._cargar_evento()
 
-    # --- zonas y rumores ----------------------------------------------------------------
+    # --- mapa y viajes ------------------------------------------------------------------
     def _nombre_zona(self, id: str) -> str:
         return self.mapa.zona(id).nombre if id in self.mapa else id
 
-    def _puede(self, nodo: DecisionNode) -> bool:
-        """Verificar y Reportar se hacen en el lugar de la noticia; el resto, desde cualquier zona."""
-        return nodo.tipo not in TIPOS_EN_SITIO or self.zona == self.arbol.event.zone
-
     def _estado_mapa(self) -> EstadoMapa:
         decidiendo = self.fase == DECIDIENDO
+        ruta, costo = self.ruta_vista, self.costo_ruta_vista
+        if decidiendo and self._hover_zona not in (None, self.zona):   # vista previa de la ruta bajo el mouse
+            previa = self.mapa.ruta(self.zona, self._hover_zona)
+            if previa is not None:
+                ruta, costo = previa.zonas, previa.costo
         return EstadoMapa(
-            self.mapa, self.zona, zona_noticia=self.arbol.event.zone if decidiendo else "",
-            infectadas=self.rumores.zonas_infectadas(), en_riesgo=self.rumores.zonas_en_riesgo(),
-            alcanzables=self.mapa.vecinos(self.zona) if decidiendo else [])
+            self.mapa, self.zona, self.mapa.costos_desde(self.zona),
+            energia=self.investigacion.energia if decidiendo else None,
+            ruta=ruta, costo_ruta=costo if ruta else None,
+            pendientes=self.investigacion.lugares_pendientes() if decidiendo else set(),
+            revisadas=self.investigacion.lugares_revisados(),
+            hover=self._hover_zona if decidiendo else None, teclas=decidiendo)
 
-    def _pasar_ronda(self) -> tuple[Impact, str]:
-        """Una ronda: los rumores sin atender se expanden un anillo (BFS por niveles sobre el grafo
-        de la ciudad) y cada zona infectada cuesta una penalizacion pequena. Devuelve ese costo y
-        un aviso para el dialogo."""
-        self.ronda += 1
-        nuevas = self.rumores.avanzar_ronda()
-        por_rumor: dict[str, list[str]] = {}
-        for rumor_id, zona in nuevas:
-            por_rumor.setdefault(rumor_id, []).append(self._nombre_zona(zona))
-        partes = [f"El rumor \u00ab{self._titulos.get(r, r)}\u00bb llega a {', '.join(z)}." for r, z in por_rumor.items()]
-        if not partes and self.rumores.visibles():
-            partes = ["Los rumores siguen activos."]
-        return self.rumores.penalizacion(), " ".join(partes[:2])
+    def _viajar(self, destino: str) -> None:
+        """Ir a una zona cualquiera: cuesta la distancia del camino mas corto (Dijkstra) y, si la
+        energia no alcanza, no se mueve ni se cobra. Al llegar se revela la evidencia que haya alli."""
+        if self.fase != DECIDIENDO or destino == self.zona or destino not in self.mapa:
+            return
+        ruta = self.mapa.ruta(self.zona, destino)
+        nombre = self._nombre_zona(destino)
+        if ruta is None:
+            self._decir_en_sitio(f"No hay camino hasta {nombre}.")
+            return
+        if not self.investigacion.viajar(ruta.costo):
+            self._decir_en_sitio(f"No te alcanza la energia: ir a {nombre} cuesta {ruta.costo} y te quedan "
+                                 f"{self.investigacion.energia}. Decide con lo que sabes o revisa algo mas barato.")
+            return
+        self.zona, self.ruta_vista, self.costo_ruta_vista = destino, ruta.zonas, ruta.costo
+        camino = " > ".join(self._nombre_zona(z) for z in ruta.zonas)
+        aviso = f"Viajas a {nombre} por {camino} (costo {ruta.costo})."
+        evidencia = self.investigacion.revelar_evidencia(destino)
+        if evidencia is not None:
+            aviso += f" {evidencia.titulo}: {evidencia.hallazgo}"
+        elif self.investigacion.evidencia_en(destino) is not None:
+            aviso += " Ya habias revisado lo de este lugar."
+        else:
+            aviso += " Aqui no hay nada de esta noticia."
+        self._decir_en_sitio(aviso)
+
+    def _manejar_mapa(self, event: pygame.event.Event) -> None:
+        """Viajar: clic sobre una zona del mapa o su letra (Q W E R T); el mouse encima muestra la ruta."""
+        if event.type == pygame.MOUSEMOTION:
+            self._hover_zona = zona_en(self._estado_mapa(), RECT_MAPA, event.pos)
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            zona = zona_en(self._estado_mapa(), RECT_MAPA, event.pos)
+            if zona is not None:
+                self._viajar(zona)
+        elif event.type == pygame.KEYDOWN and event.key in TECLAS_VIAJAR:
+            zona = zona_de_tecla(self.mapa, TECLAS_VIAJAR[event.key])
+            if zona is not None:
+                self._viajar(zona)
+
+    # --- transiciones -------------------------------------------------------------------
+    def _cargar_evento(self) -> None:
+        self.fase, self.impacto, self.animo = DECIDIENDO, None, 0
+        evento = self.arbol.event
+        self.investigacion = Investigacion(evento.clues, evidencias=evento.evidences)  # energia completa
+        self._hover = self._hover_zona = None
+        self.ruta_vista, self.costo_ruta_vista = (), 0
+        self.dialogo.set_texto(evento.content, "Civitas")
+        # Si el jugador ya esta parado donde la noticia dejo evidencia, se revela sola (no cuesta nada)
+        evidencia = self.investigacion.revelar_evidencia(self.zona)
+        if evidencia is not None:
+            self._decir_en_sitio(f"Ya estas en {self._nombre_zona(self.zona)}. "
+                                 f"{evidencia.titulo}: {evidencia.hallazgo}")
+        self._construir_botones()
+
+    def _construir_botones(self) -> None:
+        """Un boton por rama del evento (las acciones cambian segun la noticia: "Verificar", "Buscar
+        video completo", ...). Siempre estan todas disponibles: lo que cambia es cuanto rinden segun
+        el respaldo reunido, no si se pueden elegir."""
+        ramas = self.arbol.root.children[:4]
+        self.botones = [Boton(rect, f"{i + 1}. {nodo.label}", lambda n=nodo: self._decidir(n), atajo=ATAJOS[i])
+                        for i, (rect, nodo) in enumerate(zip(_rects_botones(len(ramas)), ramas))]
+
+    def _decir_en_sitio(self, aviso: str) -> None:
+        """Muestra la noticia y debajo el aviso, sin volver a animar el texto (ya se leyo)."""
+        self.dialogo.set_texto(f"{self.arbol.event.content}\n{aviso}", "Civitas")
+        self.dialogo.completar()
 
     def _investigar(self, pista: Pista) -> None:
-        """Revisa una pista: gasta energia, revela el hallazgo en el dialogo y marca la zona de la tarjeta."""
+        """Revisa una pista de la tarjeta: gasta energia, revela el hallazgo y marca la zona."""
         if self.fase != DECIDIENDO:
             return
         r = self.investigacion.investigar(pista.id)
@@ -151,85 +208,28 @@ class EscenaState(BaseState):
             aviso = f"{pista.titulo}: {pista.hallazgo}"   # "repetida" no cuesta nada: se relee
         self._decir_en_sitio(aviso)
 
-    def _mover(self, destino: str) -> None:
-        if self.fase != DECIDIENDO or destino not in self.mapa.vecinos(self.zona):
-            return
-        self.zona = destino
-        costo, aviso = self._pasar_ronda()
-        self.ciudad.apply(costo)
-        self._decir_en_sitio(f"Vas a {self._nombre_zona(destino)}. {aviso}".strip())
-        self._construir_botones()
-
-    def _desmentir(self) -> None:
-        """Estando en una zona infectada: elimina ese rumor (premio por actuar con responsabilidad)
-        y cuesta una ronda."""
+    def _decidir(self, nodo: DecisionNode) -> None:
         if self.fase != DECIDIENDO:
             return
-        rumor = self.rumores.rumor_en(self.zona, excluir=self.arbol.event.event_id)
-        if rumor is None:
-            return
-        self.rumores.resolver(rumor.id)
-        costo, aviso = self._pasar_ronda()
-        self.ciudad.apply(DESMENTIR_PREMIO + costo)
-        titulo = self._titulos.get(rumor.id, rumor.id)
-        self._decir_en_sitio(f"Desmientes el rumor \u00ab{titulo}\u00bb en {self._nombre_zona(self.zona)}. {aviso}".strip())
-        self._construir_botones()
-
-    def _decir_en_sitio(self, aviso: str) -> None:
-        """Muestra la noticia y debajo el aviso, sin volver a animar el texto (ya se leyo)."""
-        self.dialogo.set_texto(f"{self.arbol.event.content}\n{aviso}", "Civitas")
-        self.dialogo.completar()
-
-    # --- transiciones -------------------------------------------------------------------
-    def _cargar_evento(self) -> None:
-        self.fase, self.impacto, self.animo = DECIDIENDO, None, 0
-        evento = self.arbol.event
-        self.investigacion = Investigacion(evento.clues)   # energia completa y ninguna pista descubierta
-        self._hover = None
-        self.dialogo.set_texto(evento.content, "Civitas")
-        # Una noticia falsa es un rumor desde que aparece, pero el mapa no lo muestra hasta que
-        # empieza a correr (si no, delataria cual es falsa sin investigar).
-        if evento.zone and es_falsa(evento.truth_level):
-            self.rumores.nacer(evento.event_id, evento.zone)
-        self._construir_botones()
-
-    def _construir_botones(self) -> None:
-        """Un boton por rama del evento (las acciones cambian segun la noticia: "Verificar",
-        "Buscar video completo", ...) mas "Desmentir aqui" si la zona actual tiene un rumor viejo.
-        Las acciones que exigen estar en la zona de la noticia salen apagadas si no estas ahi."""
-        evento = self.arbol.event
-        ramas = self.arbol.root.children[:4]
-        desmentible = self.rumores.rumor_en(self.zona, excluir=evento.event_id)
-        rects = _rects_botones(len(ramas) + (1 if desmentible else 0))
-        botones: list[Boton] = []
-        for i, (rect, nodo) in enumerate(zip(rects, ramas)):
-            ok = self._puede(nodo)
-            texto = f"{i + 1}. {nodo.label}" + ("" if ok else f" (ir a {self._nombre_zona(evento.zone)})")
-            boton = Boton(rect, texto, lambda n=nodo: self._decidir(n), atajo=ATAJOS[i])
-            boton.habilitado = ok
-            botones.append(boton)
-        if desmentible:
-            botones.append(Boton(rects[-1], f"{len(ramas) + 1}. Desmentir aqui", self._desmentir,
-                                 atajo=ATAJOS[len(ramas)]))
-        self.botones = botones
-
-    def _decidir(self, nodo: DecisionNode) -> None:
-        if self.fase != DECIDIENDO or not self._puede(nodo):
-            return
-        evento = self.arbol.event
-        if nodo.tipo in TIPOS_EN_SITIO:
-            self.rumores.resolver(evento.event_id)   # atendido en el lugar: el rumor muere
-        elif nodo.tipo == COMPARTIR:
-            self.rumores.ampliar(evento.event_id)    # compartirlo lo extiende un anillo de golpe
         # accumulated_impact recorre la raiz hasta `nodo` (DFS, O(n) en nodos del evento) y suma
         # el efecto de la publicacion (root_effect) mas el de la decision: es la cadena de causas.
         bruto = self.arbol.accumulated_impact(nodo.node_id)
         impacto = bruto.scaled_for_role(self.personaje.rol)  # el rol cambia el resultado
-        simulacion = self._simular(nodo)
+        # Verificar y Reportar rinden segun el respaldo reunido (0 nada, 1 tarjeta, 2 evidencia de campo).
+        # Solo se atenuan los BENEFICIOS; los perjuicios de equivocarse no se abaratan.
+        respaldo = self.investigacion.respaldo(nodo.tipo) if nodo.tipo in (VERIFICAR, REPORTAR) else 2
+        if nodo.tipo == VERIFICAR:
+            impacto = impacto.atenuar_beneficios(fuerza_verificar(respaldo))
+        elif nodo.tipo == REPORTAR:
+            impacto = impacto.atenuar_beneficios(fuerza_reportar(respaldo))
+            if reporte_rechazado(respaldo):
+                impacto = impacto + REPORTE_INFUNDADO   # reportar sin ninguna prueba cuesta confianza
+        aviso = mensaje_respaldo(nodo.tipo, respaldo)
+        simulacion = self._simular(nodo, respaldo)
         if simulacion is None:
-            self._mostrar_consecuencia(nodo, impacto)
+            self._mostrar_consecuencia(nodo, impacto, aviso)
             return
-        self._pendiente = (nodo, impacto)
+        self._pendiente = (nodo, impacto, aviso)
         self.animacion = AnimacionPropagacion(self.grafo, simulacion)
         self.fase = PROPAGACION
         self.animo = 0
@@ -238,24 +238,21 @@ class EscenaState(BaseState):
         self.botones = [Boton(pygame.Rect(362, Y_BOTONES, 300, ALTO_BOTONES), "Saltar animacion (Enter)",
                               self.animacion.saltar, atajo=pygame.K_RETURN)]
 
-    def _simular(self, nodo: DecisionNode) -> SimulacionDecision | None:
-        """Propagacion que desencadena la decision, o None si no mueve la publicacion.
-        El autor original de la noticia se sortea entre los demas ciudadanos."""
+    def _simular(self, nodo: DecisionNode, respaldo: int) -> SimulacionDecision | None:
+        """Propagacion que desencadena la decision, o None si no mueve la publicacion (Ignorar o un
+        reporte rechazado). El autor original de la noticia se sortea entre los demas ciudadanos."""
         if not nodo.tipo:
             return None
         autor = self.rng.choice([c.id for c in self.grafo.vertices() if c.id != JUGADOR])
         return simular_decision(self.grafo, nodo.tipo, es_falsa(self.arbol.event.truth_level),
-                                JUGADOR, autor, self.rng)
+                                JUGADOR, autor, self.rng, respaldo=respaldo)
 
-    def _mostrar_consecuencia(self, nodo: DecisionNode, impacto: Impact) -> None:
-        # Decidir tambien es una ronda: los rumores que quedaron sin atender avanzan y se cobran
-        costo, aviso = self._pasar_ronda()
-        impacto = impacto + costo
+    def _mostrar_consecuencia(self, nodo: DecisionNode, impacto: Impact, aviso: str = "") -> None:
         self.impacto = impacto
         self.ciudad.apply(impacto)
         self.animo = (impacto.score > 0) - (impacto.score < 0)
         self.fase = CONSECUENCIA
-        # El texto cambia segun lo investigado (variante escrita en events.json o "Habias revisado: ...")
+        # El texto cambia segun lo hallado (variante escrita en events.json o "Habias revisado: ...")
         mensaje = nodo.consecuencia(self.investigacion.pistas_descubiertas()) or "Nada cambia por ahora."
         self.dialogo.set_texto(f"{mensaje}\n{aviso}" if aviso else mensaje, "Consecuencia")
         self.botones = [Boton(pygame.Rect(362, Y_BOTONES, 300, ALTO_BOTONES), "Continuar (Enter)",
@@ -264,10 +261,10 @@ class EscenaState(BaseState):
     def _terminar_propagacion(self) -> None:
         """Pasa de la animacion a las consecuencias: efecto del arbol + efecto de la propagacion."""
         assert self.animacion is not None and self._pendiente is not None
-        nodo, impacto_arbol = self._pendiente
+        nodo, impacto_arbol, aviso = self._pendiente
         impacto = impacto_arbol + self.animacion.resultado.impacto()
         self.animacion, self._pendiente = None, None
-        self._mostrar_consecuencia(nodo, impacto)
+        self._mostrar_consecuencia(nodo, impacto, aviso)
 
     def _continuar(self) -> None:
         self.indice += 1
@@ -275,10 +272,7 @@ class EscenaState(BaseState):
             self._cargar_evento()
             return
         self.fase, self.impacto, self.animo = FIN, None, 1 if self.ciudad.score >= 0 else -1
-        pendientes = len(self.rumores.activos())
-        extra = f" Rumores sin atender: {pendientes}." if pendientes else " No quedan rumores activos."
-        self.dialogo.set_texto(f"Termino la jornada en Ciudad Nova. Tu puntaje final es {self.ciudad.score}.{extra}",
-                               "Fin")
+        self.dialogo.set_texto(f"Termino la jornada en Ciudad Nova. Tu puntaje final es {self.ciudad.score}.", "Fin")
         self.botones = [Boton(pygame.Rect(362, Y_BOTONES, 300, ALTO_BOTONES), "Volver al menu (Enter)",
                               lambda: self.app.estados.cambiar("menu"), atajo=pygame.K_RETURN)]
 
@@ -292,23 +286,11 @@ class EscenaState(BaseState):
         if event.type == pygame.MOUSEBUTTONDOWN and RECT_DIALOGO.collidepoint(event.pos):
             self.dialogo.completar()
         if self.fase == DECIDIENDO:
-            self._manejar_movimiento(event)
+            self._manejar_mapa(event)
             self._manejar_investigacion(event)
         for boton in list(self.botones):  # copia: un clic reemplaza self.botones
             if boton.handle_event(event):
                 break
-
-    def _manejar_movimiento(self, event: pygame.event.Event) -> None:
-        """Ir a una zona vecina: clic sobre ella en el minimapa, o su letra (Q W E R) en el teclado."""
-        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            zona = zona_en(self._estado_mapa(), RECT_MAPA, event.pos)
-            if zona is not None:
-                self._mover(zona)
-        elif event.type == pygame.KEYDOWN and event.key in TECLAS_MOVER:
-            i = TECLAS_MOVER.index(event.key)
-            vecinos = self.mapa.vecinos(self.zona)
-            if i < len(vecinos):
-                self._mover(vecinos[i])
 
     def _manejar_investigacion(self, event: pygame.event.Event) -> None:
         """Investigar: clic sobre una zona de la tarjeta con pista, o su letra (A S D F G); el mouse

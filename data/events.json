@@ -1,7 +1,6 @@
 [
   {
     "id": "colegio-cerrado",
-    "zona": "colegio",
     "autor": {
       "nombre": "@vecina_barrio",
       "avatar": {
@@ -260,7 +259,6 @@
   },
   {
     "id": "parques-cerrados",
-    "zona": "parque",
     "autor": {
       "nombre": "Alerta Total Nova",
       "avatar": {
@@ -445,7 +443,6 @@
   },
   {
     "id": "propuesta-transporte",
-    "zona": "plaza",
     "autor": {
       "nombre": "Noticias de Nova",
       "avatar": {
@@ -625,7 +622,6 @@
   },
   {
     "id": "video-debate-editado",
-    "zona": "alcaldia",
     "autor": {
       "nombre": "@clips_nova",
       "avatar": {
@@ -826,7 +822,6 @@
   },
   {
     "id": "campana-convivencia",
-    "zona": "barrio",
     "autor": {
       "nombre": "Vecinos por el dialogo",
       "avatar": {
