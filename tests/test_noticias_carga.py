@@ -76,7 +76,7 @@ class NoticiasCargaTest(unittest.TestCase):
 
     def test_las_variantes_nombran_pistas_de_su_noticia(self) -> None:
         for a in self.arboles:
-            ids = {p.id for p in a.event.clues}
+            ids = {p.id for p in a.event.clues} | {e.id for e in a.event.evidences}
             n = 0
             for nodo in a.dfs_nodes():
                 for v in nodo.variantes:
