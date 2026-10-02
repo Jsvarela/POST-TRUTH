@@ -28,7 +28,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterable
 
-ENERGIA_POR_NOTICIA = 5     # puntos que se recargan al abrir cada publicacion: sirven para revisar la tarjeta Y para viajar
+ENERGIA_POR_NOTICIA = 3     # puntos que se recargan al abrir cada publicacion: sirven para revisar la tarjeta Y para viajar
 COSTO_MIN, COSTO_MAX = 1, 3
 
 

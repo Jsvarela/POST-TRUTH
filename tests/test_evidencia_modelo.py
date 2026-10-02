@@ -169,9 +169,9 @@ class RespaldoTest(unittest.TestCase):
 
 class FuerzaYEfectoTest(unittest.TestCase):
     def test_tablas_de_fuerza(self) -> None:
-        self.assertEqual([fuerza_verificar(n) for n in (0, 1, 2)], [0.5, 0.75, 1.0])
-        self.assertEqual([fuerza_reportar(n) for n in (0, 1, 2)], [0.0, 0.6, 1.0])
-        self.assertEqual((fuerza_verificar(-3), fuerza_verificar(9)), (0.5, 1.0))   # se acota a 0..2
+        self.assertEqual([fuerza_verificar(n) for n in (0, 1, 2)], [0.15, 0.4, 1.0])
+        self.assertEqual([fuerza_reportar(n) for n in (0, 1, 2)], [0.0, 0.3, 1.0])
+        self.assertEqual((fuerza_verificar(-3), fuerza_verificar(9)), (0.15, 1.0))   # se acota a 0..2
         self.assertEqual((FUERZA_VERIFICAR[2], FUERZA_REPORTAR[0]), (1.0, 0.0))
         self.assertTrue(reporte_rechazado(0))
         self.assertFalse(reporte_rechazado(1))

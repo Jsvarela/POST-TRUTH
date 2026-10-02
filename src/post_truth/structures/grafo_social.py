@@ -40,7 +40,7 @@ PESO_MIN = 0.02
 # Efecto de una propagacion segun cuantas personas alcanza (n): cada efecto es COEFICIENTE * n con un TOPE,
 # para que una sola publicacion no decida la partida. Son las perillas de balance (ver tools/balance.py).
 # Falsa: desinformacion, conflictos, confianza perdida y puntaje perdido -> (coeficiente, tope)
-PROPAGACION_FALSA = {"desinformacion": (1.5, 12), "conflictos": (0.8, 8), "confianza": (0.7, 8), "puntaje": (1.0, 10)}
+PROPAGACION_FALSA = {"desinformacion": (3.5, 24), "conflictos": (0.8, 8), "confianza": (0.7, 8), "puntaje": (1.0, 10)}
 # Verdadera: informacion verificada, confianza, convivencia y puntaje ganados -> (coeficiente, tope)
 PROPAGACION_VERDADERA = {"verificada": (1.2, 10), "confianza": (0.5, 6), "convivencia": (0.3, 4), "puntaje": (1.0, 10)}
 

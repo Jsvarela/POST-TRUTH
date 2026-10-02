@@ -13,6 +13,7 @@ import pygame
 from post_truth.controllers.escena_state import CONSECUENCIA, DECIDIENDO, PROPAGACION
 from post_truth.models.pistas import ENERGIA_POR_NOTICIA
 from post_truth.pygame_app import App
+from post_truth.structures.propagacion import FUERZA_VERIFICAR
 from post_truth.views.escena_view import RECT_MAPA, RECT_TARJETA
 from post_truth.views.mapa_view import _posiciones
 from post_truth.views.tarjeta_civitas_view import _layout
@@ -110,10 +111,10 @@ class ViajesEnEscenaTest(unittest.TestCase):
     def test_se_puede_ir_a_cualquier_zona_no_solo_a_las_vecinas(self) -> None:
         escena = self._escena()
         escena.zona = "colegio"
-        self._ir(escena, "alcaldia")                           # Colegio y Alcaldia no son vecinas: Colegio - Plaza - Alcaldia
-        self.assertEqual(escena.zona, "alcaldia")
-        self.assertEqual(escena.ruta_vista, ("colegio", "plaza", "alcaldia"))
-        self.assertEqual(escena.investigacion.energia, ENERGIA_POR_NOTICIA - 4)
+        self._ir(escena, "parque")                             # Colegio y Parque no son vecinos: Colegio - Barrio - Parque
+        self.assertEqual(escena.zona, "parque")
+        self.assertEqual(escena.ruta_vista, ("colegio", "barrio", "parque"))
+        self.assertEqual(escena.investigacion.energia, ENERGIA_POR_NOTICIA - 2)
 
     def test_el_costo_es_el_del_camino_mas_corto_no_el_de_menos_saltos(self) -> None:
         """Barrio -> Plaza: la via directa (1 salto) cuesta 3; por el Parque (2 saltos) cuesta 2."""
@@ -133,10 +134,9 @@ class ViajesEnEscenaTest(unittest.TestCase):
 
     def test_un_viaje_largo_se_come_casi_toda_la_energia_y_obliga_a_elegir(self) -> None:
         escena = self._escena()
-        escena.zona = "alcaldia"
-        self._ir(escena, "barrio")                             # costo 4 de 5
+        self._ir(escena, "alcaldia")                           # desde la Plaza: costo 2 de 3
         self.assertEqual(escena.investigacion.energia, 1)
-        self.assertTrue(escena.investigacion.esta_descubierta("testigo-vecina"))
+        self.assertTrue(escena.investigacion.esta_descubierta("acta-del-consejo"))
         tecla(self.app, pygame.K_a)                            # y aun alcanza para 1 pista barata de la tarjeta
         self.assertEqual(escena.investigacion.energia, 0)
 
@@ -149,12 +149,13 @@ class ViajesEnEscenaTest(unittest.TestCase):
 
     def test_volver_a_un_lugar_ya_revisado_no_repite_la_evidencia(self) -> None:
         escena = self._escena()
-        self._ir(escena, "colegio")                    # 2 (revela al testigo de la directora)
+        escena.zona = "barrio"                         # Barrio y Colegio son vecinos (cuesta 1)
+        self._ir(escena, "colegio")                    # 1 (revela al testigo de la directora)
         self._ir(escena, "barrio")                     # 1 (revela a la vecina)
         self._ir(escena, "colegio")                    # 1 (vuelve: ya estaba revisado)
         self.assertEqual(escena.investigacion.descubiertas, ["testigo-directora", "testigo-vecina"])
         self.assertIn("Ya habias revisado", escena.dialogo.texto)
-        self.assertEqual(escena.investigacion.energia, ENERGIA_POR_NOTICIA - 4)
+        self.assertEqual(escena.investigacion.energia, ENERGIA_POR_NOTICIA - 3)
 
     def test_la_ruta_bajo_el_mouse_se_muestra_con_su_costo_sin_viajar(self) -> None:
         escena = self._escena()
@@ -227,18 +228,21 @@ class ViajesEnEscenaTest(unittest.TestCase):
         self.assertEqual(escena.fase, CONSECUENCIA)
         return escena.impacto.verified_information
 
-    def test_verificar_rinde_50_75_o_100_segun_el_respaldo(self) -> None:
+    def test_verificar_rinde_segun_el_respaldo(self) -> None:
         nada = self._verificar(lambda e: None)
         tarjeta = self._verificar(lambda e: tecla(self.app, pygame.K_a))             # pista de la tarjeta
         campo = self._verificar(lambda e: self._ir(e, "colegio"))                   # evidencia de campo
-        self.assertEqual((nada, tarjeta, campo), (6, 9, 12))
+        esperado = tuple(round(12 * FUERZA_VERIFICAR[n]) for n in (0, 1, 2))     # la accion base da 12
+        self.assertEqual((nada, tarjeta, campo), esperado)
+        self.assertLess(nada, tarjeta)
+        self.assertLess(tarjeta, campo)
 
     def test_verificar_funciona_sin_ir_a_ningun_lugar_pero_a_medias(self) -> None:
         escena = self._escena()
         self._decidir(escena, "verificar")
         self.assertIn(escena.fase, (PROPAGACION, CONSECUENCIA))
         self._terminar_propagacion(escena)
-        self.assertIn("50%", escena.dialogo.texto)
+        self.assertIn(f"{round(100 * FUERZA_VERIFICAR[0])}%", escena.dialogo.texto)
 
     def test_reportar_sin_pruebas_se_rechaza_sin_animacion_y_resta_confianza(self) -> None:
         escena = self._escena()

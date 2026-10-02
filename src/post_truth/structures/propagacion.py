@@ -17,8 +17,8 @@ RESPALDO (no hace falta ir a ningun lugar; importa lo que se reunio, ver Investi
     nivel 0 = nada, 1 = solo pistas de la tarjeta, 2 = evidencia de campo (del mapa de la ciudad).
 
                  Verificar (efecto sobre beneficios y friccion)      Reportar
-    nivel 0      50%                                                 rechazado: no pasa nada y baja la confianza
-    nivel 1      75%                                                 limita al autor (le baja el peso a sus conexiones)
+    nivel 0      15%                                                 rechazado: no pasa nada y baja la confianza
+    nivel 1      40%                                                 limita al autor (le baja el peso a sus conexiones)
     nivel 2      100%                                                aceptado: se cortan las conexiones del autor
 
 El respaldo solo atenua los efectos BENEFICIOSOS (ver Impact.atenuar_beneficios); los perjuicios de
@@ -37,9 +37,10 @@ FRENO_AUTOR = 0.35      # el peso de las aristas del autor se multiplica por est
 FRENO_CONTACTOS = 0.6   # y el de las aristas de sus contactos directos (contencion a 2 saltos)
 
 # Fraccion de efecto segun el respaldo (0, 1 o 2) de cada accion
-FUERZA_VERIFICAR = {0: 0.5, 1: 0.75, 2: 1.0}
-FUERZA_REPORTAR = {0: 0.0, 1: 0.6, 2: 1.0}
-FACTOR_LIMITE_REPORTE = 0.5          # con respaldo 1, las conexiones del autor pierden la mitad de su peso
+# Balance (tools/balance.py): verificar a ciegas rinde casi nada, asi que investigar si vale la energia
+FUERZA_VERIFICAR = {0: 0.15, 1: 0.4, 2: 1.0}
+FUERZA_REPORTAR = {0: 0.0, 1: 0.3, 2: 1.0}
+FACTOR_LIMITE_REPORTE = 0.6          # con respaldo 1, las conexiones del autor conservan el 60% de su peso
 REPORTE_INFUNDADO = Impact(trust=-3, score=-2)   # reportar sin ninguna prueba: la plataforma lo rechaza
 
 UMBRAL_FALSA = 50       # truth_level por debajo de esto se trata como noticia falsa (rumor, fake, manipulada)
@@ -56,12 +57,12 @@ def _nivel(respaldo: int) -> int:
 
 
 def fuerza_verificar(respaldo: int) -> float:
-    """Fraccion (0.5, 0.75 o 1.0) del efecto de Verificar segun el respaldo reunido."""
+    """Fraccion (FUERZA_VERIFICAR: 0.15, 0.4 o 1.0) del efecto de Verificar segun el respaldo reunido."""
     return FUERZA_VERIFICAR[_nivel(respaldo)]
 
 
 def fuerza_reportar(respaldo: int) -> float:
-    """Fraccion (0, 0.6 o 1.0) de los beneficios de Reportar segun el respaldo reunido."""
+    """Fraccion (FUERZA_REPORTAR: 0, 0.3 o 1.0) de los beneficios de Reportar segun el respaldo reunido."""
     return FUERZA_REPORTAR[_nivel(respaldo)]
 
 
@@ -70,13 +71,17 @@ def reporte_rechazado(respaldo: int) -> bool:
     return _nivel(respaldo) == 0
 
 
+def _pct(fuerza: float) -> int:
+    return round(100 * fuerza)
+
+
 def mensaje_respaldo(tipo: str, respaldo: int) -> str:
     """Frase que explica al jugador como pesaron sus pruebas en Verificar o Reportar ("" para otras acciones)."""
     n = _nivel(respaldo)
     if tipo == VERIFICAR:
         return {2: "Tu verificacion se apoyo en evidencia de campo: efecto completo.",
-                1: "Solo contaste con pistas de la tarjeta: la verificacion rinde al 75%.",
-                0: "Verificaste sin pruebas concretas: la verificacion rinde al 50%."}[n]
+                1: f"Solo contaste con pistas de la tarjeta: la verificacion rinde al {_pct(FUERZA_VERIFICAR[1])}%.",
+                0: f"Verificaste sin pruebas concretas: la verificacion rinde al {_pct(FUERZA_VERIFICAR[0])}%."}[n]
     if tipo == REPORTAR:
         return {2: "Reporte aceptado: se cortaron las conexiones del autor.",
                 1: "Reporte con pruebas parciales: se limito al autor, pero sigue difundiendo.",
