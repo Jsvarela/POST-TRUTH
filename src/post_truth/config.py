@@ -21,6 +21,8 @@ ANCHO, ALTO = px(DISENO_ANCHO), px(DISENO_ALTO)
 
 # data/events.json en la raiz del repo (src/post_truth/config.py -> subir 2 niveles)
 RUTA_EVENTOS = Path(__file__).resolve().parents[2] / "data" / "events.json"
+# Publicaciones que se juegan en una partida: se sortean entre todas las de events.json (variedad entre partidas)
+EVENTOS_POR_PARTIDA = 8
 RUTA_GRAFO_SOCIAL = Path(__file__).resolve().parents[2] / "data" / "grafo_social.json"
 RUTA_GRAFO_CIUDAD = Path(__file__).resolve().parents[2] / "data" / "grafo_ciudad.json"
 RUTA_INTRO = Path(__file__).resolve().parents[2] / "data" / "intro.json"

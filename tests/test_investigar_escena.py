@@ -42,6 +42,7 @@ class InvestigarEnEscenaTest(unittest.TestCase):
     def _escena(self, evento: str = "colegio-cerrado", semilla: int = 11):
         escena = self.app.estados._estados["escena"]
         escena.rng = random.Random(semilla)
+        escena.eventos_por_partida = None   # estas pruebas usan noticias concretas: se juegan todas
         tecla(self.app, pygame.K_RETURN)
         tecla(self.app, pygame.K_1)
         tecla(self.app, pygame.K_2)

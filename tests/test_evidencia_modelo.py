@@ -258,6 +258,8 @@ class EventosConEvidenciaTest(unittest.TestCase):
     def test_las_evidencias_apuntan_a_la_veracidad_real_de_la_noticia(self) -> None:
         for a in self.arboles:
             esperada = Senal.FALSA if a.event.truth_level < 50 else Senal.VERDADERA
+            if a.event.kind == "opinion":
+                esperada = Senal.NEUTRA      # una opinion no se puede probar ni desmentir
             for e in a.event.evidences:
                 self.assertIs(e.senal, esperada, f"{a.event.event_id}/{e.id}")
 
