@@ -9,6 +9,7 @@ from typing import Callable
 
 import pygame
 
+from post_truth.config import px
 from post_truth.views.theme import Tema
 
 
@@ -24,7 +25,7 @@ class Fuentes:
     def crear(cls) -> "Fuentes":
         def f(tam: int, negrita: bool = False) -> pygame.font.Font:
             return pygame.font.SysFont("arial", tam, bold=negrita)
-        return cls(f(16), f(22), f(30, True), f(44, True))
+        return cls(f(px(17)), f(px(22)), f(px(30), True), f(px(44), True))
 
 
 def ajustar_texto(texto: str, fuente: pygame.font.Font, ancho: int) -> list[str]:
@@ -49,9 +50,10 @@ def ajustar_texto(texto: str, fuente: pygame.font.Font, ancho: int) -> list[str]
 
 
 def dibujar_texto_ajustado(pantalla: pygame.Surface, fuente: pygame.font.Font, texto: str,
-                           color: tuple[int, int, int], rect: pygame.Rect, interlineado: int = 4) -> int:
+                           color: tuple[int, int, int], rect: pygame.Rect, interlineado: int | None = None) -> int:
     """Dibuja texto ajustado al ancho de `rect`; devuelve la y donde termino."""
     y = rect.y
+    interlineado = px(4) if interlineado is None else interlineado
     for linea in ajustar_texto(texto, fuente, rect.width):
         pantalla.blit(fuente.render(linea, True, color), (rect.x, y))
         y += fuente.get_linesize() + interlineado
@@ -93,17 +95,17 @@ class Boton:
 
     def draw(self, pantalla: pygame.Surface, fuente: pygame.font.Font, tema: Tema) -> None:
         if not self.habilitado:
-            pygame.draw.rect(pantalla, tema.boton_off, self.rect, border_radius=10)
-            pygame.draw.rect(pantalla, tema.texto_off, self.rect, width=1, border_radius=10)
+            pygame.draw.rect(pantalla, tema.boton_off, self.rect, border_radius=px(10))
+            pygame.draw.rect(pantalla, tema.texto_off, self.rect, width=1, border_radius=px(10))
             color_texto = tema.texto_off
         else:
             relleno = tema.boton_hover if self.hover else tema.boton
             borde = tema.acento if self.hover else tema.borde
-            pygame.draw.rect(pantalla, relleno, self.rect, border_radius=10)
-            pygame.draw.rect(pantalla, borde, self.rect, width=3 if self.hover else 2, border_radius=10)
+            pygame.draw.rect(pantalla, relleno, self.rect, border_radius=px(10))
+            pygame.draw.rect(pantalla, borde, self.rect, width=px(3 if self.hover else 2), border_radius=px(10))
             color_texto = tema.boton_texto
         img = fuente.render(self.texto, True, color_texto)
-        maximo = self.rect.width - 16
+        maximo = self.rect.width - px(16)
         if img.get_width() > maximo:  # textos largos se reducen en vez de salirse del boton
             alto = max(1, img.get_height() * maximo // img.get_width())
             img = pygame.transform.smoothscale(img, (maximo, alto))
@@ -121,21 +123,21 @@ class Panel:
     @property
     def interior(self) -> pygame.Rect:
         """Area util debajo del titulo, con margen."""
-        margen_sup = 52 if self.titulo else 16
-        return pygame.Rect(self.rect.x + 18, self.rect.y + margen_sup,
-                           self.rect.width - 36, self.rect.height - margen_sup - 16)
+        margen_sup = px(52) if self.titulo else px(16)
+        return pygame.Rect(self.rect.x + px(18), self.rect.y + margen_sup,
+                           self.rect.width - px(36), self.rect.height - margen_sup - px(16))
 
     def draw(self, pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema) -> None:
         if self.alfa >= 255:
-            pygame.draw.rect(pantalla, tema.panel, self.rect, border_radius=14)
+            pygame.draw.rect(pantalla, tema.panel, self.rect, border_radius=px(14))
         else:
             velo = pygame.Surface(self.rect.size, pygame.SRCALPHA)
-            pygame.draw.rect(velo, (*tema.panel, self.alfa), velo.get_rect(), border_radius=14)
+            pygame.draw.rect(velo, (*tema.panel, self.alfa), velo.get_rect(), border_radius=px(14))
             pantalla.blit(velo, self.rect.topleft)
-        pygame.draw.rect(pantalla, tema.borde, self.rect, width=2, border_radius=14)
+        pygame.draw.rect(pantalla, tema.borde, self.rect, width=px(2), border_radius=px(14))
         if self.titulo:
             img = fuentes.grande.render(self.titulo, True, tema.acento)
-            pantalla.blit(img, (self.rect.x + 18, self.rect.y + 12))
+            pantalla.blit(img, (self.rect.x + px(18), self.rect.y + px(12)))
 
 
 class CajaDialogo:
@@ -171,19 +173,19 @@ class CajaDialogo:
             self._visibles = min(float(len(self.texto)), self._visibles + self.velocidad * dt)
 
     def draw(self, pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema) -> None:
-        pygame.draw.rect(pantalla, tema.panel, self.rect, border_radius=14)
-        pygame.draw.rect(pantalla, tema.acento, self.rect, width=3, border_radius=14)
-        y = self.rect.y + 12
+        pygame.draw.rect(pantalla, tema.panel, self.rect, border_radius=px(14))
+        pygame.draw.rect(pantalla, tema.acento, self.rect, width=px(3), border_radius=px(14))
+        y = self.rect.y + px(12)
         if self.hablante:
-            pantalla.blit(fuentes.normal.render(self.hablante, True, tema.acento), (self.rect.x + 20, y))
-            y += fuentes.normal.get_linesize() + 4
+            pantalla.blit(fuentes.normal.render(self.hablante, True, tema.acento), (self.rect.x + px(20), y))
+            y += fuentes.normal.get_linesize() + px(4)
         restante = int(self._visibles)
-        for linea in ajustar_texto(self.texto, fuentes.normal, self.rect.width - 40):
+        for linea in ajustar_texto(self.texto, fuentes.normal, self.rect.width - px(40)):
             if restante <= 0:
                 break
-            pantalla.blit(fuentes.normal.render(linea[:restante], True, tema.texto), (self.rect.x + 20, y))
+            pantalla.blit(fuentes.normal.render(linea[:restante], True, tema.texto), (self.rect.x + px(20), y))
             restante -= len(linea) + 1  # +1: el espacio que el wrap quito al cortar la linea
-            y += fuentes.normal.get_linesize() + 2
+            y += fuentes.normal.get_linesize() + px(2)
         if self.terminado and int(self._t * 2) % 2 == 0:  # triangulo parpadeante: "ya termino"
-            x, yb = self.rect.right - 28, self.rect.bottom - 22
-            pygame.draw.polygon(pantalla, tema.acento, [(x, yb), (x + 14, yb), (x + 7, yb + 9)])
+            x, yb = self.rect.right - px(28), self.rect.bottom - px(22)
+            pygame.draw.polygon(pantalla, tema.acento, [(x, yb), (x + px(14), yb), (x + px(7), yb + px(9))])
