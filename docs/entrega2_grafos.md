@@ -13,22 +13,31 @@ de un arbol, h = altura del arbol.
 |---|---|---|
 | Arbol n-ario de decisiones | `decision_tree.py` | Que consecuencias tiene cada decision sobre una publicacion |
 | Grafo social | `structures/grafo_social.py` | Quien recibe una publicacion cuando se comparte, cuantos y que tan rapido |
-| Grafo de la ciudad | `structures/grafo_ciudad.py` y `structures/rumores_ciudad.py` | Donde ocurre cada noticia, a donde puede ir el jugador y por donde se expande un rumor |
+| Grafo de la ciudad | `structures/grafo_ciudad.py` | El mapa de lugares donde se investiga: a que zona ir, cuanto cuesta llegar (energia) y que evidencia hay alli |
 
 Las tres son logica pura (sin pygame), se pueden serializar a diccionarios y se cargan desde
 `data/` (`events.json`, `grafo_social.json`, `grafo_ciudad.json`). La interfaz solo las dibuja.
 
-Una decision del jugador pasa por las tres, en este orden (detalle en la seccion 4):
+Los rumores se propagan SOLO en el grafo social (entre personas). El grafo de la ciudad no propaga
+nada: es el mapa de lugares donde el jugador va a buscar evidencia, y viajar tiene un costo.
+
+Antes de decidir el jugador investiga con una sola energia (5 por publicacion): revisa las pistas de
+la tarjeta de Civitas y viaja por el grafo de la ciudad (Dijkstra) a los lugares donde la noticia dejo
+evidencia. Luego decide, y su decision pasa por las tres estructuras (detalle en la seccion 4):
 
 ```
+investigar (antes de decidir)
+  tarjeta          pistas de la tarjeta de Civitas (1-2 de energia cada una)
+  CIUDAD           viajar a una zona cuesta la distancia del camino mas corto (Dijkstra);
+                   al llegar se revela la evidencia de la noticia que haya alli
+
 boton de decision
   1. ARBOL         DFS hasta el nodo elegido -> impacto acumulado, escalado por el rol
-  2. CIUDAD        zona de la noticia: Verificar/Reportar solo si el jugador esta en ella;
-                   el rumor de la noticia se elimina (Verificar/Reportar) o se extiende (Compartir)
+  2. RESPALDO      lo hallado (nada / solo tarjeta / evidencia de campo) gradua Verificar
+                   (50% / 75% / 100%) y Reportar (rechazado / limita / corta)
   3. GRAFO SOCIAL  se simula como viaja la publicacion (BFS por olas + Dijkstra) y se anima
-  4. RONDA         los rumores sin atender se expanden un anillo por el mapa y penalizan
-  5. CONSECUENCIAS impacto del arbol + impacto de la propagacion + penalizacion del rumor
-                   -> CityState (indicadores de Ciudad Nova)
+  4. CONSECUENCIAS impacto del arbol (atenuado segun el respaldo) + impacto de la propagacion
+                   -> CityState; el texto depende de las pistas y evidencias descubiertas
 ```
 
 ## 1. Arbol de decisiones (entrega 1, integrado)
@@ -147,92 +156,106 @@ Reportar en 0.0. Una verdadera compartida por un Ciudadano llega a 9.0 personas 
 
 ## 3. Grafo de la ciudad
 
-**Problema que resuelve.** El grafo social dice *como* circula una noticia en linea; este dice
-*donde* ocurre y por donde se contagia en persona. Da una funcion real a la geografia: a donde
-puede ir el jugador, que zonas quedan expuestas a un rumor y cuanto tarda en llegar a cada una.
+**Problema que resuelve.** El grafo social dice *como* circula una noticia entre personas; este es el
+*mapa de lugares donde se investiga*. Cada zona puede guardar evidencia de una noticia (un testigo, un
+documento, una grabacion) y llegar hasta ella cuesta energia: la distancia del camino mas corto.
+Elegir a que zona ir es una decision real: viajar lejos a buscar evidencia o decidir con lo que ya se
+sabe. Los rumores NO se propagan por aqui (antes se contagiaban por zonas; se quito porque la
+propagacion tiene sentido entre personas, no entre lugares).
 
-**Por que un grafo.** Las zonas se conectan en una red con ciclos (Barrio - Parque - Plaza forman
-un triangulo): no es una jerarquia.
+**Por que un grafo.** Las zonas se conectan en una red con ciclos (Barrio - Parque - Plaza forman un
+triangulo) y para ir de una a otra hay varios caminos, de distinto costo: no es una jerarquia.
 
 **Variante.**
-- No dirigido: una calle se recorre en ambos sentidos (la conexion se anota en la lista de las
-  dos zonas).
-- Sin pesos: todas las conexiones cuestan un movimiento (una ronda).
-- 5 zonas (Colegio, Barrio, Parque, Plaza, Alcaldia) y 6 conexiones. Plaza es el centro: llega
-  a todas en un salto; Alcaldia solo se conecta con Plaza.
-- Representacion: lista de adyacencia `dict` zona -> `list` de vecinos, O(V + E). Con grado
-  maximo 4, buscar en la lista es practicamente O(1) y se conserva el orden de insercion, lo que
-  hace los recorridos deterministas (y asigna las letras Q, W, E, R del teclado a los vecinos).
+- No dirigido: una calle se recorre en ambos sentidos (la conexion se anota en las dos zonas).
+- **Ponderado**: cada conexion tiene una distancia (entero >= 1) que es su costo en energia:
+  Colegio-Barrio 1, Barrio-Parque 1, Parque-Plaza 1, Colegio-Plaza 2, Plaza-Alcaldia 2, Barrio-Plaza 3.
+- 5 zonas (Colegio, Barrio, Parque, Plaza, Alcaldia) y 6 conexiones. El jugador puede ir a CUALQUIER
+  zona, no solo a las vecinas, y su posicion se mantiene entre publicaciones.
+- Representacion: lista de adyacencia como `dict` zona -> `dict` vecino -> distancia, espacio O(V + E).
+  Con 5 zonas es mas que suficiente, y consultar la distancia de una via directa es O(1).
 
 **Insercion y eliminacion.**
 
 | Operacion | Metodo | Costo |
 |---|---|---|
 | Agregar zona | `agregar_zona` | O(1) |
-| Eliminar zona (y sus conexiones) | `eliminar_zona` | O(suma de grados de sus vecinos), a lo sumo O(E) |
-| Agregar conexion (bidireccional, sin lazos ni duplicados) | `agregar_conexion` | O(k) |
-| Eliminar conexion | `eliminar_conexion` | O(k) |
-| Vecinos | `vecinos` | O(k) |
+| Eliminar zona (y sus conexiones) | `eliminar_zona` | O(grado de la zona) |
+| Agregar conexion (bidireccional, distancia entera >= 1, sin lazos ni duplicados) | `agregar_conexion` | O(1) |
+| Eliminar conexion | `eliminar_conexion` | O(1) |
+| Distancia de una via directa / vecinos | `distancia`, `vecinos` | O(1) / O(k) |
 
-**Recorridos y complejidad.** Todos son BFS, O(V + E), porque las aristas no tienen peso y el
-camino con menos saltos es el mas corto (Dijkstra no aportaria nada sin pesos):
+**Recorridos y complejidad.**
 
-| Consulta | Metodo | Para que |
+| Consulta | Metodo | Costo | Para que |
+|---|---|---|---|
+| Camino de menor costo y su costo | `ruta(a, b)` (**Dijkstra**) | O((V + E) log V) | Cuanto cuesta viajar a una zona y por donde se va |
+| Costo a todas las zonas | `costos_desde(origen)` (Dijkstra, una corrida) | O((V + E) log V) | El numero que se muestra dentro de cada zona del mapa |
+| Saltos / conectividad | `saltos`, `es_conexo` (**BFS**) | O(V + E) | Validar al cargar que toda zona sea alcanzable |
+
+**Por que Dijkstra y cuando basta BFS.** El costo de un viaje es la *suma* de distancias, y el camino
+con menos saltos no siempre es el mas barato. En el mapa real: de Barrio a Plaza la via directa es 1
+salto pero cuesta 3, y por el Parque son 2 saltos pero cuestan 1 + 1 = 2. BFS (que minimiza saltos)
+daria 3; Dijkstra da 2 y la ruta `Barrio - Parque - Plaza`. Dijkstra saca de una cola de prioridad
+(`heapq`) la zona con menor costo acumulado y relaja sus vecinos; como las distancias son positivas, el
+primer costo con que sale una zona ya es el minimo. Cuesta O((V + E) log V); aqui V = 5 y E = 6, asi que
+es trivial. BFS (O(V + E)) bastaria si todas las distancias valieran lo mismo (el costo seria el
+numero de saltos); aqui se usa solo para comprobar que el mapa sea conexo. Con distancias negativas
+Dijkstra seria incorrecto: por eso se exige que sean enteros positivos.
+
+Costos reales desde la Plaza: Parque 1, Colegio 2, Barrio 2, Alcaldia 2. El viaje mas largo
+(Alcaldia - Barrio, Alcaldia - Colegio) cuesta 4 de los 5 de energia.
+
+**Evidencia por zona** (`models/pistas.py`, datos en `data/events.json`). Cada noticia deja de 2 a 3
+evidencias, cada una en una zona distinta: `{id, lugar, tipo (testigo, documento, grabacion), titulo,
+hallazgo, senal (falsa/verdadera/neutra)}`. Al llegar a la zona (o al abrir la noticia si el jugador ya
+esta ahi) la evidencia se revela como una pista mas: entra en el mismo registro que las pistas de la
+tarjeta, en el veredicto y en el texto de la consecuencia, y se puede editar sin tocar codigo.
+
+**Energia y costo.** Hay una sola energia por publicacion (5). Revisar una pista de la tarjeta cuesta 1
+o 2 y viajar cuesta la distancia del camino mas corto. Por revisar hay mas que energia (la tarjeta
+sola cuesta 6), asi que hay que elegir. Decidir cuesta 0: las cuatro acciones siempre estan
+disponibles, aunque la energia llegue a 0.
+
+**Como afecta la decision.** Verificar y Reportar NO exigen estar en ninguna zona: su resultado depende
+del *respaldo* reunido (`Investigacion.respaldo`): 0 nada, 1 solo pistas de la tarjeta, 2 evidencia de
+campo (la del mapa). Solo se atenuan los beneficios; los perjuicios de equivocarse no se abaratan.
+
+| Respaldo | Verificar (beneficios y friccion sobre el grafo social) | Reportar |
 |---|---|---|
-| Camino mas corto | `camino(a, b)` (BFS guardando el padre de cada zona) | Ruta del jugador hacia la zona de una noticia |
-| Distancias | `distancias(origen, limite)` | Base de las otras consultas |
-| Zonas expuestas | `expuestas(origen, alcance)` (BFS agrupado por anillos) | El anillo k son las zonas que un rumor toca en la ronda k |
+| 0 nada | 50% | Rechazado: no pasa nada en el grafo y baja la confianza |
+| 1 tarjeta | 75% | Limita al autor (sus conexiones pierden la mitad del peso) |
+| 2 campo | 100% | Aceptado: se cortan las conexiones del autor |
 
-Ejemplo real: `camino("colegio", "alcaldia")` = Colegio - Plaza - Alcaldia, y
-`expuestas("colegio", 3)` = [(Plaza, Barrio), (Parque, Alcaldia)]: un rumor nacido en el Colegio
-llega a la Alcaldia en 2 rondas.
-
-**Rumores** (`structures/rumores_ciudad.py`). Una noticia falsa es un rumor desde que aparece.
-Cada ronda, el rumor ocupa todas las vecinas de las zonas que ya ocupa: es avanzar un nivel de
-BFS desde el origen, asi que tras k rondas ocupa exactamente lo que predice `expuestas(origen, k)`
-(una prueba lo comprueba). Una ronda cuesta O(suma de grados de las zonas ocupadas), nunca mas
-que O(V + E). Cada zona infectada penaliza por ronda (desinformacion y conflictos, con tope).
-El rumor solo se muestra cuando ya empezo a correr, porque si se viera desde el principio el
-mapa delataria cuales noticias son falsas y no habria nada que investigar.
-
-**Como afecta la decision.**
-
-| Accion | Efecto en la ciudad |
-|---|---|
-| Moverse a una zona vecina (clic en el mapa o Q W E R) | Cuesta una ronda: los rumores avanzan |
-| Verificar o Reportar | Solo se pueden hacer **en la zona de la noticia**; eliminan el rumor |
-| Compartir una falsa | Extiende el rumor un anillo de inmediato |
-| Ignorar | El rumor sigue activo y crece |
-| Desmentir aqui | En una zona infectada, elimina ese rumor, cuesta una ronda y da un premio (confianza e informacion verificada) |
-
-Esto obliga a decidir si vale la pena viajar: mientras el jugador se desplaza, los rumores
-avanzan.
+Reportar cuenta solo lo que apunta a FALSA (lo que justifica un reporte); Verificar cuenta cualquier
+senal que no sea neutra. Por eso reportar una noticia verdadera siempre se rechaza.
 
 ## 4. Como se combinan en una decision
 
-Ejemplo: noticia falsa "Rumor sobre el colegio" (zona Colegio), jugador en la Plaza.
+Ejemplo: noticia falsa de la tarjeta "@vecina_barrio" (el colegio se cierra), jugador en la Plaza con
+5 de energia.
 
-1. Verificar y Reportar aparecen apagados ("ir a Colegio"). Compartir e Ignorar si se pueden.
-2. Si el jugador va al Colegio (1 ronda), el rumor aparece en el mapa y ya ocupa Plaza y Barrio.
-3. Alli elige Verificar: el arbol aporta +informacion verificada, +confianza; el rumor se
-   elimina; el grafo social frena a los contactos del autor y se anima la propagacion limitada;
-   al terminar se aplican los indicadores.
-4. Si en cambio elige Compartir desde la Plaza: el arbol penaliza, el rumor crece un anillo y
-   el grafo social lleva la publicacion a unas 7 personas; la desinformacion y los conflictos
-   suben y el rumor sigue ampliandose en las rondas siguientes.
+1. Mira la tarjeta: revisa la cuenta sospechosa (1). Le quedan 4.
+2. Viaja al Colegio (Dijkstra: Plaza - Colegio, costo 2). Al llegar se revela el testigo (la directora:
+   no hay ninguna orden de cierre). Le quedan 2. Ya tiene respaldo de campo (2).
+3. Elige Reportar: el arbol aporta sus beneficios completos, el grafo social corta las conexiones del
+   autor y se anima la propagacion; el texto de la consecuencia usa la variante de la directora.
+4. Si hubiera decidido sin investigar, Reportar se habria rechazado (pierde confianza) y Verificar
+   habria rendido la mitad.
 
-Resultados de 40 partidas por estilo de juego (jugador automatico, roles y semillas
-repetidos), promedio al final:
+Resultados de 40 partidas por estilo de juego (jugador automatico, roles y semillas repetidos),
+promedio al final:
 
 | Estilo | Puntaje | Desinformacion | Conflictos | Info verificada |
 |---|---|---|---|---|
-| Azar | -17.0 | 98.5 | 80.0 | 74.0 |
-| Siempre compartir | -35.4 | 100.0 | 92.2 | 69.5 |
-| Siempre ignorar | -17.5 | 100.0 | 67.7 | 62.5 |
-| Investigar (viajar a la zona y verificar) | +74.5 | 22.1 | 13.6 | 100.0 |
+| Siempre compartir | -37.5 | 98.7 | 82.5 | 69.5 |
+| Siempre ignorar | -15.2 | 90.3 | 51.3 | 62.7 |
+| Azar (explora y decide sin criterio) | +30.7 | 41.3 | 27.6 | 92.6 |
+| Viajar a la evidencia y verificar/reportar | +55.7 | 12.2 | 12.0 | 99.8 |
+| Informado (tarjeta, evidencia si apunta a falsa, decide con el veredicto) | +63.0 | 16.2 | 9.8 | 99.2 |
 
-Es decir, el resultado depende de la habilidad (decidir bien y moverse con criterio), no solo
-del azar de la propagacion.
+El resultado depende de la habilidad: investigar con criterio y decidir con el respaldo supera con
+claridad a compartir o ignorar sin mirar.
 
 ## 5. Preguntas tipicas de sustentacion
 
@@ -248,16 +271,25 @@ del azar de la propagacion.
   quien recibe y en que ola, BFS basta y es mas barato.
 - **Que pasa si un peso fuera 0?** El costo 1/peso seria infinito: por eso el peso minimo es
   0.02 y "sin relacion" se modela eliminando la arista.
-- **Por que BFS y no Dijkstra en el grafo de la ciudad?** Las conexiones no tienen peso: el
-  camino con menos saltos ya es el mas corto.
+- **Por que Dijkstra y no BFS en el grafo de la ciudad?** El viaje cuesta la suma de distancias y el
+  camino con menos saltos no siempre es el mas barato (Barrio - Plaza directo: 3; por el Parque: 2).
+  BFS solo basta si todas las distancias son iguales; aqui se usa para validar que el mapa sea conexo.
+- **Que pasa si hubiera una distancia negativa?** Dijkstra daria resultados incorrectos (supone que
+  el primer costo con que sale una zona ya es el minimo). Por eso `agregar_conexion` exige enteros >= 1.
+- **Por que los rumores no se propagan por el mapa?** Un rumor viaja entre personas (grafo social); un
+  lugar no "se contagia". El mapa sirve para investigar: tiene evidencia y un costo de desplazamiento.
+- **Por que Verificar y Reportar no exigen estar en una zona?** Porque lo que importa es lo que el
+  jugador pudo demostrar: la evidencia de campo (que obliga a viajar) da el efecto completo, la tarjeta
+  da uno parcial y sin nada el reporte se rechaza.
 - **Como se elimina un vertice?** Se borra su entrada (las salientes) y se hace `pop` en cada
   diccionario de los demas (las entrantes): O(V).
 - **Por que Reportar elimina aristas y Verificar solo baja pesos?** Reportar actua sobre una
   cuenta (se corta del todo); Verificar frena, pero la noticia puede seguir circulando.
-- **Por que el rumor no se ve de inmediato?** Para no revelar cual noticia es falsa sin que el
-  jugador investigue.
-- **Es serializable?** Si: `to_dict` / `from_dict` en el grafo social, el grafo de la ciudad y
-  los rumores, pensado para el servidor de sockets de la entrega final.
+- **Por que investigar gasta energia y no tiempo de juego?** Porque asi investigar no delata si una
+  noticia es falsa: ninguna otra cosa cambia en la ciudad al revisar o viajar.
+- **Es serializable?** Si: `to_dict` / `from_dict` en el grafo social, el grafo de la ciudad, las
+  noticias (con pistas y evidencias) y la investigacion, pensado para el servidor de sockets de la
+  entrega final.
 
 ## 6. Modo de sustentacion
 
@@ -287,17 +319,19 @@ g.eliminar_vertice("lina")                      # sus aristas desaparecen
 
 # Ciudad
 c = GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD)
-print(c.camino("colegio", "alcaldia"))          # ['colegio', 'plaza', 'alcaldia']
-print(c.expuestas("colegio", 3))                # [('plaza', 'barrio'), ('parque', 'alcaldia')]
+print(c.ruta("barrio", "plaza"))                # Ruta(zonas=('barrio', 'parque', 'plaza'), costo=2): Dijkstra
+print(c.saltos("barrio")["plaza"])              # 1: BFS cuenta saltos (la via directa), pero cuesta 3
+print(c.costos_desde("plaza"))                  # costo de viajar a cada zona desde la Plaza
 ```
 
-Con la semilla 1 el primero imprime
+En la ciudad imprime `Ruta(zonas=('barrio', 'parque', 'plaza'), costo=2)`, `1` y
+`{'plaza': 0, 'parque': 1, 'colegio': 2, 'alcaldia': 2, 'barrio': 2}`. Con la semilla 1 el primero imprime
 `(('jugador',), ('mateo', 'lina'), ('tomas', 'sofia', 'gael'), ('isabela', 'daniela'),
 ('esteban',), ('renata',))` y 9 personas alcanzadas.
 
-Las pruebas unitarias (`tests/test_grafo_social.py`, `test_grafo_ciudad.py`,
-`test_rumores_ciudad.py`, `test_propagacion.py`) tambien sirven como demostracion de cada
-operacion.
+Las pruebas unitarias (`tests/test_grafo_social.py`, `test_grafo_ciudad.py` con Dijkstra comparado
+contra Floyd-Warshall, `test_propagacion.py`, `test_evidencia_modelo.py`) tambien sirven como
+demostracion de cada operacion.
 
 ## 7. Como repetir las pruebas y las cifras
 
@@ -307,13 +341,16 @@ python -m unittest tests.test_partida_completa       # partidas completas del ju
 ```
 
 `tests/test_partida_completa.py` juega el flujo Menu -> Seleccion -> Escena -> Fin con teclado y
-mouse, los 4 roles y varias politicas de juego, dibujando en los 3 temas y comprobando
-invariantes en cada fotograma.
+mouse, los 4 roles y varias politicas de juego (azar, compartir, ignorar, viajar a la evidencia,
+informado y una que agota toda la energia), dibujando en los 3 temas y comprobando invariantes en
+cada fotograma, entre ellas que la energia gastada en pistas mas viajes mas la restante sea siempre
+el total. `tests/test_viajes_escena.py` prueba los viajes, la evidencia y el respaldo en la escena.
 
 ## 8. Limites conocidos
 
-- Con solo 5 publicaciones, jugar al azar o ignorar satura la desinformacion en 100 (ver la
-  tabla de la seccion 4). Los topes y penalizaciones estan en constantes
-  (`ResultadoPropagacion.impacto`, `rumores_ciudad.py`) para ajustarlos al balance final.
-- El grafo social y el de la ciudad son datos fijos de ejemplo (14 ciudadanos, 5 zonas).
+- Compartir o ignorar siempre sigue llevando la desinformacion cerca de 100 (ver la tabla de la
+  seccion 4). Los topes y factores estan en constantes (`ResultadoPropagacion.impacto`,
+  `FUERZA_VERIFICAR` / `FUERZA_REPORTAR` en `structures/propagacion.py`) para ajustar el balance final.
+- El grafo social y el de la ciudad son datos fijos de ejemplo (14 ciudadanos, 5 zonas) y cada noticia
+  tiene solo 2 o 3 evidencias.
 - Aun no hay modo de sustentacion en Pygame (ver la hoja de ruta en CLAUDE.md).
