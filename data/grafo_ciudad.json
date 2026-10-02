@@ -7,12 +7,12 @@
     { "id": "alcaldia", "nombre": "Alcaldia", "pos": [0.86, 0.26] }
   ],
   "conexiones": [
-    ["colegio", "plaza"],
-    ["colegio", "barrio"],
-    ["barrio", "plaza"],
-    ["barrio", "parque"],
-    ["parque", "plaza"],
-    ["plaza", "alcaldia"]
+    { "origen": "colegio", "destino": "barrio",   "distancia": 1 },
+    { "origen": "barrio",  "destino": "parque",   "distancia": 1 },
+    { "origen": "parque",  "destino": "plaza",    "distancia": 1 },
+    { "origen": "colegio", "destino": "plaza",    "distancia": 2 },
+    { "origen": "plaza",   "destino": "alcaldia", "distancia": 2 },
+    { "origen": "barrio",  "destino": "plaza",    "distancia": 3 }
   ],
   "zona_inicial": "plaza"
 }
