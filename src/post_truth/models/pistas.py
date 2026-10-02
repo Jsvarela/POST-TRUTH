@@ -8,7 +8,8 @@ IDEA DE JUEGO
     decidir. Las pistas no cambian los puntajes: cambian lo que el jugador SABE y el texto de la
     consecuencia (decidir con o sin evidencia no se cuenta igual).
 
-Energia y no rondas: investigar una noticia falsa no debe delatarla.
+La energia es el unico costo de investigar: nada mas cambia en la ciudad al revisar o viajar, asi que
+investigar no delata si una noticia es falsa.
 
 EVIDENCIA POR ZONA
     Ademas de las pistas de la tarjeta, cada noticia puede dejar EVIDENCIA en lugares del mapa de la

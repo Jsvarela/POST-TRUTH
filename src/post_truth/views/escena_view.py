@@ -38,7 +38,7 @@ RECT_PANEL = pygame.Rect(330, 68, 664, 328)
 RECT_ESCENA = pygame.Rect(0, 57, 1024, 347)      # area del fondo de la zona (entre el HUD y el dialogo)
 RECT_TARJETA = pygame.Rect(RECT_PANEL.x + 12, RECT_PANEL.y + 8, 372, 312)   # tarjeta de Civitas (a la izquierda)
 RECT_MAPA = pygame.Rect(RECT_PANEL.right - 10 - 252, RECT_PANEL.y + 8, 252, 312)  # minimapa (a la derecha)
-AYUDA = "Investigar: clic en la publicacion o A S D F G   |   Moverse: clic en el mapa o Q W E R   |   Decidir: 1-4"
+AYUDA = "Investigar: clic en la publicacion o A S D F G   |   Viajar: clic en el mapa o Q W E R T   |   Decidir: 1-4"
 RECT_TEXTO_PANEL = pygame.Rect(RECT_PANEL.x + 18, RECT_PANEL.y + 52, 340, 256)  # texto a la izquierda del mapa
 ALFA_PANEL = 205  # el panel deja ver un poco el fondo de la zona
 

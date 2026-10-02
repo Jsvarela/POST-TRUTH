@@ -98,7 +98,6 @@ class NewsEvent:
     content: str
     kind: str
     truth_level: int
-    zone: str = ""  # id de la zona de la ciudad donde ocurre (ver structures/grafo_ciudad.py)
     # Tarjeta de Civitas: quien publica, de donde sale, cuando, imagen y reacciones...
     author: Autor | None = None
     source: str = ""
@@ -116,7 +115,7 @@ class NewsEvent:
         """Lee un evento de data/events.json (los campos de la tarjeta y las pistas son opcionales)."""
         return cls(
             event_id=d["id"], title=d["title"], content=d["content"], kind=d["kind"],
-            truth_level=d["truth_level"], zone=d.get("zona", ""),
+            truth_level=d["truth_level"],
             author=Autor.from_dict(d["autor"]) if d.get("autor") else None,
             source=d.get("fuente", ""), date=d.get("fecha", ""),
             image=Imagen.from_dict(d["imagen"]) if d.get("imagen") else None,
@@ -127,7 +126,7 @@ class NewsEvent:
     def to_dict(self) -> dict:
         """Mismo formato que events.json (sin las decisiones, que viven en el arbol)."""
         d: dict = {"id": self.event_id, "title": self.title, "content": self.content, "kind": self.kind,
-                   "truth_level": self.truth_level, "zona": self.zone}
+                   "truth_level": self.truth_level}
         if self.author is not None:
             d["autor"] = self.author.to_dict()
         d.update({"fuente": self.source, "fecha": self.date})

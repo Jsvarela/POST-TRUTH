@@ -36,9 +36,13 @@ class PropagacionEnEscenaTest(unittest.TestCase):
         tecla(self.app, pygame.K_2)
         escena.indice = next(i for i, a in enumerate(escena.arboles) if a.event.event_id == evento)
         escena._cargar_evento()
-        escena.zona = escena.arbol.event.zone   # el jugador ya esta en el lugar: Verificar/Reportar disponibles
         escena._construir_botones()
         return escena
+
+    def _reunir_evidencia_de_campo(self, escena) -> None:
+        """Viaja al Colegio (tecla Q): la evidencia de campo da respaldo completo (2) a Reportar/Verificar."""
+        tecla(self.app, pygame.K_q)
+        self.assertEqual(escena.investigacion.respaldo("reportar"), 2)
 
     def _decidir_tipo(self, escena, tipo: str) -> None:
         i = next(i for i, n in enumerate(escena.arbol.root.children) if n.tipo == tipo)
@@ -82,6 +86,7 @@ class PropagacionEnEscenaTest(unittest.TestCase):
 
     def test_reportar_corta_las_aristas_del_autor_de_forma_persistente(self) -> None:
         escena = self._escena("colegio-cerrado")
+        self._reunir_evidencia_de_campo(escena)
         self._decidir_tipo(escena, "reportar")
         autor = escena.animacion.sim.autor
         self.assertEqual(escena.grafo.vecinos(autor), [])
@@ -105,6 +110,7 @@ class PropagacionEnEscenaTest(unittest.TestCase):
 
     def test_el_corte_persiste_en_la_siguiente_publicacion(self) -> None:
         escena = self._escena("colegio-cerrado")
+        self._reunir_evidencia_de_campo(escena)
         self._decidir_tipo(escena, "reportar")
         autor = escena.animacion.sim.autor
         self.app.estados.update(60)
@@ -119,6 +125,7 @@ class PropagacionEnEscenaTest(unittest.TestCase):
 
     def test_reiniciar_la_partida_restaura_el_grafo(self) -> None:
         escena = self._escena("colegio-cerrado")
+        self._reunir_evidencia_de_campo(escena)
         self._decidir_tipo(escena, "reportar")
         autor = escena.animacion.sim.autor
         self.app.estados.cambiar("menu")

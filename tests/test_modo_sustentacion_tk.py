@@ -1,7 +1,7 @@
 """Prueba de humo del modo de sustentacion de la version Tkinter (obsoleta, tag tkinter-entrega1).
 
 Solo comprueba que sigue funcionando despues de convertir models.py en paquete y de agregar los
-campos `tipo` y `zone`: arranca, muestra DFS y BFS y inserta/elimina una rama del arbol. Se omite
+campos `tipo`, `evidencias` y demas: arranca, muestra DFS y BFS y inserta/elimina una rama del arbol. Se omite
 si no hay Tkinter o pantalla disponible. Ese modo cubre el arbol; los grafos se demuestran con
 los fragmentos de docs/entrega2_grafos.md y con sus pruebas unitarias.
 """
@@ -61,7 +61,7 @@ class ModoSustentacionTkTest(unittest.TestCase):
     def test_carga_los_cinco_eventos_con_los_campos_nuevos(self) -> None:
         self.assertEqual(len(self.app.trees), 5)
         for arbol in self.app.trees:
-            self.assertTrue(arbol.event.zone)
+            self.assertTrue(arbol.event.evidences)
 
 
 if __name__ == "__main__":
