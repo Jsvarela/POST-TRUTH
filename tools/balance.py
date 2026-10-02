@@ -34,12 +34,6 @@ UMBRAL_VERIFICADA = 50       # ...y con informacion verificada final por encima 
 SEMILLA_BASE = 20261
 
 
-def _boton_de(escena, tipo: str):
-    ramas = escena.arbol.root.children[:4]
-    for boton, nodo in zip(escena.botones, ramas):
-        if nodo.tipo == tipo:
-            return nodo
-    return None
 
 
 def _viajar_a_evidencia(escena) -> None:
@@ -63,14 +57,22 @@ def _revisar_pistas(escena, maximo: int) -> None:
 
 
 def _elegir(escena, politica: str):
-    ramas = {n.tipo: n for n in escena.arbol.root.children[:4] if n.tipo}
-    if politica in ("ignorar", "compartir", "verificar"):
-        return ramas.get(politica, escena.arbol.root.children[0])
+    ramas: dict[str, object] = {}
+    for n in escena.arbol.root.children[:4]:
+        if n.tipo:
+            ramas.setdefault(n.tipo, n)          # la primera de cada tipo (hay eventos con dos "compartir")
+    sin_tipo = [n for n in escena.arbol.root.children[:4] if not n.tipo]
+    if politica == "compartir":                  # en una opinion "compartir" es entrar a la discusion (la primera)
+        return ramas.get("compartir") or (sin_tipo[0] if sin_tipo else escena.arbol.root.children[0])
+    if politica in ("ignorar", "verificar"):     # sin "verificar" (opiniones) se ignora
+        return ramas.get(politica) or ramas.get("ignorar") or escena.arbol.root.children[0]
     inv = escena.investigacion
     if inv.veredicto() == "verdadera" and "compartir" in ramas:
         return ramas["compartir"]
     if "reportar" in ramas and inv.respaldo("reportar") >= 1:
         return ramas["reportar"]
+    if sin_tipo:                                 # opinion: se elige la respuesta mas constructiva (la que mas suma)
+        return max(sin_tipo, key=lambda n: n.impact.score)
     for tipo in ("verificar", "ignorar"):
         if tipo in ramas:
             return ramas[tipo]
