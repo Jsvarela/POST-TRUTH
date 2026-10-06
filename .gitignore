@@ -7,3 +7,7 @@ venv/
 env/
 *.log
 .DS_Store
+
+# Contexto local de Claude: no se sube al repositorio
+CLAUDE.md
+.claude/
