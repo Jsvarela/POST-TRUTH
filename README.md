@@ -12,7 +12,7 @@ preguntas, ensenan a verificar antes de compartir y a no amplificar rumores.
 |---|---|---|
 | 1 - Arboles | Arbol n-ario de decisiones, insercion, eliminacion, DFS y BFS | Hecha (version Tkinter en el tag `tkinter-entrega1`) |
 | 2 - Grafos | Grafo social, grafo de la ciudad, operaciones, integracion con el arbol y la mecanica, visualizacion | Hecha, en Pygame |
-| Final | Todo integrado y estable (ver la hoja de ruta de `CLAUDE.md`) | En curso |
+| Final | Todo integrado y estable | En curso |
 
 El juego se migro de Tkinter a Pygame. El codigo Tkinter (`src/post_truth/app.py`) esta
 obsoleto: se conserva solo como referencia.

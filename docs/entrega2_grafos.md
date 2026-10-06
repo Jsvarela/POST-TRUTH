@@ -369,4 +369,4 @@ el total. `tests/test_viajes_escena.py` prueba los viajes, la evidencia y el res
 - El grafo social y el de la ciudad son datos fijos de ejemplo (14 ciudadanos, 5 zonas) y cada noticia
   tiene solo 2 o 3 evidencias. Con 3 de energia algunos lugares quedan a mas de un viaje (por ejemplo
   Alcaldia - Barrio cuesta 4).
-- Aun no hay modo de sustentacion en Pygame (ver la hoja de ruta en CLAUDE.md).
+- Aun no hay modo de sustentacion en Pygame (pendiente en la hoja de ruta del proyecto).
