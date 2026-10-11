@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 from post_truth.models import Impact
 
@@ -27,6 +27,13 @@ class CityState:
         self.misinformation = self._bounded(self.misinformation + impact.misinformation)
         self.conflicts = self._bounded(self.conflicts + impact.conflicts)
         self.score += impact.score
+
+    def to_dict(self) -> dict[str, int]:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, datos: dict[str, int]) -> "CityState":
+        return cls(**{k: int(v) for k, v in datos.items()})
 
     def reset(self) -> None:
         self.verified_information = 55
