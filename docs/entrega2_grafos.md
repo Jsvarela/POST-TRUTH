@@ -266,6 +266,35 @@ pierden. Lo que se ajusto, sin cambiar la estructura: `FUERZA_VERIFICAR` (0.5/0.
 `FUERZA_REPORTAR` (0/0.6/1 -> 0/0.3/1), `FACTOR_LIMITE_REPORTE` (0.5 -> 0.6), `ENERGIA_POR_NOTICIA`
 (5 -> 3) y el tope de desinformacion de una propagacion falsa (12 -> 24, `PROPAGACION_FALSA`).
 
+## 4.2 La partida como modelo (etapa 9: preparar varios jugadores)
+
+El estado de la partida ya no vive en la pantalla: `PartidaSesion` (`sesion.py`) guarda la ciudad, de 1 a 4
+`Jugador` (personaje y rol, zona, energia y hallazgos, puntos), la lista de publicaciones, de quien es el turno,
+el grafo social y el rng. No importa pygame y se puede pasar a JSON entero (`to_dict` / `from_dict`), que es lo que
+necesitara el servidor de sockets. `EscenaState` quedo como controlador: traduce eventos a llamadas de la sesion y
+dibuja.
+
+| Operacion | Que hace | Resultado |
+|---|---|---|
+| `investigar(jugador, pista)` | gasta energia del jugador (o relee gratis) | `ResultadoInvestigar` |
+| `viajar(jugador, zona)` | Dijkstra: cobra la distancia, revela la evidencia | `ResultadoViaje` |
+| `decidir(jugador, accion)` | impacto del arbol (por rol y respaldo) y propagacion; queda pendiente | `ResultadoDecision` |
+| `aplicar()` | suma el impacto a la ciudad y a los puntos de quien decidio | la decision |
+| `continuar()` | siguiente jugador, siguiente publicacion o FIN | `bool` |
+
+Fuera de turno, de fase o con una decision pendiente, las operaciones devuelven `ok=False` con un `motivo`
+(`no_es_su_turno`, `fuera_de_fase`, `decision_pendiente`...) y no cambian nada.
+
+**Regla de turnos.** En cada publicacion decide cada jugador una vez, en orden; abre el jugador `indice % n`,
+asi que quien abre la ronda rota. Cada uno recarga su energia completa y conserva su zona. Comparten la ciudad, el
+grafo social (lo que se corta o frena persiste) y la publicacion; son individuales la energia, los hallazgos, la
+zona y los puntos (los de la ciudad son la suma). Cada jugador es un vertice del grafo social (`jugador`,
+`jugador2`...), con los mismos contactos que `jugador`, y compartir parte del vertice de quien decide.
+
+`decidir` y `aplicar` van separadas para que la animacion de la propagacion se vea antes de que cambien los
+indicadores. Con un jugador el juego es el de siempre: la tabla de `tools/balance.py` sale identica con las mismas
+semillas antes y despues del cambio.
+
 ## 5. Preguntas tipicas de sustentacion
 
 - **Por que lista de adyacencia y no matriz?** Los grafos son dispersos (grado medio 2.64 en el
@@ -347,6 +376,7 @@ demostracion de cada operacion.
 ```bash
 python -m unittest discover -s tests                 # todas las pruebas, sin ventana (SDL dummy)
 python -m unittest tests.test_partida_completa       # partidas completas del jugador automatico
+python -m unittest tests.test_sesion                 # turnos con 1 a 4 jugadores y serializacion de ida y vuelta
 python tools/balance.py 300                          # tabla de balance: 300 partidas por politica (unos 10 s)
 python tools/balance.py 300 --rol 1                  # con otro rol (0 Ciudadano, 1 Periodista, 2 Influencer, 3 Candidato)
 ```
@@ -369,4 +399,7 @@ el total. `tests/test_viajes_escena.py` prueba los viajes, la evidencia y el res
 - El grafo social y el de la ciudad son datos fijos de ejemplo (14 ciudadanos, 5 zonas) y cada noticia
   tiene solo 2 o 3 evidencias. Con 3 de energia algunos lugares quedan a mas de un viaje (por ejemplo
   Alcaldia - Barrio cuesta 4).
+- La sesion admite 1 a 4 jugadores, pero la interfaz sigue siendo de uno (no hay seleccion de varios personajes
+  ni sockets). La animacion de una decision pendiente no se serializa: al restaurar una sesion pasa directo a las
+  consecuencias. Los jugadores 2 a 4 se dibujan encima del vertice `jugador` en la vista del grafo social.
 - Aun no hay modo de sustentacion en Pygame (pendiente en la hoja de ruta del proyecto).

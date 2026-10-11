@@ -119,6 +119,7 @@ src/post_truth/pygame_app.py             Game loop (60 FPS, dt en segundos) y re
 src/post_truth/config.py                 Constantes y rutas de los datos
 src/post_truth/models/                   Logica pura: dominio (Impact, NewsEvent, Role), personaje, intro, publicacion y pistas
 src/post_truth/game_state.py             CityState: indicadores de Ciudad Nova
+src/post_truth/sesion.py                 PartidaSesion: estado y reglas de la partida (1 a 4 jugadores, turnos), serializable
 src/post_truth/decision_tree.py          Arbol n-ario, DFS y BFS
 src/post_truth/structures/               grafo_social, propagacion, grafo_ciudad
 src/post_truth/controllers/              Estados: menu, intro, seleccion, escena (patron State)
