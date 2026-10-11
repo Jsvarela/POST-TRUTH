@@ -360,6 +360,9 @@ class PartidaCompletaTest(unittest.TestCase):
             bot = Bot(self.app, 7, politica="compartir")
             bot.empezar(2, 1)
             e = bot.escena
+            # Una opinion no propaga por el grafo: la primera publicacion debe poder pasar por PROPAGACION
+            e.arboles.sort(key=lambda a: a.event.kind == "opinion")
+            e._cargar_evento()
             n = len(e.arboles)
             if fase_objetivo == FIN:
                 for _ in range(n):

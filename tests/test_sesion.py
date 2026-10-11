@@ -232,7 +232,7 @@ class EstadoIndividualTest(unittest.TestCase):
         s = nueva(2)
         falsa = next(i for i, a in enumerate(s.arboles) if a.event.truth_level < 50)
         s.arboles[0], s.arboles[falsa] = s.arboles[falsa], s.arboles[0]
-        s._abrir_evento()
+        s.abrir_evento()
         j = s.jugador_actual
         while j.investigacion.energia and not j.investigacion.lugares_revisados():     # busca evidencia de campo
             destino = next(iter(j.investigacion.lugares_pendientes()))

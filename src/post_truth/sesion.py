@@ -118,7 +118,7 @@ class PartidaSesion:
             grafo.cambiar_rol(id, personaje.rol)   # el rol define cuanto amplifica al compartir
             jugadores.append(Jugador(id, personaje, mapa.zona_inicial))
         sesion = cls(jugadores, arboles, grafo, mapa, rng)
-        sesion._abrir_evento()
+        sesion.abrir_evento()
         return sesion
 
     # --- consultas ------------------------------------------------------------------------
@@ -235,15 +235,17 @@ class PartidaSesion:
             return True
         self.turno, self.indice = 0, self.indice + 1
         if self.indice < len(self.arboles):
-            self.fase = DECIDIENDO
-            self._abrir_evento()
+            self.abrir_evento()
         else:
             self.fase = FIN
         return True
 
-    def _abrir_evento(self) -> None:
-        """Cada jugador empieza la publicacion con la energia completa; si ya esta parado donde la noticia dejo
-        evidencia, se revela sola (no cuesta nada)."""
+    def abrir_evento(self, indice: int | None = None) -> None:
+        """Abre la publicacion `indice` (por defecto la actual) desde el primer turno. Cada jugador empieza con la
+        energia completa; si ya esta parado donde la noticia dejo evidencia, se revela sola (no cuesta nada)."""
+        if indice is not None:
+            self.indice = indice
+        self.turno, self.fase, self.pendiente = 0, DECIDIENDO, None
         evento = self.arbol.event
         for j in self.jugadores:
             j.investigacion = Investigacion(evento.clues, evidencias=evento.evidences)
