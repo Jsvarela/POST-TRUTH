@@ -6,6 +6,7 @@ from post_truth.controllers.escena_state import EscenaState
 from post_truth.controllers.game_state import GameState
 from post_truth.controllers.intro_state import IntroState
 from post_truth.controllers.menu_state import MenuState
+from post_truth.controllers.mundo_state import MundoState
 from post_truth.controllers.seleccion_state import SeleccionState
 from post_truth.controllers.state_manager import StateManager
 from post_truth.models.personaje import Personaje
@@ -32,6 +33,7 @@ class App:
         self.estados.registrar("intro", IntroState(self))
         self.estados.registrar("seleccion", SeleccionState(self))
         self.estados.registrar("escena", EscenaState(self))
+        self.estados.registrar("mundo", MundoState(self))
         self.estados.registrar("juego", GameState(self))  # prototipo anterior, ya fuera del flujo
         self.estados.cambiar("menu")
 

@@ -176,12 +176,18 @@ for _ in range(60 * 20):
     a.estados.update(1 / 60)
     if e.botones[0].texto.startswith("Ver"): break
 dibujar(); k(pygame.K_RETURN); dibujar(2)            # consecuencias
+k(pygame.K_ESCAPE); k(pygame.K_m)                    # menu -> mundo caminable
+m = a.estados._actual
+assert type(m).__name__ == "MundoState", type(m).__name__
+inicio = m.mundo.jugador
+k(pygame.K_d); dibujar(3)                            # camina y la camara lo sigue
+assert m.mundo.jugador != inicio and m.mundo.es_transitable(m.mundo.jugador)
 print("OK", ANCHO, ALTO)
 """
 
 
 class JuegoCompletoEnVariasEscalasTest(unittest.TestCase):
-    """Corre el flujo Menu -> Intro -> Seleccion -> Escena (investigar, viajar, propagacion) en otras escalas."""
+    """Corre el flujo Menu -> Intro -> Seleccion -> Escena (investigar, viajar, propagacion) y el mundo caminable en otras escalas."""
 
     def _correr(self, escala: str) -> str:
         r = subprocess.run([sys.executable, "-c", SCRIPT_ESCALA], cwd=RAIZ,

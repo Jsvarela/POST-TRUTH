@@ -1,10 +1,12 @@
 """Mundo caminable (models/mundo.py): datos, colisiones, deslizamiento, independencia de FPS y zona al alcance."""
 import json
 import math
+import os
 import sys
 import unittest
 from pathlib import Path
 
+os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from post_truth.config import RUTA_GRAFO_CIUDAD, RUTA_MUNDO
@@ -165,6 +167,111 @@ class ZonaAlAlcanceTest(unittest.TestCase):
             self.assertEqual(m.zona_al_alcance(), e.zona)
         m.jugador = m.aparicion
         self.assertIsNone(m.zona_al_alcance())               # en el centro de la Plaza no se esta en ninguna puerta
+
+
+class MundoEnPantallaTest(unittest.TestCase):
+    """MundoState con eventos de teclado (sin ventana), camara y dibujo en los 3 temas."""
+
+    def setUp(self) -> None:
+        import pygame
+        from post_truth.pygame_app import App
+        self.pygame = pygame
+        self.app = App()
+        self.app.intro_vista = True
+        self.tecla(pygame.K_m)                                         # desde el menu
+        self.estado = self.app.estados._actual
+
+    def tearDown(self) -> None:
+        self.pygame.quit()
+
+    def tecla(self, key: int, tipo=None) -> None:
+        self.app.estados.handle_event(self.pygame.event.Event(tipo or self.pygame.KEYDOWN, key=key))
+
+    def correr(self, segundos: float, fps: int = 60) -> None:
+        for _ in range(round(segundos * fps)):
+            self.app.estados.update(1 / fps)
+
+    def test_el_menu_abre_el_mundo_en_el_punto_de_aparicion(self) -> None:
+        self.assertEqual(type(self.estado).__name__, "MundoState")
+        self.assertEqual(self.estado.mundo.jugador, self.estado.mundo.aparicion)
+
+    def test_wasd_y_flechas_mueven_y_soltar_detiene(self) -> None:
+        pg = self.pygame
+        for teclas, eje, signo in (((pg.K_d, pg.K_RIGHT), 0, 1), ((pg.K_a, pg.K_LEFT), 0, -1),
+                                   ((pg.K_s, pg.K_DOWN), 1, 1), ((pg.K_w, pg.K_UP), 1, -1)):
+            for t in teclas:
+                self.estado.mundo.jugador = self.estado.mundo.aparicion
+                antes = self.estado.mundo.jugador
+                self.tecla(t)
+                self.correr(0.2)
+                self.tecla(t, pg.KEYUP)
+                movido = self.estado.mundo.jugador
+                self.assertGreater((movido[eje] - antes[eje]) * signo, 30, pg.key.name(t))
+                self.correr(0.2)
+                self.assertEqual(self.estado.mundo.jugador, movido)      # soltar la tecla lo detiene
+
+    def test_teclas_opuestas_se_anulan(self) -> None:
+        self.tecla(self.pygame.K_a)
+        self.tecla(self.pygame.K_d)
+        self.correr(0.5)
+        self.assertEqual(self.estado.mundo.jugador, self.estado.mundo.aparicion)
+
+    def test_e_en_una_entrada_avisa_y_lejos_no(self) -> None:
+        self.tecla(self.pygame.K_e)
+        self.assertEqual(self.estado.aviso, "")
+        self.estado.mundo.jugador = self.estado.mundo.edificios[0].entrada
+        self.tecla(self.pygame.K_e)
+        self.assertIn(self.estado.mundo.edificios[0].zona.capitalize(), self.estado.aviso)
+        self.correr(3)
+        self.assertEqual(self.estado.aviso, "")                          # el aviso se va solo
+
+    def test_esc_vuelve_al_menu_y_la_siguiente_visita_empieza_de_nuevo(self) -> None:
+        self.tecla(self.pygame.K_d)
+        self.correr(0.3)
+        self.tecla(self.pygame.K_ESCAPE)
+        self.assertEqual(type(self.app.estados._actual).__name__, "MenuState")
+        self.tecla(self.pygame.K_m)
+        self.assertEqual(self.estado.mundo.jugador, self.estado.mundo.aparicion)
+        self.correr(0.3)
+        self.assertEqual(self.estado.mundo.jugador, self.estado.mundo.aparicion)   # no quedo una tecla pegada
+
+    def test_la_camara_sigue_al_jugador_sin_salirse_del_mundo(self) -> None:
+        from post_truth.config import ALTO, ANCHO, ESCALA
+        from post_truth.views.mundo_view import camara
+        m = self.estado.mundo
+        vista = (ANCHO / ESCALA, ALTO / ESCALA)
+        x, y = camara(m)
+        self.assertAlmostEqual(x + vista[0] / 2, m.jugador[0])           # en el centro: centrada en el jugador
+        self.assertAlmostEqual(y + vista[1] / 2, m.jugador[1])
+        for e in m.edificios:                                            # en las esquinas: no se sale
+            m.jugador = e.entrada
+            x, y = camara(m)
+            self.assertTrue(0 <= x <= m.tamano[0] - vista[0] and 0 <= y <= m.tamano[1] - vista[1], e.zona)
+
+    def test_se_dibuja_en_los_3_temas_cerca_de_cada_lugar(self) -> None:
+        imagenes = set()
+        for _ in range(3):
+            for e in self.estado.mundo.edificios:
+                self.estado.mundo.jugador = e.entrada
+                self.app.estados.draw(self.app.pantalla)
+                imagenes.add(self.pygame.image.tobytes(self.app.pantalla, "RGB"))
+            self.app.temas.siguiente()
+        self.assertEqual(len(imagenes), 15)                              # 5 lugares x 3 temas, todos distintos
+
+    def test_el_arte_se_puede_reemplazar_sin_tocar_el_modelo(self) -> None:
+        from post_truth.views.arte_mundo import ArteFormas
+        from post_truth.views.mundo_view import dibujar_mundo
+        llamadas = []
+
+        class ArteEspia(ArteFormas):
+            def __getattribute__(self, nombre):
+                if not nombre.startswith("_"):
+                    llamadas.append(nombre)
+                return super().__getattribute__(nombre)
+        m = self.estado.mundo
+        dibujar_mundo(self.app.pantalla, self.app.fuentes, self.app.temas.actual, m, arte=ArteEspia())
+        self.assertEqual(set(llamadas), {"suelo", "calle", "plaza", "edificio", "personaje"})
+        self.assertEqual(llamadas.count("calle"), len(m.calles))
 
 
 if __name__ == "__main__":
