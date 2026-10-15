@@ -187,15 +187,26 @@ class PartidaSesion:
         imagen = self.arbol.event.image
         return imagen.motivo if imagen is not None else self.mapa.zona_inicial
 
+    def calle_gratis(self, a: str, b: str) -> bool:
+        """Ir de a hacia b por esa calle acerca a la noticia activa por un camino mas corto. Dijkstra desde la
+        noticia (O((V+E) log V)) da la distancia de cada plaza: la calle a->b esta en un camino mas corto si
+        dist(b) + peso(a, b) == dist(a)."""
+        peso = self.mapa.distancia(a, b)
+        dist = self.mapa.costos_desde(self.zona_noticia)
+        return peso is not None and dist[b] + peso == dist[a]
+
     def cobrar_calle(self, jugador: str, a: str, b: str) -> ResultadoViaje:
-        """Cobra la distancia de la calle a-b (una arista del grafo de la ciudad) al tomarla en el mundo. Caminar
-        por el camino mas corto cuesta lo mismo que el viaje con Dijkstra de siempre: el balance no cambia."""
+        """Cobra la distancia de la calle a -> b (una arista del grafo de la ciudad) al tomarla en el mundo.
+        Es GRATIS si va hacia la noticia activa por un camino mas corto: llegar a la noticia nunca se traba y la
+        energia se gasta solo en desvios para buscar evidencia, como antes en el viaje con Dijkstra."""
         j, motivo = self._turno_de(jugador)
         if motivo:
             return ResultadoViaje(False, motivo, b)
         costo = self.mapa.distancia(a, b)
         if costo is None:
             return ResultadoViaje(False, "sin_camino", b)
+        if self.calle_gratis(a, b):
+            return ResultadoViaje(True, "", b, (a, b), 0)
         if not j.investigacion.viajar(costo):
             return ResultadoViaje(False, "sin_energia", b, (a, b), costo)
         return ResultadoViaje(True, "", b, (a, b), costo)

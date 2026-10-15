@@ -329,17 +329,43 @@ class MundoEnLaSesionTest(unittest.TestCase):
             self.assertEqual(s.zona_noticia, s.arbol.event.image.motivo)
             self.assertIn(s.zona_noticia, s.mapa)
 
+    def _con_noticia_en(self, zona: str) -> PartidaSesion:
+        s = nueva(1, eventos=18)                                   # todas: hay noticias en cada zona
+        s.abrir_evento(next(i for i, a in enumerate(s.arboles) if a.event.image.motivo == zona))
+        return s
+
     def test_cobrar_calle_cobra_la_distancia_del_grafo(self) -> None:
-        s = nueva(1)
+        s = self._con_noticia_en("barrio")                         # Plaza -> Alcaldia se aleja de la noticia
         j = s.jugador_actual
         r = s.cobrar_calle(j.id, "plaza", "alcaldia")              # distancia 2
         self.assertEqual((r.ok, r.costo), (True, 2))
         self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA - 2)
         self.assertEqual(j.investigacion.viaje_gastado, 2)
-        r = s.cobrar_calle(j.id, "alcaldia", "plaza")              # ya no alcanza (queda 1)
+        r = s.cobrar_calle(j.id, "plaza", "colegio")               # tambien se aleja, y ya no alcanza (queda 1)
         self.assertEqual((r.ok, r.motivo, r.costo), (False, "sin_energia", 2))
         self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA - 2)   # no cobra nada
         self.assertEqual(s.cobrar_calle(j.id, "colegio", "alcaldia").motivo, "sin_camino")
+
+    def test_ir_hacia_la_noticia_por_un_camino_mas_corto_es_gratis(self) -> None:
+        s = self._con_noticia_en("barrio")
+        j = s.jugador_actual
+        # Desde la Plaza el Barrio queda a 2 por el Parque (1 + 1); la calle directa cuesta 3
+        self.assertTrue(s.calle_gratis("plaza", "parque"))
+        self.assertTrue(s.calle_gratis("parque", "barrio"))
+        self.assertFalse(s.calle_gratis("plaza", "barrio"))         # la directa no es un camino mas corto
+        self.assertFalse(s.calle_gratis("parque", "plaza"))         # al reves se aleja
+        r = s.cobrar_calle(j.id, "plaza", "parque")
+        self.assertEqual((r.ok, r.costo), (True, 0))
+        self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA)
+        self.assertEqual(s.cobrar_calle(j.id, "plaza", "barrio").costo, 3)   # desviarse si cuesta
+
+    def test_nunca_se_traba_toda_noticia_se_alcanza_gratis_desde_cualquier_zona(self) -> None:
+        s = nueva(1, eventos=18)
+        for i in range(len(s.arboles)):
+            s.abrir_evento(i)
+            for origen in s.mapa.zonas():
+                ruta = s.mapa.ruta(origen.id, s.zona_noticia)
+                self.assertTrue(all(s.calle_gratis(a, b) for a, b in zip(ruta.zonas, ruta.zonas[1:])))
 
     def test_llegar_actualiza_la_zona_sin_cobrar_ni_revelar(self) -> None:
         s = nueva(1)
