@@ -2,6 +2,7 @@
 import json
 import math
 import os
+import random
 import sys
 import unittest
 from pathlib import Path
@@ -154,6 +155,8 @@ class ZonaAlAlcanceTest(unittest.TestCase):
         m = mundo_simple()
         self.assertIsNone(m.zona_al_alcance())                # en la plaza a: su edificio no existe
         m.jugador = (600, 80)
+        self.assertIsNone(m.zona_al_alcance())                # todavia no "llego" a la plaza b
+        m.ultima_plaza = "b"
         self.assertEqual(m.zona_al_alcance(), "b")
         m.jugador = (600, 80 + 25)                            # justo en el radio
         self.assertEqual(m.zona_al_alcance(), "b")
@@ -163,9 +166,10 @@ class ZonaAlAlcanceTest(unittest.TestCase):
     def test_cada_lugar_del_mapa_real_se_alcanza_caminando_hasta_su_entrada(self) -> None:
         m = MundoCiudad.cargar(RUTA_MUNDO)
         for e in m.edificios:
-            m.jugador = e.entrada
+            m.jugador, m.ultima_plaza = e.entrada, e.zona
             self.assertEqual(m.zona_al_alcance(), e.zona)
-        m.jugador = m.aparicion
+            self.assertEqual(m.plaza_en(e.entrada, 2 * m.radio_jugador), e.zona)   # la puerta queda "dentro"
+        m.jugador, m.ultima_plaza = m.aparicion, "plaza"
         self.assertIsNone(m.zona_al_alcance())               # en el centro de la Plaza no se esta en ninguna puerta
 
 
@@ -323,13 +327,17 @@ class MundoEnPantallaTest(unittest.TestCase):
         self.correr(0.5)
         self.assertEqual(self.estado.mundo.jugador, self.estado.mundo.aparicion)
 
-    def test_e_en_una_entrada_avisa_y_lejos_no(self) -> None:
+    def test_e_lejos_no_hace_nada_y_en_un_lugar_sin_nada_avisa(self) -> None:
         self.tecla(self.pygame.K_e)
         self.assertEqual(self.estado.aviso, "")
-        self.estado.mundo.jugador = self.estado.mundo.edificios[0].entrada
+        s, m = self.app.partida, self.estado.mundo
+        vacio = next(e for e in m.edificios if e.zona != s.zona_noticia
+                     and e.zona not in s.jugador_actual.investigacion.lugares_pendientes())
+        m.jugador, m.ultima_plaza = vacio.entrada, vacio.zona
+        s.llegar(s.jugador_actual.id, vacio.zona)
         self.tecla(self.pygame.K_e)
-        self.assertIn(self.estado.mundo.edificios[0].zona.capitalize(), self.estado.aviso)
-        self.correr(3)
+        self.assertIn("no hay nada", self.estado.aviso)
+        self.correr(5)
         self.assertEqual(self.estado.aviso, "")                          # el aviso se va solo
 
     def test_esc_vuelve_al_menu_y_la_siguiente_visita_empieza_de_nuevo(self) -> None:
@@ -379,6 +387,187 @@ class MundoEnPantallaTest(unittest.TestCase):
         dibujar_mundo(self.app.pantalla, self.app.fuentes, self.app.temas.actual, m, arte=ArteEspia())
         self.assertEqual(set(llamadas), {"suelo", "calle", "plaza", "edificio", "personaje"})
         self.assertEqual(llamadas.count("calle"), len(m.calles))
+
+
+
+def ir_a_zona(estado, zona: str, hasta_la_puerta: bool = True) -> bool:
+    """Camina como un jugador: por la ruta de Dijkstra, plaza por plaza, con el mismo cobro que el teclado."""
+    m, s = estado.mundo, estado.app.partida
+    for siguiente in s.mapa.ruta(m.ultima_plaza, zona).zonas[1:]:
+        if not caminar_hacia(m, m.plazas[siguiente].pos, estado._cobrar, estado._llegar):
+            return False
+    if hasta_la_puerta:
+        puerta = next(e.entrada for e in m.edificios if e.zona == zona)
+        return caminar_hacia(m, puerta, estado._cobrar, estado._llegar)
+    return True
+
+
+class FlujoMundoNoticiasTest(unittest.TestCase):
+    """Etapa M2: Seleccion -> Mundo -> (E) noticia -> decidir -> Mundo con la siguiente. La sesion manda."""
+
+    def setUp(self) -> None:
+        import pygame
+        from post_truth.pygame_app import App
+        self.pygame = pygame
+        self.app = App()
+        self.app.intro_vista = True
+        self.app.estados._estados["mundo"].rng = random.Random(4)
+        for k in (pygame.K_RETURN, pygame.K_2, pygame.K_1):           # menu -> seleccion -> periodista hombre
+            self.tecla(k)
+        self.estado = self.app.estados._actual
+
+    def tearDown(self) -> None:
+        self.pygame.quit()
+
+    def tecla(self, key: int) -> None:
+        self.app.estados.handle_event(self.pygame.event.Event(self.pygame.KEYDOWN, key=key))
+
+    @property
+    def sesion(self):
+        return self.app.partida
+
+    def sincronizados(self) -> None:
+        self.assertEqual(self.sesion.jugador_actual.zona, self.estado.mundo.ultima_plaza)
+
+    def entrar_a_la_noticia(self):
+        self.assertTrue(ir_a_zona(self.estado, self.sesion.zona_noticia))
+        self.assertEqual(self.estado.accion_disponible(), (self.sesion.zona_noticia, "entrar"))
+        self.tecla(self.pygame.K_e)
+        return self.app.estados._actual
+
+    def decidir_y_salir(self, escena, tipo: str = "ignorar") -> None:
+        from post_truth.controllers.escena_state import PROPAGACION
+        nodo = next((n for n in escena.arbol.root.children if n.tipo == tipo), escena.arbol.root.children[0])
+        escena._decidir(nodo)
+        if escena.fase == PROPAGACION:
+            escena.animacion.saltar()
+            escena._terminar_propagacion()
+        self.tecla(self.pygame.K_RETURN)                                 # Continuar
+
+    def test_la_seleccion_lleva_al_mundo_con_una_partida_nueva_y_sincronizada(self) -> None:
+        self.assertEqual(type(self.estado).__name__, "MundoState")
+        self.assertIsNotNone(self.sesion)
+        self.assertEqual(self.sesion.jugador_actual.personaje, self.app.personaje)
+        self.sincronizados()
+
+    def test_ir_a_la_noticia_por_la_guia_es_gratis_y_e_abre_su_pantalla(self) -> None:
+        inv = self.sesion.jugador_actual.investigacion
+        escena = self.entrar_a_la_noticia()
+        self.assertEqual(type(escena).__name__, "EscenaState")
+        self.assertTrue(escena.interior)
+        self.assertIs(escena.sesion, self.sesion)                        # la misma partida, no una nueva
+        self.assertEqual(escena.zona, self.sesion.zona_noticia)
+        self.assertEqual(inv.viaje_gastado, 0)                           # el camino a la noticia no cobro
+        self.sincronizados()
+
+    def test_al_decidir_se_vuelve_a_la_calle_con_la_siguiente_noticia(self) -> None:
+        primera = self.sesion.arbol
+        escena = self.entrar_a_la_noticia()
+        self.decidir_y_salir(escena)
+        self.assertIs(self.app.estados._actual, self.estado)
+        self.assertEqual(self.sesion.indice, 1)
+        self.assertIsNot(self.sesion.arbol, primera)
+        self.assertEqual(self.estado.estado_vista().noticia, self.sesion.zona_noticia)   # la marca se movio
+        self.sincronizados()
+
+    def test_esc_en_el_interior_vuelve_a_la_calle_sin_decidir(self) -> None:
+        self.entrar_a_la_noticia()
+        self.tecla(self.pygame.K_ESCAPE)
+        self.assertIs(self.app.estados._actual, self.estado)
+        self.assertEqual(self.sesion.indice, 0)                         # la noticia sigue pendiente
+        self.assertIsNotNone(self.app.partida)
+
+    def test_buscar_evidencia_en_otro_lugar_la_revela_y_cuesta_el_desvio(self) -> None:
+        s = self.sesion
+        while not (s.jugador_actual.investigacion.lugares_pendientes() - {s.zona_noticia}):
+            s.abrir_evento(s.indice + 1)                                 # una noticia con evidencia en otro lugar
+        inv = s.jugador_actual.investigacion
+        lugar = min(inv.lugares_pendientes() - {s.zona_noticia},
+                    key=lambda z: s.mapa.ruta(self.estado.mundo.ultima_plaza, z).costo)
+        costo = s.mapa.ruta(self.estado.mundo.ultima_plaza, lugar).costo
+        gratis = all(s.calle_gratis(a, b) for a, b in zip(*[s.mapa.ruta(self.estado.mundo.ultima_plaza, lugar).zonas] * 2))
+        if costo > inv.energia:
+            self.skipTest("la evidencia mas cercana no alcanza con esta semilla")
+        self.assertTrue(ir_a_zona(self.estado, lugar))
+        self.assertEqual(self.estado.accion_disponible(), (lugar, "evidencia"))
+        self.tecla(self.pygame.K_e)
+        evidencia = inv.evidencia_en(lugar)
+        self.assertTrue(inv.esta_descubierta(evidencia.id))
+        self.assertIn(evidencia.titulo, self.estado.aviso)
+        self.assertIsNone(self.estado.accion_disponible())               # ya no hay nada que buscar aqui
+        self.assertLessEqual(inv.viaje_gastado, costo)
+        if not gratis:
+            self.assertGreater(inv.viaje_gastado, 0)
+        self.sincronizados()
+
+    def test_sin_energia_desviarse_se_bloquea_y_avisa(self) -> None:
+        s, m = self.sesion, self.estado.mundo
+        s.jugador_actual.investigacion.energia = 0
+        for a, b in [(c.desde, c.hasta) for c in m.calles] + [(c.hasta, c.desde) for c in m.calles]:
+            if a == m.ultima_plaza and not s.calle_gratis(a, b):
+                self.assertFalse(caminar_hacia(m, m.plazas[b].pos, self.estado._cobrar, self.estado._llegar))
+                self.assertIn("No te alcanza", self.estado.aviso)
+                self.assertEqual(m.ultima_plaza, a)
+                return
+        self.skipTest("todas las calles desde aqui van hacia la noticia")
+
+    def test_g_muestra_la_guia_hacia_la_noticia(self) -> None:
+        self.assertEqual(self.estado.estado_vista().guia, ())
+        self.tecla(self.pygame.K_g)
+        vista = self.estado.estado_vista()
+        self.assertEqual(vista.guia[0], self.estado.mundo.ultima_plaza)
+        self.assertEqual(vista.guia[-1], self.sesion.zona_noticia)
+        self.assertEqual(vista.costo_guia, 0)                            # por la guia caminar es gratis
+        self.assertEqual(list(vista.guia),
+                         list(self.sesion.mapa.ruta(vista.guia[0], vista.guia[-1]).zonas))   # es el camino de Dijkstra
+        self.tecla(self.pygame.K_g)
+        self.assertEqual(self.estado.estado_vista().guia, ())
+
+    def test_hud_marcas_guia_y_minimapa_se_dibujan_en_los_3_temas(self) -> None:
+        imagenes = set()
+        self.tecla(self.pygame.K_g)
+        for _ in range(3):
+            self.app.estados.draw(self.app.pantalla)
+            imagenes.add(self.pygame.image.tobytes(self.app.pantalla, "RGB"))
+            self.app.temas.siguiente()
+        self.assertEqual(len(imagenes), 3)
+
+    def test_una_partida_completa_caminando(self) -> None:
+        """Bot que camina: noticia por noticia busca la evidencia mas barata si alcanza, entra y decide."""
+        from post_truth.controllers.escena_state import FIN
+        s = self.sesion
+        tipos = ("verificar", "compartir", "reportar", "ignorar")
+        for i in range(len(s.arboles)):
+            self.assertIs(self.app.estados._actual, self.estado)
+            inv = s.jugador_actual.investigacion
+            otros = inv.lugares_pendientes() - {s.zona_noticia}
+            if otros:
+                lugar = min(otros, key=lambda z: s.mapa.ruta(self.estado.mundo.ultima_plaza, z).costo)
+                if s.mapa.ruta(self.estado.mundo.ultima_plaza, lugar).costo <= inv.energia:
+                    ir_a_zona(self.estado, lugar)
+                    self.tecla(self.pygame.K_e)
+            self.sincronizados()
+            self.assertGreaterEqual(inv.energia, 0)
+            self.assertEqual(inv.energia + inv.viaje_gastado
+                             + sum(p.costo for p in inv.pistas if inv.esta_descubierta(p.id)), inv.energia_max)
+            escena = self.entrar_a_la_noticia()
+            self.app.estados.draw(self.app.pantalla)
+            self.decidir_y_salir(escena, tipos[i % 4])
+        escena = self.app.estados._actual
+        self.assertEqual(escena.fase, FIN)
+        self.tecla(self.pygame.K_RETURN)                                 # Volver al menu
+        self.assertEqual(type(self.app.estados._actual).__name__, "MenuState")
+        self.assertIsNone(self.app.partida)
+
+    def test_el_respaldo_lleva_a_la_escena_como_antes(self) -> None:
+        self.tecla(self.pygame.K_ESCAPE)                                 # abandona la partida del mundo
+        self.assertIsNone(self.app.partida)
+        self.app.flujo = "escena"
+        for k in (self.pygame.K_RETURN, self.pygame.K_1, self.pygame.K_2):
+            self.tecla(k)
+        escena = self.app.estados._actual
+        self.assertEqual(type(escena).__name__, "EscenaState")
+        self.assertFalse(escena.interior)
 
 
 if __name__ == "__main__":
