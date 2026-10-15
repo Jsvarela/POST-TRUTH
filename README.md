@@ -62,9 +62,17 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
   rechaza y baja la confianza, con pruebas de la tarjeta limita al autor y con evidencia de campo corta
   sus conexiones. Los rumores se propagan solo por el grafo social (entre personas), no por el mapa.
   Lo investigado tambien cambia el texto de la consecuencia.
-- **Mundo caminable (en construccion, etapa M1):** con M en el menu se abre Ciudad Nova vista desde arriba. Se camina con
-  WASD o flechas solo por las calles (las aristas del grafo de la ciudad) y las plazas (sus vertices); la camara sigue
-  al jugador y, junto a la puerta de un lugar, aparece "E: entrar" (entrar de verdad llega en la etapa M2).
+- **Mundo caminable (flujo por defecto: Menu -> Intro -> Seleccion -> Mundo):** Ciudad Nova vista desde arriba. Se
+  camina con WASD o flechas solo por las calles (las aristas del grafo de la ciudad) y las plazas (sus vertices).
+  La noticia activa se marca con un globo con "!" sobre su lugar y la evidencia pendiente con un rombo con "?".
+  Junto a la puerta: "E: entrar" abre la pantalla de noticias de ese lugar y "E: buscar evidencia" la revela. Al
+  decidir se vuelve a la calle con la siguiente noticia. G muestra la guia (camino mas corto, Dijkstra) hacia la
+  noticia. Arriba: indicadores, energia y un minimapa con la posicion del jugador. M en el menu entra directo.
+- **Energia al caminar:** cada calle cuesta su distancia del grafo en rayos y se cobra al tomarla; queda pagada
+  hasta llegar a una de sus plazas (dar la vuelta no cobra ni devuelve). Las calles del camino mas corto hacia la
+  noticia activa son gratis, asi la energia se gasta en desvios para buscar evidencia (el balance medido no cambia)
+  y nunca falta para llegar a la noticia. Si un desvio no alcanza, la calle no deja pasar y se avisa.
+- **Respaldo:** `POSTTRUTH_FLUJO=escena python src/main.py` usa el flujo anterior (Seleccion -> escena de noticias).
 - Otras teclas: Enter para continuar, Espacio para saltar el texto, I en el menu para ver la introduccion, T en el menu para cambiar
   de tema (normal, alto contraste, daltonismo), ESC para volver.
 
