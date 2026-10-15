@@ -1,4 +1,4 @@
-"""Evidencia por zona, viaje con energia, respaldo y su efecto sobre Verificar y Reportar (modelo puro)."""
+"""Evidencia por zona, respaldo y su efecto sobre Verificar y Reportar (modelo puro)."""
 import copy
 import json
 import random
@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from post_truth.config import RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL
 from post_truth.decision_tree import DecisionTree, load_trees
 from post_truth.models import Impact, NewsEvent
-from post_truth.models.pistas import (ENERGIA_POR_NOTICIA, Evidencia, Investigacion, Pista, Senal, TipoEvidencia,
+from post_truth.models.pistas import (Evidencia, Investigacion, Pista, Senal, TipoEvidencia,
                                       ZonaTarjeta, texto_consecuencia, validar_evidencias)
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
@@ -20,8 +20,8 @@ from post_truth.structures.propagacion import (FUERZA_REPORTAR, FUERZA_VERIFICAR
                                                simular_decision)
 
 
-def pista(id: str, zona: ZonaTarjeta, senal: Senal = Senal.FALSA, costo: int = 1) -> Pista:
-    return Pista(id, zona, id.title(), f"hallazgo de {id}", senal, costo)
+def pista(id: str, zona: ZonaTarjeta, senal: Senal = Senal.FALSA) -> Pista:
+    return Pista(id, zona, id.title(), f"hallazgo de {id}", senal)
 
 
 def evidencia(id: str, lugar: str, senal: Senal = Senal.FALSA, tipo: TipoEvidencia = TipoEvidencia.TESTIGO) -> Evidencia:
@@ -40,9 +40,6 @@ class EvidenciaTest(unittest.TestCase):
     def test_roundtrip_dict(self) -> None:
         e = evidencia("testigo", "colegio")
         self.assertEqual(Evidencia.from_dict(json.loads(json.dumps(e.to_dict()))), e)
-
-    def test_no_tiene_costo_propio_porque_se_paga_el_viaje(self) -> None:
-        self.assertEqual(evidencia("t", "colegio").costo, 0)
 
     def test_datos_invalidos(self) -> None:
         with self.assertRaises(ValueError):
@@ -67,17 +64,15 @@ class EvidenciaTest(unittest.TestCase):
 
 
 class InvestigacionConMapaTest(unittest.TestCase):
-    def test_arranca_con_la_energia_completa_y_sin_hallazgos(self) -> None:
+    def test_arranca_sin_hallazgos(self) -> None:
         inv = investigacion()
-        self.assertEqual((inv.energia, inv.viaje_gastado), (ENERGIA_POR_NOTICIA, 0))
         self.assertEqual(inv.lugares_pendientes(), {"colegio", "alcaldia", "parque"})
         self.assertEqual(inv.lugares_revisados(), set())
 
-    def test_revelar_evidencia_al_llegar_no_cuesta_y_es_idempotente(self) -> None:
+    def test_revelar_evidencia_al_llegar_es_idempotente(self) -> None:
         inv = investigacion()
         e = inv.revelar_evidencia("colegio")
         self.assertEqual(e.id, "testigo")
-        self.assertEqual(inv.energia, ENERGIA_POR_NOTICIA)             # el viaje se paga aparte
         self.assertIsNone(inv.revelar_evidencia("colegio"))            # ya revelada
         self.assertEqual(inv.descubiertas, ["testigo"])
         self.assertEqual(inv.lugares_pendientes(), {"alcaldia", "parque"})
@@ -89,34 +84,15 @@ class InvestigacionConMapaTest(unittest.TestCase):
         self.assertEqual(inv.descubiertas, [])
 
     def test_la_evidencia_entra_al_mismo_registro_que_las_pistas(self) -> None:
-        inv = investigacion(energia_max=9)
+        inv = investigacion()
         inv.investigar("cuenta")
         inv.revelar_evidencia("colegio")
         self.assertEqual([h.id for h in inv.pistas_descubiertas()], ["cuenta", "testigo"])
         self.assertTrue(inv.esta_descubierta("testigo"))
         self.assertEqual(inv.hallazgo("testigo").lugar, "colegio")
 
-    def test_viajar_gasta_energia_y_no_cobra_si_no_alcanza(self) -> None:
-        inv = investigacion()
-        self.assertTrue(inv.viajar(2))
-        self.assertEqual((inv.energia, inv.viaje_gastado), (ENERGIA_POR_NOTICIA - 2, 2))
-        self.assertFalse(inv.viajar(ENERGIA_POR_NOTICIA))              # no alcanza
-        self.assertEqual((inv.energia, inv.viaje_gastado), (ENERGIA_POR_NOTICIA - 2, 2))
-        self.assertTrue(inv.viajar(0))                                  # quedarse no cuesta
-        with self.assertRaises(ValueError):
-            inv.viajar(-1)
-
-    def test_la_energia_es_una_sola_para_la_tarjeta_y_los_viajes(self) -> None:
-        inv = investigacion(energia_max=4)
-        inv.viajar(3)
-        self.assertEqual(inv.investigar("foto").estado, "nueva")        # cuesta 1: queda 0
-        self.assertEqual(inv.energia, 0)
-        self.assertEqual(inv.investigar("cuenta").estado, "sin_energia")
-        gastado = sum(inv.pista(id).costo for id in inv.descubiertas if id in {"cuenta", "hora", "foto"})
-        self.assertEqual(gastado + inv.viaje_gastado + inv.energia, inv.energia_max)
-
     def test_el_veredicto_cuenta_pistas_y_evidencias(self) -> None:
-        inv = investigacion(energia_max=9)
+        inv = investigacion()
         self.assertEqual(inv.veredicto(), "incierta")
         inv.revelar_evidencia("colegio")                                # falsa
         self.assertEqual(inv.veredicto(), "falsa")
@@ -125,19 +101,17 @@ class InvestigacionConMapaTest(unittest.TestCase):
         inv.investigar("cuenta")                                        # falsa
         self.assertEqual(inv.veredicto(), "falsa")
 
-    def test_serializacion_del_progreso_con_viajes(self) -> None:
+    def test_serializacion_del_progreso_con_evidencia(self) -> None:
         inv = investigacion()
-        inv.viajar(2)
         inv.revelar_evidencia("colegio")
         inv.investigar("cuenta")
         copia = Investigacion.from_dict(json.loads(json.dumps(inv.to_dict())), inv.pistas, inv.evidencias)
         self.assertEqual(copia, inv)
-        self.assertEqual(copia.viaje_gastado, 2)
 
 
 class RespaldoTest(unittest.TestCase):
     def test_nada_tarjeta_o_campo(self) -> None:
-        inv = investigacion(energia_max=9)
+        inv = investigacion()
         self.assertEqual((inv.respaldo("verificar"), inv.respaldo("reportar")), (0, 0))
         inv.investigar("cuenta")                                        # pista de la tarjeta que apunta a falsa
         self.assertEqual((inv.respaldo("verificar"), inv.respaldo("reportar")), (1, 1))
@@ -145,13 +119,13 @@ class RespaldoTest(unittest.TestCase):
         self.assertEqual((inv.respaldo("verificar"), inv.respaldo("reportar")), (2, 2))
 
     def test_lo_neutro_no_respalda_nada(self) -> None:
-        inv = investigacion(energia_max=9)
+        inv = investigacion()
         inv.investigar("hora")
         inv.revelar_evidencia("parque")
         self.assertEqual((inv.respaldo("verificar"), inv.respaldo("reportar")), (0, 0))
 
     def test_reportar_solo_cuenta_lo_que_apunta_a_falsa_pero_verificar_cuenta_cualquier_senal(self) -> None:
-        inv = investigacion(energia_max=9)
+        inv = investigacion()
         inv.revelar_evidencia("alcaldia")                               # evidencia que apunta a VERDADERA
         self.assertEqual(inv.respaldo("verificar"), 2)                  # verificar se apoya en ella
         self.assertEqual(inv.respaldo("reportar"), 0)                   # pero no justifica reportar
@@ -159,7 +133,7 @@ class RespaldoTest(unittest.TestCase):
         self.assertEqual(inv.respaldo("reportar"), 0)
 
     def test_la_evidencia_de_campo_pesa_mas_que_cualquier_cantidad_de_pistas_de_tarjeta(self) -> None:
-        inv = investigacion(energia_max=9)
+        inv = investigacion()
         inv.investigar("cuenta")
         inv.investigar("foto")
         self.assertEqual(inv.respaldo("verificar"), 1)
@@ -267,20 +241,6 @@ class EventosConEvidenciaTest(unittest.TestCase):
         costos = self.ciudad.costos_desde(self.ciudad.zona_inicial)
         distancias = {costos[e.lugar] for a in self.arboles for e in a.event.evidences}
         self.assertTrue({0, 1, 2} <= distancias, distancias)
-
-    def test_investigar_todo_no_alcanza_la_energia(self) -> None:
-        """Pistas de la tarjeta + viajar a todo lo que hay en el mapa cuesta mas de lo que se tiene."""
-        for a in self.arboles:
-            tarjeta = sum(p.costo for p in a.event.clues)
-            viajes = sum(self.ciudad.ruta(self.ciudad.zona_inicial, e.lugar).costo for e in a.event.evidences)
-            self.assertGreater(tarjeta + viajes, ENERGIA_POR_NOTICIA, a.event.event_id)
-
-    def test_una_conclusion_cabe_en_la_energia_con_las_pistas_baratas_o_con_un_viaje(self) -> None:
-        """Siempre hay una forma de llegar a respaldo 2 gastando como maximo la energia."""
-        for a in self.arboles:
-            costos = self.ciudad.costos_desde(self.ciudad.zona_inicial)
-            mas_barata = min(costos[e.lugar] for e in a.event.evidences)
-            self.assertLessEqual(mas_barata, ENERGIA_POR_NOTICIA, a.event.event_id)
 
     def test_las_variantes_de_evidencia_cambian_el_texto(self) -> None:
         a = self.arboles[0]                                              # colegio-cerrado

@@ -3,19 +3,19 @@
 PROBLEMA QUE RESUELVE
     El grafo social dice COMO circula una noticia entre personas; este es el MAPA DE LUGARES donde se
     investiga. Cada zona puede guardar evidencia de una noticia (un testigo, un documento, una
-    grabacion) y llegar hasta ella cuesta energia: la distancia del camino mas corto. Elegir a que zona
-    ir es una decision real: viajar lejos a buscar evidencia o decidir con lo que ya se sabe.
+    grabacion). El camino mas corto entre dos zonas es la ruta que sigue el jugador (y la guia del mundo
+    caminable que lo lleva hasta la noticia).
     (Los rumores NO se propagan por aqui: eso ocurre solo en el grafo social, entre personas.)
 
 REPRESENTACION
     Vertices = zonas (Colegio, Barrio, Parque, Plaza, Alcaldia). Aristas NO dirigidas y PONDERADAS: una
-    calle se recorre en los dos sentidos y su peso es la distancia (entero >= 1, el costo en energia).
+    calle se recorre en los dos sentidos y su peso es la distancia (entero >= 1).
     Lista de adyacencia `dict zona -> dict vecino -> distancia`, espacio O(V + E): con pocas zonas y
     grado pequeno es mas que suficiente, y la consulta de una distancia directa es O(1).
 
 ALGORITMOS
-    * Dijkstra (heapq): el costo de un viaje es la SUMA de distancias, y el camino con menos saltos no
-      siempre es el mas barato (Barrio -> Plaza: directo cuesta 3, por el Parque cuesta 1 + 1 = 2).
+    * Dijkstra (heapq): el largo de un camino es la SUMA de distancias, y el camino con menos saltos no
+      siempre es el mas corto (Barrio -> Plaza: directo cuesta 3, por el Parque cuesta 1 + 1 = 2).
       Con cola de prioridad binaria cuesta O((V + E) log V); aqui V = 5 y E = 6, asi que es trivial. Los
       pesos deben ser positivos: con negativos Dijkstra daria resultados incorrectos.
     * BFS: basta cuando todas las aristas pesan lo mismo (el costo es el numero de saltos) y cuesta
@@ -33,7 +33,7 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class Ruta:
-    """Camino de `zonas[0]` a `zonas[-1]` (ambos incluidos) y su costo total en energia."""
+    """Camino de `zonas[0]` a `zonas[-1]` (ambos incluidos) y su distancia total."""
     zonas: tuple[str, ...]
     costo: int
 
@@ -101,7 +101,7 @@ class GrafoCiudad:
         if a == b:
             raise ValueError("Una zona no se conecta consigo misma")
         if isinstance(distancia, bool) or not isinstance(distancia, int) or distancia < 1:
-            raise ValueError(f"La distancia debe ser un entero >= 1 (el costo en energia): {distancia!r}")
+            raise ValueError(f"La distancia debe ser un entero >= 1: {distancia!r}")
         if b in self._ady[a]:
             raise ValueError(f"Ya existe la conexion {a} - {b}")
         self._ady[a][b] = distancia

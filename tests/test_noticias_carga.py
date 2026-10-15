@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from post_truth.config import RUTA_EVENTOS, RUTA_GRAFO_CIUDAD
 from post_truth.decision_tree import DecisionTree, load_trees
 from post_truth.models import NewsEvent
-from post_truth.models.pistas import ENERGIA_POR_NOTICIA, Investigacion, Senal, ZonaTarjeta
+from post_truth.models.pistas import Investigacion, Senal, ZonaTarjeta
 from post_truth.models.publicacion import MOTIVOS_IMAGEN
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.propagacion import es_falsa
@@ -34,19 +34,14 @@ class NoticiasCargaTest(unittest.TestCase):
             self.assertGreater(e.likes, 0)
             self.assertGreaterEqual(e.comments, 0)
 
-    def test_de_cuatro_a_cinco_pistas_con_zonas_e_ids_unicos_y_costos_validos(self) -> None:
+    def test_de_cuatro_a_cinco_pistas_con_zonas_e_ids_unicos(self) -> None:
         for a in self.arboles:
             pistas = a.event.clues
             self.assertTrue(4 <= len(pistas) <= 5, a.event.event_id)
             self.assertEqual(len({p.id for p in pistas}), len(pistas))
             self.assertEqual(len({p.zona for p in pistas}), len(pistas))
             for p in pistas:
-                self.assertIn(p.costo, (1, 2))
                 self.assertTrue(p.titulo and p.hallazgo)
-
-    def test_hay_que_elegir_el_costo_total_supera_la_energia(self) -> None:
-        for a in self.arboles:
-            self.assertGreater(sum(p.costo for p in a.event.clues), ENERGIA_POR_NOTICIA, a.event.event_id)
 
     def test_las_pistas_son_coherentes_con_la_veracidad(self) -> None:
         for a in self.arboles:
@@ -62,15 +57,13 @@ class NoticiasCargaTest(unittest.TestCase):
                 self.assertNotIn(Senal.FALSA, senales, a.event.event_id)
             self.assertIn(Senal.NEUTRA, senales, f"{a.event.event_id}: falta una pista enganosa")
 
-    def test_con_la_energia_se_puede_llegar_a_una_conclusion_pero_no_a_todo(self) -> None:
-        """Con 3 de energia hay una combinacion de pistas baratas que ya apunta a la veracidad."""
+    def test_revisar_toda_la_tarjeta_lleva_a_una_conclusion(self) -> None:
         for a in self.arboles:
             inv = Investigacion(a.event.clues)
-            for p in sorted(a.event.clues, key=lambda p: p.costo):
+            for p in a.event.clues:
                 inv.investigar(p.id)
             esperado = ("incierta",) if a.event.kind == "opinion" else ("falsa", "verdadera")
             self.assertIn(inv.veredicto(), esperado, a.event.event_id)
-            self.assertLess(len(inv.descubiertas), len(a.event.clues))
 
     def test_las_imagenes_usan_una_zona_conocida_y_el_motivo_coincide_con_la_ciudad(self) -> None:
         ciudad = GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD)
@@ -97,7 +90,7 @@ class NoticiasCargaTest(unittest.TestCase):
     def test_las_pistas_cambian_la_consecuencia(self) -> None:
         a = self.arboles[0]                                                 # colegio-cerrado
         compartir = next(n for n in a.root.children if n.tipo == "compartir")
-        inv = Investigacion(a.event.clues, energia_max=9)
+        inv = Investigacion(a.event.clues)
         sin_pistas = compartir.consecuencia(inv.pistas_descubiertas())
         self.assertEqual(sin_pistas, compartir.description)                 # sin investigar: texto base
         inv.investigar("imagen-reutilizada")

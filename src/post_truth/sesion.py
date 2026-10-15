@@ -1,19 +1,19 @@
 """Sesion de partida: el estado y las reglas del juego, sin pygame ni vistas (logica pura y serializable).
 
 PROBLEMA QUE RESUELVE
-    Todo lo que vive "en la partida" (ciudad, jugadores, energia, zona, hallazgos, puntos, publicacion actual,
+    Todo lo que vive "en la partida" (ciudad, jugadores, zona, hallazgos, puntos, publicacion actual,
     de quien es el turno) estaba mezclado con botones y animaciones en EscenaState. Para el multijugador
     cliente-servidor el servidor debe guardar y reenviar ese estado, asi que aqui vive solo el modelo y el
     controlador (EscenaState) se limita a traducir eventos de pygame a llamadas de esta clase.
 
 COMPARTIDO vs INDIVIDUAL
     Compartido: ciudad, grafo social (lo que se corta o frena persiste), publicacion actual y rng.
-    Individual (`Jugador`): personaje/rol, zona, energia y hallazgos (su `Investigacion`) y puntos.
+    Individual (`Jugador`): personaje/rol, zona, hallazgos (su `Investigacion`) y puntos.
 
 REGLA DE TURNOS
     En cada publicacion decide cada jugador una vez, en orden. Empieza el jugador `indice % n` (rota), asi que el
-    que abre la ronda cambia de una publicacion a otra. Cada uno recarga su energia completa al abrirse la
-    publicacion y conserva su zona. Con un jugador es exactamente el flujo de siempre.
+    que abre la ronda cambia de una publicacion a otra. Cada uno empieza la publicacion sin hallazgos y
+    conserva su zona. Con un jugador es exactamente el flujo de siempre.
 
 OPERACIONES (devuelven un resultado, no lanzan excepciones por usarse fuera de turno)
     investigar(jugador, pista) -> ResultadoInvestigar
@@ -65,17 +65,16 @@ class Jugador:
 class ResultadoInvestigar:
     ok: bool
     motivo: str = ""     # "" | no_es_su_turno | fuera_de_fase | decision_pendiente
-    estado: str = ""     # nueva | repetida | sin_energia (los de Investigacion.investigar)
+    estado: str = ""     # nueva | repetida (los de Investigacion.investigar)
     pista: Pista | None = None
 
 
 @dataclass(frozen=True)
 class ResultadoViaje:
     ok: bool
-    motivo: str = ""     # "" | no_es_su_turno | fuera_de_fase | decision_pendiente | misma_zona | zona_desconocida | sin_camino | sin_energia
+    motivo: str = ""     # "" | no_es_su_turno | fuera_de_fase | decision_pendiente | misma_zona | zona_desconocida | sin_camino
     destino: str = ""
     ruta: tuple[str, ...] = ()
-    costo: int = 0
     evidencia: Evidencia | None = None   # la que se revelo al llegar
     revisada: bool = False               # habia evidencia aqui pero ya se habia revisado
 
@@ -153,7 +152,7 @@ class PartidaSesion:
 
     # --- operaciones ----------------------------------------------------------------------
     def investigar(self, jugador: str, pista: Pista | str) -> ResultadoInvestigar:
-        """Revisa una pista de la tarjeta: gasta energia del jugador (o la relee gratis)."""
+        """Revisa una pista de la tarjeta (gratis; una ya revelada se relee)."""
         j, motivo = self._turno_de(jugador)
         if motivo:
             return ResultadoInvestigar(False, motivo)
@@ -161,8 +160,8 @@ class PartidaSesion:
         return ResultadoInvestigar(True, "", r.estado, r.pista)
 
     def viajar(self, jugador: str, zona: str) -> ResultadoViaje:
-        """Ir a cualquier zona: cuesta la distancia del camino mas corto (Dijkstra, GrafoCiudad.ruta); si la
-        energia no alcanza no se mueve ni se cobra. Al llegar se revela la evidencia de la publicacion."""
+        """Ir a cualquier zona por el camino mas corto (Dijkstra, GrafoCiudad.ruta). Al llegar se revela la
+        evidencia de la publicacion."""
         j, motivo = self._turno_de(jugador)
         if motivo:
             return ResultadoViaje(False, motivo, zona)
@@ -173,12 +172,10 @@ class PartidaSesion:
         ruta = self.mapa.ruta(j.zona, zona)
         if ruta is None:
             return ResultadoViaje(False, "sin_camino", zona)
-        if not j.investigacion.viajar(ruta.costo):
-            return ResultadoViaje(False, "sin_energia", zona, ruta.zonas, ruta.costo)
         j.zona = zona
         evidencia = j.investigacion.revelar_evidencia(zona)
         revisada = evidencia is None and j.investigacion.evidencia_en(zona) is not None
-        return ResultadoViaje(True, "", zona, ruta.zonas, ruta.costo, evidencia, revisada)
+        return ResultadoViaje(True, "", zona, ruta.zonas, evidencia, revisada)
 
     # --- mundo caminable (etapa M2): la sesion sigue siendo la fuente de verdad -------------------------
     @property
@@ -187,39 +184,15 @@ class PartidaSesion:
         imagen = self.arbol.event.image
         return imagen.motivo if imagen is not None else self.mapa.zona_inicial
 
-    def calle_gratis(self, a: str, b: str) -> bool:
-        """Ir de a hacia b por esa calle acerca a la noticia activa por un camino mas corto. Dijkstra desde la
-        noticia (O((V+E) log V)) da la distancia de cada plaza: la calle a->b esta en un camino mas corto si
-        dist(b) + peso(a, b) == dist(a)."""
-        peso = self.mapa.distancia(a, b)
-        dist = self.mapa.costos_desde(self.zona_noticia)
-        return peso is not None and dist[b] + peso == dist[a]
-
-    def cobrar_calle(self, jugador: str, a: str, b: str) -> ResultadoViaje:
-        """Cobra la distancia de la calle a -> b (una arista del grafo de la ciudad) al tomarla en el mundo.
-        Es GRATIS si va hacia la noticia activa por un camino mas corto: llegar a la noticia nunca se traba y la
-        energia se gasta solo en desvios para buscar evidencia, como antes en el viaje con Dijkstra."""
-        j, motivo = self._turno_de(jugador)
-        if motivo:
-            return ResultadoViaje(False, motivo, b)
-        costo = self.mapa.distancia(a, b)
-        if costo is None:
-            return ResultadoViaje(False, "sin_camino", b)
-        if self.calle_gratis(a, b):
-            return ResultadoViaje(True, "", b, (a, b), 0)
-        if not j.investigacion.viajar(costo):
-            return ResultadoViaje(False, "sin_energia", b, (a, b), costo)
-        return ResultadoViaje(True, "", b, (a, b), costo)
-
     def llegar(self, jugador: str, zona: str) -> None:
-        """El jugador del mundo llego a la plaza `zona`: la sesion queda en la misma zona (sin cobrar ni revelar)."""
+        """El jugador del mundo llego a la plaza `zona`: la sesion queda en la misma zona (sin revelar nada)."""
         if zona not in self.mapa:
             raise KeyError(f"Zona desconocida: {zona}")
         self.jugador(jugador).zona = zona
 
     def buscar_evidencia(self, jugador: str) -> Evidencia | None:
-        """Revela la evidencia de la publicacion activa que hay en la zona del jugador (gratis: el viaje ya se
-        pago). None si no hay, si ya se habia revelado o si no es su turno."""
+        """Revela la evidencia de la publicacion activa que hay en la zona del jugador. None si no hay, si ya se
+        habia revelado o si no es su turno."""
         j, motivo = self._turno_de(jugador)
         return None if motivo else j.investigacion.revelar_evidencia(j.zona)
 
@@ -284,8 +257,8 @@ class PartidaSesion:
         return True
 
     def abrir_evento(self, indice: int | None = None) -> None:
-        """Abre la publicacion `indice` (por defecto la actual) desde el primer turno. Cada jugador empieza con la
-        energia completa; si ya esta parado donde la noticia dejo evidencia, se revela sola (no cuesta nada)."""
+        """Abre la publicacion `indice` (por defecto la actual) desde el primer turno. Si un jugador ya esta parado
+        donde la noticia dejo evidencia, se revela sola."""
         if indice is not None:
             self.indice = indice
         self.turno, self.fase, self.pendiente = 0, DECIDIENDO, None

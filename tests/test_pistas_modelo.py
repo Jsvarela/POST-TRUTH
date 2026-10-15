@@ -6,28 +6,28 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from post_truth.models.intro import AspectoRetrato
-from post_truth.models.pistas import (ENERGIA_POR_NOTICIA, Investigacion, Pista, Senal, VarianteTexto, ZonaTarjeta,
+from post_truth.models.pistas import (Investigacion, Pista, Senal, VarianteTexto, ZonaTarjeta,
                                       elegir_variante, texto_consecuencia, validar_pistas)
 from post_truth.models.publicacion import Autor, Avatar, Imagen
 
 
-def pista(id: str, zona: ZonaTarjeta, senal: Senal = Senal.FALSA, costo: int = 1) -> Pista:
-    return Pista(id, zona, id.replace("-", " ").title(), f"hallazgo de {id}", senal, costo)
+def pista(id: str, zona: ZonaTarjeta, senal: Senal = Senal.FALSA) -> Pista:
+    return Pista(id, zona, id.replace("-", " ").title(), f"hallazgo de {id}", senal)
 
 
 def pistas_demo() -> tuple[Pista, ...]:
     return (pista("cuenta", ZonaTarjeta.AUTOR), pista("fecha", ZonaTarjeta.FECHA, Senal.NEUTRA),
-            pista("imagen", ZonaTarjeta.IMAGEN, costo=2), pista("fuente", ZonaTarjeta.FUENTE, Senal.VERDADERA))
+            pista("imagen", ZonaTarjeta.IMAGEN), pista("fuente", ZonaTarjeta.FUENTE, Senal.VERDADERA))
 
 
 class PistaTest(unittest.TestCase):
     def test_roundtrip_dict(self) -> None:
-        p = pista("imagen", ZonaTarjeta.IMAGEN, costo=2)
+        p = pista("imagen", ZonaTarjeta.IMAGEN)
         self.assertEqual(Pista.from_dict(json.loads(json.dumps(p.to_dict()))), p)
 
     def test_datos_invalidos(self) -> None:
-        for kwargs in ({"costo": 0}, {"costo": 4}, {"titulo": " "}, {"hallazgo": ""}, {"id": ""}):
-            base = {"id": "x", "zona": ZonaTarjeta.TEXTO, "titulo": "t", "hallazgo": "h", "senal": Senal.FALSA, "costo": 1}
+        for kwargs in ({"titulo": " "}, {"hallazgo": ""}, {"id": ""}):
+            base = {"id": "x", "zona": ZonaTarjeta.TEXTO, "titulo": "t", "hallazgo": "h", "senal": Senal.FALSA}
             base.update(kwargs)
             with self.assertRaises(ValueError, msg=str(kwargs)):
                 Pista(**base)
@@ -73,51 +73,37 @@ class PublicacionTest(unittest.TestCase):
 
 
 class InvestigacionTest(unittest.TestCase):
-    def test_empieza_con_la_energia_completa_y_sin_pistas(self) -> None:
-        inv = Investigacion(pistas_demo(), energia_max=3)
-        self.assertEqual((inv.energia, inv.energia_max), (3, 3))
+    def test_empieza_sin_pistas(self) -> None:
+        inv = Investigacion(pistas_demo())
         self.assertEqual(inv.pistas_descubiertas(), [])
         self.assertEqual(inv.veredicto(), "incierta")
 
-    def test_investigar_gasta_energia_y_revela(self) -> None:
-        inv = Investigacion(pistas_demo(), energia_max=3)
+    def test_investigar_revela(self) -> None:
+        inv = Investigacion(pistas_demo())
         r = inv.investigar("imagen")
-        self.assertEqual((r.estado, inv.energia), ("nueva", 1))
+        self.assertEqual(r.estado, "nueva")
         self.assertTrue(inv.esta_descubierta("imagen"))
         self.assertEqual(inv.pistas_descubiertas()[0].id, "imagen")
 
-    def test_releer_una_pista_es_gratis(self) -> None:
-        inv = Investigacion(pistas_demo(), energia_max=3)
+    def test_releer_una_pista_no_la_repite(self) -> None:
+        inv = Investigacion(pistas_demo())
         inv.investigar("cuenta")
         r = inv.investigar("cuenta")
-        self.assertEqual((r.estado, inv.energia), ("repetida", 2))
+        self.assertEqual(r.estado, "repetida")
         self.assertEqual(inv.descubiertas, ["cuenta"])
 
-    def test_sin_energia_no_cobra_ni_revela(self) -> None:
-        inv = Investigacion(pistas_demo(), energia_max=3)
-        inv.investigar("imagen")           # cuesta 2: quedan 1
-        inv.investigar("cuenta")           # cuesta 1: quedan 0
-        r = inv.investigar("fecha")
-        self.assertEqual((r.estado, inv.energia), ("sin_energia", 0))
-        self.assertFalse(inv.esta_descubierta("fecha"))
-
-    def test_una_pista_cara_no_cabe_si_la_energia_no_alcanza_aunque_quede_algo(self) -> None:
-        inv = Investigacion(pistas_demo(), energia_max=3)
-        inv.investigar("cuenta")
-        inv.investigar("fecha")            # quedan 1
-        r = inv.investigar("imagen")       # cuesta 2
-        self.assertEqual((r.estado, inv.energia), ("sin_energia", 1))
+    def test_se_puede_revisar_todo(self) -> None:
+        inv = Investigacion(pistas_demo())
+        for p in pistas_demo():
+            self.assertEqual(inv.investigar(p.id).estado, "nueva")
+        self.assertEqual(len(inv.descubiertas), 4)
 
     def test_pista_inexistente(self) -> None:
         with self.assertRaises(KeyError):
-            Investigacion(pistas_demo(), energia_max=3).investigar("fantasma")
-
-    def test_hay_que_elegir_no_alcanza_para_todo(self) -> None:
-        pistas = pistas_demo()
-        self.assertGreater(sum(p.costo for p in pistas), 3)
+            Investigacion(pistas_demo()).investigar("fantasma")
 
     def test_veredicto_segun_las_senales(self) -> None:
-        inv = Investigacion(pistas_demo(), energia_max=9)
+        inv = Investigacion(pistas_demo())
         inv.investigar("fecha")                      # neutra
         self.assertEqual(inv.veredicto(), "incierta")
         inv.investigar("cuenta")                     # falsa
@@ -128,21 +114,20 @@ class InvestigacionTest(unittest.TestCase):
         self.assertEqual(inv.veredicto(), "falsa")
 
     def test_pista_en_una_zona(self) -> None:
-        inv = Investigacion(pistas_demo(), energia_max=3)
+        inv = Investigacion(pistas_demo())
         self.assertEqual(inv.pista_en(ZonaTarjeta.IMAGEN).id, "imagen")
         self.assertIsNone(inv.pista_en(ZonaTarjeta.TEXTO))
 
     def test_serializacion_del_progreso(self) -> None:
-        inv = Investigacion(pistas_demo(), energia_max=3)
+        inv = Investigacion(pistas_demo())
         inv.investigar("imagen")
         inv.investigar("cuenta")
         copia = Investigacion.from_dict(json.loads(json.dumps(inv.to_dict())), pistas_demo())
         self.assertEqual(copia, inv)
-        self.assertEqual(copia.energia, 0)
 
     def test_progreso_con_pistas_desconocidas_es_invalido(self) -> None:
         with self.assertRaises(ValueError):
-            Investigacion.from_dict({"energia_max": 3, "energia": 3, "descubiertas": ["fantasma"]}, pistas_demo())
+            Investigacion.from_dict({"descubiertas": ["fantasma"]}, pistas_demo())
 
 
 class TextoConsecuenciaTest(unittest.TestCase):

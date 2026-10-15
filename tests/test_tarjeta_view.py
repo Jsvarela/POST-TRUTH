@@ -40,9 +40,9 @@ class TarjetaViewTest(unittest.TestCase):
     def test_dibuja_las_5_noticias_en_los_3_temas_y_en_todos_los_estados(self) -> None:
         for tema in TEMAS:
             for e in self.eventos:
-                inv = Investigacion(e.clues, energia_max=9)
+                inv = Investigacion(e.clues)
                 for zona in [None] + [p.zona for p in e.clues]:
-                    self._imagen(e, inv, tema, hover=zona)       # sin descubrir, con tooltip de costo
+                    self._imagen(e, inv, tema, hover=zona)       # sin descubrir, con tooltip de invitacion
                 for p in e.clues:
                     inv.investigar(p.id)
                 for zona in [None] + [p.zona for p in e.clues]:

@@ -19,7 +19,7 @@ import pygame
 from post_truth.config import EVENTOS_POR_PARTIDA, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD
 from post_truth.decision_tree import load_trees
 from post_truth.models.dominio import Impact
-from post_truth.models.pistas import ENERGIA_POR_NOTICIA, Senal
+from post_truth.models.pistas import Senal
 from post_truth.pygame_app import App
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.propagacion import es_falsa
@@ -103,7 +103,6 @@ class ContenidoEventosTest(unittest.TestCase):
             self.assertEqual(len({ev["lugar"] for ev in e["evidencias"]}), len(e["evidencias"]), id)
             hallazgos = [h["id"] for h in e["pistas"] + e["evidencias"]]
             self.assertEqual(len(hallazgos), len(set(hallazgos)), f"{id}: ids repetidos")
-            self.assertGreater(sum(p["costo"] for p in e["pistas"]), ENERGIA_POR_NOTICIA, id)   # hay que elegir
             for ev in e["evidencias"]:
                 self.assertIn(ev["lugar"], self.ciudad, id)
 

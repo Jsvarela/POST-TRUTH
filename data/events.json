@@ -22,7 +22,6 @@
         "zona": "autor",
         "titulo": "Cuenta sospechosa",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "La cuenta tiene 2 dias de creada y solo comparte rumores sobre candidatos."
       },
       {
@@ -30,7 +29,6 @@
         "zona": "fuente",
         "titulo": "Sin fuente",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "El mensaje no cita ningun comunicado de la alcaldia ni de la campana de Juan Ardila."
       },
       {
@@ -38,7 +36,6 @@
         "zona": "imagen",
         "titulo": "Imagen reutilizada",
         "senal": "falsa",
-        "costo": 2,
         "hallazgo": "La foto es de unas obras de 2021: no muestra ningun cierre."
       },
       {
@@ -46,7 +43,6 @@
         "zona": "estadisticas",
         "titulo": "Comentarios repetidos",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "Muchos comentarios son copias casi identicas: parecen cuentas automaticas."
       },
       {
@@ -54,7 +50,6 @@
         "zona": "fecha",
         "titulo": "Hora normal",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Se publico esta manana; la hora no tiene nada raro."
       }
     ],
@@ -280,7 +275,6 @@
         "zona": "autor",
         "titulo": "Pagina sin historial",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "Se creo ayer y no tiene publicaciones anteriores ni datos de contacto."
       },
       {
@@ -288,7 +282,6 @@
         "zona": "texto",
         "titulo": "Urgencia sin dato",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "Dice \"manana\" pero no da hora, decreto ni numero de resolucion."
       },
       {
@@ -296,7 +289,6 @@
         "zona": "imagen",
         "titulo": "Imagen de otra ciudad",
         "senal": "falsa",
-        "costo": 2,
         "hallazgo": "La cinta y el parque son de otra ciudad: la foto sale en una nota de hace 3 anos."
       },
       {
@@ -304,7 +296,6 @@
         "zona": "fuente",
         "titulo": "Sin comunicado oficial",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "La alcaldia no ha publicado ningun decreto de cierre de parques."
       },
       {
@@ -312,7 +303,6 @@
         "zona": "estadisticas",
         "titulo": "Muy viral",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Que tenga muchas reacciones no prueba que sea cierto."
       }
     ],
@@ -464,7 +454,6 @@
         "zona": "autor",
         "titulo": "Medio con historial",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Lleva anos publicando noticias locales y corrige sus errores."
       },
       {
@@ -472,7 +461,6 @@
         "zona": "fuente",
         "titulo": "Cita el plan oficial",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "El comunicado enlaza al plan de transporte que presento la campana."
       },
       {
@@ -480,7 +468,6 @@
         "zona": "fecha",
         "titulo": "Coincide con el debate",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Se publico justo despues del debate donde Maria Lozano presento la propuesta."
       },
       {
@@ -488,7 +475,6 @@
         "zona": "imagen",
         "titulo": "Foto de archivo",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "La foto es de archivo, pero eso no desmiente la propuesta."
       },
       {
@@ -496,7 +482,6 @@
         "zona": "estadisticas",
         "titulo": "Pocas reacciones",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Tiene pocas reacciones; una noticia cierta no siempre es viral."
       }
     ],
@@ -650,7 +635,6 @@
         "zona": "imagen",
         "titulo": "Clip recortado",
         "senal": "falsa",
-        "costo": 2,
         "hallazgo": "El video completo dura 12 minutos; el fragmento corta la frase anterior."
       },
       {
@@ -658,7 +642,6 @@
         "zona": "autor",
         "titulo": "Cuenta de ataque",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "La cuenta solo publica clips contra una candidata."
       },
       {
@@ -666,7 +649,6 @@
         "zona": "fuente",
         "titulo": "No enlaza el original",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "No muestra el debate completo ni dice quien lo grabo."
       },
       {
@@ -674,7 +656,6 @@
         "zona": "estadisticas",
         "titulo": "Comentarios coordinados",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "Decenas de comentarios identicos aparecieron en pocos minutos."
       },
       {
@@ -682,7 +663,6 @@
         "zona": "fecha",
         "titulo": "Debate de ayer",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "El debate fue ayer; que sea reciente no lo vuelve cierto."
       }
     ],
@@ -850,7 +830,6 @@
         "zona": "autor",
         "titulo": "Vecinos reales",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "El grupo existe hace anos y sus voceros dan la cara en las reuniones del barrio."
       },
       {
@@ -858,7 +837,6 @@
         "zona": "texto",
         "titulo": "Propuesta concreta",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Indica donde y cuando es la reunion y pide debatir sin ataques."
       },
       {
@@ -866,7 +844,6 @@
         "zona": "fuente",
         "titulo": "Sin bandera politica",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "No apoya a ningun candidato."
       },
       {
@@ -874,7 +851,6 @@
         "zona": "estadisticas",
         "titulo": "Poca difusion",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "Tiene pocos comentarios; eso no la hace falsa."
       },
       {
@@ -882,7 +858,6 @@
         "zona": "fecha",
         "titulo": "Convocatoria de hoy",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "La reunion es esta semana, como dice el mensaje."
       }
     ],
@@ -1022,7 +997,6 @@
         "zona": "autor",
         "titulo": "Cuenta reciente",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "La cuenta se abrio hace 3 dias y solo habla de candidatos."
       },
       {
@@ -1030,7 +1004,6 @@
         "zona": "fuente",
         "titulo": "Captura sin enlace",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "Es una imagen recortada: no enlaza a ningun documento de la campana."
       },
       {
@@ -1038,7 +1011,6 @@
         "zona": "imagen",
         "titulo": "Foto de otra ciudad",
         "senal": "falsa",
-        "costo": 2,
         "hallazgo": "La antena de la foto esta en otro pais: se ve en el letrero."
       },
       {
@@ -1046,7 +1018,6 @@
         "zona": "estadisticas",
         "titulo": "Reacciones en bloque",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "Casi todas las reacciones llegaron en los mismos 10 minutos."
       },
       {
@@ -1054,7 +1025,6 @@
         "zona": "fecha",
         "titulo": "Hora normal",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Se publico a una hora normal; eso no dice nada."
       }
     ],
@@ -1258,7 +1228,6 @@
         "zona": "fuente",
         "titulo": "Sin ficha tecnica",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "No dice quien pregunto, a cuantas personas ni cuando."
       },
       {
@@ -1266,7 +1235,6 @@
         "zona": "imagen",
         "titulo": "Grafico manipulado",
         "senal": "falsa",
-        "costo": 2,
         "hallazgo": "Las barras no coinciden con los numeros: 3% se dibuja mas grande que 20%."
       },
       {
@@ -1274,7 +1242,6 @@
         "zona": "autor",
         "titulo": "Firma sin historial",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "La cuenta nunca habia publicado encuestas antes de esta."
       },
       {
@@ -1282,7 +1249,6 @@
         "zona": "texto",
         "titulo": "Pide no votar",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "No informa: solo pide que nadie vote por una candidata."
       },
       {
@@ -1290,7 +1256,6 @@
         "zona": "fecha",
         "titulo": "Publicada hace 2 horas",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Es reciente, pero eso no la vuelve cierta."
       }
     ],
@@ -1486,7 +1451,6 @@
         "zona": "autor",
         "titulo": "Sin nombre",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "El mensaje viene firmado solo como un vecino; nadie lo conoce."
       },
       {
@@ -1494,7 +1458,6 @@
         "zona": "fuente",
         "titulo": "No cita el informe",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "Habla de un informe escondido, pero no dice cual ni donde esta."
       },
       {
@@ -1502,7 +1465,6 @@
         "zona": "texto",
         "titulo": "Mensaje de miedo",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "Usa mayusculas y pide reenviar a todos: no da ningun dato."
       },
       {
@@ -1510,7 +1472,6 @@
         "zona": "imagen",
         "titulo": "Agua turbia vieja",
         "senal": "falsa",
-        "costo": 2,
         "hallazgo": "La foto del agua turbia circulo hace tres anos en otra ciudad."
       },
       {
@@ -1518,7 +1479,6 @@
         "zona": "fecha",
         "titulo": "Hora de la manana",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Salio temprano; no dice nada sobre si es cierto."
       }
     ],
@@ -1722,7 +1682,6 @@
         "zona": "autor",
         "titulo": "Pagina anonima",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "La pagina no dice quien la maneja ni tiene direccion de contacto."
       },
       {
@@ -1730,7 +1689,6 @@
         "zona": "fuente",
         "titulo": "Volante sin firma",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "No lo firma ninguna campana ni empresa de buses."
       },
       {
@@ -1738,7 +1696,6 @@
         "zona": "texto",
         "titulo": "Promete a cambio de voto",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "Ofrecer un premio por votar es compra de votos: una campana seria no lo publicaria."
       },
       {
@@ -1746,7 +1703,6 @@
         "zona": "imagen",
         "titulo": "Cara pegada",
         "senal": "falsa",
-        "costo": 2,
         "hallazgo": "La foto de la candidata esta pegada sobre un bus que no es de Nova."
       },
       {
@@ -1754,7 +1710,6 @@
         "zona": "estadisticas",
         "titulo": "Pocos comentarios reales",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "Hay pocos comentarios: eso no prueba nada."
       }
     ],
@@ -1951,7 +1906,6 @@
         "zona": "autor",
         "titulo": "Cuenta de ataque",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "Solo publica contra un candidato desde que empezo la campana."
       },
       {
@@ -1959,7 +1913,6 @@
         "zona": "fuente",
         "titulo": "Foto sin lugar",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "No dice donde ni cuando se tomo."
       },
       {
@@ -1967,7 +1920,6 @@
         "zona": "imagen",
         "titulo": "Recorte de una audiencia",
         "senal": "falsa",
-        "costo": 2,
         "hallazgo": "La foto completa muestra decenas de personas: era una audiencia publica."
       },
       {
@@ -1975,7 +1927,6 @@
         "zona": "texto",
         "titulo": "Acusa sin pruebas",
         "senal": "falsa",
-        "costo": 1,
         "hallazgo": "Dice 'a escondidas', pero no muestra nada que lo pruebe."
       },
       {
@@ -1983,7 +1934,6 @@
         "zona": "fecha",
         "titulo": "Ayer de noche",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Hora poco comun, pero no demuestra nada."
       }
     ],
@@ -2186,7 +2136,6 @@
         "zona": "autor",
         "titulo": "Cuenta de la campana",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Es la cuenta oficial de Lucia Barrera, verificada hace meses."
       },
       {
@@ -2194,7 +2143,6 @@
         "zona": "fuente",
         "titulo": "Cita las actas",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Enlaza a las actas de las sesiones, que son publicas."
       },
       {
@@ -2202,7 +2150,6 @@
         "zona": "texto",
         "titulo": "Dato concreto",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Da cifras y fechas que se pueden comprobar, no insultos."
       },
       {
@@ -2210,7 +2157,6 @@
         "zona": "imagen",
         "titulo": "Foto generica",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "Es una foto de la sala: no prueba ni desmiente."
       },
       {
@@ -2218,7 +2164,6 @@
         "zona": "estadisticas",
         "titulo": "Muchas reacciones",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Hay muchos comentarios, pero la polemica no la hace cierta."
       }
     ],
@@ -2387,7 +2332,6 @@
         "zona": "autor",
         "titulo": "Emisora local",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "La emisora tiene anos informando sobre el colegio y las campanas."
       },
       {
@@ -2395,7 +2339,6 @@
         "zona": "fuente",
         "titulo": "Comunicado del colegio",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Reproduce el comunicado oficial del colegio con la hora y el lugar."
       },
       {
@@ -2403,7 +2346,6 @@
         "zona": "fecha",
         "titulo": "Fecha cercana",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "El jueves es esta misma semana, como dice el mensaje."
       },
       {
@@ -2411,7 +2353,6 @@
         "zona": "imagen",
         "titulo": "Foto del auditorio",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "Es una foto del auditorio de siempre; no prueba nada."
       },
       {
@@ -2419,7 +2360,6 @@
         "zona": "estadisticas",
         "titulo": "Pocas reacciones",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Tiene pocas reacciones; una noticia cierta no siempre es viral."
       }
     ],
@@ -2573,7 +2513,6 @@
         "zona": "autor",
         "titulo": "Grupo del parque",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Es el grupo de vecinos que cuida el parque desde hace anos."
       },
       {
@@ -2581,7 +2520,6 @@
         "zona": "fuente",
         "titulo": "Cronograma oficial",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Adjunta el cronograma con fechas, horas y cupos."
       },
       {
@@ -2589,7 +2527,6 @@
         "zona": "texto",
         "titulo": "Datos de inscripcion",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Explica donde inscribirse y no pide dinero."
       },
       {
@@ -2597,7 +2534,6 @@
         "zona": "imagen",
         "titulo": "Foto de archivo",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "La foto es de archivo, pero eso no desmiente el taller."
       },
       {
@@ -2605,7 +2541,6 @@
         "zona": "estadisticas",
         "titulo": "Reacciones normales",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Reacciones normales para una noticia del barrio."
       }
     ],
@@ -2774,7 +2709,6 @@
         "zona": "autor",
         "titulo": "Cuenta oficial",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Es la cuenta oficial de la alcaldia, verificada."
       },
       {
@@ -2782,7 +2716,6 @@
         "zona": "fuente",
         "titulo": "Aviso con numero",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Trae el numero de la resolucion y las fechas del cierre."
       },
       {
@@ -2790,7 +2723,6 @@
         "zona": "fecha",
         "titulo": "Fecha de las obras",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Las fechas coinciden con el cronograma de obras del drenaje."
       },
       {
@@ -2798,7 +2730,6 @@
         "zona": "imagen",
         "titulo": "Foto de la plaza",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "La foto muestra la plaza, sin vallas todavia."
       },
       {
@@ -2806,7 +2737,6 @@
         "zona": "estadisticas",
         "titulo": "Pocas interacciones",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Pocas reacciones; los avisos oficiales rara vez son virales."
       }
     ],
@@ -2982,7 +2912,6 @@
         "zona": "autor",
         "titulo": "Madre de familia",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Es una madre del colegio que opina con nombre propio."
       },
       {
@@ -2990,7 +2919,6 @@
         "zona": "texto",
         "titulo": "Mezcla datos y opinion",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "Dice 'van a caminar mas': es una prevision, no un hecho."
       },
       {
@@ -2998,7 +2926,6 @@
         "zona": "fecha",
         "titulo": "Tras la propuesta",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Se publico despues de que Juan Ardila presento su propuesta."
       },
       {
@@ -3006,7 +2933,6 @@
         "zona": "estadisticas",
         "titulo": "Debate largo",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "La discusion tiene muchos comentarios, unos amables y otros no."
       }
     ],
@@ -3146,7 +3072,6 @@
         "zona": "autor",
         "titulo": "Taxista conocido",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Es un taxista conocido de la plaza, opina con nombre propio."
       },
       {
@@ -3154,7 +3079,6 @@
         "zona": "texto",
         "titulo": "Pide algo concreto",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "Pide mas iluminacion en las paradas, lo cual se puede comprobar."
       },
       {
@@ -3162,7 +3086,6 @@
         "zona": "fuente",
         "titulo": "Sin cifras",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "No cita ninguna cifra de seguridad: es una impresion personal."
       },
       {
@@ -3170,7 +3093,6 @@
         "zona": "imagen",
         "titulo": "Foto propia",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "La foto parece tomada por el mismo autor."
       }
     ],
@@ -3310,7 +3232,6 @@
         "zona": "autor",
         "titulo": "Estudiante real",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Es una estudiante que cruza esa esquina cada dia."
       },
       {
@@ -3318,7 +3239,6 @@
         "zona": "texto",
         "titulo": "Compara prioridades",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "Compara dos cosas: es una opinion sobre que va primero."
       },
       {
@@ -3326,7 +3246,6 @@
         "zona": "fecha",
         "titulo": "Mediodia",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Salio a mediodia; no importa."
       },
       {
@@ -3334,7 +3253,6 @@
         "zona": "estadisticas",
         "titulo": "Apoyo y critica",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "Tiene apoyos y criticas casi parejos."
       }
     ],
@@ -3467,7 +3385,6 @@
         "zona": "autor",
         "titulo": "Radios reales",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Las radios existen hace anos y sus voceros dan la cara."
       },
       {
@@ -3475,7 +3392,6 @@
         "zona": "fuente",
         "titulo": "Comunicado conjunto",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Lo firman el colegio y tres radios, con numero de contacto."
       },
       {
@@ -3483,7 +3399,6 @@
         "zona": "texto",
         "titulo": "Norma concreta",
         "senal": "verdadera",
-        "costo": 1,
         "hallazgo": "Dice que se moderaran los insultos y como se reportan."
       },
       {
@@ -3491,7 +3406,6 @@
         "zona": "estadisticas",
         "titulo": "Poco ruido",
         "senal": "neutra",
-        "costo": 2,
         "hallazgo": "Tiene pocos comentarios; eso no la hace falsa."
       },
       {
@@ -3499,7 +3413,6 @@
         "zona": "fecha",
         "titulo": "Esta semana",
         "senal": "neutra",
-        "costo": 1,
         "hallazgo": "Dice que arranca esta semana, como esperaba."
       }
     ],

@@ -12,7 +12,6 @@ from post_truth.decision_tree import load_trees
 from post_truth.game_state import CityState
 from post_truth.models import Role
 from post_truth.models.personaje import Genero, Personaje
-from post_truth.models.pistas import ENERGIA_POR_NOTICIA
 from post_truth.sesion import (CONSECUENCIA, DECIDIENDO, FIN, JUGADOR, MAX_JUGADORES, PartidaSesion)
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
@@ -149,19 +148,16 @@ class TurnosTest(unittest.TestCase):
 
 
 class EstadoIndividualTest(unittest.TestCase):
-    def test_energia_y_zona_son_de_cada_jugador(self) -> None:
+    def test_la_zona_es_de_cada_jugador(self) -> None:
         s = nueva(2)
         a, b = s.jugadores
-        self.assertTrue(s.viajar(a.id, "parque").ok)         # Plaza - Parque cuesta 1
+        self.assertTrue(s.viajar(a.id, "parque").ok)
         self.assertEqual((a.zona, b.zona), ("parque", s.mapa.zona_inicial))
-        self.assertEqual(a.investigacion.energia, ENERGIA_POR_NOTICIA - 1)
-        self.assertEqual(b.investigacion.energia, ENERGIA_POR_NOTICIA)
         jugar_turno(s)                                        # decide a
-        self.assertTrue(s.viajar(b.id, "alcaldia").ok)       # Plaza - Alcaldia cuesta 2
+        self.assertTrue(s.viajar(b.id, "alcaldia").ok)
         self.assertEqual((a.zona, b.zona), ("parque", "alcaldia"))
-        self.assertEqual(a.investigacion.energia, ENERGIA_POR_NOTICIA - 1)
 
-    def test_la_energia_se_recarga_para_todos_en_la_nueva_publicacion_y_la_zona_se_conserva(self) -> None:
+    def test_los_hallazgos_se_reinician_en_la_nueva_publicacion_y_la_zona_se_conserva(self) -> None:
         s = nueva(2)
         a, b = s.jugadores
         s.viajar(a.id, "parque")
@@ -170,8 +166,8 @@ class EstadoIndividualTest(unittest.TestCase):
         jugar_turno(s)
         self.assertEqual(s.indice, 1)
         for j in (a, b):
-            self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA)
-            self.assertEqual(j.investigacion.viaje_gastado, 0)
+            self.assertEqual(j.investigacion.lugares_revisados(),
+                             {e.lugar for e in s.arbol.event.evidences} & {j.zona})   # solo lo de donde esta parado
         self.assertEqual((a.zona, b.zona), ("parque", "colegio"))
 
     def test_los_hallazgos_son_individuales(self) -> None:
@@ -184,13 +180,13 @@ class EstadoIndividualTest(unittest.TestCase):
         self.assertFalse(b.investigacion.esta_descubierta(pista.id))
         self.assertEqual(s.investigar(a.id, pista.id).estado, "repetida")
 
-    def test_viajar_sin_energia_no_se_mueve_ni_se_cobra(self) -> None:
+    def test_viajar_sigue_el_camino_mas_corto_y_rechaza_destinos_invalidos(self) -> None:
         s = nueva(1)
         j = s.jugadores[0]
-        j.investigacion.energia = 1
-        r = s.viajar(j.id, "colegio")                         # cuesta 2
-        self.assertEqual((r.ok, r.motivo, r.costo), (False, "sin_energia", 2))
-        self.assertEqual((j.zona, j.investigacion.energia), (s.mapa.zona_inicial, 1))
+        r = s.viajar(j.id, "colegio")
+        self.assertEqual((r.ok, r.ruta), (True, s.mapa.ruta("plaza", "colegio").zonas))
+        self.assertEqual(j.zona, "colegio")
+        s.llegar(j.id, s.mapa.zona_inicial)
         self.assertEqual(s.viajar(j.id, s.mapa.zona_inicial).motivo, "misma_zona")
         self.assertEqual(s.viajar(j.id, "marte").motivo, "zona_desconocida")
 
@@ -234,10 +230,8 @@ class EstadoIndividualTest(unittest.TestCase):
         s.arboles[0], s.arboles[falsa] = s.arboles[falsa], s.arboles[0]
         s.abrir_evento()
         j = s.jugador_actual
-        while j.investigacion.energia and not j.investigacion.lugares_revisados():     # busca evidencia de campo
-            destino = next(iter(j.investigacion.lugares_pendientes()))
-            if not s.viajar(j.id, destino).ok:
-                break
+        if not j.investigacion.lugares_revisados():                                     # busca evidencia de campo
+            s.viajar(j.id, next(iter(j.investigacion.lugares_pendientes())))
         r = s.decidir(j.id, rama(s, "reportar"))
         if r.simulacion is not None and r.simulacion.aristas_cortadas:
             self.assertTrue(all(s.grafo.arista(o, d) is None for o, d in r.simulacion.aristas_cortadas))
@@ -320,7 +314,7 @@ class SerializacionTest(unittest.TestCase):
 
 
 class MundoEnLaSesionTest(unittest.TestCase):
-    """Operaciones que usa el mundo caminable (etapa M2): cobrar calles, llegar a plazas y buscar evidencia."""
+    """Operaciones que usa el mundo caminable (etapa M2): llegar a plazas y buscar evidencia."""
 
     def test_la_noticia_ocurre_en_la_zona_de_su_imagen(self) -> None:
         s = nueva(1, eventos=6)
@@ -329,50 +323,13 @@ class MundoEnLaSesionTest(unittest.TestCase):
             self.assertEqual(s.zona_noticia, s.arbol.event.image.motivo)
             self.assertIn(s.zona_noticia, s.mapa)
 
-    def _con_noticia_en(self, zona: str) -> PartidaSesion:
-        s = nueva(1, eventos=18)                                   # todas: hay noticias en cada zona
-        s.abrir_evento(next(i for i, a in enumerate(s.arboles) if a.event.image.motivo == zona))
-        return s
-
-    def test_cobrar_calle_cobra_la_distancia_del_grafo(self) -> None:
-        s = self._con_noticia_en("barrio")                         # Plaza -> Alcaldia se aleja de la noticia
-        j = s.jugador_actual
-        r = s.cobrar_calle(j.id, "plaza", "alcaldia")              # distancia 2
-        self.assertEqual((r.ok, r.costo), (True, 2))
-        self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA - 2)
-        self.assertEqual(j.investigacion.viaje_gastado, 2)
-        r = s.cobrar_calle(j.id, "plaza", "colegio")               # tambien se aleja, y ya no alcanza (queda 1)
-        self.assertEqual((r.ok, r.motivo, r.costo), (False, "sin_energia", 2))
-        self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA - 2)   # no cobra nada
-        self.assertEqual(s.cobrar_calle(j.id, "colegio", "alcaldia").motivo, "sin_camino")
-
-    def test_ir_hacia_la_noticia_por_un_camino_mas_corto_es_gratis(self) -> None:
-        s = self._con_noticia_en("barrio")
-        j = s.jugador_actual
-        # Desde la Plaza el Barrio queda a 2 por el Parque (1 + 1); la calle directa cuesta 3
-        self.assertTrue(s.calle_gratis("plaza", "parque"))
-        self.assertTrue(s.calle_gratis("parque", "barrio"))
-        self.assertFalse(s.calle_gratis("plaza", "barrio"))         # la directa no es un camino mas corto
-        self.assertFalse(s.calle_gratis("parque", "plaza"))         # al reves se aleja
-        r = s.cobrar_calle(j.id, "plaza", "parque")
-        self.assertEqual((r.ok, r.costo), (True, 0))
-        self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA)
-        self.assertEqual(s.cobrar_calle(j.id, "plaza", "barrio").costo, 3)   # desviarse si cuesta
-
-    def test_nunca_se_traba_toda_noticia_se_alcanza_gratis_desde_cualquier_zona(self) -> None:
-        s = nueva(1, eventos=18)
-        for i in range(len(s.arboles)):
-            s.abrir_evento(i)
-            for origen in s.mapa.zonas():
-                ruta = s.mapa.ruta(origen.id, s.zona_noticia)
-                self.assertTrue(all(s.calle_gratis(a, b) for a, b in zip(ruta.zonas, ruta.zonas[1:])))
-
-    def test_llegar_actualiza_la_zona_sin_cobrar_ni_revelar(self) -> None:
+    def test_llegar_actualiza_la_zona_sin_revelar(self) -> None:
         s = nueva(1)
         j = s.jugador_actual
+        antes = list(j.investigacion.descubiertas)
         s.llegar(j.id, "colegio")
         self.assertEqual(j.zona, "colegio")
-        self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA)
+        self.assertEqual(j.investigacion.descubiertas, antes)
         with self.assertRaises(KeyError):
             s.llegar(j.id, "marte")
 
@@ -389,14 +346,11 @@ class MundoEnLaSesionTest(unittest.TestCase):
         e = s.buscar_evidencia(j.id)
         self.assertEqual(e.lugar, lugar)
         self.assertIsNone(s.buscar_evidencia(j.id))                  # ya revelada
-        self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA)
 
-    def test_fuera_de_turno_no_se_cobra_ni_se_busca(self) -> None:
+    def test_fuera_de_turno_no_se_busca(self) -> None:
         s = nueva(2)
         otro = s.jugadores[1]
-        self.assertEqual(s.cobrar_calle(otro.id, "plaza", "parque").motivo, "no_es_su_turno")
         self.assertIsNone(s.buscar_evidencia(otro.id))
-        self.assertEqual(otro.investigacion.energia, ENERGIA_POR_NOTICIA)
 
 
 if __name__ == "__main__":
