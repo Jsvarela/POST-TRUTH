@@ -1,0 +1,153 @@
+{
+  "tamano": [
+    2560,
+    1600
+  ],
+  "radio_jugador": 14,
+  "velocidad": 240,
+  "zonas": {
+    "colegio": {
+      "pos": [
+        432,
+        220
+      ],
+      "radio": 110
+    },
+    "barrio": {
+      "pos": [
+        432,
+        1380
+      ],
+      "radio": 110
+    },
+    "parque": {
+      "pos": [
+        2128,
+        1380
+      ],
+      "radio": 110
+    },
+    "plaza": {
+      "pos": [
+        1280,
+        800
+      ],
+      "radio": 140
+    },
+    "alcaldia": {
+      "pos": [
+        2128,
+        220
+      ],
+      "radio": 110
+    }
+  },
+  "calles": [
+    {
+      "desde": "colegio",
+      "hasta": "barrio",
+      "ancho": 90
+    },
+    {
+      "desde": "barrio",
+      "hasta": "parque",
+      "ancho": 90
+    },
+    {
+      "desde": "parque",
+      "hasta": "plaza",
+      "ancho": 90
+    },
+    {
+      "desde": "colegio",
+      "hasta": "plaza",
+      "ancho": 90
+    },
+    {
+      "desde": "plaza",
+      "hasta": "alcaldia",
+      "ancho": 90
+    },
+    {
+      "desde": "barrio",
+      "hasta": "plaza",
+      "ancho": 90
+    }
+  ],
+  "edificios": [
+    {
+      "zona": "colegio",
+      "rect": [
+        82,
+        120,
+        220,
+        200
+      ],
+      "entrada": [
+        342,
+        220
+      ],
+      "radio": 90
+    },
+    {
+      "zona": "barrio",
+      "rect": [
+        82,
+        1280,
+        220,
+        200
+      ],
+      "entrada": [
+        342,
+        1380
+      ],
+      "radio": 90
+    },
+    {
+      "zona": "parque",
+      "rect": [
+        2258,
+        1280,
+        220,
+        200
+      ],
+      "entrada": [
+        2218,
+        1380
+      ],
+      "radio": 90
+    },
+    {
+      "zona": "plaza",
+      "rect": [
+        1170,
+        440,
+        220,
+        200
+      ],
+      "entrada": [
+        1280,
+        680
+      ],
+      "radio": 90
+    },
+    {
+      "zona": "alcaldia",
+      "rect": [
+        2258,
+        120,
+        220,
+        200
+      ],
+      "entrada": [
+        2218,
+        220
+      ],
+      "radio": 90
+    }
+  ],
+  "aparicion": [
+    1280,
+    800
+  ]
+}
