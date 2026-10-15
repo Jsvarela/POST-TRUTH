@@ -180,6 +180,38 @@ class PartidaSesion:
         revisada = evidencia is None and j.investigacion.evidencia_en(zona) is not None
         return ResultadoViaje(True, "", zona, ruta.zonas, ruta.costo, evidencia, revisada)
 
+    # --- mundo caminable (etapa M2): la sesion sigue siendo la fuente de verdad -------------------------
+    @property
+    def zona_noticia(self) -> str:
+        """Lugar donde ocurre la publicacion activa: la zona de su imagen (cada noticia tiene una)."""
+        imagen = self.arbol.event.image
+        return imagen.motivo if imagen is not None else self.mapa.zona_inicial
+
+    def cobrar_calle(self, jugador: str, a: str, b: str) -> ResultadoViaje:
+        """Cobra la distancia de la calle a-b (una arista del grafo de la ciudad) al tomarla en el mundo. Caminar
+        por el camino mas corto cuesta lo mismo que el viaje con Dijkstra de siempre: el balance no cambia."""
+        j, motivo = self._turno_de(jugador)
+        if motivo:
+            return ResultadoViaje(False, motivo, b)
+        costo = self.mapa.distancia(a, b)
+        if costo is None:
+            return ResultadoViaje(False, "sin_camino", b)
+        if not j.investigacion.viajar(costo):
+            return ResultadoViaje(False, "sin_energia", b, (a, b), costo)
+        return ResultadoViaje(True, "", b, (a, b), costo)
+
+    def llegar(self, jugador: str, zona: str) -> None:
+        """El jugador del mundo llego a la plaza `zona`: la sesion queda en la misma zona (sin cobrar ni revelar)."""
+        if zona not in self.mapa:
+            raise KeyError(f"Zona desconocida: {zona}")
+        self.jugador(jugador).zona = zona
+
+    def buscar_evidencia(self, jugador: str) -> Evidencia | None:
+        """Revela la evidencia de la publicacion activa que hay en la zona del jugador (gratis: el viaje ya se
+        pago). None si no hay, si ya se habia revelado o si no es su turno."""
+        j, motivo = self._turno_de(jugador)
+        return None if motivo else j.investigacion.revelar_evidencia(j.zona)
+
     def decidir(self, jugador: str, accion: DecisionNode | str) -> ResultadoDecision:
         """Elige una rama de la publicacion. El impacto del arbol se suma a lo largo del camino (DFS), se escala
         por el rol y, en Verificar/Reportar, segun el respaldo reunido. Si la decision mueve la publicacion por

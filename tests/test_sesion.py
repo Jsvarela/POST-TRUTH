@@ -318,5 +318,60 @@ class SerializacionTest(unittest.TestCase):
         self.assertEqual(CityState.from_dict(json.loads(json.dumps(c.to_dict()))), c)
 
 
+
+class MundoEnLaSesionTest(unittest.TestCase):
+    """Operaciones que usa el mundo caminable (etapa M2): cobrar calles, llegar a plazas y buscar evidencia."""
+
+    def test_la_noticia_ocurre_en_la_zona_de_su_imagen(self) -> None:
+        s = nueva(1, eventos=6)
+        for i in range(6):
+            s.abrir_evento(i)
+            self.assertEqual(s.zona_noticia, s.arbol.event.image.motivo)
+            self.assertIn(s.zona_noticia, s.mapa)
+
+    def test_cobrar_calle_cobra_la_distancia_del_grafo(self) -> None:
+        s = nueva(1)
+        j = s.jugador_actual
+        r = s.cobrar_calle(j.id, "plaza", "alcaldia")              # distancia 2
+        self.assertEqual((r.ok, r.costo), (True, 2))
+        self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA - 2)
+        self.assertEqual(j.investigacion.viaje_gastado, 2)
+        r = s.cobrar_calle(j.id, "alcaldia", "plaza")              # ya no alcanza (queda 1)
+        self.assertEqual((r.ok, r.motivo, r.costo), (False, "sin_energia", 2))
+        self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA - 2)   # no cobra nada
+        self.assertEqual(s.cobrar_calle(j.id, "colegio", "alcaldia").motivo, "sin_camino")
+
+    def test_llegar_actualiza_la_zona_sin_cobrar_ni_revelar(self) -> None:
+        s = nueva(1)
+        j = s.jugador_actual
+        s.llegar(j.id, "colegio")
+        self.assertEqual(j.zona, "colegio")
+        self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA)
+        with self.assertRaises(KeyError):
+            s.llegar(j.id, "marte")
+
+    def test_buscar_evidencia_la_revela_una_sola_vez_y_solo_donde_esta(self) -> None:
+        s = nueva(1, eventos=8)
+        con = next(i for i, a in enumerate(s.arboles) if any(e.lugar != "plaza" for e in a.event.evidences))
+        s.abrir_evento(con)
+        j = s.jugador_actual
+        lugar = next(e.lugar for e in s.arbol.event.evidences if e.lugar != j.zona)   # no revelada al abrir
+        otra = next(z.id for z in s.mapa.zonas() if z.id not in {e.lugar for e in s.arbol.event.evidences})
+        s.llegar(j.id, otra)
+        self.assertIsNone(s.buscar_evidencia(j.id))
+        s.llegar(j.id, lugar)
+        e = s.buscar_evidencia(j.id)
+        self.assertEqual(e.lugar, lugar)
+        self.assertIsNone(s.buscar_evidencia(j.id))                  # ya revelada
+        self.assertEqual(j.investigacion.energia, ENERGIA_POR_NOTICIA)
+
+    def test_fuera_de_turno_no_se_cobra_ni_se_busca(self) -> None:
+        s = nueva(2)
+        otro = s.jugadores[1]
+        self.assertEqual(s.cobrar_calle(otro.id, "plaza", "parque").motivo, "no_es_su_turno")
+        self.assertIsNone(s.buscar_evidencia(otro.id))
+        self.assertEqual(otro.investigacion.energia, ENERGIA_POR_NOTICIA)
+
+
 if __name__ == "__main__":
     unittest.main()
