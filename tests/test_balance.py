@@ -1,7 +1,7 @@
 """Balance del juego medido con el bot (tools/balance.py): reproducibilidad, invariantes y orden entre politicas.
 
 No fija cifras exactas (eso lo hace la tabla de docs/entrega2_grafos.md): comprueba la FORMA del balance, con
-suficientes partidas para que el azar no la voltee. Si alguien cambia FUERZA_*, la energia o los topes de
+suficientes partidas para que el azar no la voltee. Si alguien cambia FUERZA_*, la investigacion o los topes de
 propagacion y el juego se vuelve trivial o imposible, falla aqui.
 """
 import os
@@ -36,10 +36,10 @@ class BalanceTest(unittest.TestCase):
             self.assertGreater(t["compartir"]["desinformacion"], 80, rol)      # la ciudad se llena de rumores
             self.assertGreater(t["ignorar"]["desinformacion"], 60, rol)
 
-    def test_investigar_con_criterio_gana_la_mayoria_pero_no_todas(self) -> None:
+    def test_investigar_con_criterio_gana_la_mayoria(self) -> None:
+        # sin energia investigar no tiene limite: con criterio se gana casi siempre (el temporizador de M3 lo endurecera)
         for rol, t in self.tablas.items():
             self.assertGreaterEqual(t["investigar"]["gana_pct"], 70, rol)
-            self.assertLessEqual(t["investigar"]["gana_pct"], 97, rol)
 
     def test_verificar_a_ciegas_queda_en_medio(self) -> None:
         for rol, t in self.tablas.items():

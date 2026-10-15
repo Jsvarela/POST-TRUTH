@@ -1,6 +1,6 @@
 """Mide el balance del juego con cientos de partidas simuladas, sin ventana.
 
-Cada partida recorre la escena real (EscenaState: viajes por el mapa, pistas, evidencia, energia, decision,
+Cada partida recorre la escena real (EscenaState: viajes por el mapa, pistas, evidencia, decision,
 propagacion por el grafo social y consecuencias) pero sin dibujar ni esperar animaciones, por lo que cientos
 de partidas tardan segundos. El azar sale de una semilla por partida: la misma semilla da el mismo resultado.
 
@@ -9,7 +9,7 @@ Politicas:
   compartir  siempre Compartir.
   verificar  siempre Verificar, a ciegas (sin revisar pistas ni viajar).
   investigar con criterio: revisa 2 pistas de la tarjeta y, si no apuntan a verdadera, va a la evidencia de campo
-             mas barata; comparte lo que sale verdadero, reporta lo que tiene pruebas de falsedad, verifica
+             mas cercana; comparte lo que sale verdadero, reporta lo que tiene pruebas de falsedad, verifica
              si hay respaldo parcial y, si todo es incierto, ignora.
 
 Se "gana" una partida si termina con desinformacion < 40 e informacion verificada > 50.
@@ -37,10 +37,9 @@ SEMILLA_BASE = 20261
 
 
 def _viajar_a_evidencia(escena) -> None:
-    """Va a la zona con evidencia pendiente mas barata que alcance la energia."""
+    """Va a la zona con evidencia pendiente mas cercana (camino mas corto, Dijkstra)."""
     costos = escena.mapa.costos_desde(escena.zona)
-    inv = escena.investigacion
-    posibles = [z for z in inv.lugares_pendientes() if 0 < costos[z] <= inv.energia]
+    posibles = [z for z in escena.investigacion.lugares_pendientes() if costos[z] > 0]
     if posibles:
         escena._viajar(min(posibles, key=lambda z: (costos[z], z)))
 
@@ -48,10 +47,10 @@ def _viajar_a_evidencia(escena) -> None:
 def _revisar_pistas(escena, maximo: int) -> None:
     inv = escena.investigacion
     hechas = 0
-    for pista in sorted(inv.pistas, key=lambda p: p.costo):
+    for pista in inv.pistas:
         if hechas >= maximo:
             break
-        if inv.energia >= pista.costo and not inv.esta_descubierta(pista.id):
+        if not inv.esta_descubierta(pista.id):
             escena._investigar(pista)
             hechas += 1
 

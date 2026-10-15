@@ -23,7 +23,7 @@ obsoleto: se conserva solo como referencia.
 |---|---|---|
 | Arbol n-ario de decisiones | `decision_tree.py`, `data/events.json` | Ramas de cada publicacion y sus consecuencias (DFS acumula el impacto, BFS recorre por niveles) |
 | Grafo social (dirigido, ponderado) | `structures/grafo_social.py`, `data/grafo_social.json` | Como se propaga una publicacion al compartirla: BFS por olas y Dijkstra para el tiempo |
-| Grafo de la ciudad (no dirigido, ponderado) | `structures/grafo_ciudad.py`, `data/grafo_ciudad.json` | Mapa de lugares donde se investiga: viajar cuesta energia (la distancia del camino mas corto, con Dijkstra) y cada zona guarda evidencia de la noticia |
+| Grafo de la ciudad (no dirigido, ponderado) | `structures/grafo_ciudad.py`, `data/grafo_ciudad.json` | Mapa de lugares donde se investiga: se viaja por el camino mas corto (Dijkstra), que tambien es la guia del mundo caminable, y cada zona guarda evidencia de la noticia |
 
 La justificacion completa (problema, estructura, variante, insercion y eliminacion,
 recorridos y complejidad, efecto de la decision) esta en
@@ -44,15 +44,12 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
   comentarios). Se decide con los botones (teclas 1-4).
 - **Investigar:** las partes de la tarjeta (autor, fuente, fecha, imagen, texto, reacciones) son zonas
   clicables (o teclas A S D F G) que esconden pistas: una cuenta sospechosa, una fecha antigua, una imagen
-  reutilizada... Revisar una pista revela su hallazgo y gasta energia (5 por publicacion; hay mas por revisar
-  que energia, asi que hay que elegir; algunas pistas son neutras y no prueban nada).
+  reutilizada... Revisar una pista revela su hallazgo (algunas pistas son neutras y no prueban nada).
 - **Viajar por el mapa:** la noticia tambien deja **evidencia en lugares de la ciudad** (un testigo, un
-  documento, una grabacion). Se puede ir a cualquier zona con un clic en el minimapa (o Q W E R T); el viaje
-  cuesta la distancia del camino mas corto (Dijkstra) en la misma energia, y al llegar se revela la
-  evidencia. El minimapa es limpio y no muestra cifras: cada lugar tiene su icono y su nombre, el pin marca
+  documento, una grabacion). Se puede ir a cualquier zona con un clic en el minimapa (o Q W E R T); se va
+  por el camino mas corto (Dijkstra) y al llegar se revela la evidencia. El minimapa es limpio y no muestra cifras: cada lugar tiene su icono y su nombre, el pin marca
   donde estas, un rombo marca los lugares donde queda algo por descubrir y, al pasar el mouse por un lugar,
-  se resalta el camino y una franja explica "Ir a ... / Cuesta (rayos de energia)". La energia se ve siempre
-  como rayos.
+  se resalta el camino y una franja dice "Ir a ...".
 - **Compartir, Verificar o Reportar** muestran como viaja la noticia por la red social,
   ola por ola, y despues sus consecuencias. Compartir parte del jugador (el Influencer
   amplifica), Verificar frena la difusion de una noticia falsa y Reportar corta las
@@ -67,11 +64,7 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
   La noticia activa se marca con un globo con "!" sobre su lugar y la evidencia pendiente con un rombo con "?".
   Junto a la puerta: "E: entrar" abre la pantalla de noticias de ese lugar y "E: buscar evidencia" la revela. Al
   decidir se vuelve a la calle con la siguiente noticia. G muestra la guia (camino mas corto, Dijkstra) hacia la
-  noticia. Arriba: indicadores, energia y un minimapa con la posicion del jugador. M en el menu entra directo.
-- **Energia al caminar:** cada calle cuesta su distancia del grafo en rayos y se cobra al tomarla; queda pagada
-  hasta llegar a una de sus plazas (dar la vuelta no cobra ni devuelve). Las calles del camino mas corto hacia la
-  noticia activa son gratis, asi la energia se gasta en desvios para buscar evidencia (el balance medido no cambia)
-  y nunca falta para llegar a la noticia. Si un desvio no alcanza, la calle no deja pasar y se avisa.
+  noticia. Arriba: indicadores y un minimapa con la posicion del jugador. M en el menu entra directo.
 - **Respaldo:** `POSTTRUTH_FLUJO=escena python src/main.py` usa el flujo anterior (Seleccion -> escena de noticias).
 - Otras teclas: Enter para continuar, Espacio para saltar el texto, I en el menu para ver la introduccion, T en el menu para cambiar
   de tema (normal, alto contraste, daltonismo), ESC para volver.
