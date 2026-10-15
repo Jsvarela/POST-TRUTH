@@ -62,6 +62,9 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
   rechaza y baja la confianza, con pruebas de la tarjeta limita al autor y con evidencia de campo corta
   sus conexiones. Los rumores se propagan solo por el grafo social (entre personas), no por el mapa.
   Lo investigado tambien cambia el texto de la consecuencia.
+- **Mundo caminable (en construccion, etapa M1):** con M en el menu se abre Ciudad Nova vista desde arriba. Se camina con
+  WASD o flechas solo por las calles (las aristas del grafo de la ciudad) y las plazas (sus vertices); la camara sigue
+  al jugador y, junto a la puerta de un lugar, aparece "E: entrar" (entrar de verdad llega en la etapa M2).
 - Otras teclas: Enter para continuar, Espacio para saltar el texto, I en el menu para ver la introduccion, T en el menu para cambiar
   de tema (normal, alto contraste, daltonismo), ESC para volver.
 
@@ -117,15 +120,15 @@ jugador automatico juega partidas completas con teclado y mouse.
 src/main.py                              Punto de entrada (Pygame)
 src/post_truth/pygame_app.py             Game loop (60 FPS, dt en segundos) y recursos compartidos
 src/post_truth/config.py                 Constantes y rutas de los datos
-src/post_truth/models/                   Logica pura: dominio (Impact, NewsEvent, Role), personaje, intro, publicacion y pistas
+src/post_truth/models/                   Logica pura: dominio (Impact, NewsEvent, Role), personaje, intro, publicacion, pistas y mundo (MundoCiudad)
 src/post_truth/game_state.py             CityState: indicadores de Ciudad Nova
 src/post_truth/sesion.py                 PartidaSesion: estado y reglas de la partida (1 a 4 jugadores, turnos), serializable
 src/post_truth/decision_tree.py          Arbol n-ario, DFS y BFS
 src/post_truth/structures/               grafo_social, propagacion, grafo_ciudad
 src/post_truth/controllers/              Estados: menu, intro, seleccion, escena (patron State)
-src/post_truth/views/                    Tema, componentes, personajes, retratos, intro, escena, tarjeta de Civitas, grafo, mapa, fondos por zona
+src/post_truth/views/                    Tema, componentes, personajes, retratos, intro, escena, tarjeta de Civitas, grafo, mapa, fondos por zona, mundo y su proveedor de arte
 src/post_truth/app.py                    Version Tkinter de la entrega 1 (obsoleta)
-data/                                    events.json (18 publicaciones), grafo_social.json, grafo_ciudad.json, intro.json
+data/                                    events.json (18 publicaciones), grafo_social.json, grafo_ciudad.json, intro.json, mundo.json
 tools/                                   balance.py: mide el balance con partidas simuladas
 docs/                                    Guias de sustentacion de las entregas 1 y 2
 tests/                                   Pruebas unitarias, de integracion y de partida completa
