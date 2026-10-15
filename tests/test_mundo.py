@@ -173,7 +173,7 @@ class ZonaAlAlcanceTest(unittest.TestCase):
         self.assertIsNone(m.zona_al_alcance())               # en el centro de la Plaza no se esta en ninguna puerta
 
 
-def caminar_hacia(m: MundoCiudad, destino: tuple[float, float], cobrar=None, llegar=None, fps: int = 60,
+def caminar_hacia(m: MundoCiudad, destino: tuple[float, float], llegar=None, fps: int = 60,
                   maximo: float = 30) -> bool:
     """Camina en linea recta hacia `destino` (las calles unen centros de plazas). True si llego."""
     for _ in range(round(maximo * fps)):
@@ -181,75 +181,49 @@ def caminar_hacia(m: MundoCiudad, destino: tuple[float, float], cobrar=None, lle
         if math.hypot(dx, dy) < 3:
             return True
         antes = m.jugador
-        m.mover(dx, dy, 1 / fps, cobrar, llegar)
+        m.mover(dx, dy, 1 / fps, llegar)
         if m.jugador == antes:
             return False                                    # bloqueado
     return False
 
 
-class CobroPorCalleTest(unittest.TestCase):
-    """Regla de M2: se paga al entrar a una calle no pagada; queda pagada hasta llegar a una de sus plazas."""
+class LlegadaTest(unittest.TestCase):
+    """Llegar a una plaza distinta avisa una sola vez (asi la partida queda en la misma zona)."""
 
     def setUp(self) -> None:
-        self.cobros: list[frozenset] = []
         self.llegadas: list[str] = []
 
-    def cobrar(self, calle) -> bool:
-        self.cobros.append(frozenset((calle.desde, calle.hasta)))
-        return True
-
-    def test_cruzar_una_calle_cobra_una_vez_y_avisa_la_llegada(self) -> None:
+    def test_cruzar_una_calle_avisa_la_llegada(self) -> None:
         m = mundo_simple()
         self.assertEqual(m.ultima_plaza, "a")
-        self.assertTrue(caminar_hacia(m, (600, 100), self.cobrar, self.llegadas.append))
-        self.assertEqual(self.cobros, [frozenset("ab")])
+        self.assertTrue(caminar_hacia(m, (600, 100), self.llegadas.append))
         self.assertEqual(self.llegadas, ["b"])
         self.assertEqual(m.ultima_plaza, "b")
-        self.assertEqual(m.calles_pagadas, set())          # al llegar se acaba lo pagado
 
-    def test_dar_la_vuelta_a_mitad_de_calle_no_cobra_ni_devuelve(self) -> None:
+    def test_dar_la_vuelta_a_mitad_de_calle_no_avisa(self) -> None:
         m = mundo_simple()
-        caminar_hacia(m, (350, 100), self.cobrar, self.llegadas.append)   # mitad de la calle
-        caminar_hacia(m, (100, 100), self.cobrar, self.llegadas.append)   # vuelve a la plaza de origen
-        caminar_hacia(m, (350, 100), self.cobrar, self.llegadas.append)   # y sale otra vez: es otro viaje
-        self.assertEqual(self.cobros, [frozenset("ab"), frozenset("ab")])
-        self.assertEqual(self.llegadas, [])                                # nunca llego a una plaza distinta
+        caminar_hacia(m, (350, 100), self.llegadas.append)   # mitad de la calle
+        caminar_hacia(m, (100, 100), self.llegadas.append)   # vuelve a la plaza de origen
+        self.assertEqual(self.llegadas, [])                  # nunca llego a una plaza distinta
+        self.assertEqual(m.ultima_plaza, "a")
 
-    def test_ir_y_venir_dentro_de_la_calle_no_cobra_de_nuevo(self) -> None:
+    def test_rozar_la_boca_de_otra_plaza_no_es_llegar(self) -> None:
         m = mundo_simple()
-        for destino in ((300, 100), (200, 100), (400, 100), (250, 100)):
-            caminar_hacia(m, destino, self.cobrar)
-        self.assertEqual(len(self.cobros), 1)
+        caminar_hacia(m, (565, 100), self.llegadas.append)   # b: borde en 560; se llega a 2 radios del jugador (580)
+        self.assertEqual(self.llegadas, [])                  # histeresis
+        caminar_hacia(m, (590, 100), self.llegadas.append)
+        self.assertEqual(self.llegadas, ["b"])
 
-    def test_moverse_en_la_boca_de_la_calle_no_cobra_dos_veces(self) -> None:
-        m = mundo_simple()
-        for destino in ((145, 100), (125, 100), (145, 100), (126, 100), (150, 100)):   # radio 40: borde en 140
-            caminar_hacia(m, destino, self.cobrar)
-        self.assertEqual(len(self.cobros), 1)                # histeresis: no "llego" de vuelta a la plaza
-
-    def test_sin_energia_la_calle_es_una_pared(self) -> None:
-        m = mundo_simple()
-        self.assertFalse(caminar_hacia(m, (600, 100), lambda c: False))
-        self.assertEqual(m.plaza_en(m.jugador), "a")         # sigue en su plaza
-        self.assertEqual(m.bloqueo.hasta, "b")               # y se sabe que calle no pudo tomar
-        self.assertEqual(m.calles_pagadas, set())
-
-    def test_sin_cobro_caminar_es_gratis(self) -> None:
-        m = mundo_simple()
-        self.assertTrue(caminar_hacia(m, (600, 100)))
-        self.assertEqual(m.ultima_plaza, "b")
-
-    def test_en_el_mapa_real_caminar_el_camino_mas_corto_cuesta_lo_mismo_que_dijkstra(self) -> None:
+    def test_en_el_mapa_real_se_llega_por_el_camino_de_dijkstra(self) -> None:
         g = GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD)
         for origen, destino in (("barrio", "plaza"), ("colegio", "alcaldia"), ("plaza", "parque"), ("alcaldia", "barrio")):
             m = MundoCiudad.cargar(RUTA_MUNDO)
             m.jugador, m.ultima_plaza = m.plazas[origen].pos, origen
-            pagado = []
+            llegadas = []
             ruta = g.ruta(origen, destino)
             for siguiente in ruta.zonas[1:]:
-                self.assertTrue(caminar_hacia(m, m.plazas[siguiente].pos,
-                                              lambda c: pagado.append(g.distancia(c.desde, c.hasta)) or True))
-            self.assertEqual(sum(pagado), ruta.costo, (origen, destino))
+                self.assertTrue(caminar_hacia(m, m.plazas[siguiente].pos, llegadas.append))
+            self.assertEqual(llegadas, list(ruta.zonas[1:]), (origen, destino))
             self.assertEqual(m.ultima_plaza, destino)
 
     def test_fuera_de_las_plazas_las_calles_del_mapa_real_no_se_solapan(self) -> None:
@@ -266,13 +240,11 @@ class CobroPorCalleTest(unittest.TestCase):
                     dentro = [o for o in m.calles if math.dist(p, _cercano(p, m, o)) <= o.ancho / 2]
                     self.assertEqual(len(dentro), 1, (c, p))
 
-    def test_ida_y_vuelta_con_calles_pagadas(self) -> None:
+    def test_ida_y_vuelta_con_la_ultima_plaza(self) -> None:
         m = mundo_simple()
-        caminar_hacia(m, (350, 100), self.cobrar)
+        caminar_hacia(m, (600, 100))
         copia = MundoCiudad.from_dict(json.loads(json.dumps(m.to_dict())))
-        self.assertEqual((copia.ultima_plaza, copia.calles_pagadas), ("a", {frozenset("ab")}))
-        caminar_hacia(copia, (400, 100), self.cobrar)
-        self.assertEqual(len(self.cobros), 1)                # la copia recuerda que la calle estaba pagada
+        self.assertEqual((copia.ultima_plaza, copia.jugador), ("b", m.jugador))
 
 
 def _cercano(p, m: MundoCiudad, calle):
@@ -391,14 +363,14 @@ class MundoEnPantallaTest(unittest.TestCase):
 
 
 def ir_a_zona(estado, zona: str, hasta_la_puerta: bool = True) -> bool:
-    """Camina como un jugador: por la ruta de Dijkstra, plaza por plaza, con el mismo cobro que el teclado."""
+    """Camina como un jugador: por la ruta de Dijkstra, plaza por plaza, avisando las llegadas como el teclado."""
     m, s = estado.mundo, estado.app.partida
     for siguiente in s.mapa.ruta(m.ultima_plaza, zona).zonas[1:]:
-        if not caminar_hacia(m, m.plazas[siguiente].pos, estado._cobrar, estado._llegar):
+        if not caminar_hacia(m, m.plazas[siguiente].pos, estado._llegar):
             return False
     if hasta_la_puerta:
         puerta = next(e.entrada for e in m.edificios if e.zona == zona)
-        return caminar_hacia(m, puerta, estado._cobrar, estado._llegar)
+        return caminar_hacia(m, puerta, estado._llegar)
     return True
 
 
@@ -450,14 +422,12 @@ class FlujoMundoNoticiasTest(unittest.TestCase):
         self.assertEqual(self.sesion.jugador_actual.personaje, self.app.personaje)
         self.sincronizados()
 
-    def test_ir_a_la_noticia_por_la_guia_es_gratis_y_e_abre_su_pantalla(self) -> None:
-        inv = self.sesion.jugador_actual.investigacion
+    def test_ir_a_la_noticia_y_e_abre_su_pantalla(self) -> None:
         escena = self.entrar_a_la_noticia()
         self.assertEqual(type(escena).__name__, "EscenaState")
         self.assertTrue(escena.interior)
         self.assertIs(escena.sesion, self.sesion)                        # la misma partida, no una nueva
         self.assertEqual(escena.zona, self.sesion.zona_noticia)
-        self.assertEqual(inv.viaje_gastado, 0)                           # el camino a la noticia no cobro
         self.sincronizados()
 
     def test_al_decidir_se_vuelve_a_la_calle_con_la_siguiente_noticia(self) -> None:
@@ -477,17 +447,12 @@ class FlujoMundoNoticiasTest(unittest.TestCase):
         self.assertEqual(self.sesion.indice, 0)                         # la noticia sigue pendiente
         self.assertIsNotNone(self.app.partida)
 
-    def test_buscar_evidencia_en_otro_lugar_la_revela_y_cuesta_el_desvio(self) -> None:
+    def test_buscar_evidencia_en_otro_lugar_la_revela(self) -> None:
         s = self.sesion
         while not (s.jugador_actual.investigacion.lugares_pendientes() - {s.zona_noticia}):
             s.abrir_evento(s.indice + 1)                                 # una noticia con evidencia en otro lugar
         inv = s.jugador_actual.investigacion
-        lugar = min(inv.lugares_pendientes() - {s.zona_noticia},
-                    key=lambda z: s.mapa.ruta(self.estado.mundo.ultima_plaza, z).costo)
-        costo = s.mapa.ruta(self.estado.mundo.ultima_plaza, lugar).costo
-        gratis = all(s.calle_gratis(a, b) for a, b in zip(*[s.mapa.ruta(self.estado.mundo.ultima_plaza, lugar).zonas] * 2))
-        if costo > inv.energia:
-            self.skipTest("la evidencia mas cercana no alcanza con esta semilla")
+        lugar = min(inv.lugares_pendientes() - {s.zona_noticia})
         self.assertTrue(ir_a_zona(self.estado, lugar))
         self.assertEqual(self.estado.accion_disponible(), (lugar, "evidencia"))
         self.tecla(self.pygame.K_e)
@@ -495,21 +460,7 @@ class FlujoMundoNoticiasTest(unittest.TestCase):
         self.assertTrue(inv.esta_descubierta(evidencia.id))
         self.assertIn(evidencia.titulo, self.estado.aviso)
         self.assertIsNone(self.estado.accion_disponible())               # ya no hay nada que buscar aqui
-        self.assertLessEqual(inv.viaje_gastado, costo)
-        if not gratis:
-            self.assertGreater(inv.viaje_gastado, 0)
         self.sincronizados()
-
-    def test_sin_energia_desviarse_se_bloquea_y_avisa(self) -> None:
-        s, m = self.sesion, self.estado.mundo
-        s.jugador_actual.investigacion.energia = 0
-        for a, b in [(c.desde, c.hasta) for c in m.calles] + [(c.hasta, c.desde) for c in m.calles]:
-            if a == m.ultima_plaza and not s.calle_gratis(a, b):
-                self.assertFalse(caminar_hacia(m, m.plazas[b].pos, self.estado._cobrar, self.estado._llegar))
-                self.assertIn("No te alcanza", self.estado.aviso)
-                self.assertEqual(m.ultima_plaza, a)
-                return
-        self.skipTest("todas las calles desde aqui van hacia la noticia")
 
     def test_g_muestra_la_guia_hacia_la_noticia(self) -> None:
         self.assertEqual(self.estado.estado_vista().guia, ())
@@ -517,7 +468,6 @@ class FlujoMundoNoticiasTest(unittest.TestCase):
         vista = self.estado.estado_vista()
         self.assertEqual(vista.guia[0], self.estado.mundo.ultima_plaza)
         self.assertEqual(vista.guia[-1], self.sesion.zona_noticia)
-        self.assertEqual(vista.costo_guia, 0)                            # por la guia caminar es gratis
         self.assertEqual(list(vista.guia),
                          list(self.sesion.mapa.ruta(vista.guia[0], vista.guia[-1]).zonas))   # es el camino de Dijkstra
         self.tecla(self.pygame.K_g)
@@ -533,23 +483,18 @@ class FlujoMundoNoticiasTest(unittest.TestCase):
         self.assertEqual(len(imagenes), 3)
 
     def test_una_partida_completa_caminando(self) -> None:
-        """Bot que camina: noticia por noticia busca la evidencia mas barata si alcanza, entra y decide."""
+        """Bot que camina: noticia por noticia busca toda la evidencia de otros lugares, entra y decide."""
         from post_truth.controllers.escena_state import FIN
         s = self.sesion
         tipos = ("verificar", "compartir", "reportar", "ignorar")
         for i in range(len(s.arboles)):
             self.assertIs(self.app.estados._actual, self.estado)
             inv = s.jugador_actual.investigacion
-            otros = inv.lugares_pendientes() - {s.zona_noticia}
-            if otros:
-                lugar = min(otros, key=lambda z: s.mapa.ruta(self.estado.mundo.ultima_plaza, z).costo)
-                if s.mapa.ruta(self.estado.mundo.ultima_plaza, lugar).costo <= inv.energia:
-                    ir_a_zona(self.estado, lugar)
-                    self.tecla(self.pygame.K_e)
-            self.sincronizados()
-            self.assertGreaterEqual(inv.energia, 0)
-            self.assertEqual(inv.energia + inv.viaje_gastado
-                             + sum(p.costo for p in inv.pistas if inv.esta_descubierta(p.id)), inv.energia_max)
+            for lugar in sorted(inv.lugares_pendientes() - {s.zona_noticia}):
+                self.assertTrue(ir_a_zona(self.estado, lugar))
+                self.tecla(self.pygame.K_e)
+                self.sincronizados()
+            self.assertEqual(inv.lugares_pendientes() - {s.zona_noticia}, set())
             escena = self.entrar_a_la_noticia()
             self.app.estados.draw(self.app.pantalla)
             self.decidir_y_salir(escena, tipos[i % 4])

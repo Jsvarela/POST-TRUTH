@@ -9,7 +9,6 @@ from post_truth.models import Impact
 from post_truth.models.personaje import Personaje
 from post_truth.views.componentes import Boton, CajaDialogo, Fuentes, Panel, dibujar_texto_ajustado
 from post_truth.views.grafo_view import AnimacionPropagacion
-from post_truth.views.iconos import fila_de_rayos
 from post_truth.views.mapa_view import EstadoMapa, dibujar_mapa
 from post_truth.views.tarjeta_civitas_view import EstadoTarjeta, dibujar_tarjeta
 from post_truth.views.personaje_view import dibujar_personaje
@@ -87,19 +86,6 @@ def _dibujar_consecuencias(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tem
         y += fuentes.normal.get_linesize() + px(6)
 
 
-def _dibujar_energia(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, inv, y: int) -> None:
-    """Etiqueta "Energia" con un punto por cada unidad: lleno si queda, vacio si ya se gasto."""
-    etiqueta = fuentes.normal.render("Energia", True, tema.texto)
-    ancho = etiqueta.get_width() + px(24) + inv.energia_max * px(22) + px(8)
-    marco = pygame.Rect(px(16), y, ancho, etiqueta.get_height() + px(10))
-    pygame.draw.rect(pantalla, tema.panel, marco, border_radius=px(8))
-    pygame.draw.rect(pantalla, tema.acento, marco, width=px(2), border_radius=px(8))
-    pantalla.blit(etiqueta, (marco.x + px(10), marco.y + px(5)))
-    # un rayo por cada unidad: relleno si queda, solo contorno si ya se gasto
-    fila_de_rayos(pantalla, tema.acento, marco.x + px(10) + etiqueta.get_width() + px(20), marco.centery,
-                  inv.energia_max, px(10), px(22), llenos=inv.energia)
-
-
 def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, personaje: Personaje,
                    animo: int, filas: list[tuple[str, int]], titulo_panel: str, texto_panel: str,
                    impacto: Impact | None, dialogo: CajaDialogo, botones: list[Boton],
@@ -115,8 +101,6 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
         pygame.draw.rect(pantalla, tema.panel, marco, border_radius=px(8))
         pygame.draw.rect(pantalla, tema.acento, marco, width=px(2), border_radius=px(8))
         pantalla.blit(etiqueta, etiqueta.get_rect(center=marco.center))
-    if tarjeta is not None:  # energia que queda para investigar esta publicacion
-        _dibujar_energia(pantalla, fuentes, tema, tarjeta.investigacion, RECT_ESCENA.y + px(56))
     if animacion is not None:  # la propagacion ocupa el lugar del panel de noticia
         animacion.draw(pantalla, fuentes, tema, RECT_PANEL)
     else:

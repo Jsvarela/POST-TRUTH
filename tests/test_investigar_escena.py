@@ -1,4 +1,4 @@
-"""Integracion: tarjeta de Civitas, pistas clicables, energia y texto de consecuencia en la escena."""
+"""Integracion: tarjeta de Civitas, pistas clicables y texto de consecuencia en la escena."""
 import os
 import random
 import sys
@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import pygame
 
 from post_truth.controllers.escena_state import CONSECUENCIA, DECIDIENDO, PROPAGACION
-from post_truth.models.pistas import ENERGIA_POR_NOTICIA, ZonaTarjeta
+from post_truth.models.pistas import ZonaTarjeta
 from post_truth.pygame_app import App
 from post_truth.views.escena_view import RECT_MAPA, RECT_TARJETA
 from post_truth.views.mapa_view import _posiciones
@@ -62,17 +62,15 @@ class InvestigarEnEscenaTest(unittest.TestCase):
             tecla(self.app, pygame.K_RETURN)
 
     # --- investigar --------------------------------------------------------------------------
-    def test_cada_publicacion_empieza_con_la_energia_completa_y_sin_pistas(self) -> None:
+    def test_cada_publicacion_empieza_sin_pistas(self) -> None:
         escena = self._escena()
-        self.assertEqual(escena.investigacion.energia, ENERGIA_POR_NOTICIA)
         self.assertEqual(escena.investigacion.descubiertas, [])
         self.assertEqual(len(escena.investigacion.pistas), 5)
 
-    def test_clic_en_una_zona_revela_la_pista_gasta_energia_y_la_dice_en_el_dialogo(self) -> None:
+    def test_clic_en_una_zona_revela_la_pista_y_la_dice_en_el_dialogo(self) -> None:
         escena = self._escena()
         clic(self.app, self._zona(escena, "cuenta-sospechosa"))
         self.assertTrue(escena.investigacion.esta_descubierta("cuenta-sospechosa"))
-        self.assertEqual(escena.investigacion.energia, ENERGIA_POR_NOTICIA - 1)
         self.assertIn("Cuenta sospechosa", escena.dialogo.texto)
         self.assertIn("2 dias de creada", escena.dialogo.texto)
         self.assertTrue(escena.dialogo.terminado)            # el hallazgo se ve de inmediato, sin esperar
@@ -81,42 +79,30 @@ class InvestigarEnEscenaTest(unittest.TestCase):
     def test_se_investiga_tambien_con_las_letras_a_s_d_f_g(self) -> None:
         escena = self._escena()
         for i, letra in enumerate((pygame.K_a, pygame.K_s, pygame.K_d)):
-            antes = escena.investigacion.energia
             tecla(self.app, letra)
             esperada = escena.investigacion.pistas[i]
-            if antes >= esperada.costo:
-                self.assertTrue(escena.investigacion.esta_descubierta(esperada.id), esperada.id)
+            self.assertTrue(escena.investigacion.esta_descubierta(esperada.id), esperada.id)
 
-    def test_la_energia_obliga_a_elegir_y_no_cobra_si_no_alcanza(self) -> None:
+    def test_se_puede_revisar_toda_la_tarjeta(self) -> None:
         escena = self._escena()
-        clic(self.app, self._zona(escena, "imagen-reutilizada"))      # cuesta 2
-        clic(self.app, self._zona(escena, "cuenta-sospechosa"))       # cuesta 1
-        clic(self.app, self._zona(escena, "sin-fuente"))              # cuesta 1
-        clic(self.app, self._zona(escena, "comentarios-repetidos"))   # cuesta 1: la energia (5) se acabo
-        self.assertEqual(escena.investigacion.energia, 0)
-        clic(self.app, self._zona(escena, "hora-normal"))             # ya no alcanza
-        self.assertFalse(escena.investigacion.esta_descubierta("hora-normal"))
-        self.assertEqual(escena.investigacion.energia, 0)
-        self.assertIn("No te queda energia", escena.dialogo.texto)
+        for pista in escena.investigacion.pistas:
+            clic(self.app, self._zona(escena, pista.id))
+        self.assertEqual(len(escena.investigacion.descubiertas), len(escena.investigacion.pistas))
 
-    def test_releer_una_pista_ya_revisada_es_gratis(self) -> None:
+    def test_releer_una_pista_ya_revisada_no_la_repite(self) -> None:
         escena = self._escena()
         clic(self.app, self._zona(escena, "cuenta-sospechosa"))
-        energia = escena.investigacion.energia
         clic(self.app, self._zona(escena, "cuenta-sospechosa"))
-        self.assertEqual(escena.investigacion.energia, energia)
         self.assertEqual(escena.investigacion.descubiertas, ["cuenta-sospechosa"])
         self.assertIn("2 dias de creada", escena.dialogo.texto)
 
-    def test_investigar_solo_cuesta_energia_no_mueve_al_jugador_ni_cambia_indicadores(self) -> None:
-        """Revisar la tarjeta gasta energia y nada mas: ni se viaja, ni se tocan los indicadores."""
+    def test_investigar_no_mueve_al_jugador_ni_cambia_indicadores(self) -> None:
+        """Revisar la tarjeta solo revela pistas: ni se viaja, ni se tocan los indicadores."""
         escena = self._escena()
         antes = (escena.ciudad.as_display_rows(), escena.zona, escena.ruta_vista)
         for pista in escena.investigacion.pistas[:3]:
             clic(self.app, self._zona(escena, pista.id))
         self.assertEqual((escena.ciudad.as_display_rows(), escena.zona, escena.ruta_vista), antes)
-        self.assertLess(escena.investigacion.energia, ENERGIA_POR_NOTICIA)
-        self.assertEqual(escena.investigacion.viaje_gastado, 0)
 
     def test_una_zona_sin_pista_o_un_clic_fuera_no_hacen_nada(self) -> None:
         escena = self._escena()
@@ -126,7 +112,6 @@ class InvestigarEnEscenaTest(unittest.TestCase):
             clic(self.app, _layout(RECT_TARJETA)[zona].center)
         clic(self.app, (5, 5))
         self.assertEqual(escena.investigacion.descubiertas, [])
-        self.assertEqual(escena.investigacion.energia, ENERGIA_POR_NOTICIA)
 
     def test_el_mouse_encima_resalta_la_zona(self) -> None:
         escena = self._escena()
@@ -135,14 +120,13 @@ class InvestigarEnEscenaTest(unittest.TestCase):
         mover_mouse(self.app, (5, 5))
         self.assertIsNone(escena._hover)
 
-    def test_la_energia_y_las_pistas_se_reinician_en_la_siguiente_publicacion(self) -> None:
+    def test_las_pistas_se_reinician_en_la_siguiente_publicacion(self) -> None:
         escena = self._escena()
         clic(self.app, self._zona(escena, "cuenta-sospechosa"))
         tecla(self.app, pygame.K_3)                              # Ignorar
         self.assertEqual(escena.fase, CONSECUENCIA)
         tecla(self.app, pygame.K_RETURN)                         # siguiente publicacion
         self.assertEqual(escena.fase, DECIDIENDO)
-        self.assertEqual(escena.investigacion.energia, ENERGIA_POR_NOTICIA)
         self.assertEqual(escena.investigacion.descubiertas, [])
 
     def test_fuera_de_la_fase_de_decidir_no_se_investiga(self) -> None:

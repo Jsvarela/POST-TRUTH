@@ -1,5 +1,5 @@
 """Vista del mundo caminable: camara que sigue al jugador, marcas de la noticia y la evidencia, guia de ruta,
-HUD (indicadores y energia) y minimapa. Todo el arte del mundo pasa por un proveedor (ver arte_mundo).
+HUD (indicadores) y minimapa. Todo el arte del mundo pasa por un proveedor (ver arte_mundo).
 
 El mundo (data/mundo.json) es mas grande que la pantalla: se ve una ventana de ANCHO/ESCALA x ALTO/ESCALA
 pixeles del mundo alrededor del jugador, y la camara se detiene en los bordes del mundo.
@@ -12,8 +12,7 @@ from post_truth.config import ALTO, ANCHO, ESCALA, px
 from post_truth.models.mundo import MundoCiudad
 from post_truth.views.arte_mundo import ARTE_FORMAS, ArteFormas
 from post_truth.views.componentes import Fuentes, ajustar_texto
-from post_truth.views.escena_view import RECT_HUD, _dibujar_energia, _dibujar_hud
-from post_truth.views.iconos import rayo
+from post_truth.views.escena_view import RECT_HUD, _dibujar_hud
 from post_truth.views.mapa_view import _rombo
 from post_truth.views.theme import Tema
 
@@ -27,10 +26,8 @@ class EstadoMundo:
     noticia: str = ""                          # zona de la noticia activa ("" si no hay)
     evidencias: frozenset | set = frozenset()  # zonas con evidencia pendiente de la noticia activa
     accion: tuple[str, str] | None = None      # (zona, "entrar" | "evidencia") disponible con E
-    investigacion: object = None               # energia del jugador (energia, energia_max)
     indicadores: list = ()                     # filas del HUD (CityState.as_display_rows)
     guia: tuple[str, ...] = ()                 # ruta de plazas hacia la noticia (vacia: guia apagada)
-    costo_guia: int | None = None
     aviso: str = ""
     color_rol: int = 0
 
@@ -78,11 +75,7 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
     arte.personaje(pantalla, tema, a_pantalla(mundo.jugador, cam), px(mundo.radio_jugador), estado.color_rol)
     if estado.indicadores:
         _dibujar_hud(pantalla, fuentes, tema, list(estado.indicadores))
-    if estado.investigacion is not None:
-        _dibujar_energia(pantalla, fuentes, tema, estado.investigacion, RECT_HUD.bottom + px(12))
     _minimapa(pantalla, tema, mundo, estado)
-    if estado.guia and estado.costo_guia is not None:
-        _costo_guia(pantalla, fuentes, tema, estado.costo_guia)
     _franja(pantalla, fuentes, tema, _mensaje(estado))
 
 
@@ -153,7 +146,7 @@ def _mensaje(estado: EstadoMundo) -> str:
     if estado.accion is not None:
         zona, que = estado.accion
         return f"E: entrar a {zona.capitalize()}" if que == "entrar" else f"E: buscar evidencia en {zona.capitalize()}"
-    if estado.guia and estado.costo_guia is not None:
+    if estado.guia:
         return f"Guia: la noticia esta en {estado.noticia.capitalize()}"
     return ""
 
@@ -173,15 +166,3 @@ def _franja(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mensaje: str
         y += fuentes.normal.get_linesize()
     ayuda = fuentes.chica.render(AYUDA, True, tema.texto)
     pantalla.blit(ayuda, ayuda.get_rect(bottomright=(caja.right - px(18), caja.bottom - px(8))))
-
-
-def _costo_guia(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, costo: int) -> None:
-    """Bajo el minimapa: cuanto cuesta llegar a la noticia por la guia, en rayos (sin cifras sueltas)."""
-    caja = pygame.Rect(RECT_MINIMAPA.x, RECT_MINIMAPA.bottom + px(8), RECT_MINIMAPA.w, px(40))
-    pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(10))
-    pygame.draw.rect(pantalla, tema.acento, caja, px(2), border_radius=px(10))
-    # Por la guia (camino mas corto hacia la noticia) caminar es gratis; desviarse cuesta los rayos de cada calle
-    texto = fuentes.chica.render("Por la guia: gratis" if costo == 0 else "Hasta la noticia:", True, tema.texto)
-    pantalla.blit(texto, texto.get_rect(midleft=(caja.x + px(10), caja.centery)))
-    for i in range(costo):
-        rayo(pantalla, tema.acento, (caja.x + texto.get_width() + px(26) + i * px(20), caja.centery), px(9))

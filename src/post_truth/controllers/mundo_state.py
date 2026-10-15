@@ -2,16 +2,15 @@
 
 Flujo (etapa M2): Menu -> Intro -> Seleccion -> MUNDO. La partida (PartidaSesion) vive en `app.partida` y es la
 fuente de verdad: este estado la crea al empezar una partida nueva y la conserva al volver del interior de un
-lugar. Caminar cobra energia por calle (`PartidaSesion.cobrar_calle`) y llegar a una plaza actualiza la zona de
-la sesion (`llegar`), asi que la zona del mundo y la de la partida siempre coinciden.
+lugar. Llegar a una plaza actualiza la zona de la sesion (`llegar`), asi que la zona del mundo y la de la partida
+siempre coinciden.
 
 Con E, junto a la puerta de un lugar: si ahi ocurre la noticia activa se entra (EscenaState como interior); si
-el lugar guarda evidencia de esa noticia, se busca (gratis: el viaje ya se pago). G muestra u oculta la guia.
+el lugar guarda evidencia de esa noticia, se busca. G muestra u oculta la guia.
 
 Las teclas presionadas se guardan con KEYDOWN/KEYUP (no con pygame.key.get_pressed) para poder probar el
 movimiento sin ventana con eventos simulados.
 """
-import math
 import random
 
 import pygame
@@ -20,7 +19,7 @@ from post_truth.config import EVENTOS_POR_PARTIDA, RUTA_EVENTOS, RUTA_GRAFO_CIUD
 from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import load_trees
 from post_truth.models import Role
-from post_truth.models.mundo import Calle, MundoCiudad
+from post_truth.models.mundo import MundoCiudad
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.sesion import PartidaSesion
 from post_truth.structures.grafo_ciudad import GrafoCiudad
@@ -71,18 +70,6 @@ class MundoState(BaseState):
 
     def _avisar(self, texto: str) -> None:
         self.aviso, self._t_aviso = texto, DURACION_AVISO
-
-    def _cobrar(self, calle: Calle) -> bool:
-        # Se entra a la calle por el extremo mas cercano al jugador: ese es el origen del tramo
-        desde, hasta = calle.desde, calle.hasta
-        plazas = self.mundo.plazas
-        if math.dist(self.mundo.jugador, plazas[hasta].pos) < math.dist(self.mundo.jugador, plazas[desde].pos):
-            desde, hasta = hasta, desde
-        r = self.sesion.cobrar_calle(self.jugador_id, desde, hasta)
-        if not r.ok and r.motivo == "sin_energia":
-            rayos = "rayo" if r.costo == 1 else "rayos"
-            self._avisar(f"No te alcanza la energia: esta calle cuesta {r.costo} {rayos}. Decide con lo que sabes.")
-        return r.ok
 
     def _llegar(self, zona: str) -> None:
         self.sesion.llegar(self.jugador_id, zona)
@@ -136,7 +123,7 @@ class MundoState(BaseState):
     def update(self, dt: float) -> None:
         dx = sum(DIRECCIONES[k][0] for k in self.presionadas)
         dy = sum(DIRECCIONES[k][1] for k in self.presionadas)
-        self.mundo.mover(dx, dy, dt, self._cobrar, self._llegar)   # sin direccion no se mueve
+        self.mundo.mover(dx, dy, dt, self._llegar)   # sin direccion no se mueve
         self._t_aviso = max(0.0, self._t_aviso - dt)
         if self._t_aviso == 0:
             self.aviso = ""
@@ -144,15 +131,11 @@ class MundoState(BaseState):
     def estado_vista(self) -> EstadoMundo:
         s = self.sesion
         ruta = s.mapa.ruta(self.mundo.ultima_plaza, s.zona_noticia) if self.guia else None
-        # costo estimado de seguir la guia: solo cuestan las calles que no van hacia la noticia (por la guia: 0)
-        costo = sum(s.mapa.distancia(a, b) for a, b in zip(ruta.zonas, ruta.zonas[1:])
-                    if not s.calle_gratis(a, b)) if ruta else None
         inv = s.jugador_actual.investigacion
         return EstadoMundo(
             noticia=s.zona_noticia, evidencias=inv.lugares_pendientes() - {s.zona_noticia},
-            accion=self.accion_disponible(), investigacion=inv,
-            indicadores=s.ciudad.as_display_rows(), guia=ruta.zonas if ruta else (),
-            costo_guia=costo, aviso=self.aviso,
+            accion=self.accion_disponible(),
+            indicadores=s.ciudad.as_display_rows(), guia=ruta.zonas if ruta else (), aviso=self.aviso,
             color_rol=list(Role).index(self.personaje.rol))
 
     def draw(self, pantalla: pygame.Surface) -> None:

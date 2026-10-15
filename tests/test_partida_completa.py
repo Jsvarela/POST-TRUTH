@@ -1,7 +1,7 @@
 """Partidas completas jugadas por un bot, sin ventana (SDL dummy).
 
 Recorre el flujo real Menu -> Seleccion -> Escena (decidir, propagacion por el grafo social, viajes
-por el mapa ponderado de la ciudad, evidencia por zona, pistas de la tarjeta y energia) -> Fin -> Menu,
+por el mapa ponderado de la ciudad, evidencia por zona y pistas de la tarjeta) -> Fin -> Menu,
 con eventos de teclado y de mouse, avanzando el tiempo con dt como lo hace el game loop. Tras cada paso dibuja (rotando
 los 3 temas) y comprueba invariantes: si algo se rompe en medio de una partida, falla aqui.
 """
@@ -81,12 +81,9 @@ class Bot:
         assert e.zona in e.mapa, f"zona inexistente: {e.zona}"
         assert e.dialogo.texto, "la caja de dialogo no puede quedar vacia"
         inv = e.investigacion
-        assert 0 <= inv.energia <= inv.energia_max, f"energia fuera de rango: {inv.energia}"
         ids = {p.id for p in inv.pistas} | {ev.id for ev in inv.evidencias}
         assert set(inv.descubiertas) <= ids, "hallazgos descubiertos desconocidos"
-        # La energia es una sola: lo gastado en pistas de la tarjeta + en viajes + lo que queda = el total
-        en_pistas = sum(inv.pista(id).costo for id in inv.descubiertas if id in {p.id for p in inv.pistas})
-        assert en_pistas + inv.viaje_gastado + inv.energia == inv.energia_max, "la energia no cuadra"
+        assert len(set(inv.descubiertas)) == len(inv.descubiertas), "un hallazgo se registro dos veces"
         assert inv.lugares_revisados().isdisjoint(inv.lugares_pendientes())
         assert e.botones, f"sin botones en la fase {e.fase}"
         if e.fase == DECIDIENDO:
@@ -119,71 +116,62 @@ class Bot:
         return self.escena.arbol.root.children[:4][self.escena.botones.index(boton)].tipo
 
     def investigar_pistas(self, max_pistas: int | None = None) -> None:
-        """Gasta energia en las pistas mas baratas de la tarjeta, con clic o con su letra."""
+        """Revisa pistas de la tarjeta en orden, con clic o con su letra."""
         e = self.escena
         hechas = 0
-        for pista in sorted(e.investigacion.pistas, key=lambda x: x.costo):
+        for pista in e.investigacion.pistas:
             if max_pistas is not None and hechas >= max_pistas:
                 break
-            if e.investigacion.energia < pista.costo or e.investigacion.esta_descubierta(pista.id):
+            if e.investigacion.esta_descubierta(pista.id):
                 continue
             if self.modo == "mouse":
                 self.clic(_layout_tarjeta(RECT_TARJETA)[pista.zona].center)
             else:
                 letra = "ASDFG"[e.investigacion.pistas.index(pista)]
                 self.tecla({"A": pygame.K_a, "S": pygame.K_s, "D": pygame.K_d, "F": pygame.K_f, "G": pygame.K_g}[letra])
-            assert e.investigacion.esta_descubierta(pista.id), "la pista debia revelarse (alcanzaba la energia)"
+            assert e.investigacion.esta_descubierta(pista.id), "la pista debia revelarse"
             hechas += 1
             self.pistas += 1
             self.avanzar(dibujar=False)
 
     def ir_a(self, destino: str) -> bool:
-        """Viaja a `destino` con clic en el mapa o con su letra (Q W E R T). Comprueba que se mueva
-        solo si alcanza la energia y que cobre exactamente el costo del camino mas corto."""
+        """Viaja a `destino` con clic en el mapa o con su letra (Q W E R T) y comprueba que llegue por el
+        camino mas corto."""
         e = self.escena
         if destino == e.zona:
             return False
-        costo = e.mapa.ruta(e.zona, destino).costo
-        energia = e.investigacion.energia
-        alcanzaba = costo <= energia
+        ruta = e.mapa.ruta(e.zona, destino).zonas
         if self.modo == "mouse":
             self.clic(_posiciones(e._estado_mapa(), RECT_MAPA)[destino])
         else:
             self.tecla({"Q": pygame.K_q, "W": pygame.K_w, "E": pygame.K_e, "R": pygame.K_r,
                         "T": pygame.K_t}[tecla_de(e.mapa, destino)])
-        assert (e.zona == destino) == alcanzaba, "el viaje debia ocurrir solo si alcanza la energia"
-        assert e.investigacion.energia == energia - (costo if alcanzaba else 0), "el viaje cobro mal"
-        if alcanzaba:
-            self.viajes += 1
+        assert e.zona == destino, "el viaje debia ocurrir"
+        assert e.ruta_vista == ruta, "el viaje no siguio el camino mas corto"
+        self.viajes += 1
         self.avanzar(dibujar=False)
-        return alcanzaba
+        return True
 
     def mover_al_azar(self) -> None:
         e = self.escena
         self.ir_a(self.rng.choice([z.id for z in e.mapa.zonas() if z.id != e.zona]))
 
     def viajar_a_evidencia(self) -> bool:
-        """Va a la zona con evidencia pendiente MAS BARATA de las que alcanza la energia."""
+        """Va a la zona con evidencia pendiente MAS CERCANA."""
         e = self.escena
         costos = e.mapa.costos_desde(e.zona)
-        posibles = [z for z in e.investigacion.lugares_pendientes() if 0 < costos[z] <= e.investigacion.energia]
+        posibles = [z for z in e.investigacion.lugares_pendientes() if costos[z] > 0]
         if not posibles:
             return False
         return self.ir_a(min(posibles, key=lambda z: (costos[z], z)))
 
-    def agotar_la_energia(self) -> None:
-        """Gasta TODA la energia (el viaje mas largo posible y todas las pistas baratas) para comprobar que
-        con energia 0 el jugador no se queda sin opciones."""
+    def investigar_todo(self) -> None:
+        """Revisa toda la tarjeta y visita todos los lugares con evidencia."""
         e = self.escena
-        costos = e.mapa.costos_desde(e.zona)
-        alcanzables = [z for z, c in costos.items() if 0 < c <= e.investigacion.energia]
-        if alcanzables:
-            self.ir_a(max(alcanzables, key=lambda z: (costos[z], z)))
         self.investigar_pistas()
-        while e.investigacion.energia > 0:               # lo que sobre, en viajes de 1
-            vecinos = [z for z, c in e.mapa.costos_desde(e.zona).items() if c == 1]
-            if not vecinos or not self.ir_a(vecinos[0]):
-                break
+        while self.viajar_a_evidencia():
+            pass
+        assert not e.investigacion.lugares_pendientes(), "quedo evidencia sin revisar"
 
     def elegir(self, habilitados: list) -> object:
         por_tipo = {self.tipo(b): b for b in habilitados}
@@ -191,7 +179,7 @@ class Bot:
             return por_tipo.get("compartir", habilitados[0])
         if self.politica == "ignorar":
             return por_tipo.get("ignorar", habilitados[0])
-        if self.politica in ("investigar", "informado", "agotar"):
+        if self.politica in ("investigar", "informado", "todo"):
             primero: dict[str, object] = {}
             for b in habilitados:
                 primero.setdefault(self.tipo(b), b)
@@ -208,16 +196,15 @@ class Bot:
     def jugar_publicacion(self) -> None:
         e = self.escena
         assert e.fase == DECIDIENDO
-        if self.politica == "investigar":                # evidencia de campo primero (la mas barata) y pistas con lo que sobre
+        if self.politica == "investigar":                # evidencia de campo primero (la mas cercana) y 2 pistas
             self.viajar_a_evidencia()
             self.investigar_pistas(max_pistas=2)
         elif self.politica == "informado":               # tarjeta primero; si apunta a falsa, se busca evidencia de campo
             self.investigar_pistas(max_pistas=2)
             if e.investigacion.veredicto() != "verdadera":
                 self.viajar_a_evidencia()
-        elif self.politica == "agotar":
-            self.agotar_la_energia()
-            assert e.investigacion.energia >= 0
+        elif self.politica == "todo":
+            self.investigar_todo()
         elif self.politica == "azar":                    # explora un poco, sin criterio
             for _ in range(self.rng.randint(0, 2)):
                 self.mover_al_azar()
@@ -293,11 +280,11 @@ class PartidaCompletaTest(unittest.TestCase):
             self.assertIs(self.app.estados._actual, self.app.estados._estados["menu"])
 
     def escena_inicial_limpia(self) -> tuple[bool, bool, bool]:
-        """Entrar de nuevo a la escena reinicia ciudad, posicion y energia."""
+        """Entrar de nuevo a la escena reinicia ciudad, posicion y hallazgos."""
         e = self.app.estados._estados["escena"]
         self.app.estados.cambiar("escena")
         res = (e.zona == e.mapa.zona_inicial,
-               e.investigacion.energia == e.investigacion.energia_max and e.investigacion.viaje_gastado == 0,
+               e.investigacion.lugares_revisados() <= {e.zona},
                e.ciudad.score == 0 and e.fase == DECIDIENDO)
         self.app.estados.cambiar("menu")
         return res
@@ -312,17 +299,17 @@ class PartidaCompletaTest(unittest.TestCase):
         for rol in range(4):
             Bot(self.app, 200 + rol, politica="compartir").partida(rol, 1)
 
-    def test_investigar_viaja_a_la_evidencia_mas_barata_y_decide_con_respaldo(self) -> None:
+    def test_investigar_viaja_a_la_evidencia_mas_cercana_y_decide_con_respaldo(self) -> None:
         for rol in range(4):
             bot = Bot(self.app, 300 + rol, politica="investigar", modo="mouse" if rol % 2 else "teclado")
             bot.partida(rol, 0)
             self.assertGreater(bot.viajes, 0, "el bot debia viajar a buscar evidencia")
             self.assertLess(bot.escena.ciudad.misinformation, 100)
 
-    def test_sin_energia_el_jugador_sigue_teniendo_todas_las_opciones(self) -> None:
-        """Se gasta TODA la energia de cada publicacion y aun asi se puede decidir y la partida termina."""
+    def test_investigar_todo_en_cada_publicacion_y_la_partida_termina(self) -> None:
+        """Se revisa toda la tarjeta y todo el mapa en cada publicacion y aun asi la partida termina."""
         for rol in range(4):
-            bot = Bot(self.app, 600 + rol, politica="agotar", modo="mouse" if rol % 2 else "teclado")
+            bot = Bot(self.app, 600 + rol, politica="todo", modo="mouse" if rol % 2 else "teclado")
             bot.partida(rol, 1)
             self.assertGreater(bot.viajes + bot.pistas, 0)
 

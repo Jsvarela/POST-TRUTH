@@ -9,11 +9,9 @@ de PASO segundos. Con sub-pasos fijos, 30 y 60 FPS recorren exactamente la misma
 no depende de los FPS. Si un paso cae fuera de las calles, se corrige al punto valido mas cercano: el personaje
 resbala a lo largo del borde en vez de quedarse pegado.
 
-COBRO POR CALLE (etapa M2): cada calle cuesta su distancia del grafo de la ciudad (en rayos de energia). Se cobra
-al ENTRAR a una calle que no esta pagada; queda pagada hasta llegar a cualquiera de sus dos plazas, asi que dar la
-vuelta a mitad de calle no cobra ni devuelve nada. Si no alcanza, la entrada a esa calle funciona como pared.
-Para no cobrar dos veces por moverse justo en la boca de una calle hay histeresis: se sale de una plaza al pasar
-su radio, pero se llega a ella recien al estar MARGEN_LLEGADA * radio_jugador mas adentro.
+LLEGADA: al entrar a una plaza distinta de la ultima se avisa (`llegar`) para que la partida quede en la misma
+zona. Se llega recien al estar MARGEN_LLEGADA * radio_jugador dentro del borde (histeresis), para no "llegar" por
+rozar la boca de una calle.
 
 Las posiciones estan en pixeles del MUNDO (data/mundo.json), no de la pantalla: la vista las convierte.
 """
@@ -74,8 +72,7 @@ def _acercar(p: Punto, centro: Punto, radio: float) -> Punto:
 class MundoCiudad:
     def __init__(self, tamano: tuple[float, float], plazas: list[Plaza], calles: list[Calle],
                  edificios: list[Edificio], aparicion: Punto, velocidad: float = 240, radio_jugador: float = 14,
-                 jugador: Punto | None = None, ultima_plaza: str | None = None,
-                 calles_pagadas: set[frozenset[str]] | None = None) -> None:
+                 jugador: Punto | None = None, ultima_plaza: str | None = None) -> None:
         self.tamano = tamano
         self.plazas = {p.id: p for p in plazas}
         self.calles = calles
@@ -87,13 +84,11 @@ class MundoCiudad:
         self.jugador: Punto = jugador if jugador is not None else aparicion
         if not self.es_transitable(self.jugador):
             raise ValueError(f"El jugador no esta sobre una calle o plaza: {self.jugador}")
-        # Ultima plaza a la que se llego (la sesion de la partida tiene esta misma zona) y calles ya pagadas
+        # Ultima plaza a la que se llego (la sesion de la partida tiene esta misma zona)
         self.ultima_plaza = ultima_plaza or self.plaza_en(self.jugador) or min(
             self.plazas.values(), key=lambda p: math.dist(p.pos, self.jugador)).id
         if self.ultima_plaza not in self.plazas:
             raise ValueError(f"Plaza desconocida: {self.ultima_plaza}")
-        self.calles_pagadas: set[frozenset[str]] = set(calles_pagadas or ())
-        self.bloqueo: Calle | None = None   # calle que no se pudo tomar por falta de energia (para avisar)
 
     def _validar(self) -> None:
         if self.tamano[0] <= 0 or self.tamano[1] <= 0 or self.velocidad <= 0 or self.radio_jugador <= 0:
@@ -146,50 +141,24 @@ class MundoCiudad:
                 return pl.id
         return None
 
-    def calle_en(self, p: Punto) -> Calle | None:
-        """La calle sobre la que esta p si no esta en una plaza (en los datos, fuera de las plazas las calles no
-        se solapan; si se solaparan, gana la mas cercana)."""
-        if self.plaza_en(p) is not None:
-            return None
-        cerca = [(math.dist(p, _cercano_en_segmento(p, self.plazas[c.desde].pos, self.plazas[c.hasta].pos)), i)
-                 for i, c in enumerate(self.calles)]
-        d, i = min(cerca, default=(math.inf, -1))
-        return self.calles[i] if d <= self.calles[i].ancho / 2 else None
-
     # --- movimiento e interaccion --------------------------------------------------------
-    def mover(self, dir_x: float, dir_y: float, dt: float, cobrar: Callable[[Calle], bool] | None = None,
-              llegar: Callable[[str], None] | None = None) -> None:
+    def mover(self, dir_x: float, dir_y: float, dt: float, llegar: Callable[[str], None] | None = None) -> None:
         """Mueve al jugador en la direccion (dir_x, dir_y) durante dt segundos. La diagonal no es mas rapida.
-
-        `cobrar(calle)` se llama al entrar a una calle no pagada y devuelve si alcanzo la energia (sin `cobrar`,
-        caminar es gratis); `llegar(zona)` avisa al llegar a una plaza distinta de la ultima."""
+        `llegar(zona)` avisa al llegar a una plaza distinta de la ultima."""
         largo = math.hypot(dir_x, dir_y)
         if largo == 0 or dt <= 0:
             return
         ux, uy = dir_x / largo, dir_y / largo
         pasos = max(1, math.ceil(dt / PASO - 1e-9))
         h = dt / pasos
-        self.bloqueo = None
         for _ in range(pasos):
             x, y = self.jugador
-            nuevo = self._corregir((x + ux * self.velocidad * h, y + uy * self.velocidad * h))
-            calle = self.calle_en(nuevo)
-            if calle is not None:
-                clave = frozenset((calle.desde, calle.hasta))
-                if clave not in self.calles_pagadas:
-                    if cobrar is not None and not cobrar(calle):
-                        self.bloqueo = calle      # no alcanza: la calle es una pared, el jugador no avanza
-                        return
-                    self.calles_pagadas.add(clave)
-            else:
-                plaza = self.plaza_en(nuevo, MARGEN_LLEGADA * self.radio_jugador)
-                if plaza is not None:
-                    self.calles_pagadas.clear()   # al llegar a una plaza se acaba lo pagado
-                    if plaza != self.ultima_plaza:
-                        self.ultima_plaza = plaza
-                        if llegar is not None:
-                            llegar(plaza)
-            self.jugador = nuevo
+            self.jugador = self._corregir((x + ux * self.velocidad * h, y + uy * self.velocidad * h))
+            plaza = self.plaza_en(self.jugador, MARGEN_LLEGADA * self.radio_jugador)
+            if plaza is not None and plaza != self.ultima_plaza:
+                self.ultima_plaza = plaza
+                if llegar is not None:
+                    llegar(plaza)
 
     def zona_al_alcance(self) -> str | None:
         """La zona cuyo edificio tiene la entrada a menos de su radio del jugador (la mas cercana), o None. Solo
@@ -210,7 +179,6 @@ class MundoCiudad:
             "aparicion": list(self.aparicion),
             "jugador": list(self.jugador),
             "ultima_plaza": self.ultima_plaza,
-            "calles_pagadas": sorted(sorted(c) for c in self.calles_pagadas),
         }
 
     @classmethod
@@ -226,7 +194,6 @@ class MundoCiudad:
             punto(d["aparicion"]), float(d.get("velocidad", 240)), float(d.get("radio_jugador", 14)),
             punto(d["jugador"]) if "jugador" in d else None,
             d.get("ultima_plaza"),
-            {frozenset(c) for c in d.get("calles_pagadas", [])},
         )
 
     @classmethod

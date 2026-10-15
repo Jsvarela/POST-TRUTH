@@ -59,11 +59,9 @@ class ZonasViewTest(unittest.TestCase):
             self.assertEqual(zona_en(estado, RECT_MAPA, punto), id)
         self.assertIsNone(zona_en(estado, RECT_MAPA, (RECT_MAPA.right - 1, RECT_MAPA.centery)))
 
-    # --- minimapa nuevo: lugares de investigacion con distancias --------------------------------
+    # --- minimapa: lugares de investigacion ---------------------------------------------------------
     def _estado(self, actual: str = "plaza", **kw) -> EstadoMapa:
-        base = {"costos": self.ciudad.costos_desde(actual), "energia": 5}
-        base.update(kw)
-        return EstadoMapa(self.ciudad, actual, **base)
+        return EstadoMapa(self.ciudad, actual, **kw)
 
     def _imagen(self, estado: EstadoMapa, tema_id: str = "normal") -> bytes:
         tema = TEMAS[tema_id]
@@ -76,9 +74,9 @@ class ZonasViewTest(unittest.TestCase):
         estados = [
             self._estado(),
             self._estado(pendientes={"colegio", "alcaldia"}, revisadas={"barrio"}, teclas=True),
-            self._estado(ruta=ruta.zonas, costo_ruta=ruta.costo, hover="barrio", teclas=True),
-            self._estado(energia=0, hover="alcaldia"),      # todo apagado: no alcanza para ningun viaje
-            self._estado("colegio", ruta=("colegio", "plaza"), costo_ruta=2, pendientes={"colegio"}, hover="colegio"),
+            self._estado(ruta=ruta.zonas, hover="barrio", teclas=True),
+            self._estado(hover="alcaldia"),
+            self._estado("colegio", ruta=("colegio", "plaza"), pendientes={"colegio"}, hover="colegio"),
             self._estado(hover="parque", revisadas={"parque"}),
             EstadoMapa(self.ciudad, "colegio"),             # el minimo
             EstadoMapa(self.ciudad, "colegio", mostrar_ayuda=False),   # como lo usa la introduccion
@@ -93,7 +91,7 @@ class ZonasViewTest(unittest.TestCase):
     def test_el_pin_del_jugador_se_dibuja_encima_de_todo_y_se_ve_en_todos_los_temas(self) -> None:
         """Aunque la zona del jugador tenga algo por descubrir y el camino pase por ella, el pin queda visible."""
         estado = self._estado("plaza", pendientes={"plaza", "colegio"}, ruta=("colegio", "plaza", "alcaldia"),
-                              costo_ruta=4, hover="plaza", teclas=True)
+                              hover="plaza", teclas=True)
         x, y = _posiciones(estado, RECT_MAPA)["plaza"]
         cabeza = (RECT_MAPA.x + x, RECT_MAPA.y + y - RADIO + px(3) - px(22))
         for id, tema in TEMAS.items():
@@ -126,40 +124,29 @@ class ZonasViewTest(unittest.TestCase):
 
     def test_la_ruta_elegida_se_resalta(self) -> None:
         sin = self._imagen(self._estado())
-        con = self._imagen(self._estado(ruta=("plaza", "alcaldia"), costo_ruta=2))
-        otra = self._imagen(self._estado(ruta=("plaza", "parque", "barrio"), costo_ruta=2))
+        con = self._imagen(self._estado(ruta=("plaza", "alcaldia")))
+        otra = self._imagen(self._estado(ruta=("plaza", "parque", "barrio")))
         self.assertEqual(len({sin, con, otra}), 3)
 
     # --- el jugador no ve el grafo: nada de distancias, cifras ni letras sobre el mapa ---------------
     def test_el_mapa_no_dibuja_distancias_ni_cifras(self) -> None:
-        """La distancia de cada via y el costo total de la ruta son calculo interno: cambiarlos no cambia el dibujo."""
+        """La distancia de cada via es calculo interno: cambiarla no cambia el dibujo."""
         copia = GrafoCiudad.from_dict(self.ciudad.to_dict())
-        antes = self._imagen(EstadoMapa(copia, "plaza", ruta=("plaza", "alcaldia"), costo_ruta=2))
+        antes = self._imagen(EstadoMapa(copia, "plaza", ruta=("plaza", "alcaldia")))
         copia.eliminar_conexion("barrio", "plaza")
         copia.agregar_conexion("barrio", "plaza", 7)
-        despues = self._imagen(EstadoMapa(copia, "plaza", ruta=("plaza", "alcaldia"), costo_ruta=2))
+        despues = self._imagen(EstadoMapa(copia, "plaza", ruta=("plaza", "alcaldia")))
         self.assertEqual(antes, despues)                    # otra distancia, mismo mapa
-        self.assertEqual(self._imagen(self._estado(ruta=("plaza", "alcaldia"), costo_ruta=2)),
-                         self._imagen(self._estado(ruta=("plaza", "alcaldia"), costo_ruta=9)))   # otro costo total, mismo mapa
 
     def test_las_zonas_no_llevan_numeros_ni_letras_encima(self) -> None:
-        """Sin el mouse encima, mostrar o no los costos y las teclas no cambia el mapa."""
-        base = self._imagen(self._estado(energia=5, teclas=False))
-        self.assertEqual(base, self._imagen(self._estado(energia=5, teclas=True)))
-        self.assertEqual(base, self._imagen(self._estado(energia=None, teclas=False)))
+        """Sin el mouse encima, mostrar o no las teclas no cambia el mapa."""
+        self.assertEqual(self._imagen(self._estado(teclas=False)), self._imagen(self._estado(teclas=True)))
 
-    def test_los_lugares_a_los_que_no_alcanza_la_energia_se_ven_apagados(self) -> None:
-        self.assertNotEqual(self._imagen(self._estado(energia=5)), self._imagen(self._estado(energia=1)))
-        self.assertEqual(self._imagen(self._estado(energia=5)), self._imagen(self._estado(energia=2)))   # con 2 llega a todo desde la Plaza
-
-    def test_la_franja_de_ayuda_explica_el_viaje_con_rayos_al_pasar_el_mouse(self) -> None:
+    def test_la_franja_de_ayuda_dice_a_donde_se_va_al_pasar_el_mouse(self) -> None:
         sin_mouse = self._imagen(self._estado())
-        colegio = self._imagen(self._estado(hover="colegio"))      # cuesta 2
-        parque = self._imagen(self._estado(hover="parque"))        # cuesta 1
+        colegio = self._imagen(self._estado(hover="colegio"))
+        parque = self._imagen(self._estado(hover="parque"))
         self.assertEqual(len({sin_mouse, colegio, parque}), 3)
-        # sin energia suficiente el mensaje cambia
-        self.assertNotEqual(self._imagen(self._estado(hover="colegio", energia=5)),
-                            self._imagen(self._estado(hover="colegio", energia=1)))
 
     def test_la_tecla_de_atajo_solo_aparece_en_la_franja_de_ayuda(self) -> None:
         self.assertNotEqual(self._imagen(self._estado(hover="colegio", teclas=False)),
@@ -187,7 +174,7 @@ class ZonasViewTest(unittest.TestCase):
                     self.assertGreater(((x - x2) ** 2 + (y - y2) ** 2) ** 0.5, 2 * RADIO + px(10))
 
     def test_colores_del_tema(self) -> None:
-        estado = self._estado(pendientes={"colegio"}, ruta=("plaza", "colegio"), costo_ruta=2, hover="colegio")
+        estado = self._estado(pendientes={"colegio"}, ruta=("plaza", "colegio"), hover="colegio")
         self.assertEqual(len({self._imagen(estado, tema) for tema in TEMAS}), 3)
 
     def test_zona_de_tecla(self) -> None:

@@ -18,7 +18,6 @@ from post_truth.controllers.intro_state import RECT_SUBTITULO
 from post_truth.escala import ESCALA_MAXIMA, ESCALA_MINIMA, escala_para_pantalla
 from post_truth.views.componentes import Fuentes
 from post_truth.views.escena_view import RECT_ESCENA, RECT_HUD, RECT_MAPA, RECT_PANEL, RECT_PERSONAJE, RECT_TARJETA
-from post_truth.views.iconos import fila_de_rayos, rayo
 from post_truth.views.intro_view import ALTO_ARTE
 from post_truth.views.theme import TEMAS
 
@@ -132,14 +131,14 @@ class GeometriaCabeEnLaVentanaTest(unittest.TestCase):
         self.assertLess(RECT_SUBTITULO.bottom + px(20), ALTO)         # y queda sitio para la ayuda
 
     def test_los_personajes_no_tapan_las_etiquetas_de_la_esquina(self) -> None:
-        """"Estas en" y "Energia" viven arriba a la izquierda: la cabeza del personaje queda debajo de ellas."""
+        """"Estas en" vive arriba a la izquierda: la cabeza del personaje queda debajo (con margen de sobra)."""
         from post_truth.views.personaje_view import ALTO_U, ANCHO_U
         pygame.init()
         f = Fuentes.crear()
-        borde_inferior_de_la_energia = RECT_ESCENA.y + px(56) + f.normal.get_height() + px(10)
+        borde_inferior = RECT_ESCENA.y + px(56) + f.normal.get_height() + px(10)
         s = min(RECT_PERSONAJE.width / ANCHO_U, RECT_PERSONAJE.height / ALTO_U)
         coronilla = RECT_PERSONAJE.bottom - ALTO_U * s + 24 * s     # el pelo empieza en y = 24 de la caja de diseno
-        self.assertGreaterEqual(coronilla, borde_inferior_de_la_energia)
+        self.assertGreaterEqual(coronilla, borde_inferior)
         pygame.quit()
 
 
@@ -209,68 +208,12 @@ class JuegoCompletoEnVariasEscalasTest(unittest.TestCase):
         self.assertEqual(self._correr("1.5"), "OK 1536 960")
 
 
-class IconosTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        pygame.init()
-        cls.s = pygame.display.set_mode((200, 100))
-
-    def _img(self, **kw) -> bytes:
-        self.s.fill((0, 0, 0))
-        rayo(self.s, (255, 255, 0), (50, 50), 20, **kw)
-        return pygame.image.tobytes(self.s, "RGB")
-
-    def test_el_rayo_lleno_y_el_vacio_son_distintos_y_no_estan_en_blanco(self) -> None:
-        lleno, vacio = self._img(lleno=True), self._img(lleno=False)
-        en_blanco = bytes(200 * 100 * 3)
-        self.assertNotEqual(lleno, vacio)
-        self.assertNotEqual(lleno, en_blanco)
-        self.assertNotEqual(vacio, en_blanco)
-
-    def test_fila_de_rayos_rellena_los_primeros(self) -> None:
-        self.s.fill((0, 0, 0))
-        fila_de_rayos(self.s, (255, 255, 0), 20, 50, 5, 12, 30, llenos=2)
-        a = pygame.image.tobytes(self.s, "RGB")
-        self.s.fill((0, 0, 0))
-        fila_de_rayos(self.s, (255, 255, 0), 20, 50, 5, 12, 30, llenos=4)
-        self.assertNotEqual(a, pygame.image.tobytes(self.s, "RGB"))
-
-    def test_fila_devuelve_donde_termina(self) -> None:
-        self.assertEqual(fila_de_rayos(self.s, (1, 1, 1), 10, 50, 3, 8, 20), 10 + 2 * 20 + 8)
-
-
-class EnergiaConRayosTest(unittest.TestCase):
-    """La energia se ve siempre como rayos (HUD, costo de una pista de la tarjeta y viajes del mapa)."""
-
+class PanelTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         pygame.init()
         cls.pantalla = pygame.display.set_mode((ANCHO, ALTO))
         cls.fuentes = Fuentes.crear()
-
-    def _etiqueta(self, energia: int) -> bytes:
-        from post_truth.models.pistas import Investigacion
-        from post_truth.views.escena_view import _dibujar_energia
-        inv = Investigacion((), energia_max=5, energia=energia)
-        self.pantalla.fill((0, 0, 0))
-        _dibujar_energia(self.pantalla, self.fuentes, TEMAS["normal"], inv, px(60))
-        return pygame.image.tobytes(self.pantalla.subsurface(pygame.Rect(0, px(50), px(330), px(70))), "RGB")
-
-    def test_la_etiqueta_de_energia_muestra_un_rayo_por_unidad(self) -> None:
-        imagenes = {self._etiqueta(n) for n in range(6)}
-        self.assertEqual(len(imagenes), 6)                      # 0, 1, 2, 3, 4 y 5 rayos llenos se ven distintos
-
-    def test_el_costo_de_una_pista_se_dibuja_con_rayos(self) -> None:
-        from post_truth.models.pistas import Pista, Senal, ZonaTarjeta
-        from post_truth.views.tarjeta_civitas_view import _insignia
-
-        def costo(c: int) -> bytes:
-            self.pantalla.fill((0, 0, 0))
-            p = Pista("x", ZonaTarjeta.AUTOR, "t", "h", Senal.FALSA, c)
-            _insignia(self.pantalla, self.fuentes, TEMAS["normal"], (px(300), px(100)), p, False, "A")
-            return pygame.image.tobytes(self.pantalla.subsurface(pygame.Rect(px(200), px(60), px(160), px(80))), "RGB")
-
-        self.assertEqual(len({costo(1), costo(2), costo(3)}), 3)
 
     def test_el_titulo_de_consecuencias_cabe_junto_al_mapa(self) -> None:
         from post_truth.views.escena_view import RECT_MAPA, RECT_PANEL

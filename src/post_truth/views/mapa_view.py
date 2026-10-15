@@ -1,9 +1,9 @@
 """Minimapa de la ciudad: los lugares donde se investiga, dibujado para un jugador (no para un programador).
 
 Se ve limpio: calles simples, cada lugar con su icono y su nombre, el pin de donde estas y un rombo en
-los lugares donde queda algo por descubrir. NO se muestran distancias, numeros ni letras de atajo: el
-costo de un viaje se explica en lenguaje normal, con rayos de energia, en el cuadro que aparece al pasar
-el mouse sobre un lugar (junto con la tecla de atajo, si se pide). La distancia y la ruta mas corta
+los lugares donde queda algo por descubrir. NO se muestran distancias, numeros ni letras de atajo: a donde
+se va se explica en el cuadro que aparece al pasar el mouse sobre un lugar (junto con la tecla de atajo, si
+se pide). La distancia y la ruta mas corta
 (Dijkstra, structures/grafo_ciudad.py) son calculo interno; aqui solo se dibuja su resultado.
 
 Solo dibuja los datos que le entrega el controlador (`EstadoMapa`) y responde "que zona hay bajo este
@@ -12,7 +12,6 @@ punto" para los clics; no cambia nada del modelo. Colores del tema; ademas del c
     rombo con "?"         -> en ese lugar queda algo por descubrir de la noticia actual
     rombo hueco con visto -> ya revisado
     linea gruesa de acento -> el camino hacia el lugar que se esta mirando
-    lugar apagado         -> la energia no alcanza para ir hasta alli
 """
 from dataclasses import dataclass, field
 
@@ -21,7 +20,6 @@ import pygame
 from post_truth.config import px
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.views.componentes import Fuentes
-from post_truth.views.iconos import rayo
 from post_truth.views.theme import Tema
 
 RADIO = px(22)          # radio de cada lugar en el minimapa de la escena
@@ -33,10 +31,7 @@ TECLAS_VIAJE = "QWERT"  # tecla de la 1.a, 2.a... zona del mapa (en el orden del
 class EstadoMapa:
     ciudad: GrafoCiudad
     actual: str                                            # zona donde esta el jugador
-    costos: dict[str, int] = field(default_factory=dict)   # costo de viajar desde `actual` a cada zona (Dijkstra)
-    energia: int | None = None                             # energia disponible; None = no hablar de viajes
     ruta: tuple[str, ...] = ()                             # camino resaltado (el del lugar bajo el mouse o el ultimo recorrido)
-    costo_ruta: int | None = None                          # costo total de ese camino
     pendientes: set[str] = field(default_factory=set)      # lugares con algo por descubrir de la noticia actual
     revisadas: set[str] = field(default_factory=set)       # lugares ya revisados
     hover: str | None = None                               # lugar bajo el mouse
@@ -156,8 +151,7 @@ def _tecla(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, letra: str, d
 def _franja_de_ayuda(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: pygame.Rect,
                      estado: EstadoMapa) -> None:
     """Zona fija bajo el mapa (no tapa nada). Sin mouse sobre un lugar: que significan el pin y el rombo.
-    Con el mouse sobre un lugar: a donde se va, cuanto cuesta (con rayos, no con cifras sueltas) y si queda
-    algo por descubrir."""
+    Con el mouse sobre un lugar: a donde se va y si queda algo por descubrir."""
     franja = pygame.Rect(rect.x + px(10), rect.bottom - ALTO_FRANJA - px(8), rect.width - px(20), ALTO_FRANJA)
     pygame.draw.rect(pantalla, tema.panel, franja, border_radius=px(10))
     f = fuentes.chica
@@ -176,16 +170,6 @@ def _franja_de_ayuda(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rec
         pantalla.blit(f.render(f"Ir a {zona.nombre}", True, tema.acento), (x0, y))
         if estado.teclas:
             _tecla(pantalla, fuentes, tema, tecla_de(estado.ciudad, zona.id), franja.right - px(14), y + f.get_linesize() // 2)
-        costo = estado.costos.get(zona.id)
-        if estado.energia is not None and costo is not None:
-            y += paso
-            if costo <= estado.energia:
-                pantalla.blit(f.render("Cuesta", True, tema.texto), (x0, y))
-                xr = x0 + f.size("Cuesta")[0] + px(16)
-                for k in range(costo):
-                    rayo(pantalla, tema.acento, (xr + k * px(18), y + f.get_linesize() // 2), px(9))
-            else:
-                pantalla.blit(f.render("No te alcanza la energia", True, tema.malo), (x0, y))
     y += paso
     if zona.id in estado.pendientes:
         _rombo(pantalla, tema.detalle, (x0 + px(8), y + f.get_linesize() // 2), px(8), True)
@@ -216,18 +200,12 @@ def dibujar_mapa(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: p
         x, y = pos[zona.id]
         es_actual = zona.id == estado.actual
         mirado = estado.hover == zona.id
-        inalcanzable = (estado.energia is not None and not es_actual
-                        and estado.costos.get(zona.id, 0) > estado.energia)
         pygame.draw.circle(pantalla, tema.panel, (x, y), radio)
         _icono_zona(pantalla, tema, zona.id, (x, y), radio - px(3), zona.nombre, fuentes.normal)
-        if inalcanzable:                                  # apagado: no alcanza la energia
-            velo = pygame.Surface((radio * 2, radio * 2), pygame.SRCALPHA)
-            pygame.draw.circle(velo, (*tema.fondo, 150), (radio, radio), radio)
-            pantalla.blit(velo, (x - radio, y - radio))
         destacado = es_actual or mirado or zona.id in estado.ruta
         pygame.draw.circle(pantalla, tema.acento if destacado else tema.borde, (x, y), radio,
                            px(4) if (es_actual or mirado) else px(2))
-        nombre = fuentes.chica.render(zona.nombre, True, tema.acento if es_actual else (tema.borde if inalcanzable else tema.texto))
+        nombre = fuentes.chica.render(zona.nombre, True, tema.acento if es_actual else tema.texto)
         pantalla.blit(nombre, nombre.get_rect(midtop=(x, y + radio + px(5))))
         if zona.id in estado.pendientes:                  # algo por descubrir: rombo relleno con "?"
             c = (x + radio - px(2), y - radio + px(4))

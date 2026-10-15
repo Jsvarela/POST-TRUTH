@@ -4,7 +4,7 @@ Solo dibuja lo que le entrega el controlador (la noticia, el estado de la `Inves
 bajo el mouse) y responde "que zona hay bajo este punto"; no cambia el modelo. Todo se dibuja con
 formas de Pygame (avatar, imagen placeholder, corazon y globo de comentarios) y con colores del tema.
 
-Cada zona con pista muestra una insignia con su tecla (A S D F G) y puntos de costo; al revisarla
+Cada zona con pista muestra una insignia con su tecla (A S D F G); al revisarla
 la insignia pasa a una forma segun lo hallado: triangulo (alerta), circulo con visto (confianza) o
 circulo con guion (neutra), asi que no depende solo del color (daltonismo).
 
@@ -20,14 +20,13 @@ from post_truth.models import NewsEvent
 from post_truth.models.pistas import Investigacion, Pista, Senal, ZonaTarjeta
 from post_truth.models.publicacion import Avatar
 from post_truth.views.componentes import Fuentes, ajustar_texto, dibujar_texto_ajustado
-from post_truth.views.iconos import rayo
 from post_truth.views.retrato_view import dibujar_retrato
 from post_truth.views.theme import Tema
 from post_truth.views.zona_view import dibujar_fondo_zona
 
 TECLAS_PISTA = "ASDFG"   # tecla de la 1.a, 2.a... pista de la noticia (como Q W E R para moverse)
 MAX_LINEAS_TEXTO = 3
-RESERVA_INSIGNIA = px(70)    # px a la derecha de fuente y texto que se dejan libres para la insignia y el costo
+RESERVA_INSIGNIA = px(70)    # px a la derecha de fuente y texto que se dejan libres para la insignia
 
 
 @dataclass
@@ -118,12 +117,10 @@ def _globo(pantalla: pygame.Surface, color: tuple[int, int, int], centro: tuple[
 def _insignia(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, centro: tuple[int, int], pista: Pista,
               descubierta: bool, letra: str) -> None:
     x, y = centro
-    if not descubierta:   # "aqui hay algo que revisar": tecla + costo en puntos de energia
+    if not descubierta:   # "aqui hay algo que revisar": su tecla
         pygame.draw.circle(pantalla, tema.acento, centro, px(11))
         glifo = fuentes.chica.render(letra, True, tema.fondo)
         pantalla.blit(glifo, glifo.get_rect(center=centro))
-        for i in range(pista.costo):   # lo que cuesta revisarla: un rayo de energia por unidad
-            rayo(pantalla, tema.acento, (x - px(24) - i * px(14), y), px(7))
     elif pista.senal is Senal.FALSA:
         pygame.draw.polygon(pantalla, tema.malo, [(x, y - px(12)), (x + px(13), y + px(10)), (x - px(13), y + px(10))])
         signo = fuentes.chica.render("!", True, tema.fondo)
@@ -138,10 +135,9 @@ def _insignia(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, centro: tu
 
 def _tooltip(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, tarjeta: pygame.Rect, zona: pygame.Rect,
              pista: Pista, descubierta: bool) -> None:
-    """Cuadro junto a la zona: el hallazgo si ya se reviso; si no, solo el costo (sin delatar nada)."""
+    """Cuadro junto a la zona: el hallazgo si ya se reviso; si no, solo la invitacion (sin delatar nada)."""
     ancho = px(290)
-    texto = (f"{pista.titulo}\n{pista.hallazgo}" if descubierta
-             else f"Clic para investigar\nCosto: {pista.costo} de energia")
+    texto = f"{pista.titulo}\n{pista.hallazgo}" if descubierta else "Clic para investigar"
     lineas = ajustar_texto(texto, fuentes.chica, ancho - px(20))
     alto = len(lineas) * (fuentes.chica.get_linesize() + px(2)) + px(16)
     caja = pygame.Rect(0, 0, ancho, alto)
@@ -212,7 +208,7 @@ def dibujar_tarjeta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect
     _globo(pantalla, tema.acento, (r.x + px(128), r.centery))
     pantalla.blit(fuentes.normal.render(str(evento.comments), True, tema.texto), (r.x + px(146), r.y + px(1)))
 
-    # Zonas con pista: borde al pasar el mouse e insignia con tecla/costo o con lo hallado
+    # Zonas con pista: borde al pasar el mouse e insignia con su tecla o con lo hallado
     for i, pista in enumerate(evento.clues):
         zr = zonas[pista.zona]
         descubierta = investigacion.esta_descubierta(pista.id)

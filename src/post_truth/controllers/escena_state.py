@@ -4,12 +4,11 @@ Flujo por publicacion: DECIDIENDO (noticia + botones) -> [PROPAGACION] -> CONSEC
 (mensaje + efecto en la ciudad) -> siguiente publicacion ... -> FIN. Todo el contenido sale
 del DecisionTree cargado desde data/events.json; aqui no hay noticias fijas.
 
-INVESTIGAR (energia): cada publicacion es una tarjeta de Civitas con zonas clicables (autor, fuente,
+INVESTIGAR: cada publicacion es una tarjeta de Civitas con zonas clicables (autor, fuente,
 fecha, imagen, texto, estadisticas) que esconden pistas, y ademas deja EVIDENCIA en lugares del mapa
-de la ciudad (un testigo, un documento, una grabacion). Hay UNA energia por publicacion (3) para
-revisar la tarjeta y para viajar, y hay mas por revisar que energia: hay que elegir.
+de la ciudad (un testigo, un documento, una grabacion). Revisar y viajar son gratis.
 
-El ESTADO y las REGLAS (ciudad, jugadores, energia, zona, hallazgos, puntos, turnos, decidir/viajar/investigar)
+El ESTADO y las REGLAS (ciudad, jugadores, zona, hallazgos, puntos, turnos, decidir/viajar/investigar)
 viven en `sesion.PartidaSesion`, que no sabe de pygame y es serializable; este controlador solo traduce eventos
 a llamadas de la sesion y maneja lo visual (dialogo, botones, hover y la animacion de la propagacion).
 
@@ -81,7 +80,6 @@ class EscenaState(BaseState):
         self.animacion: AnimacionPropagacion | None = None
         self._narracion = ""
         self.ruta_vista: tuple[str, ...] = ()   # ultima ruta recorrida en esta publicacion (se resalta en el mapa)
-        self.costo_ruta_vista = 0
         self._hover = None        # zona de la tarjeta bajo el mouse
         self._hover_zona = None   # zona del mapa bajo el mouse
         # True si se entro desde el mundo caminable: la partida es la del mundo, no se viaja con el minimapa
@@ -182,34 +180,29 @@ class EscenaState(BaseState):
 
     def _estado_mapa(self) -> EstadoMapa:
         decidiendo = self.fase == DECIDIENDO
-        ruta, costo = self.ruta_vista, self.costo_ruta_vista
+        ruta = self.ruta_vista
         if decidiendo and self._hover_zona not in (None, self.zona):   # vista previa de la ruta bajo el mouse
             previa = self.mapa.ruta(self.zona, self._hover_zona)
             if previa is not None:
-                ruta, costo = previa.zonas, previa.costo
+                ruta = previa.zonas
         return EstadoMapa(
-            self.mapa, self.zona, self.mapa.costos_desde(self.zona),
-            energia=self.investigacion.energia if decidiendo else None,
-            ruta=ruta, costo_ruta=costo if ruta else None,
+            self.mapa, self.zona, ruta=ruta,
             pendientes=self.investigacion.lugares_pendientes() if decidiendo else set(),
             revisadas=self.investigacion.lugares_revisados(),
             hover=self._hover_zona if decidiendo else None, teclas=decidiendo,
             mostrar_ayuda=decidiendo and not self.interior)   # la franja de ayuda solo sirve mientras se decide
 
     def _viajar(self, destino: str) -> None:
-        """Ir a una zona cualquiera (la sesion cobra la distancia del camino mas corto y revela la evidencia)."""
+        """Ir a una zona cualquiera (la sesion la mueve por el camino mas corto y revela la evidencia)."""
         r = self.sesion.viajar(self.sesion.jugador_actual.id, destino)
         nombre = self._nombre_zona(destino)
         if not r.ok:
             if r.motivo == "sin_camino":
                 self._decir_en_sitio(f"No hay camino hasta {nombre}.")
-            elif r.motivo == "sin_energia":
-                self._decir_en_sitio(f"No te alcanza la energia: ir a {nombre} cuesta {r.costo} y te quedan "
-                                     f"{self.investigacion.energia}. Decide con lo que sabes o revisa algo mas barato.")
             return    # fuera de turno, misma zona o zona desconocida: no pasa nada
-        self.ruta_vista, self.costo_ruta_vista = r.ruta, r.costo
+        self.ruta_vista = r.ruta
         camino = " > ".join(self._nombre_zona(z) for z in r.ruta)
-        aviso = f"Viajas a {nombre} por {camino} (costo {r.costo})."
+        aviso = f"Viajas a {nombre} por {camino}."
         if r.evidencia is not None:
             aviso += f" {r.evidencia.titulo}: {r.evidencia.hallazgo}"
         elif r.revisada:
@@ -236,7 +229,7 @@ class EscenaState(BaseState):
 
     # --- transiciones -------------------------------------------------------------------
     def _cargar_evento(self) -> None:
-        """Abre la publicacion actual (energia completa para todos) y prepara la pantalla."""
+        """Abre la publicacion actual y prepara la pantalla."""
         self.sesion.abrir_evento()
         self._preparar_turno()
 
@@ -244,9 +237,9 @@ class EscenaState(BaseState):
         """Pantalla del jugador de turno: la noticia y sus botones."""
         self.impacto, self.animo = None, 0
         self._hover = self._hover_zona = None
-        self.ruta_vista, self.costo_ruta_vista = (), 0
+        self.ruta_vista = ()
         self.dialogo.set_texto(self.arbol.event.content, "Civitas")
-        # Si el jugador ya esta parado donde la noticia dejo evidencia, la sesion la revelo sola (no cuesta nada)
+        # Si el jugador ya esta parado donde la noticia dejo evidencia, la sesion la revelo sola
         evidencia = self.investigacion.evidencia_en(self.zona)
         if evidencia is not None and self.investigacion.esta_descubierta(evidencia.id):
             self._decir_en_sitio(f"Ya estas en {self._nombre_zona(self.zona)}. "
@@ -267,16 +260,10 @@ class EscenaState(BaseState):
         self.dialogo.completar()
 
     def _investigar(self, pista: Pista) -> None:
-        """Revisa una pista de la tarjeta: gasta energia, revela el hallazgo y marca la zona."""
+        """Revisa una pista de la tarjeta: revela el hallazgo (o lo relee) y marca la zona."""
         r = self.sesion.investigar(self.sesion.jugador_actual.id, pista)
-        if not r.ok:
-            return
-        if r.estado == "sin_energia":
-            aviso = (f"No te queda energia para revisar eso: cuesta {pista.costo} y tienes "
-                     f"{self.investigacion.energia}. Decide con lo que sabes, o relee una pista ya revisada.")
-        else:
-            aviso = f"{pista.titulo}: {pista.hallazgo}"   # "repetida" no cuesta nada: se relee
-        self._decir_en_sitio(aviso)
+        if r.ok:
+            self._decir_en_sitio(f"{pista.titulo}: {pista.hallazgo}")
 
     def _decidir(self, nodo: DecisionNode) -> None:
         r = self.sesion.decidir(self.sesion.jugador_actual.id, nodo)
