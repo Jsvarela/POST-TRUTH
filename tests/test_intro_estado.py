@@ -26,6 +26,7 @@ def clic(app: App, pos: tuple[int, int] = (500, 250)) -> None:
 class IntroEstadoTest(unittest.TestCase):
     def setUp(self) -> None:
         self.app = App()
+        self.app.flujo = "escena"   # estas pruebas usan el flujo anterior (Seleccion -> Escena)
         self.intro = self.app.estados._estados["intro"]
 
     def tearDown(self) -> None:

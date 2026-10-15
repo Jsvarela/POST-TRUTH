@@ -26,4 +26,9 @@ EVENTOS_POR_PARTIDA = 8
 RUTA_GRAFO_SOCIAL = Path(__file__).resolve().parents[2] / "data" / "grafo_social.json"
 RUTA_GRAFO_CIUDAD = Path(__file__).resolve().parents[2] / "data" / "grafo_ciudad.json"
 RUTA_INTRO = Path(__file__).resolve().parents[2] / "data" / "intro.json"
+# Flujo de juego tras la seleccion: "mundo" (caminar por la ciudad, por defecto) o "escena" (el flujo anterior,
+# como respaldo hasta pasar la entrega 2). Se cambia con la variable de entorno POSTTRUTH_FLUJO.
+FLUJO = os.environ.get("POSTTRUTH_FLUJO", "mundo")
+if FLUJO not in ("mundo", "escena"):
+    raise ValueError(f"POSTTRUTH_FLUJO debe ser 'mundo' o 'escena', no {FLUJO!r}")
 RUTA_MUNDO = Path(__file__).resolve().parents[2] / "data" / "mundo.json"

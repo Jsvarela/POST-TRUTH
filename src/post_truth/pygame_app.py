@@ -1,7 +1,7 @@
 """Game loop de Pygame + StateManager (migracion desde Tkinter)."""
 import pygame
 
-from post_truth.config import ANCHO, ALTO, FPS, TITULO, px
+from post_truth.config import FLUJO, ANCHO, ALTO, FPS, TITULO, px
 from post_truth.controllers.escena_state import EscenaState
 from post_truth.controllers.game_state import GameState
 from post_truth.controllers.intro_state import IntroState
@@ -28,6 +28,8 @@ class App:
         self.corriendo = True
         self.intro_vista = False  # la introduccion se muestra sola la primera vez de la sesion
         self.personaje: Personaje | None = None  # lo fija SeleccionState, lo lee EscenaState
+        self.flujo = FLUJO        # "mundo" o "escena" (respaldo): a donde lleva la seleccion
+        self.partida = None       # PartidaSesion compartida entre el mundo y el interior de los lugares
         self.estados = StateManager()
         self.estados.registrar("menu", MenuState(self))
         self.estados.registrar("intro", IntroState(self))

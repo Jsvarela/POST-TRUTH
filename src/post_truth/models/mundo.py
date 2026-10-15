@@ -192,9 +192,10 @@ class MundoCiudad:
             self.jugador = nuevo
 
     def zona_al_alcance(self) -> str | None:
-        """La zona cuyo edificio tiene la entrada a menos de su radio del jugador (la mas cercana), o None."""
+        """La zona cuyo edificio tiene la entrada a menos de su radio del jugador (la mas cercana), o None. Solo
+        cuenta el lugar de la plaza a la que el jugador LLEGO, asi la zona coincide con la de la partida."""
         cerca = [(math.dist(self.jugador, e.entrada), e.zona) for e in self.edificios
-                 if math.dist(self.jugador, e.entrada) <= e.radio]
+                 if math.dist(self.jugador, e.entrada) <= e.radio and e.zona == self.ultima_plaza]
         return min(cerca)[1] if cerca else None
 
     # --- serializacion -------------------------------------------------------------------

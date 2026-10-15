@@ -40,7 +40,7 @@ from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, PartidaSesion, Resu
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
 from post_truth.views.componentes import Boton, CajaDialogo
-from post_truth.views.escena_view import RECT_MAPA, RECT_TARJETA, dibujar_escena
+from post_truth.views.escena_view import AYUDA, AYUDA_INTERIOR, RECT_MAPA, RECT_TARJETA, dibujar_escena
 from post_truth.views.grafo_view import AnimacionPropagacion
 from post_truth.views.mapa_view import EstadoMapa, zona_de_tecla, zona_en
 from post_truth.views.tarjeta_civitas_view import EstadoTarjeta, pista_con_tecla, zona_en as zona_de_tarjeta
@@ -84,6 +84,9 @@ class EscenaState(BaseState):
         self.costo_ruta_vista = 0
         self._hover = None        # zona de la tarjeta bajo el mouse
         self._hover_zona = None   # zona del mapa bajo el mouse
+        # True si se entro desde el mundo caminable: la partida es la del mundo, no se viaja con el minimapa
+        # (se camina) y al terminar cada noticia se vuelve a la calle
+        self.interior = False
 
     # --- el estado vive en la sesion ----------------------------------------------------
     @property
@@ -160,6 +163,12 @@ class EscenaState(BaseState):
         return s.fase
 
     def al_entrar(self) -> None:
+        self.interior = self.app.partida is not None
+        if self.interior:                             # entrar a un lugar desde el mundo: misma partida
+            self._sesion = self.app.partida
+            self.animacion = None
+            self._preparar_turno()
+            return
         todos = load_trees(RUTA_EVENTOS)
         # Cada partida juega una seleccion al azar (y en orden al azar): el contenido cambia entre partidas
         arboles = self.rng.sample(todos, min(self.eventos_por_partida or len(todos), len(todos)))
@@ -185,7 +194,7 @@ class EscenaState(BaseState):
             pendientes=self.investigacion.lugares_pendientes() if decidiendo else set(),
             revisadas=self.investigacion.lugares_revisados(),
             hover=self._hover_zona if decidiendo else None, teclas=decidiendo,
-            mostrar_ayuda=decidiendo)   # la franja de ayuda solo sirve mientras se decide
+            mostrar_ayuda=decidiendo and not self.interior)   # la franja de ayuda solo sirve mientras se decide
 
     def _viajar(self, destino: str) -> None:
         """Ir a una zona cualquiera (la sesion cobra la distancia del camino mas corto y revela la evidencia)."""
@@ -210,7 +219,10 @@ class EscenaState(BaseState):
         self._decir_en_sitio(aviso)
 
     def _manejar_mapa(self, event: pygame.event.Event) -> None:
-        """Viajar: clic sobre una zona del mapa o su letra (Q W E R T); el mouse encima muestra la ruta."""
+        """Viajar: clic sobre una zona del mapa o su letra (Q W E R T); el mouse encima muestra la ruta.
+        Dentro de un lugar del mundo no se viaja con el minimapa: se sale a la calle y se camina."""
+        if self.interior:
+            return
         if event.type == pygame.MOUSEMOTION:
             self._hover_zona = zona_en(self._estado_mapa(), RECT_MAPA, event.pos)
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -235,8 +247,8 @@ class EscenaState(BaseState):
         self.ruta_vista, self.costo_ruta_vista = (), 0
         self.dialogo.set_texto(self.arbol.event.content, "Civitas")
         # Si el jugador ya esta parado donde la noticia dejo evidencia, la sesion la revelo sola (no cuesta nada)
-        if self.investigacion.descubiertas:
-            evidencia = self.investigacion.hallazgo(self.investigacion.descubiertas[0])
+        evidencia = self.investigacion.evidencia_en(self.zona)
+        if evidencia is not None and self.investigacion.esta_descubierta(evidencia.id):
             self._decir_en_sitio(f"Ya estas en {self._nombre_zona(self.zona)}. "
                                  f"{evidencia.titulo}: {evidencia.hallazgo}")
         self._construir_botones()
@@ -300,17 +312,29 @@ class EscenaState(BaseState):
     def _continuar(self) -> None:
         self.sesion.continuar()
         if self.sesion.fase != FIN:
+            if self.interior:
+                self.app.estados.cambiar("mundo")   # noticia resuelta: de vuelta a la calle por la siguiente
+                return
             self._preparar_turno()
             return
         self.impacto, self.animo = None, 1 if self.ciudad.score >= 0 else -1
         self.dialogo.set_texto(f"Termino la jornada en Ciudad Nova. Tu puntaje final es {self.ciudad.score}.", "Fin")
-        self.botones = [Boton(RECT_BOTON_CENTRAL, "Volver al menu (Enter)",
-                              lambda: self.app.estados.cambiar("menu"), atajo=pygame.K_RETURN)]
+        self.botones = [Boton(RECT_BOTON_CENTRAL, "Volver al menu (Enter)", self._volver_al_menu,
+                              atajo=pygame.K_RETURN)]
+
+    def _volver_al_menu(self) -> None:
+        self.app.partida = None    # la partida termino
+        self.app.estados.cambiar("menu")
 
     # --- ciclo del estado ---------------------------------------------------------------
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.app.estados.cambiar("menu")
+            if not self.interior:
+                self.app.estados.cambiar("menu")
+            elif self.fase == DECIDIENDO:
+                self.app.estados.cambiar("mundo")   # salir a la calle sin decidir (la noticia sigue pendiente)
+            elif self.fase == FIN:
+                self._volver_al_menu()
             return
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
             self.dialogo.completar()  # saltar la animacion del texto
@@ -366,4 +390,4 @@ class EscenaState(BaseState):
                        self._nombre_zona(self.zona) if self.zona else "",
                        self._estado_mapa() if en_mapa else None,
                        EstadoTarjeta(self.arbol.event, self.investigacion, self._hover)
-                       if self.fase == DECIDIENDO else None)
+                       if self.fase == DECIDIENDO else None, AYUDA_INTERIOR if self.interior else AYUDA)

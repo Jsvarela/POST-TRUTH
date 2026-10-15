@@ -34,6 +34,7 @@ def mover_mouse(app: App, pos: tuple[int, int]) -> None:
 class InvestigarEnEscenaTest(unittest.TestCase):
     def setUp(self) -> None:
         self.app = App()
+        self.app.flujo = "escena"   # estas pruebas usan el flujo anterior (Seleccion -> Escena)
         self.app.intro_vista = True
 
     def tearDown(self) -> None:

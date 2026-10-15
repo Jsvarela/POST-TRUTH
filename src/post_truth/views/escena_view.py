@@ -41,6 +41,7 @@ RECT_PANEL = pygame.Rect(px(330), px(68), px(664), px(328))
 RECT_ESCENA = pygame.Rect(0, px(57), ANCHO, px(404) - px(57))      # fondo de la zona (entre el HUD y el dialogo)
 RECT_TARJETA = pygame.Rect(RECT_PANEL.x + px(12), RECT_PANEL.y + px(8), px(346), px(312))   # tarjeta de Civitas (izquierda)
 RECT_MAPA = pygame.Rect(RECT_PANEL.right - px(10) - px(290), RECT_PANEL.y + px(8), px(290), px(312))  # minimapa (derecha)
+AYUDA_INTERIOR = "Investigar: clic en la publicacion o A S D F G   |   Decidir: 1-4   |   ESC: volver a la calle"
 AYUDA = "Investigar: clic en la publicacion o A S D F G   |   Viajar: clic en el mapa o Q W E R T   |   Decidir: 1-4"
 RECT_TEXTO_PANEL = pygame.Rect(RECT_PANEL.x + px(18), RECT_PANEL.y + px(52), px(340), px(256))  # texto a la izquierda del mapa
 ALFA_PANEL = 205  # el panel deja ver un poco el fondo de la zona
@@ -103,7 +104,7 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
                    animo: int, filas: list[tuple[str, int]], titulo_panel: str, texto_panel: str,
                    impacto: Impact | None, dialogo: CajaDialogo, botones: list[Boton],
                    animacion: AnimacionPropagacion | None = None, zona_id: str = "", nombre_zona: str = "",
-                   mapa: EstadoMapa | None = None, tarjeta: EstadoTarjeta | None = None) -> None:
+                   mapa: EstadoMapa | None = None, tarjeta: EstadoTarjeta | None = None, ayuda: str = AYUDA) -> None:
     pantalla.fill(tema.fondo)
     dibujar_fondo_zona(pantalla, zona_id, tema, RECT_ESCENA)  # el escenario cambia con la zona
     _dibujar_hud(pantalla, fuentes, tema, filas)
@@ -135,5 +136,5 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
     for boton in botones:
         boton.draw(pantalla, fuentes.normal, tema)
     if tarjeta is not None:  # recordatorio de controles bajo los botones
-        ayuda = fuentes.chica.render(AYUDA, True, tema.texto)
+        ayuda = fuentes.chica.render(ayuda, True, tema.texto)
         pantalla.blit(ayuda, ayuda.get_rect(midbottom=(pantalla.get_width() // 2, pantalla.get_height() - px(6))))

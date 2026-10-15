@@ -154,6 +154,7 @@ from post_truth.views.escena_view import RECT_MAPA, RECT_TARJETA
 from post_truth.views.mapa_view import _posiciones
 
 a = App()
+a.flujo = "escena"                                   # flujo anterior; el mundo se prueba aparte con M
 assert a.pantalla.get_size() == (ANCHO, ALTO) == (px(1024), px(640)), (a.pantalla.get_size(), ESCALA)
 def k(key): a.estados.handle_event(pygame.event.Event(pygame.KEYDOWN, key=key))
 def dibujar(n=1):

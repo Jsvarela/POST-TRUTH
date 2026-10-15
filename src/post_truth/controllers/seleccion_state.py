@@ -52,7 +52,8 @@ class SeleccionState(BaseState):
     def _elegir_genero(self, genero: Genero) -> None:
         assert self.rol is not None
         self.app.personaje = Personaje(self.rol, genero)  # lo leera la escena
-        self.app.estados.cambiar("escena")
+        self.app.partida = None                            # partida nueva
+        self.app.estados.cambiar(self.app.flujo)            # "mundo" (por defecto) o "escena" (respaldo)
 
     def _volver(self) -> None:
         if self.fase == FASE_GENERO:

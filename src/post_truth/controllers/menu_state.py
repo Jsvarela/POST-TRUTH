@@ -13,7 +13,8 @@ class MenuState(BaseState):
             elif event.key == pygame.K_i:
                 self.app.estados.cambiar("intro")   # volver a ver la introduccion
             elif event.key == pygame.K_m:
-                self.app.estados.cambiar("mundo")   # mundo caminable (etapa M1, en prueba)
+                self.app.partida = None
+                self.app.estados.cambiar("mundo")   # atajo al mundo caminable sin pasar por la seleccion
             elif event.key == pygame.K_t:
                 self.app.temas.siguiente()
             elif event.key == pygame.K_ESCAPE:
