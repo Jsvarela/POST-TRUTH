@@ -169,6 +169,113 @@ class ZonaAlAlcanceTest(unittest.TestCase):
         self.assertIsNone(m.zona_al_alcance())               # en el centro de la Plaza no se esta en ninguna puerta
 
 
+def caminar_hacia(m: MundoCiudad, destino: tuple[float, float], cobrar=None, llegar=None, fps: int = 60,
+                  maximo: float = 30) -> bool:
+    """Camina en linea recta hacia `destino` (las calles unen centros de plazas). True si llego."""
+    for _ in range(round(maximo * fps)):
+        dx, dy = destino[0] - m.jugador[0], destino[1] - m.jugador[1]
+        if math.hypot(dx, dy) < 3:
+            return True
+        antes = m.jugador
+        m.mover(dx, dy, 1 / fps, cobrar, llegar)
+        if m.jugador == antes:
+            return False                                    # bloqueado
+    return False
+
+
+class CobroPorCalleTest(unittest.TestCase):
+    """Regla de M2: se paga al entrar a una calle no pagada; queda pagada hasta llegar a una de sus plazas."""
+
+    def setUp(self) -> None:
+        self.cobros: list[frozenset] = []
+        self.llegadas: list[str] = []
+
+    def cobrar(self, calle) -> bool:
+        self.cobros.append(frozenset((calle.desde, calle.hasta)))
+        return True
+
+    def test_cruzar_una_calle_cobra_una_vez_y_avisa_la_llegada(self) -> None:
+        m = mundo_simple()
+        self.assertEqual(m.ultima_plaza, "a")
+        self.assertTrue(caminar_hacia(m, (600, 100), self.cobrar, self.llegadas.append))
+        self.assertEqual(self.cobros, [frozenset("ab")])
+        self.assertEqual(self.llegadas, ["b"])
+        self.assertEqual(m.ultima_plaza, "b")
+        self.assertEqual(m.calles_pagadas, set())          # al llegar se acaba lo pagado
+
+    def test_dar_la_vuelta_a_mitad_de_calle_no_cobra_ni_devuelve(self) -> None:
+        m = mundo_simple()
+        caminar_hacia(m, (350, 100), self.cobrar, self.llegadas.append)   # mitad de la calle
+        caminar_hacia(m, (100, 100), self.cobrar, self.llegadas.append)   # vuelve a la plaza de origen
+        caminar_hacia(m, (350, 100), self.cobrar, self.llegadas.append)   # y sale otra vez: es otro viaje
+        self.assertEqual(self.cobros, [frozenset("ab"), frozenset("ab")])
+        self.assertEqual(self.llegadas, [])                                # nunca llego a una plaza distinta
+
+    def test_ir_y_venir_dentro_de_la_calle_no_cobra_de_nuevo(self) -> None:
+        m = mundo_simple()
+        for destino in ((300, 100), (200, 100), (400, 100), (250, 100)):
+            caminar_hacia(m, destino, self.cobrar)
+        self.assertEqual(len(self.cobros), 1)
+
+    def test_moverse_en_la_boca_de_la_calle_no_cobra_dos_veces(self) -> None:
+        m = mundo_simple()
+        for destino in ((145, 100), (125, 100), (145, 100), (126, 100), (150, 100)):   # radio 40: borde en 140
+            caminar_hacia(m, destino, self.cobrar)
+        self.assertEqual(len(self.cobros), 1)                # histeresis: no "llego" de vuelta a la plaza
+
+    def test_sin_energia_la_calle_es_una_pared(self) -> None:
+        m = mundo_simple()
+        self.assertFalse(caminar_hacia(m, (600, 100), lambda c: False))
+        self.assertEqual(m.plaza_en(m.jugador), "a")         # sigue en su plaza
+        self.assertEqual(m.bloqueo.hasta, "b")               # y se sabe que calle no pudo tomar
+        self.assertEqual(m.calles_pagadas, set())
+
+    def test_sin_cobro_caminar_es_gratis(self) -> None:
+        m = mundo_simple()
+        self.assertTrue(caminar_hacia(m, (600, 100)))
+        self.assertEqual(m.ultima_plaza, "b")
+
+    def test_en_el_mapa_real_caminar_el_camino_mas_corto_cuesta_lo_mismo_que_dijkstra(self) -> None:
+        g = GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD)
+        for origen, destino in (("barrio", "plaza"), ("colegio", "alcaldia"), ("plaza", "parque"), ("alcaldia", "barrio")):
+            m = MundoCiudad.cargar(RUTA_MUNDO)
+            m.jugador, m.ultima_plaza = m.plazas[origen].pos, origen
+            pagado = []
+            ruta = g.ruta(origen, destino)
+            for siguiente in ruta.zonas[1:]:
+                self.assertTrue(caminar_hacia(m, m.plazas[siguiente].pos,
+                                              lambda c: pagado.append(g.distancia(c.desde, c.hasta)) or True))
+            self.assertEqual(sum(pagado), ruta.costo, (origen, destino))
+            self.assertEqual(m.ultima_plaza, destino)
+
+    def test_fuera_de_las_plazas_las_calles_del_mapa_real_no_se_solapan(self) -> None:
+        m = MundoCiudad.cargar(RUTA_MUNDO)
+        for c in m.calles:
+            a, b = m.plazas[c.desde].pos, m.plazas[c.hasta].pos
+            largo = math.dist(a, b)
+            ux, uy = (b[0] - a[0]) / largo, (b[1] - a[1]) / largo
+            for i in range(101):
+                for desvio in range(-40, 41, 10):
+                    p = (a[0] + ux * largo * i / 100 - uy * desvio, a[1] + uy * largo * i / 100 + ux * desvio)
+                    if m.plaza_en(p) is not None:
+                        continue
+                    dentro = [o for o in m.calles if math.dist(p, _cercano(p, m, o)) <= o.ancho / 2]
+                    self.assertEqual(len(dentro), 1, (c, p))
+
+    def test_ida_y_vuelta_con_calles_pagadas(self) -> None:
+        m = mundo_simple()
+        caminar_hacia(m, (350, 100), self.cobrar)
+        copia = MundoCiudad.from_dict(json.loads(json.dumps(m.to_dict())))
+        self.assertEqual((copia.ultima_plaza, copia.calles_pagadas), ("a", {frozenset("ab")}))
+        caminar_hacia(copia, (400, 100), self.cobrar)
+        self.assertEqual(len(self.cobros), 1)                # la copia recuerda que la calle estaba pagada
+
+
+def _cercano(p, m: MundoCiudad, calle):
+    from post_truth.models.mundo import _cercano_en_segmento
+    return _cercano_en_segmento(p, m.plazas[calle.desde].pos, m.plazas[calle.hasta].pos)
+
+
 class MundoEnPantallaTest(unittest.TestCase):
     """MundoState con eventos de teclado (sin ventana), camara y dibujo en los 3 temas."""
 
