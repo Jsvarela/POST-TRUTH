@@ -11,3 +11,6 @@ env/
 # Contexto local de Claude: no se sube al repositorio
 CLAUDE.md
 .claude/
+
+# Grafo de conocimiento generado por graphify (local)
+graphify-out/
