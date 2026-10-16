@@ -247,6 +247,63 @@ class LlegadaTest(unittest.TestCase):
         self.assertEqual((copia.ultima_plaza, copia.jugador), ("b", m.jugador))
 
 
+class RitmoDeLasCallesTest(unittest.TestCase):
+    """Cada calle se cruza en peso * segundos_por_peso: la guia (Dijkstra por peso) es el camino mas rapido a pie."""
+
+    def setUp(self) -> None:
+        self.m = MundoCiudad.cargar(RUTA_MUNDO)
+        self.g = GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD)
+
+    def tiempo(self, ruta: tuple[str, ...], fps: int = 60) -> float:
+        """Segundos que tarda en caminar la ruta plaza por plaza, de centro a centro."""
+        m = self.m
+        m.jugador, m.ultima_plaza = m.plazas[ruta[0]].pos, ruta[0]
+        cuadros = 0
+        for siguiente in ruta[1:]:
+            destino = m.plazas[siguiente].pos
+            while math.dist(m.jugador, destino) > m.velocidad_en(m.jugador) / fps:   # a menos de un cuadro: llego
+                m.mover(destino[0] - m.jugador[0], destino[1] - m.jugador[1], 1 / fps)
+                cuadros += 1
+                self.assertLess(cuadros, 60 * fps, ruta)
+        return cuadros / fps
+
+    def test_cada_calle_tiene_el_peso_de_su_arista(self) -> None:
+        pesos = {frozenset((a, b)): d for a, b, d in self.g.conexiones()}
+        for c in self.m.calles:
+            self.assertEqual(c.peso, pesos[frozenset((c.desde, c.hasta))], (c.desde, c.hasta))
+
+    def test_cruzar_una_calle_tarda_su_peso_por_los_segundos_por_peso(self) -> None:
+        for c in self.m.calles:
+            a, b = self.m.plazas[c.desde], self.m.plazas[c.hasta]
+            plazas = (a.radio + b.radio) / self.m.velocidad              # lo que se camina dentro de las plazas
+            esperado = c.peso * self.m.segundos_por_peso + plazas
+            self.assertAlmostEqual(self.tiempo((c.desde, c.hasta)), esperado, delta=0.15, msg=(c.desde, c.hasta))
+
+    def test_la_guia_es_el_camino_mas_rapido_aunque_no_sea_el_mas_corto(self) -> None:
+        # Barrio -> Plaza: la calle directa es la mas corta en pixeles pero pesa 3; por el Parque pesa 2
+        guia = self.g.ruta("barrio", "plaza").zonas
+        self.assertEqual(guia, ("barrio", "parque", "plaza"))
+        self.assertLess(self.tiempo(guia), self.tiempo(("barrio", "plaza")))
+
+    def test_en_todo_par_la_guia_no_es_mas_lenta_que_ir_por_calles_directas(self) -> None:
+        for a, b, _ in self.g.conexiones():
+            for o, d in ((a, b), (b, a)):
+                self.assertLessEqual(self.tiempo(self.g.ruta(o, d).zonas), self.tiempo((o, d)) + 0.05, (o, d))
+
+    def test_el_ritmo_no_depende_de_los_fps(self) -> None:
+        self.assertAlmostEqual(self.tiempo(("barrio", "plaza"), 30), self.tiempo(("barrio", "plaza"), 60), delta=0.05)
+
+    def test_sin_peso_se_camina_a_la_velocidad_normal(self) -> None:
+        m = mundo_simple(segundos_por_peso=3)                            # sus calles no tienen peso
+        m.jugador = (300, 100)
+        self.assertEqual(m.velocidad_en(m.jugador), m.velocidad)
+
+    def test_ida_y_vuelta_conserva_pesos_y_ritmo(self) -> None:
+        copia = MundoCiudad.from_dict(json.loads(json.dumps(self.m.to_dict())))
+        self.assertEqual([c.peso for c in copia.calles], [c.peso for c in self.m.calles])
+        self.assertEqual(copia.segundos_por_peso, self.m.segundos_por_peso)
+
+
 def _cercano(p, m: MundoCiudad, calle):
     from post_truth.models.mundo import _cercano_en_segmento
     return _cercano_en_segmento(p, m.plazas[calle.desde].pos, m.plazas[calle.hasta].pos)

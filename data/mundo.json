@@ -5,6 +5,7 @@
   ],
   "radio_jugador": 14,
   "velocidad": 240,
+  "segundos_por_peso": 3,
   "zonas": {
     "colegio": {
       "pos": [
@@ -46,32 +47,38 @@
     {
       "desde": "colegio",
       "hasta": "barrio",
-      "ancho": 90
+      "ancho": 90,
+      "peso": 1
     },
     {
       "desde": "barrio",
       "hasta": "parque",
-      "ancho": 90
+      "ancho": 90,
+      "peso": 1
     },
     {
       "desde": "parque",
       "hasta": "plaza",
-      "ancho": 90
+      "ancho": 90,
+      "peso": 1
     },
     {
       "desde": "colegio",
       "hasta": "plaza",
-      "ancho": 90
+      "ancho": 90,
+      "peso": 2
     },
     {
       "desde": "plaza",
       "hasta": "alcaldia",
-      "ancho": 90
+      "ancho": 90,
+      "peso": 2
     },
     {
       "desde": "barrio",
       "hasta": "plaza",
-      "ancho": 90
+      "ancho": 90,
+      "peso": 3
     }
   ],
   "edificios": [

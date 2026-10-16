@@ -9,6 +9,12 @@ de PASO segundos. Con sub-pasos fijos, 30 y 60 FPS recorren exactamente la misma
 no depende de los FPS. Si un paso cae fuera de las calles, se corrige al punto valido mas cercano: el personaje
 resbala a lo largo del borde en vez de quedarse pegado.
 
+RITMO DE LAS CALLES: cada calle tiene el peso de su arista en el grafo de la ciudad y se cruza en
+peso * segundos_por_peso segundos, sea cual sea su largo en pantalla (la velocidad en la calle se ajusta). Asi el
+camino de menor peso (Dijkstra, la guia) es tambien el mas rapido a pie, aunque no sea el mas corto en pixeles:
+Barrio-Plaza directo pesa 3 (es una calle lenta) y por el Parque suma 2. Sin peso, la calle se camina a la
+velocidad normal. Las plazas siempre se caminan a la velocidad normal.
+
 LLEGADA: al entrar a una plaza distinta de la ultima se avisa (`llegar`) para que la partida quede en la misma
 zona. Se llega recien al estar MARGEN_LLEGADA * radio_jugador dentro del borde (histeresis), para no "llegar" por
 rozar la boca de una calle.
@@ -41,6 +47,7 @@ class Calle:
     desde: str
     hasta: str
     ancho: float
+    peso: float | None = None   # el de su arista en el grafo de la ciudad; None = velocidad normal
 
 
 @dataclass(frozen=True)
@@ -72,7 +79,8 @@ def _acercar(p: Punto, centro: Punto, radio: float) -> Punto:
 class MundoCiudad:
     def __init__(self, tamano: tuple[float, float], plazas: list[Plaza], calles: list[Calle],
                  edificios: list[Edificio], aparicion: Punto, velocidad: float = 240, radio_jugador: float = 14,
-                 jugador: Punto | None = None, ultima_plaza: str | None = None) -> None:
+                 jugador: Punto | None = None, ultima_plaza: str | None = None,
+                 segundos_por_peso: float | None = None) -> None:
         self.tamano = tamano
         self.plazas = {p.id: p for p in plazas}
         self.calles = calles
@@ -80,6 +88,7 @@ class MundoCiudad:
         self.aparicion = aparicion
         self.velocidad = velocidad
         self.radio_jugador = radio_jugador
+        self.segundos_por_peso = segundos_por_peso
         self._validar()
         self.jugador: Punto = jugador if jugador is not None else aparicion
         if not self.es_transitable(self.jugador):
@@ -93,9 +102,13 @@ class MundoCiudad:
     def _validar(self) -> None:
         if self.tamano[0] <= 0 or self.tamano[1] <= 0 or self.velocidad <= 0 or self.radio_jugador <= 0:
             raise ValueError("Tamano, velocidad y radio del jugador deben ser positivos")
+        if self.segundos_por_peso is not None and self.segundos_por_peso <= 0:
+            raise ValueError("segundos_por_peso debe ser positivo")
         for c in self.calles:
             if c.desde not in self.plazas or c.hasta not in self.plazas:
                 raise ValueError(f"Calle con plaza desconocida: {c.desde} - {c.hasta}")
+            if c.peso is not None and c.peso <= 0:
+                raise ValueError(f"La calle {c.desde} - {c.hasta} necesita un peso positivo")
             if c.ancho / 2 <= self.radio_jugador:
                 raise ValueError(f"La calle {c.desde} - {c.hasta} es demasiado angosta para el jugador")
         for p in self.plazas.values():
@@ -141,6 +154,25 @@ class MundoCiudad:
                 return pl.id
         return None
 
+    def calle_en(self, p: Punto) -> Calle | None:
+        """La calle sobre la que esta p si no esta en una plaza (en los datos, fuera de las plazas las calles no
+        se solapan; si se solaparan, gana la mas cercana)."""
+        if self.plaza_en(p) is not None:
+            return None
+        cerca = [(math.dist(p, _cercano_en_segmento(p, self.plazas[c.desde].pos, self.plazas[c.hasta].pos)), i)
+                 for i, c in enumerate(self.calles)]
+        d, i = min(cerca, default=(math.inf, -1))
+        return self.calles[i] if d <= self.calles[i].ancho / 2 else None
+
+    def velocidad_en(self, p: Punto) -> float:
+        """Pixeles por segundo en p: en una calle con peso, su tramo entre plazas se cruza en peso * segundos_por_peso."""
+        calle = self.calle_en(p)
+        if calle is None or calle.peso is None or self.segundos_por_peso is None:
+            return self.velocidad
+        a, b = self.plazas[calle.desde], self.plazas[calle.hasta]
+        tramo = math.dist(a.pos, b.pos) - a.radio - b.radio   # lo que se camina fuera de las plazas
+        return tramo / (calle.peso * self.segundos_por_peso)
+
     # --- movimiento e interaccion --------------------------------------------------------
     def mover(self, dir_x: float, dir_y: float, dt: float, llegar: Callable[[str], None] | None = None) -> None:
         """Mueve al jugador en la direccion (dir_x, dir_y) durante dt segundos. La diagonal no es mas rapida.
@@ -153,7 +185,8 @@ class MundoCiudad:
         h = dt / pasos
         for _ in range(pasos):
             x, y = self.jugador
-            self.jugador = self._corregir((x + ux * self.velocidad * h, y + uy * self.velocidad * h))
+            v = self.velocidad_en(self.jugador)
+            self.jugador = self._corregir((x + ux * v * h, y + uy * v * h))
             plaza = self.plaza_en(self.jugador, MARGEN_LLEGADA * self.radio_jugador)
             if plaza is not None and plaza != self.ultima_plaza:
                 self.ultima_plaza = plaza
@@ -173,7 +206,9 @@ class MundoCiudad:
         return {
             "tamano": list(self.tamano), "radio_jugador": self.radio_jugador, "velocidad": self.velocidad,
             "zonas": {p.id: {"pos": list(p.pos), "radio": p.radio} for p in self.plazas.values()},
-            "calles": [{"desde": c.desde, "hasta": c.hasta, "ancho": c.ancho} for c in self.calles],
+            "calles": [{"desde": c.desde, "hasta": c.hasta, "ancho": c.ancho}
+                       | ({"peso": c.peso} if c.peso is not None else {}) for c in self.calles],
+            "segundos_por_peso": self.segundos_por_peso,
             "edificios": [{"zona": e.zona, "rect": list(e.rect), "entrada": list(e.entrada), "radio": e.radio}
                           for e in self.edificios],
             "aparicion": list(self.aparicion),
@@ -188,12 +223,13 @@ class MundoCiudad:
         return cls(
             punto(d["tamano"]),
             [Plaza(id, punto(z["pos"]), float(z["radio"])) for id, z in d["zonas"].items()],
-            [Calle(c["desde"], c["hasta"], float(c["ancho"])) for c in d["calles"]],
+            [Calle(c["desde"], c["hasta"], float(c["ancho"]), c.get("peso")) for c in d["calles"]],
             [Edificio(e["zona"], tuple(float(v) for v in e["rect"]), punto(e["entrada"]), float(e["radio"]))
              for e in d.get("edificios", [])],
             punto(d["aparicion"]), float(d.get("velocidad", 240)), float(d.get("radio_jugador", 14)),
             punto(d["jugador"]) if "jugador" in d else None,
             d.get("ultima_plaza"),
+            d.get("segundos_por_peso"),
         )
 
     @classmethod
