@@ -65,6 +65,9 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
   Junto a la puerta: "E: entrar" abre la pantalla de noticias de ese lugar y "E: buscar evidencia" la revela. Al
   decidir se vuelve a la calle con la siguiente noticia. G muestra la guia (camino mas corto, Dijkstra) hacia la
   noticia. Arriba: indicadores y un minimapa con la posicion del jugador. M en el menu entra directo.
+- **Ritmo de las calles:** cada calle se cruza en (peso de su arista) x 3 segundos, sea cual sea su largo en
+  pantalla, asi que la guia (Dijkstra por peso) es siempre el camino mas rapido a pie. Barrio-Plaza directo es
+  corta pero lenta (pesa 3); por el Parque se llega antes (pesa 2).
 - **Respaldo:** `POSTTRUTH_FLUJO=escena python src/main.py` usa el flujo anterior (Seleccion -> escena de noticias).
 - Otras teclas: Enter para continuar, Espacio para saltar el texto, I en el menu para ver la introduccion, T en el menu para cambiar
   de tema (normal, alto contraste, daltonismo), ESC para volver.

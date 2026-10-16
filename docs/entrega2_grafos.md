@@ -203,6 +203,12 @@ es trivial. BFS (O(V + E)) bastaria si todas las distancias valieran lo mismo (e
 numero de saltos); aqui se usa solo para comprobar que el mapa sea conexo. Con distancias negativas
 Dijkstra seria incorrecto: por eso se exige que sean enteros positivos.
 
+**El peso en el mundo caminable.** En el mapa dibujado, Barrio-Plaza es la calle MAS CORTA en pixeles, y una calle
+recta nunca puede medir mas que un desvio por otra plaza (desigualdad triangular): los pesos 3 contra 1 + 1 no se
+pueden dibujar como largos. Por eso el peso es TIEMPO: cada calle se cruza en peso x `segundos_por_peso` (3 s,
+`data/mundo.json`) y la velocidad en la calle se ajusta a su largo (`MundoCiudad.velocidad_en`). Barrio-Plaza
+directo tarda unos 10 s; por el Parque, unos 9 s. Asi el camino de Dijkstra (la guia G) es el mas rapido a pie.
+
 Distancias reales desde la Plaza: Parque 1, Colegio 2, Barrio 2, Alcaldia 2. El viaje mas largo
 (Alcaldia - Barrio, Alcaldia - Colegio) mide 4.
 
