@@ -4,12 +4,15 @@ HUD (indicadores) y minimapa. Todo el arte del mundo pasa por un proveedor (ver 
 El mundo (data/mundo.json) es mas grande que la pantalla: se ve una ventana de ANCHO/ESCALA x ALTO/ESCALA
 pixeles del mundo alrededor del jugador, y la camara se detiene en los bordes del mundo.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pygame
 
 from post_truth.config import ALTO, ANCHO, ESCALA, px
+from post_truth.models import Role
+from post_truth.models.animacion import AnimacionPersonaje
 from post_truth.models.mundo import MundoCiudad
+from post_truth.models.personaje import Genero, Personaje
 from post_truth.views.arte_mundo import ARTE_FORMAS, ArteFormas
 from post_truth.views.componentes import Fuentes, ajustar_texto
 from post_truth.views.escena_view import RECT_HUD, _dibujar_hud
@@ -17,6 +20,7 @@ from post_truth.views.mapa_view import _rombo
 from post_truth.views.theme import Tema
 
 AYUDA = "Caminar: WASD o flechas   |   E: entrar o buscar   |   G: guia   |   ESC: menu"
+ALTO_PERSONAJE = 3.2   # alto del personaje en radios de colision del jugador
 RECT_MINIMAPA = pygame.Rect(ANCHO - px(16) - px(220), RECT_HUD.bottom + px(12), px(220), px(138))
 
 
@@ -29,7 +33,8 @@ class EstadoMundo:
     indicadores: list = ()                     # filas del HUD (CityState.as_display_rows)
     guia: tuple[str, ...] = ()                 # ruta de plazas hacia la noticia (vacia: guia apagada)
     aviso: str = ""
-    color_rol: int = 0
+    personaje: Personaje = Personaje(Role.CITIZEN, Genero.MUJER)
+    animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
 
 
 def camara(mundo: MundoCiudad, ancho: int = ANCHO, alto: int = ALTO) -> tuple[float, float]:
@@ -72,7 +77,10 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
             _globo_noticia(pantalla, tema, fuentes, (rect.centerx, rect.top - px(8)))
         elif e.zona in estado.evidencias:
             _marca_evidencia(pantalla, tema, fuentes, (rect.centerx, rect.top - px(26)))
-    arte.personaje(pantalla, tema, a_pantalla(mundo.jugador, cam), px(mundo.radio_jugador), estado.color_rol)
+    # los pies van al borde inferior del circulo de colision; el cuerpo sobresale hacia arriba
+    x, y = mundo.jugador
+    arte.personaje(pantalla, tema, a_pantalla((x, y + mundo.radio_jugador), cam), px(ALTO_PERSONAJE * mundo.radio_jugador),
+                   estado.personaje, estado.animacion.nombre, estado.animacion.cuadro)
     if estado.indicadores:
         _dibujar_hud(pantalla, fuentes, tema, list(estado.indicadores))
     _minimapa(pantalla, tema, mundo, estado)

@@ -402,6 +402,35 @@ class MundoEnPantallaTest(unittest.TestCase):
             self.app.temas.siguiente()
         self.assertEqual(len(imagenes), 15)                              # 5 lugares x 3 temas, todos distintos
 
+    def test_el_personaje_se_anima_segun_las_teclas_y_el_movimiento(self) -> None:
+        pg = self.pygame
+        self.assertEqual(self.estado.animacion.nombre, "idle_abajo")
+        self.tecla(pg.K_d)
+        self.correr(0.3)
+        self.assertEqual(self.estado.animacion.nombre, "caminar_derecha")
+        self.tecla(pg.K_d, pg.KEYUP)
+        self.correr(0.1)
+        self.assertEqual(self.estado.animacion.nombre, "idle_derecha")      # quieto, mirando a donde iba
+        vista = self.estado.estado_vista()
+        self.assertIs(vista.animacion, self.estado.animacion)
+        self.assertEqual(vista.personaje, self.estado.personaje)
+
+    def test_el_arte_recibe_el_nombre_y_el_cuadro_de_la_animacion(self) -> None:
+        from post_truth.views.arte_mundo import ArteFormas
+        from post_truth.views.mundo_view import dibujar_mundo
+        recibido = []
+
+        class ArteEspia(ArteFormas):
+            def personaje(self, pantalla, tema, pies, alto, personaje, animacion, cuadro):
+                recibido.append((animacion, cuadro, personaje))
+                super().personaje(pantalla, tema, pies, alto, personaje, animacion, cuadro)
+        self.tecla(self.pygame.K_w)
+        self.correr(0.2)
+        dibujar_mundo(self.app.pantalla, self.app.fuentes, self.app.temas.actual, self.estado.mundo,
+                      self.estado.estado_vista(), arte=ArteEspia())
+        a = self.estado.animacion
+        self.assertEqual(recibido, [("caminar_arriba", a.cuadro, self.estado.personaje)])
+
     def test_el_arte_se_puede_reemplazar_sin_tocar_el_modelo(self) -> None:
         from post_truth.views.arte_mundo import ArteFormas
         from post_truth.views.mundo_view import dibujar_mundo

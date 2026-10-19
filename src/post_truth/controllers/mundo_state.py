@@ -11,6 +11,7 @@ el lugar guarda evidencia de esa noticia, se busca. G muestra u oculta la guia.
 Las teclas presionadas se guardan con KEYDOWN/KEYUP (no con pygame.key.get_pressed) para poder probar el
 movimiento sin ventana con eventos simulados.
 """
+import math
 import random
 
 import pygame
@@ -19,6 +20,7 @@ from post_truth.config import EVENTOS_POR_PARTIDA, RUTA_EVENTOS, RUTA_GRAFO_CIUD
 from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import load_trees
 from post_truth.models import Role
+from post_truth.models.animacion import AnimacionPersonaje
 from post_truth.models.mundo import MundoCiudad
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.sesion import PartidaSesion
@@ -42,6 +44,7 @@ class MundoState(BaseState):
         self.presionadas: set[int] = set()
         self.aviso, self._t_aviso = "", 0.0
         self.guia = False
+        self.animacion = AnimacionPersonaje()
 
     # --- partida ------------------------------------------------------------------------
     @property
@@ -65,6 +68,7 @@ class MundoState(BaseState):
             self.mundo = MundoCiudad.cargar(RUTA_MUNDO)
             self.sesion.llegar(self.jugador_id, self.mundo.ultima_plaza)
             self.guia = False
+            self.animacion = AnimacionPersonaje()
         self.presionadas.clear()       # al volver de un lugar no queda ninguna tecla "pegada"
         self.aviso, self._t_aviso = "", 0.0
 
@@ -123,7 +127,9 @@ class MundoState(BaseState):
     def update(self, dt: float) -> None:
         dx = sum(DIRECCIONES[k][0] for k in self.presionadas)
         dy = sum(DIRECCIONES[k][1] for k in self.presionadas)
+        antes = self.mundo.jugador
         self.mundo.mover(dx, dy, dt, self._llegar)   # sin direccion no se mueve
+        self.animacion.actualizar(dx, dy, math.dist(antes, self.mundo.jugador), dt)
         self._t_aviso = max(0.0, self._t_aviso - dt)
         if self._t_aviso == 0:
             self.aviso = ""
@@ -136,7 +142,7 @@ class MundoState(BaseState):
             noticia=s.zona_noticia, evidencias=inv.lugares_pendientes() - {s.zona_noticia},
             accion=self.accion_disponible(),
             indicadores=s.ciudad.as_display_rows(), guia=ruta.zonas if ruta else (), aviso=self.aviso,
-            color_rol=list(Role).index(self.personaje.rol))
+            personaje=self.personaje, animacion=self.animacion)
 
     def draw(self, pantalla: pygame.Surface) -> None:
         dibujar_mundo(pantalla, self.app.fuentes, self.app.temas.actual, self.mundo, self.estado_vista())

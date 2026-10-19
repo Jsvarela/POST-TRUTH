@@ -7,8 +7,10 @@ ArtePNG que haga blit de imagenes de assets/) y pasarla a `dibujar_mundo`; el mo
 import pygame
 
 from post_truth.config import px
+from post_truth.models.personaje import Personaje
 from post_truth.views.componentes import Fuentes
 from post_truth.views.mapa_view import _icono_zona
+from post_truth.views.personaje_view import dibujar_personaje_mundo
 from post_truth.views.theme import Tema
 
 Punto = tuple[int, int]
@@ -40,11 +42,10 @@ class ArteFormas:
         img = fuentes.chica.render(nombre, True, tema.texto)
         pantalla.blit(img, img.get_rect(midbottom=(rect.centerx, rect.bottom - px(6))))
 
-    def personaje(self, pantalla: pygame.Surface, tema: Tema, centro: Punto, radio: int, color_rol: int) -> None:
-        # shortcut: personaje provisional (circulo con el color del rol); M9 lo cambia por un sprite
-        pygame.draw.circle(pantalla, tema.texto, centro, radio + px(3))
-        pygame.draw.circle(pantalla, tema.rol[color_rol % len(tema.rol)], centro, radio)
-        pygame.draw.circle(pantalla, tema.piel[0], (centro[0], centro[1] - radio // 3), max(2, radio // 2))
+    def personaje(self, pantalla: pygame.Surface, tema: Tema, pies: Punto, alto: int, personaje: Personaje,
+                  animacion: str, cuadro: int) -> None:
+        """`animacion` y `cuadro` son la fila y la columna de la futura hoja de sprites (models/animacion.py)."""
+        dibujar_personaje_mundo(pantalla, personaje, tema, pies, alto, animacion, cuadro)
 
 
 ARTE_FORMAS = ArteFormas()
