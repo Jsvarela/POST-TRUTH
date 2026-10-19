@@ -37,6 +37,17 @@ DIRECCIONES = {
 DURACION_AVISO = 4.0   # segundos que se ve un aviso en la franja inferior
 
 
+def mapa_de_tiempos(mapa: GrafoCiudad, mundo: MundoCiudad) -> GrafoCiudad:
+    """El mismo grafo de la ciudad, pero cada arista pesa lo que se TARDA caminandola en el mundo (centesimas de
+    segundo, entero >= 1 como pide GrafoCiudad). Dijkstra sobre este grafo da el camino mas RAPIDO a pie, que es el
+    que indica la guia; el grafo original (distancias de la entrega 2) sigue mandando en la sesion y el minimapa."""
+    datos = mapa.to_dict()
+    tiempos = {frozenset((c.desde, c.hasta)): mundo.tiempo_calle(c) for c in mundo.calles}
+    for c in datos["conexiones"]:
+        c["distancia"] = max(1, round(100 * tiempos[frozenset((c["origen"], c["destino"]))]))
+    return GrafoCiudad.from_dict(datos)
+
+
 class MundoState(BaseState):
     def __init__(self, app) -> None:
         super().__init__(app)
@@ -48,6 +59,7 @@ class MundoState(BaseState):
         self.animacion = AnimacionPersonaje()
         self.camara = Camara(self.mundo.jugador)
         self.decorado = generar_decorado(self.mundo)   # mismo mapa siempre: se genera una vez
+        self.mapa_guia = mapa_de_tiempos(GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.mundo)
         self.t = 0.0                                   # reloj del ambiente (viento, luces, pajaros)
 
     # --- partida ------------------------------------------------------------------------
@@ -143,7 +155,7 @@ class MundoState(BaseState):
 
     def estado_vista(self) -> EstadoMundo:
         s = self.sesion
-        ruta = s.mapa.ruta(self.mundo.ultima_plaza, s.zona_noticia) if self.guia else None
+        ruta = self.mapa_guia.ruta(self.mundo.ultima_plaza, s.zona_noticia) if self.guia else None
         inv = s.jugador_actual.investigacion
         return EstadoMundo(
             noticia=s.zona_noticia, evidencias=inv.lugares_pendientes() - {s.zona_noticia},

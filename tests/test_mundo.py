@@ -248,7 +248,8 @@ class LlegadaTest(unittest.TestCase):
 
 
 class RitmoDeLasCallesTest(unittest.TestCase):
-    """Cada calle se cruza en peso * segundos_por_peso: la guia (Dijkstra por peso) es el camino mas rapido a pie."""
+    """Cada calle se cruza en peso * segundos_por_peso, con un tope de velocidad; la guia (Dijkstra sobre el tiempo
+    de cada calle) es el camino mas rapido a pie."""
 
     def setUp(self) -> None:
         self.m = MundoCiudad.cargar(RUTA_MUNDO)
@@ -272,23 +273,41 @@ class RitmoDeLasCallesTest(unittest.TestCase):
         for c in self.m.calles:
             self.assertEqual(c.peso, pesos[frozenset((c.desde, c.hasta))], (c.desde, c.hasta))
 
-    def test_cruzar_una_calle_tarda_su_peso_por_los_segundos_por_peso(self) -> None:
+    def test_cruzar_una_calle_tarda_lo_que_dice_tiempo_calle(self) -> None:
         for c in self.m.calles:
-            a, b = self.m.plazas[c.desde], self.m.plazas[c.hasta]
-            plazas = (a.radio + b.radio) / self.m.velocidad              # lo que se camina dentro de las plazas
-            esperado = c.peso * self.m.segundos_por_peso + plazas
-            self.assertAlmostEqual(self.tiempo((c.desde, c.hasta)), esperado, delta=0.15, msg=(c.desde, c.hasta))
+            self.assertAlmostEqual(self.tiempo((c.desde, c.hasta)), self.m.tiempo_calle(c), delta=0.1,
+                                   msg=(c.desde, c.hasta))
 
-    def test_la_guia_es_el_camino_mas_rapido_aunque_no_sea_el_mas_corto(self) -> None:
-        # Barrio -> Plaza: la calle directa es la mas corta en pixeles pero pesa 3; por el Parque pesa 2
-        guia = self.g.ruta("barrio", "plaza").zonas
-        self.assertEqual(guia, ("barrio", "parque", "plaza"))
-        self.assertLess(self.tiempo(guia), self.tiempo(("barrio", "plaza")))
+    def test_sin_tope_el_tramo_tarda_su_peso_por_los_segundos_por_peso(self) -> None:
+        for c in self.m.calles:
+            v = self.m._tramo(c) / (c.peso * self.m.segundos_por_peso)
+            if v <= self.m.velocidad * self.m.tope_calle:
+                self.assertAlmostEqual(self.m._tramo(c) / self.m.velocidad_calle(c), c.peso * self.m.segundos_por_peso)
 
-    def test_en_todo_par_la_guia_no_es_mas_lenta_que_ir_por_calles_directas(self) -> None:
-        for a, b, _ in self.g.conexiones():
-            for o, d in ((a, b), (b, a)):
-                self.assertLessEqual(self.tiempo(self.g.ruta(o, d).zonas), self.tiempo((o, d)) + 0.05, (o, d))
+    def test_ninguna_calle_pasa_el_tope_y_barrio_parque_ya_no_vuela(self) -> None:
+        tope = self.m.velocidad * self.m.tope_calle
+        for c in self.m.calles:
+            self.assertLessEqual(self.m.velocidad_calle(c), tope + 1e-9, (c.desde, c.hasta))
+        larga = next(c for c in self.m.calles if {c.desde, c.hasta} == {"barrio", "parque"})
+        self.assertAlmostEqual(self.m.velocidad_calle(larga), tope)
+
+    def test_la_guia_es_el_camino_mas_rapido_a_pie_en_todo_par(self) -> None:
+        from post_truth.controllers.mundo_state import mapa_de_tiempos
+        guia = mapa_de_tiempos(self.g, self.m)
+
+        def caminos(a, b, visto=()):
+            visto = visto + (a,)
+            if a == b:
+                yield visto
+                return
+            for v in self.g.vecinos(a):
+                if v not in visto:
+                    yield from caminos(v, b, visto)
+        for o in self.g.zonas():
+            for d in self.g.zonas():
+                if o.id != d.id:
+                    mejor = min(self.tiempo(c) for c in caminos(o.id, d.id))
+                    self.assertLessEqual(self.tiempo(guia.ruta(o.id, d.id).zonas), mejor + 0.05, (o.id, d.id))
 
     def test_el_ritmo_no_depende_de_los_fps(self) -> None:
         self.assertAlmostEqual(self.tiempo(("barrio", "plaza"), 30), self.tiempo(("barrio", "plaza"), 60), delta=0.05)
@@ -301,7 +320,7 @@ class RitmoDeLasCallesTest(unittest.TestCase):
     def test_ida_y_vuelta_conserva_pesos_y_ritmo(self) -> None:
         copia = MundoCiudad.from_dict(json.loads(json.dumps(self.m.to_dict())))
         self.assertEqual([c.peso for c in copia.calles], [c.peso for c in self.m.calles])
-        self.assertEqual(copia.segundos_por_peso, self.m.segundos_por_peso)
+        self.assertEqual((copia.segundos_por_peso, copia.tope_calle), (self.m.segundos_por_peso, self.m.tope_calle))
 
 
 def _cercano(p, m: MundoCiudad, calle):
@@ -631,7 +650,7 @@ class FlujoMundoNoticiasTest(unittest.TestCase):
         self.assertEqual(vista.guia[0], self.estado.mundo.ultima_plaza)
         self.assertEqual(vista.guia[-1], self.sesion.zona_noticia)
         self.assertEqual(list(vista.guia),
-                         list(self.sesion.mapa.ruta(vista.guia[0], vista.guia[-1]).zonas))   # es el camino de Dijkstra
+                         list(self.estado.mapa_guia.ruta(vista.guia[0], vista.guia[-1]).zonas))   # Dijkstra por tiempo
         self.tecla(self.pygame.K_g)
         self.assertEqual(self.estado.estado_vista().guia, ())
 

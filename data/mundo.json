@@ -4,8 +4,9 @@
     1600
   ],
   "radio_jugador": 14,
-  "velocidad": 360,
+  "velocidad": 330,
   "segundos_por_peso": 1.2,
+  "tope_calle": 1.6,
   "zonas": {
     "colegio": {
       "pos": [
