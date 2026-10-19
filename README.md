@@ -74,8 +74,9 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
   mueve con el tiempo: la copa de los arboles con el viento, el halo de los faroles, ventanas que se encienden y
   pajaros que cruzan el cielo. Todo con colores del tema, tambien en alto contraste y daltonismo.
 - **Ritmo de las calles:** cada calle se cruza en (peso de su arista) x 1.2 segundos, sea cual sea su largo en
-  pantalla, asi que la guia (Dijkstra por peso) es siempre el camino mas rapido a pie. Barrio-Plaza directo es
-  corta pero lenta (pesa 3); por el Parque se llega antes (pesa 2).
+  pantalla, pero nunca a mas de 1.6 veces la velocidad normal (330 px/s): una calle larga de poco peso, como
+  Barrio-Parque, no se cruza "volando". Por ese tope la guia G usa Dijkstra sobre el TIEMPO real de cada calle y
+  siempre marca el camino mas rapido a pie (viaje medio 4.4 s, el mas largo 7.7 s).
 - **Respaldo:** `POSTTRUTH_FLUJO=escena python src/main.py` usa el flujo anterior (Seleccion -> escena de noticias).
 - Otras teclas: Enter para continuar, Espacio para saltar el texto, I en el menu para ver la introduccion, T en el menu para cambiar
   de tema (normal, alto contraste, daltonismo), ESC para volver.

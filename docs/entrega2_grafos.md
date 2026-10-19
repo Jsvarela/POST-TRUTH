@@ -205,9 +205,14 @@ Dijkstra seria incorrecto: por eso se exige que sean enteros positivos.
 
 **El peso en el mundo caminable.** En el mapa dibujado, Barrio-Plaza es la calle MAS CORTA en pixeles, y una calle
 recta nunca puede medir mas que un desvio por otra plaza (desigualdad triangular): los pesos 3 contra 1 + 1 no se
-pueden dibujar como largos. Por eso el peso es TIEMPO: cada calle se cruza en peso x `segundos_por_peso` (1.2 s,
-`data/mundo.json`) y la velocidad en la calle se ajusta a su largo (`MundoCiudad.velocidad_en`). Barrio-Plaza
-directo tarda unos 4.4 s; por el Parque, unos 4.1 s (las plazas se cruzan a la velocidad base, 360 px/s). Asi el camino de Dijkstra (la guia G) es el mas rapido a pie.
+pueden dibujar como largos. Por eso el peso marca el TIEMPO: cada calle se cruza en peso x `segundos_por_peso`
+(1.2 s, `data/mundo.json`), con un tope de 1.6 veces la velocidad normal para que Barrio-Parque (la calle mas
+larga, de peso 1) no se cruce "volando". Con el tope el tiempo ya no es proporcional al peso, asi que la guia G
+corre el MISMO Dijkstra sobre una copia del grafo cuyas aristas pesan lo que se tarda en cada calle
+(`MundoCiudad.tiempo_calle`, `mapa_de_tiempos` en `controllers/mundo_state.py`): siempre es el camino mas rapido a
+pie. En el mundo Barrio-Plaza se va directo (4.5 s; por el Parque, 5.8 s); el ejemplo de esta seccion (por el
+Parque cuesta 2) sigue valiendo en el grafo de la ciudad, que es el que usan la sesion, el viaje de la escena y el
+minimapa. Es un buen ejemplo de que Dijkstra da el camino minimo SEGUN EL PESO que se le pase.
 
 Distancias reales desde la Plaza: Parque 1, Colegio 2, Barrio 2, Alcaldia 2. El viaje mas largo
 (Alcaldia - Barrio, Alcaldia - Colegio) mide 4.
