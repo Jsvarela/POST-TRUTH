@@ -33,10 +33,10 @@ class GenerarDecoradoTest(unittest.TestCase):
 
     def test_hay_de_todo(self) -> None:
         d = self.d
-        self.assertGreater(len(d.cesped), 300)
-        self.assertGreaterEqual(len(d.arboles), 40)
-        self.assertGreaterEqual(len(d.arbustos), 30)
-        self.assertGreaterEqual(len(d.faroles), 10)
+        self.assertGreater(len(d.cesped), 150)
+        self.assertGreaterEqual(len(d.arboles), 30)
+        self.assertGreaterEqual(len(d.arbustos), 15)
+        self.assertGreaterEqual(len(d.faroles), 6)
         self.assertGreaterEqual(len(d.bancas), len(self.m.plazas))
 
     def test_nada_cae_sobre_calles_plazas_ni_edificios_ni_fuera_del_mundo(self) -> None:
@@ -53,7 +53,7 @@ class GenerarDecoradoTest(unittest.TestCase):
         for i, a in enumerate(arboles):
             self.assertGreaterEqual(distancia_a_lo_transitable(self.m, a), 48)
             for b in arboles[i + 1:]:
-                self.assertGreaterEqual(math.dist(a, b), 95)
+                self.assertGreaterEqual(math.dist(a, b), 130)
 
     def test_los_faroles_bordean_las_calles(self) -> None:
         for x, y, _ in self.d.faroles:

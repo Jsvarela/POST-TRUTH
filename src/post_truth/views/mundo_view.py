@@ -24,7 +24,7 @@ from post_truth.views.theme import Tema
 AYUDA = "Caminar: WASD o flechas   |   E: entrar o buscar   |   G: guia   |   ESC: menu"
 ALTO_PERSONAJE = 3.2   # alto del personaje en radios de colision del jugador
 # Pajaros: (y de partida, velocidad en px del mundo/s, desfase): cruzan el mundo en bucle por encima de todo
-PAJAROS = ((260, 70, 0.0), (300, 70, 0.6), (900, -55, 2.0), (1250, 85, 4.1))
+PAJAROS = ((260, 70, 0.0), (300, 70, 0.6), (1100, -55, 9.0))
 RECT_MINIMAPA = pygame.Rect(ANCHO - px(16) - px(220), RECT_HUD.bottom + px(12), px(220), px(138))
 
 

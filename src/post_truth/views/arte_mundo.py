@@ -91,9 +91,9 @@ class ArteFormas:
         """`brillo` (0..1) late despacio: el halo es semitransparente."""
         x, y = base
         lampara = (x, y - tam)
-        halo = tam // 2 + round(brillo * tam // 6)
+        halo = tam // 3 + round(brillo * tam // 10)
         capa = pygame.Surface((halo * 2, halo * 2), pygame.SRCALPHA)
-        pygame.draw.circle(capa, (*tema.detalle, 40 + round(40 * brillo)), (halo, halo), halo)
+        pygame.draw.circle(capa, (*tema.detalle, 22 + round(26 * brillo)), (halo, halo), halo)
         pantalla.blit(capa, (lampara[0] - halo, lampara[1] - halo))
         pygame.draw.line(pantalla, tema.borde, (x, y), lampara, max(2, tam // 12))
         pygame.draw.circle(pantalla, tema.detalle, lampara, max(2, tam // 8))

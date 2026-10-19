@@ -13,10 +13,10 @@ from dataclasses import dataclass
 from post_truth.models.mundo import MundoCiudad
 
 SEMILLA = 2026
-SEPARACION_CESPED = 64     # px del mundo entre matas de cesped (con un poco de azar)
-MAX_ARBOLES, SEPARACION_ARBOLES = 70, 95
-MAX_ARBUSTOS, SEPARACION_ARBUSTOS = 60, 55
-SEPARACION_FAROLES = 260    # a lo largo de cada calle
+SEPARACION_CESPED = 95     # px del mundo entre matas de cesped (con un poco de azar)
+MAX_ARBOLES, SEPARACION_ARBOLES = 42, 130
+MAX_ARBUSTOS, SEPARACION_ARBUSTOS = 28, 90
+SEPARACION_FAROLES = 420    # a lo largo de cada calle
 MARGEN_BORDE = 30           # nada pegado al borde del mundo
 
 
@@ -75,7 +75,7 @@ def generar(mundo: MundoCiudad, semilla: int = SEMILLA) -> Decorado:
                for p in _esparcir(mundo, rng, MAX_ARBOLES, SEPARACION_ARBOLES, 48)]
     lejos_de_arboles = [p for p in _esparcir(mundo, rng, MAX_ARBUSTOS * 2, SEPARACION_ARBUSTOS, 22)
                         if all(math.dist(p, a[:2]) >= 55 for a in arboles)][:MAX_ARBUSTOS]
-    arbustos = [(*p, rng.uniform(0.8, 1.2), rng.random() < 0.4) for p in lejos_de_arboles]
+    arbustos = [(*p, rng.uniform(0.8, 1.2), rng.random() < 0.3) for p in lejos_de_arboles]
 
     faroles = []
     for c in mundo.calles:   # a un costado de cada calle, alternando lados, fuera de las plazas
