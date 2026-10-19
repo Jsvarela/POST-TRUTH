@@ -69,6 +69,10 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
   camara que lo sigue con suavidad; entrar y salir de un lugar tiene un fundido corto. Las animaciones se llaman
   `idle_abajo`, `idle_arriba`, `idle_izquierda`, `idle_derecha`, `caminar_abajo`... (`models/animacion.py`):
   idle tiene 2 cuadros y caminar 4, que es la forma que tendra la hoja de sprites PNG (una fila por animacion).
+- **Ciudad con vida:** cesped, arboles, arbustos con flores, faroles y bancas generados con una semilla fija
+  (`views/decorado.py`: siempre el mismo pueblo, nunca sobre calles, plazas ni edificios) y un ambiente que se
+  mueve con el tiempo: la copa de los arboles con el viento, el halo de los faroles, ventanas que se encienden y
+  pajaros que cruzan el cielo. Todo con colores del tema, tambien en alto contraste y daltonismo.
 - **Ritmo de las calles:** cada calle se cruza en (peso de su arista) x 1.2 segundos, sea cual sea su largo en
   pantalla, asi que la guia (Dijkstra por peso) es siempre el camino mas rapido a pie. Barrio-Plaza directo es
   corta pero lenta (pesa 3); por el Parque se llega antes (pesa 2).
