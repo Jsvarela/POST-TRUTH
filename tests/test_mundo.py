@@ -516,6 +516,13 @@ class FlujoMundoNoticiasTest(unittest.TestCase):
     def tecla(self, key: int) -> None:
         self.app.estados.handle_event(self.pygame.event.Event(self.pygame.KEYDOWN, key=key))
 
+    def completar_fundido(self) -> None:
+        for _ in range(60):                                              # 1 s a 60 FPS: sobra para 0.2 + 0.2 s
+            if not self.app.estados.en_fundido:
+                return
+            self.app.estados.update(1 / 60)
+        self.fail("el fundido no termino")
+
     @property
     def sesion(self):
         return self.app.partida
@@ -527,6 +534,7 @@ class FlujoMundoNoticiasTest(unittest.TestCase):
         self.assertTrue(ir_a_zona(self.estado, self.sesion.zona_noticia))
         self.assertEqual(self.estado.accion_disponible(), (self.sesion.zona_noticia, "entrar"))
         self.tecla(self.pygame.K_e)
+        self.completar_fundido()
         return self.app.estados._actual
 
     def decidir_y_salir(self, escena, tipo: str = "ignorar") -> None:
@@ -537,6 +545,7 @@ class FlujoMundoNoticiasTest(unittest.TestCase):
             escena.animacion.saltar()
             escena._terminar_propagacion()
         self.tecla(self.pygame.K_RETURN)                                 # Continuar
+        self.completar_fundido()
 
     def test_la_seleccion_lleva_al_mundo_con_una_partida_nueva_y_sincronizada(self) -> None:
         self.assertEqual(type(self.estado).__name__, "MundoState")
@@ -562,9 +571,40 @@ class FlujoMundoNoticiasTest(unittest.TestCase):
         self.assertEqual(self.estado.estado_vista().noticia, self.sesion.zona_noticia)   # la marca se movio
         self.sincronizados()
 
+    def test_entrar_a_un_lugar_tiene_un_fundido_corto_que_ignora_las_teclas(self) -> None:
+        from post_truth.controllers.state_manager import DURACION_FUNDIDO
+        ests = self.app.estados
+        self.assertTrue(ir_a_zona(self.estado, self.sesion.zona_noticia))
+        self.tecla(self.pygame.K_e)
+        self.assertTrue(ests.en_fundido)
+        self.assertIs(ests._actual, self.estado)                         # oscurece la calle...
+        self.tecla(self.pygame.K_ESCAPE)                                 # ...y no hace caso a las teclas
+        self.assertIsNotNone(self.app.partida)
+        ests.update(DURACION_FUNDIDO / 2)
+        self.assertAlmostEqual(ests.opacidad_fundido, 0.5)
+        ests.update(DURACION_FUNDIDO / 2 + 1e-6)
+        self.assertEqual(type(ests._actual).__name__, "EscenaState")     # en lo mas oscuro cambia de pantalla
+        self.assertAlmostEqual(ests.opacidad_fundido, 1.0, places=3)
+        ests.update(DURACION_FUNDIDO)
+        self.assertFalse(ests.en_fundido)
+        self.assertEqual(ests.opacidad_fundido, 0.0)
+
+    def test_el_velo_del_fundido_usa_el_fondo_del_tema(self) -> None:
+        from post_truth.controllers.state_manager import DURACION_FUNDIDO
+        ests = self.app.estados
+        for _ in range(3):
+            ests.cambiar("mundo", fundido=True)
+            ests.update(DURACION_FUNDIDO)                                # lo mas oscuro: el velo tapa todo
+            ests.update(0)
+            ests.draw(self.app.pantalla)
+            self.assertEqual(self.app.pantalla.get_at((5, 300))[:3], self.app.temas.actual.fondo)
+            self.completar_fundido()
+            self.app.temas.siguiente()
+
     def test_esc_en_el_interior_vuelve_a_la_calle_sin_decidir(self) -> None:
         self.entrar_a_la_noticia()
         self.tecla(self.pygame.K_ESCAPE)
+        self.completar_fundido()
         self.assertIs(self.app.estados._actual, self.estado)
         self.assertEqual(self.sesion.indice, 0)                         # la noticia sigue pendiente
         self.assertIsNotNone(self.app.partida)

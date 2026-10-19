@@ -105,7 +105,7 @@ class MundoState(BaseState):
         if que == "entrar":
             self.sesion.buscar_evidencia(self.jugador_id)   # si el lugar de la noticia guarda evidencia, se ve adentro
             self.presionadas.clear()
-            self.app.estados.cambiar("escena")
+            self.app.estados.cambiar("escena", fundido=True)   # entrar al lugar con un fundido corto
             return
         evidencia = self.sesion.buscar_evidencia(self.jugador_id)
         if evidencia is not None:

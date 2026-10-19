@@ -300,7 +300,7 @@ class EscenaState(BaseState):
         self.sesion.continuar()
         if self.sesion.fase != FIN:
             if self.interior:
-                self.app.estados.cambiar("mundo")   # noticia resuelta: de vuelta a la calle por la siguiente
+                self.app.estados.cambiar("mundo", fundido=True)   # noticia resuelta: de vuelta a la calle por la siguiente
                 return
             self._preparar_turno()
             return
@@ -319,7 +319,7 @@ class EscenaState(BaseState):
             if not self.interior:
                 self.app.estados.cambiar("menu")
             elif self.fase == DECIDIENDO:
-                self.app.estados.cambiar("mundo")   # salir a la calle sin decidir (la noticia sigue pendiente)
+                self.app.estados.cambiar("mundo", fundido=True)   # salir a la calle sin decidir (la noticia sigue pendiente)
             elif self.fase == FIN:
                 self._volver_al_menu()
             return

@@ -30,7 +30,7 @@ class App:
         self.personaje: Personaje | None = None  # lo fija SeleccionState, lo lee EscenaState
         self.flujo = FLUJO        # "mundo" o "escena" (respaldo): a donde lleva la seleccion
         self.partida = None       # PartidaSesion compartida entre el mundo y el interior de los lugares
-        self.estados = StateManager()
+        self.estados = StateManager(lambda: self.temas.actual.fondo)   # el fundido usa el fondo del tema
         self.estados.registrar("menu", MenuState(self))
         self.estados.registrar("intro", IntroState(self))
         self.estados.registrar("seleccion", SeleccionState(self))
