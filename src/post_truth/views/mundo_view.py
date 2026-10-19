@@ -15,6 +15,7 @@ from post_truth.models.animacion import AnimacionPersonaje
 from post_truth.models.mundo import MundoCiudad
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.views.arte_mundo import ARTE_FORMAS, ArteFormas
+from post_truth.views.decorado import Decorado
 from post_truth.views.componentes import Fuentes, ajustar_texto
 from post_truth.views.escena_view import RECT_HUD, _dibujar_hud
 from post_truth.views.mapa_view import _rombo
@@ -22,6 +23,8 @@ from post_truth.views.theme import Tema
 
 AYUDA = "Caminar: WASD o flechas   |   E: entrar o buscar   |   G: guia   |   ESC: menu"
 ALTO_PERSONAJE = 3.2   # alto del personaje en radios de colision del jugador
+# Pajaros: (y de partida, velocidad en px del mundo/s, desfase): cruzan el mundo en bucle por encima de todo
+PAJAROS = ((260, 70, 0.0), (300, 70, 0.6), (900, -55, 2.0), (1250, 85, 4.1))
 RECT_MINIMAPA = pygame.Rect(ANCHO - px(16) - px(220), RECT_HUD.bottom + px(12), px(220), px(138))
 
 
@@ -36,6 +39,8 @@ class EstadoMundo:
     aviso: str = ""
     personaje: Personaje = Personaje(Role.CITIZEN, Genero.MUJER)
     centro_camara: tuple[float, float] | None = None   # centro suavizado (Camara); None = sobre el jugador
+    decorado: Decorado | None = None           # arboles, faroles... (None: el mundo desnudo, como en M1)
+    t: float = 0.0                             # segundos de partida: anima el viento, las luces y los pajaros
     animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
 
 
@@ -77,16 +82,39 @@ def a_pantalla(p: tuple[float, float], cam: tuple[float, float]) -> tuple[int, i
     return px(p[0] - cam[0]), px(p[1] - cam[1])
 
 
+def _vista(mundo: MundoCiudad, cam: tuple[float, float], pantalla: pygame.Surface, margen: float = 90):
+    """Funcion que dice si un punto del mundo cae en pantalla (con margen): solo se dibuja el decorado visible."""
+    ancho, alto = pantalla.get_size()
+    x0, y0, x1, y1 = cam[0] - margen, cam[1] - margen, cam[0] + ancho / ESCALA + margen, cam[1] + alto / ESCALA + margen
+    return lambda x, y: x0 <= x <= x1 and y0 <= y <= y1
+
+
 def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo: MundoCiudad,
                   estado: EstadoMundo | None = None, arte: ArteFormas = ARTE_FORMAS) -> None:
     estado = estado or EstadoMundo()
     cam = camara(mundo, *pantalla.get_size(), estado.centro_camara)
     arte.suelo(pantalla, tema)
+    deco = estado.decorado
+    visible = _vista(mundo, cam, pantalla)
+    if deco is not None:
+        for x, y, variante in deco.cesped:
+            if visible(x, y):
+                arte.cesped(pantalla, tema, a_pantalla((x, y), cam), px(7), variante)
     for c in mundo.calles:
         arte.calle(pantalla, tema, a_pantalla(mundo.plazas[c.desde].pos, cam), a_pantalla(mundo.plazas[c.hasta].pos, cam),
                    px(c.ancho))
     for p in mundo.plazas.values():
         arte.plaza(pantalla, tema, a_pantalla(p.pos, cam), px(p.radio))
+    if deco is not None:
+        for x, y in deco.bancas:
+            if visible(x, y):
+                arte.banca(pantalla, tema, a_pantalla((x, y), cam), px(30))
+        for x, y, tam, flores in deco.arbustos:
+            if visible(x, y):
+                arte.arbusto(pantalla, tema, a_pantalla((x, y), cam), px(16 * tam), flores)
+        for x, y, fase in deco.faroles:
+            if visible(x, y):
+                arte.farol(pantalla, tema, a_pantalla((x, y), cam), px(48), 0.5 + 0.5 * math.sin(estado.t * 1.5 + fase))
     if estado.guia:
         _guia(pantalla, tema, mundo, cam, estado.guia)
     resaltada = estado.accion[0] if estado.accion else None
@@ -95,15 +123,26 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
         rect = pygame.Rect(*a_pantalla((x, y), cam), px(w), px(h))
         if not rect.colliderect(pantalla.get_rect()):
             continue
-        arte.edificio(pantalla, tema, fuentes, e.zona, e.zona.capitalize(), rect, e.zona == resaltada)
+        arte.edificio(pantalla, tema, fuentes, e.zona, e.zona.capitalize(), rect, e.zona == resaltada, estado.t)
         if e.zona == estado.noticia:
             _globo_noticia(pantalla, tema, fuentes, (rect.centerx, rect.top - px(8)))
         elif e.zona in estado.evidencias:
             _marca_evidencia(pantalla, tema, fuentes, (rect.centerx, rect.top - px(26)))
+    if deco is not None:   # la copa se mece con el viento; cada arbol con su propia fase
+        for x, y, tam, fase in deco.arboles:
+            if visible(x, y):
+                arte.arbol(pantalla, tema, a_pantalla((x, y), cam), px(34 * tam), math.sin(estado.t * 1.3 + fase))
     # los pies van al borde inferior del circulo de colision; el cuerpo sobresale hacia arriba
     x, y = mundo.jugador
     arte.personaje(pantalla, tema, a_pantalla((x, y + mundo.radio_jugador), cam), px(ALTO_PERSONAJE * mundo.radio_jugador),
                    estado.personaje, estado.animacion.nombre, estado.animacion.cuadro)
+    if deco is not None:
+        ancho = mundo.tamano[0] + 400
+        for i, (y0, v, desfase) in enumerate(PAJAROS):
+            bx = (y0 * 3 + v * (estado.t + desfase)) % ancho - 200   # entran por un lado y salen por el otro
+            by = y0 + 25 * math.sin(estado.t * 0.8 + i)
+            if visible(bx, by):
+                arte.pajaro(pantalla, tema, a_pantalla((bx, by), cam), px(9), math.sin(estado.t * 9 + i * 1.7))
     if estado.indicadores:
         _dibujar_hud(pantalla, fuentes, tema, list(estado.indicadores))
     _minimapa(pantalla, tema, mundo, estado)

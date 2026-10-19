@@ -26,6 +26,7 @@ from post_truth.models.personaje import Genero, Personaje
 from post_truth.sesion import PartidaSesion
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
+from post_truth.views.decorado import generar as generar_decorado
 from post_truth.views.mundo_view import Camara, EstadoMundo, dibujar_mundo
 
 # tecla -> (dx, dy)
@@ -46,6 +47,8 @@ class MundoState(BaseState):
         self.guia = False
         self.animacion = AnimacionPersonaje()
         self.camara = Camara(self.mundo.jugador)
+        self.decorado = generar_decorado(self.mundo)   # mismo mapa siempre: se genera una vez
+        self.t = 0.0                                   # reloj del ambiente (viento, luces, pajaros)
 
     # --- partida ------------------------------------------------------------------------
     @property
@@ -133,6 +136,7 @@ class MundoState(BaseState):
         self.mundo.mover(dx, dy, dt, self._llegar)   # sin direccion no se mueve
         self.animacion.actualizar(dx, dy, math.dist(antes, self.mundo.jugador), dt)
         self.camara.seguir(self.mundo.jugador, dt)
+        self.t += dt
         self._t_aviso = max(0.0, self._t_aviso - dt)
         if self._t_aviso == 0:
             self.aviso = ""
@@ -145,7 +149,8 @@ class MundoState(BaseState):
             noticia=s.zona_noticia, evidencias=inv.lugares_pendientes() - {s.zona_noticia},
             accion=self.accion_disponible(),
             indicadores=s.ciudad.as_display_rows(), guia=ruta.zonas if ruta else (), aviso=self.aviso,
-            personaje=self.personaje, animacion=self.animacion, centro_camara=self.camara.centro)
+            personaje=self.personaje, animacion=self.animacion, centro_camara=self.camara.centro,
+            decorado=self.decorado, t=self.t)
 
     def draw(self, pantalla: pygame.Surface) -> None:
         dibujar_mundo(pantalla, self.app.fuentes, self.app.temas.actual, self.mundo, self.estado_vista())
