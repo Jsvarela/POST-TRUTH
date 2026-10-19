@@ -65,6 +65,10 @@ Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
   Junto a la puerta: "E: entrar" abre la pantalla de noticias de ese lugar y "E: buscar evidencia" la revela. Al
   decidir se vuelve a la calle con la siguiente noticia. G muestra la guia (camino mas corto, Dijkstra) hacia la
   noticia. Arriba: indicadores y un minimapa con la posicion del jugador. M en el menu entra directo.
+- **Personaje animado:** el personaje elegido (rol y genero) camina en 4 direcciones con pasos, sombra y una
+  camara que lo sigue con suavidad; entrar y salir de un lugar tiene un fundido corto. Las animaciones se llaman
+  `idle_abajo`, `idle_arriba`, `idle_izquierda`, `idle_derecha`, `caminar_abajo`... (`models/animacion.py`):
+  idle tiene 2 cuadros y caminar 4, que es la forma que tendra la hoja de sprites PNG (una fila por animacion).
 - **Ritmo de las calles:** cada calle se cruza en (peso de su arista) x 3 segundos, sea cual sea su largo en
   pantalla, asi que la guia (Dijkstra por peso) es siempre el camino mas rapido a pie. Barrio-Plaza directo es
   corta pero lenta (pesa 3); por el Parque se llega antes (pesa 2).
