@@ -392,6 +392,42 @@ class MundoEnPantallaTest(unittest.TestCase):
             x, y = camara(m)
             self.assertTrue(0 <= x <= m.tamano[0] - vista[0] and 0 <= y <= m.tamano[1] - vista[1], e.zona)
 
+    def test_la_camara_suave_va_detras_del_jugador_y_lo_alcanza(self) -> None:
+        cam, m = self.estado.camara, self.estado.mundo
+        self.assertEqual(cam.centro, m.jugador)                          # al entrar salta al jugador
+        self.tecla(self.pygame.K_d)
+        self.correr(0.5)
+        self.assertLess(cam.centro[0], m.jugador[0])                     # va detras...
+        self.assertGreater(cam.centro[0], m.aparicion[0])                # ...pero lo sigue
+        self.tecla(self.pygame.K_d, self.pygame.KEYUP)
+        self.correr(1.5)
+        self.assertAlmostEqual(cam.centro[0], m.jugador[0], delta=1)     # quieto: lo alcanza
+
+    def test_la_camara_suave_es_igual_a_30_y_60_fps(self) -> None:
+        from post_truth.views.mundo_view import Camara
+        finales = []
+        for fps in (30, 60):
+            c = Camara((0.0, 0.0))
+            for _ in range(fps // 2):
+                c.seguir((300.0, -120.0), 1 / fps)
+            finales.append(c.centro)
+        self.assertAlmostEqual(finales[0][0], finales[1][0], places=6)
+        self.assertAlmostEqual(finales[0][1], finales[1][1], places=6)
+
+    def test_la_camara_suave_tampoco_se_sale_del_mundo(self) -> None:
+        from post_truth.config import ALTO, ANCHO, ESCALA
+        from post_truth.views.mundo_view import camara
+        m = self.estado.mundo
+        x, y = camara(m, centro=(-500.0, 99999.0))
+        self.assertEqual((x, y), (0.0, m.tamano[1] - ALTO / ESCALA))
+
+    def test_al_volver_de_un_lugar_la_camara_salta_sin_viajar(self) -> None:
+        m = self.estado.mundo
+        self.estado.camara.saltar((0.0, 0.0))
+        m.jugador = next(e.entrada for e in m.edificios)
+        self.estado.al_entrar()                                          # como al salir del interior
+        self.assertEqual(self.estado.camara.centro, m.jugador)
+
     def test_se_dibuja_en_los_3_temas_cerca_de_cada_lugar(self) -> None:
         imagenes = set()
         for _ in range(3):

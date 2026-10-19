@@ -4,6 +4,7 @@ HUD (indicadores) y minimapa. Todo el arte del mundo pasa por un proveedor (ver 
 El mundo (data/mundo.json) es mas grande que la pantalla: se ve una ventana de ANCHO/ESCALA x ALTO/ESCALA
 pixeles del mundo alrededor del jugador, y la camara se detiene en los bordes del mundo.
 """
+import math
 from dataclasses import dataclass, field
 
 import pygame
@@ -34,12 +35,33 @@ class EstadoMundo:
     guia: tuple[str, ...] = ()                 # ruta de plazas hacia la noticia (vacia: guia apagada)
     aviso: str = ""
     personaje: Personaje = Personaje(Role.CITIZEN, Genero.MUJER)
+    centro_camara: tuple[float, float] | None = None   # centro suavizado (Camara); None = sobre el jugador
     animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
 
 
-def camara(mundo: MundoCiudad, ancho: int = ANCHO, alto: int = ALTO) -> tuple[float, float]:
-    """Esquina superior izquierda (en pixeles del mundo) de lo que se ve: centrada en el jugador y sin salirse
-    del mundo. Si el mundo es mas chico que la pantalla en un eje, se centra en ese eje."""
+class Camara:
+    """Centro de la vista que persigue al jugador con amortiguacion exponencial: cada cuadro recorre la fraccion
+    1 - e^(-SUAVIDAD * dt) de lo que le falta. Como la fraccion depende de dt y no del numero de cuadros, la
+    camara llega igual a 30 y a 60 FPS (es la solucion exacta de x' = SUAVIDAD * (objetivo - x))."""
+    SUAVIDAD = 8.0   # 1/s: a los ~0.3 s ya recorrio el 90% del camino
+
+    def __init__(self, centro: tuple[float, float] = (0.0, 0.0)) -> None:
+        self.centro = centro
+
+    def saltar(self, objetivo: tuple[float, float]) -> None:
+        """Sin transicion: al empezar una partida o al volver de un lugar la camara no "viaja" por el mapa."""
+        self.centro = objetivo
+
+    def seguir(self, objetivo: tuple[float, float], dt: float) -> None:
+        f = 1 - math.exp(-self.SUAVIDAD * max(0.0, dt))
+        self.centro = (self.centro[0] + (objetivo[0] - self.centro[0]) * f,
+                       self.centro[1] + (objetivo[1] - self.centro[1]) * f)
+
+
+def camara(mundo: MundoCiudad, ancho: int = ANCHO, alto: int = ALTO,
+           centro: tuple[float, float] | None = None) -> tuple[float, float]:
+    """Esquina superior izquierda (en pixeles del mundo) de lo que se ve: centrada en `centro` (por defecto el
+    jugador) y sin salirse del mundo. Si el mundo es mas chico que la pantalla en un eje, se centra en ese eje."""
     vista_w, vista_h = ancho / ESCALA, alto / ESCALA
     mundo_w, mundo_h = mundo.tamano
 
@@ -47,7 +69,8 @@ def camara(mundo: MundoCiudad, ancho: int = ANCHO, alto: int = ALTO) -> tuple[fl
         if total <= vista:
             return (total - vista) / 2
         return min(max(jugador - vista / 2, 0.0), total - vista)
-    return eje(mundo.jugador[0], vista_w, mundo_w), eje(mundo.jugador[1], vista_h, mundo_h)
+    cx, cy = centro if centro is not None else mundo.jugador
+    return eje(cx, vista_w, mundo_w), eje(cy, vista_h, mundo_h)
 
 
 def a_pantalla(p: tuple[float, float], cam: tuple[float, float]) -> tuple[int, int]:
@@ -57,7 +80,7 @@ def a_pantalla(p: tuple[float, float], cam: tuple[float, float]) -> tuple[int, i
 def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo: MundoCiudad,
                   estado: EstadoMundo | None = None, arte: ArteFormas = ARTE_FORMAS) -> None:
     estado = estado or EstadoMundo()
-    cam = camara(mundo, *pantalla.get_size())
+    cam = camara(mundo, *pantalla.get_size(), estado.centro_camara)
     arte.suelo(pantalla, tema)
     for c in mundo.calles:
         arte.calle(pantalla, tema, a_pantalla(mundo.plazas[c.desde].pos, cam), a_pantalla(mundo.plazas[c.hasta].pos, cam),

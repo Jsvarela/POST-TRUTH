@@ -26,7 +26,7 @@ from post_truth.models.personaje import Genero, Personaje
 from post_truth.sesion import PartidaSesion
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
-from post_truth.views.mundo_view import EstadoMundo, dibujar_mundo
+from post_truth.views.mundo_view import Camara, EstadoMundo, dibujar_mundo
 
 # tecla -> (dx, dy)
 DIRECCIONES = {
@@ -45,6 +45,7 @@ class MundoState(BaseState):
         self.aviso, self._t_aviso = "", 0.0
         self.guia = False
         self.animacion = AnimacionPersonaje()
+        self.camara = Camara(self.mundo.jugador)
 
     # --- partida ------------------------------------------------------------------------
     @property
@@ -69,6 +70,7 @@ class MundoState(BaseState):
             self.sesion.llegar(self.jugador_id, self.mundo.ultima_plaza)
             self.guia = False
             self.animacion = AnimacionPersonaje()
+        self.camara.saltar(self.mundo.jugador)
         self.presionadas.clear()       # al volver de un lugar no queda ninguna tecla "pegada"
         self.aviso, self._t_aviso = "", 0.0
 
@@ -130,6 +132,7 @@ class MundoState(BaseState):
         antes = self.mundo.jugador
         self.mundo.mover(dx, dy, dt, self._llegar)   # sin direccion no se mueve
         self.animacion.actualizar(dx, dy, math.dist(antes, self.mundo.jugador), dt)
+        self.camara.seguir(self.mundo.jugador, dt)
         self._t_aviso = max(0.0, self._t_aviso - dt)
         if self._t_aviso == 0:
             self.aviso = ""
@@ -142,7 +145,7 @@ class MundoState(BaseState):
             noticia=s.zona_noticia, evidencias=inv.lugares_pendientes() - {s.zona_noticia},
             accion=self.accion_disponible(),
             indicadores=s.ciudad.as_display_rows(), guia=ruta.zonas if ruta else (), aviso=self.aviso,
-            personaje=self.personaje, animacion=self.animacion)
+            personaje=self.personaje, animacion=self.animacion, centro_camara=self.camara.centro)
 
     def draw(self, pantalla: pygame.Surface) -> None:
         dibujar_mundo(pantalla, self.app.fuentes, self.app.temas.actual, self.mundo, self.estado_vista())
