@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import random
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from typing import Sequence
 
 from post_truth.config import RUTA_EVENTOS, RUTA_GRAFO_CIUDAD
@@ -21,6 +21,9 @@ DECIDIENDO, CONSECUENCIA, FIN = "decidiendo", "consecuencia", "fin"
 JUGADOR = "jugador"
 MIN_JUGADORES, MAX_JUGADORES = 1, 4
 VERSION = 1
+UMBRAL_VIRAL = 300     # likes desde los que una publicacion es viral y se decide con reloj
+TIEMPO_VIRAL = 30.0    # segundos por turno; corren tambien en la calle (buscar evidencia cuesta tiempo)
+AVISO_VENCIDO = "Se te acabo el tiempo: la publicacion siguio circulando sin que nadie la frenara."
 
 
 @dataclass
@@ -63,6 +66,7 @@ class ResultadoDecision:
     impacto: Impact = Impact()
     aviso: str = ""
     simulacion: SimulacionDecision | None = None
+    vencido: bool = False   # la decidio el reloj, no el jugador
 
 
 class PartidaSesion:
@@ -79,6 +83,8 @@ class PartidaSesion:
         self.turno = 0
         self.fase = DECIDIENDO
         self.pendiente: ResultadoDecision | None = None
+        self.tiempo_restante: float | None = None   # None: la publicacion no es viral
+        self.reloj_activo = False                   # arranca al ver la publicacion por primera vez
 
     @classmethod
     def nueva(cls, personajes: Sequence[Personaje], arboles: list[DecisionTree], grafo: GrafoSocial,
@@ -106,6 +112,39 @@ class PartidaSesion:
     @property
     def terminada(self) -> bool:
         return self.fase == FIN
+
+    @property
+    def es_viral(self) -> bool:
+        return self.arbol.event.likes >= UMBRAL_VIRAL
+
+    def _reiniciar_reloj(self) -> None:
+        self.tiempo_restante = TIEMPO_VIRAL if self.es_viral else None
+        self.reloj_activo = False
+
+    def iniciar_reloj(self) -> None:
+        """El jugador de turno ya vio la publicacion: desde aqui corre su tiempo (si es viral)."""
+        if self.tiempo_restante is not None and self.fase == DECIDIENDO:
+            self.reloj_activo = True
+
+    def transcurrir(self, dt: float) -> ResultadoDecision | None:
+        """Descuenta `dt` del reloj del turno. Al llegar a 0 decide sola (ver `decidir_por_tiempo`) y devuelve
+        esa decision pendiente; si no, None. Solo corre mientras se decide."""
+        if (not self.reloj_activo or self.tiempo_restante is None or self.fase != DECIDIENDO
+                or self.pendiente is not None):
+            return None
+        self.tiempo_restante = max(0.0, self.tiempo_restante - dt)
+        return self.decidir_por_tiempo() if self.tiempo_restante == 0 else None
+
+    def decidir_por_tiempo(self) -> ResultadoDecision:
+        """Nadie decidio a tiempo: cuenta como Ignorar y ademas nadie freno la publicacion."""
+        j = self.jugador_actual
+        ramas = self.arbol.root.children
+        nodo = next((n for n in ramas if n.tipo == "ignorar"), ramas[0])
+        r = self.decidir(j.id, nodo)
+        castigo = Impact(misinformation=4, trust=-2) if es_falsa(self.arbol.event.truth_level) else Impact(trust=-2)
+        self.pendiente = replace(r, impacto=r.impacto + castigo, aviso=AVISO_VENCIDO, vencido=True)
+        self.reloj_activo = False
+        return self.pendiente
 
     def jugador(self, id: str) -> Jugador:
         for j in self.jugadores:
@@ -214,6 +253,7 @@ class PartidaSesion:
         self.turno += 1
         if self.turno < len(self.jugadores):
             self.fase = DECIDIENDO
+            self._reiniciar_reloj()
             return True
         self.turno, self.indice = 0, self.indice + 1
         if self.indice < len(self.arboles):
@@ -227,6 +267,7 @@ class PartidaSesion:
         if indice is not None:
             self.indice = indice
         self.turno, self.fase, self.pendiente = 0, DECIDIENDO, None
+        self._reiniciar_reloj()
         evento = self.arbol.event
         for j in self.jugadores:
             j.investigacion = Investigacion(evento.clues, evidencias=evento.evidences)
@@ -244,7 +285,9 @@ class PartidaSesion:
             "eventos": [a.event.event_id for a in self.arboles],
             "indice": self.indice, "turno": self.turno, "fase": self.fase,
             "pendiente": None if p is None else {"jugador": p.jugador, "nodo": p.nodo.node_id,
-                                                 "impacto": asdict(p.impacto), "aviso": p.aviso},
+                                                 "impacto": asdict(p.impacto), "aviso": p.aviso,
+                                                 "vencido": p.vencido},
+            "reloj": {"restante": self.tiempo_restante, "activo": self.reloj_activo},
             "grafo": self.grafo.to_dict(),
             "rng": [estado_rng[0], list(estado_rng[1]), estado_rng[2]],
         }
@@ -269,13 +312,15 @@ class PartidaSesion:
         sesion = cls(jugadores, arboles, GrafoSocial.from_dict(datos["grafo"]), GrafoCiudad.cargar(ruta_mapa), rng,
                      CityState.from_dict(datos["ciudad"]))
         sesion.indice, sesion.turno, sesion.fase = indice, int(datos["turno"]), datos["fase"]
+        reloj = datos.get("reloj", {})
+        sesion.tiempo_restante, sesion.reloj_activo = reloj.get("restante"), bool(reloj.get("activo", False))
         p = datos.get("pendiente")
         if p is not None:
             nodo = sesion.arbol.find(p["nodo"])
             if nodo is None:
                 raise ValueError(f"Decision pendiente desconocida: {p['nodo']}")
             sesion.pendiente = ResultadoDecision(True, "", p["jugador"], nodo, Impact.from_dict(p["impacto"]),
-                                                 p["aviso"])
+                                                 p["aviso"], vencido=bool(p.get("vencido", False)))
         return sesion
 
 
