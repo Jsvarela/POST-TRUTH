@@ -1,6 +1,6 @@
 """Vista de la escena de dialogo."""
 import math
-from dataclasses import fields
+from dataclasses import dataclass, fields
 
 import pygame
 
@@ -11,7 +11,7 @@ from post_truth.views.componentes import Boton, CajaDialogo, Fuentes, Panel, dib
 from post_truth.views.grafo_view import AnimacionPropagacion
 from post_truth.views.mapa_view import EstadoMapa, dibujar_mapa
 from post_truth.views.tarjeta_civitas_view import EstadoTarjeta, dibujar_tarjeta
-from post_truth.views.personaje_view import dibujar_personaje
+from post_truth.views.personaje_view import dibujar_personaje, dibujar_personaje_mundo
 from post_truth.views.theme import Tema
 from post_truth.views.zona_view import dibujar_fondo_zona
 
@@ -79,6 +79,73 @@ def _dibujar_consecuencias(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tem
         y += fuentes.normal.get_linesize() + px(6)
 
 
+DURACION_REACCION = 0.8   # segundos que dura el salto o la sacudida tras decidir
+
+
+@dataclass
+class EstadoPresentes:
+    """Ciudadanos en el lugar: (nombre, apariencia, si le llego la publicacion). `reaccion` es None mientras se
+    decide; despues, el signo del impacto (1 bien, -1 mal, 0 nada)."""
+    personas: list[tuple[str, Personaje, bool]]
+    reaccion: int | None = None
+    t: float = 0.0             # reloj de la escena (respiracion)
+    t_reaccion: float = 0.0    # segundos desde que se decidio
+
+
+def desplazamiento_reaccion(signo: int, t: float) -> tuple[int, int]:
+    """Bien: dos saltos cortos. Mal: una sacudida que se apaga. Despues de DURACION_REACCION, quieto."""
+    if t >= DURACION_REACCION or signo == 0:
+        return 0, 0
+    if signo > 0:
+        return 0, -round(abs(math.sin(t * 2 * math.pi / DURACION_REACCION)) * px(14))
+    return round(math.sin(t * 40) * px(6) * (1 - t / DURACION_REACCION)), 0
+
+
+def dibujar_presentes(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: pygame.Rect,
+                      estado: EstadoPresentes) -> None:
+    pygame.draw.rect(pantalla, tema.fondo, rect, border_radius=px(12))
+    pygame.draw.rect(pantalla, tema.borde, rect, width=px(2), border_radius=px(12))
+    titulo = fuentes.normal.render("En el lugar", True, tema.texto)
+    pantalla.blit(titulo, (rect.x + px(14), rect.y + px(10)))
+    n = len(estado.personas)
+    for i, (nombre, apariencia, le_llego) in enumerate(estado.personas):
+        x = rect.x + round(rect.w * (i + 0.5) / n)
+        pies = (x, rect.bottom - px(46))
+        signo = estado.reaccion or 0
+        dx, dy = desplazamiento_reaccion(signo, max(0.0, estado.t_reaccion - i * 0.1))   # no todos a la vez
+        cuadro = int((estado.t + i * 0.3) * 2) % 2
+        dibujar_personaje_mundo(pantalla, apariencia, tema, (pies[0] + dx, pies[1] + dy), px(120), "idle_abajo", cuadro)
+        img = fuentes.chica.render(nombre.split()[0], True, tema.texto)
+        pantalla.blit(img, img.get_rect(midtop=(x, pies[1] + px(6))))
+        if estado.reaccion is not None:
+            _globo_reaccion(pantalla, fuentes, tema, (x + dx, pies[1] - px(132) + dy), signo)
+            if le_llego:   # la publicacion le llego por Civitas: un celular junto a la persona
+                tel = pygame.Rect(0, 0, px(12), px(20))
+                tel.midleft = (x + px(26), pies[1] - px(70))
+                pygame.draw.rect(pantalla, tema.texto, tel, border_radius=px(3))
+                pygame.draw.rect(pantalla, tema.acento, tel.inflate(-px(4), -px(6)), border_radius=px(2))
+
+
+def _globo_reaccion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, centro: tuple[int, int], signo: int) -> None:
+    """Visto (bien), alerta (mal) o puntos suspensivos (nada): forma distinta en cada caso, no solo color."""
+    x, y = centro
+    r = px(12)
+    if signo > 0:
+        pygame.draw.circle(pantalla, tema.bueno, centro, r)
+        pygame.draw.lines(pantalla, tema.fondo, False, [(x - px(6), y), (x - px(2), y + px(5)), (x + px(6), y - px(5))], px(3))
+    elif signo < 0:
+        pygame.draw.polygon(pantalla, tema.malo, [(x, y - r), (x + r, y + r - px(2)), (x - r, y + r - px(2))])
+        img = fuentes.chica.render("!", True, tema.fondo)
+        pantalla.blit(img, img.get_rect(center=(x, y + px(2))))
+    else:
+        caja = pygame.Rect(0, 0, px(28), px(18))
+        caja.center = centro
+        pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(8))
+        pygame.draw.rect(pantalla, tema.borde, caja, width=px(1), border_radius=px(8))
+        for k in (-1, 0, 1):
+            pygame.draw.circle(pantalla, tema.texto, (x + k * px(7), y), px(2))
+
+
 AVISO_RELOJ = 10   # segundos: desde aqui el reloj usa el color de peligro
 PULSO_RELOJ = 5    # segundos: desde aqui ademas late
 
@@ -116,11 +183,13 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
                    impacto: Impact | None, dialogo: CajaDialogo, botones: list[Boton],
                    animacion: AnimacionPropagacion | None = None, zona_id: str = "", nombre_zona: str = "",
                    mapa: EstadoMapa | None = None, tarjeta: EstadoTarjeta | None = None, ayuda: str = AYUDA,
-                   reloj: tuple[float, float] | None = None) -> None:
+                   reloj: tuple[float, float] | None = None, presentes: EstadoPresentes | None = None,
+                   reaccion_jugador: tuple[int, float] | None = None) -> None:
     pantalla.fill(tema.fondo)
     dibujar_fondo_zona(pantalla, zona_id, tema, RECT_ESCENA)
     _dibujar_hud(pantalla, fuentes, tema, filas)
-    dibujar_personaje(pantalla, personaje, tema, RECT_PERSONAJE, animo)
+    dx, dy = desplazamiento_reaccion(*reaccion_jugador) if reaccion_jugador else (0, 0)
+    dibujar_personaje(pantalla, personaje, tema, RECT_PERSONAJE.move(dx, dy), animo)
     if nombre_zona:
         etiqueta = fuentes.normal.render(f"Estas en: {nombre_zona}", True, tema.texto)
         marco = etiqueta.get_rect(topleft=(px(16), RECT_ESCENA.y + px(12))).inflate(px(20), px(10))
@@ -134,14 +203,16 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
     else:
         panel = Panel(RECT_PANEL, "" if tarjeta is not None else titulo_panel, alfa=ALFA_PANEL)
         panel.draw(pantalla, fuentes, tema)
-        area = RECT_TEXTO_PANEL if mapa is not None else panel.interior
+        area = RECT_TEXTO_PANEL if mapa is not None or presentes is not None else panel.interior
         if tarjeta is not None:
             dibujar_tarjeta(pantalla, fuentes, tema, RECT_TARJETA, tarjeta.evento, tarjeta.investigacion, tarjeta.hover)
         elif impacto is None:
             dibujar_texto_ajustado(pantalla, fuentes.normal, texto_panel, tema.texto, area)
         else:
             _dibujar_consecuencias(pantalla, fuentes, tema, area, impacto)
-        if mapa is not None:
+        if presentes is not None:
+            dibujar_presentes(pantalla, fuentes, tema, RECT_MAPA, presentes)
+        elif mapa is not None:
             dibujar_mapa(pantalla, fuentes, tema, RECT_MAPA, mapa)
     dialogo.draw(pantalla, fuentes, tema)
     for boton in botones:

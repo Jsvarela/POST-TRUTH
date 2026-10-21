@@ -14,7 +14,8 @@ from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, TIEMPO_VIRAL, Parti
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
 from post_truth.views.componentes import Boton, CajaDialogo
-from post_truth.views.escena_view import AYUDA, AYUDA_INTERIOR, RECT_MAPA, RECT_TARJETA, dibujar_escena
+from post_truth.views.escena_view import (AYUDA, AYUDA_INTERIOR, RECT_MAPA, RECT_TARJETA, EstadoPresentes,
+                                          dibujar_escena)
 from post_truth.views.grafo_view import AnimacionPropagacion
 from post_truth.views.mapa_view import EstadoMapa, zona_de_tecla, zona_en
 from post_truth.views.tarjeta_civitas_view import EstadoTarjeta, pista_con_tecla, zona_en as zona_de_tarjeta
@@ -36,6 +37,14 @@ def _rects_botones(n: int) -> list[pygame.Rect]:
     return [pygame.Rect(MARGEN + i * (ancho + SEPARACION), Y_BOTONES, ancho, ALTO_BOTONES) for i in range(n)]
 
 
+def _signo(impacto) -> int:
+    """1 si la decision fue buena, -1 si fue mala, 0 si no cambio nada: manda el puntaje y, si es 0, el saldo de
+    los indicadores (los malos restan)."""
+    total = impacto.score or (impacto.verified_information + impacto.trust + impacto.coexistence
+                              + impacto.digital_wellbeing - impacto.misinformation - impacto.conflicts)
+    return (total > 0) - (total < 0)
+
+
 class EscenaState(BaseState):
     """Traduce eventos de pygame a llamadas de `PartidaSesion`."""
 
@@ -54,6 +63,9 @@ class EscenaState(BaseState):
         self._hover = None
         self._hover_zona = None
         self.interior = False
+        self._t = 0.0                  # reloj de la escena (respiracion de los presentes)
+        self._reaccion: tuple[int, frozenset[str]] | None = None   # signo del impacto y a quienes les llego
+        self._t_reaccion = 0.0
 
     @property
     def sesion(self) -> PartidaSesion:
@@ -142,6 +154,15 @@ class EscenaState(BaseState):
         self.animacion = None
         self._preparar_turno()
 
+    def _presentes(self) -> EstadoPresentes:
+        """Los ciudadanos del lugar, con la apariencia de su rol; el genero sale del nombre y el tono, de su id."""
+        personas = []
+        alcanzados = self._reaccion[1] if self._reaccion else frozenset()
+        for c in self.sesion.presentes:
+            genero = Genero.MUJER if c.nombre.split()[0].endswith("a") else Genero.HOMBRE
+            personas.append((c.nombre, Personaje(c.rol, genero, sum(map(ord, c.id)) % 2), c.id in alcanzados))
+        return EstadoPresentes(personas, self._reaccion[0] if self._reaccion else None, self._t, self._t_reaccion)
+
     def _nombre_zona(self, id: str) -> str:
         return self.mapa.zona(id).nombre if id in self.mapa else id
 
@@ -201,6 +222,7 @@ class EscenaState(BaseState):
     def _preparar_turno(self) -> None:
         """Pantalla del jugador de turno: la noticia y sus botones."""
         self.impacto, self.animo = None, 0
+        self._reaccion = None
         self._hover = self._hover_zona = None
         self.ruta_vista = ()
         self.dialogo.set_texto(self.arbol.event.content, "Civitas")
@@ -248,7 +270,10 @@ class EscenaState(BaseState):
         """La sesion aplica el impacto a la ciudad y a los puntos."""
         self.sesion.aplicar()
         self.impacto = r.impacto
-        self.animo = (r.impacto.score > 0) - (r.impacto.score < 0)
+        self.animo = _signo(r.impacto)
+        olas = r.simulacion.resultado.olas[1:] if r.simulacion is not None else ()
+        self._reaccion = (self.animo, frozenset(id for ola in olas for id in ola))   # quienes la recibieron
+        self._t_reaccion = 0.0
         mensaje = r.nodo.consecuencia(self.investigacion.pistas_descubiertas()) or "Nada cambia por ahora."
         self.dialogo.set_texto(f"{mensaje}\n{r.aviso}" if r.aviso else mensaje, "Consecuencia")
         self.botones = [Boton(RECT_BOTON_CENTRAL, "Continuar (Enter)",
@@ -314,6 +339,8 @@ class EscenaState(BaseState):
 
     def update(self, dt: float) -> None:
         self.dialogo.update(dt)
+        self._t += dt
+        self._t_reaccion += dt
         if self.fase == DECIDIENDO:
             vencida = self.sesion.transcurrir(dt)
             if vencida is not None:
@@ -343,7 +370,9 @@ class EscenaState(BaseState):
                        self._estado_mapa() if en_mapa else None,
                        EstadoTarjeta(self.arbol.event, self.investigacion, self._hover)
                        if self.fase == DECIDIENDO else None, AYUDA_INTERIOR if self.interior else AYUDA,
-                       self._reloj() if self.fase == DECIDIENDO else None)
+                       self._reloj() if self.fase == DECIDIENDO else None,
+                       self._presentes() if self.interior and self.fase in (DECIDIENDO, CONSECUENCIA) else None,
+                       (self._reaccion[0], self._t_reaccion) if self._reaccion and self.fase == CONSECUENCIA else None)
 
     def _reloj(self) -> tuple[float, float] | None:
         restante = self.sesion.tiempo_restante
