@@ -103,7 +103,7 @@ class GrafoCiudad:
         return list(self._ady[id])
 
     def conexiones(self) -> list[tuple[str, str, int]]:
-        """Cada conexion una sola vez:."""
+        """Cada conexion una sola vez, como (a, b, distancia)."""
         vistas: set[frozenset[str]] = set()
         resultado: list[tuple[str, str, int]] = []
         for a, vecinos in self._ady.items():
