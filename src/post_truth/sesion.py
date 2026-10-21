@@ -1,6 +1,7 @@
 """Sesion de partida: el estado y las reglas del juego, sin pygame ni vistas."""
 from __future__ import annotations
 
+import hashlib
 import random
 from dataclasses import asdict, dataclass, field, replace
 from typing import Sequence
@@ -21,6 +22,7 @@ DECIDIENDO, CONSECUENCIA, FIN = "decidiendo", "consecuencia", "fin"
 JUGADOR = "jugador"
 MIN_JUGADORES, MAX_JUGADORES = 1, 4
 VERSION = 1
+PRESENTES = 3          # ciudadanos del grafo social en el lugar de la publicacion
 UMBRAL_VIRAL = 300     # likes desde los que una publicacion es viral y se decide con reloj
 TIEMPO_VIRAL = 30.0    # segundos por turno; corren tambien en la calle (buscar evidencia cuesta tiempo)
 AVISO_VENCIDO = "Se te acabo el tiempo: la publicacion siguio circulando sin que nadie la frenara."
@@ -112,6 +114,17 @@ class PartidaSesion:
     @property
     def terminada(self) -> bool:
         return self.fase == FIN
+
+    @property
+    def presentes(self) -> list[Ciudadano]:
+        """Quienes estan en el lugar con el jugador de turno: siempre los mismos para un lugar y una publicacion
+        (se ordena por un hash estable, no por el rng, asi no cambia el azar de la partida)."""
+        lugar, evento = self.jugador_actual.zona, self.arbol.event.event_id
+        propios = {j.id for j in self.jugadores}
+
+        def clave(c: Ciudadano) -> str:
+            return hashlib.md5(f"{lugar}:{evento}:{c.id}".encode()).hexdigest()
+        return sorted((c for c in self.grafo.vertices() if c.id not in propios), key=clave)[:PRESENTES]
 
     @property
     def es_viral(self) -> bool:
