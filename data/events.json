@@ -402,6 +402,21 @@
         }
       },
       {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "No lo compartes, pero el rumor de los parques sigue corriendo sin que nadie lo desmienta.",
+        "variantes": [],
+        "effect": {
+          "verified_information": 0,
+          "trust": -1,
+          "coexistence": 0,
+          "digital_wellbeing": 1,
+          "misinformation": 2,
+          "conflicts": 0,
+          "score": 1
+        }
+      },
+      {
         "action": "Reportar",
         "tipo": "reportar",
         "description": "Se reduce el alcance de la publicacion sospechosa.",
@@ -768,6 +783,21 @@
             }
           }
         ]
+      },
+      {
+        "action": "Ignorar",
+        "tipo": "ignorar",
+        "description": "No lo reenvias, pero el clip recortado sigue circulando sin que nadie muestre el video completo.",
+        "variantes": [],
+        "effect": {
+          "verified_information": 0,
+          "trust": -1,
+          "coexistence": 0,
+          "digital_wellbeing": 1,
+          "misinformation": 2,
+          "conflicts": 0,
+          "score": 1
+        }
       },
       {
         "action": "Reportar manipulacion",
