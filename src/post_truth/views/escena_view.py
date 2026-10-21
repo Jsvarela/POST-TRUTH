@@ -1,4 +1,5 @@
 """Vista de la escena de dialogo."""
+import math
 from dataclasses import fields
 
 import pygame
@@ -78,11 +79,44 @@ def _dibujar_consecuencias(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tem
         y += fuentes.normal.get_linesize() + px(6)
 
 
+AVISO_RELOJ = 10   # segundos: desde aqui el reloj usa el color de peligro
+PULSO_RELOJ = 5    # segundos: desde aqui ademas late
+
+
+def dibujar_reloj(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, restante: float, total: float,
+                  topleft: tuple[int, int]) -> None:
+    """Reloj de una publicacion viral: icono, segundos y barra que se vacia. Al final cambia de color, de texto
+    ("Rapido!") y late, asi que no depende solo del color."""
+    urgente = restante <= AVISO_RELOJ
+    color = tema.malo if urgente else tema.acento
+    caja = pygame.Rect(*topleft, px(200), px(32))   # cabe sobre la cabeza del personaje
+    if restante <= PULSO_RELOJ and int(restante * 4) % 2 == 0:
+        caja = caja.inflate(px(6), px(2))
+    pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(8))
+    pygame.draw.rect(pantalla, color, caja, px(3) if urgente else px(2), border_radius=px(8))
+    centro, r = (caja.x + px(17), caja.y + px(14)), px(8)           # reloj: circulo con dos agujas
+    pygame.draw.circle(pantalla, color, centro, r, px(2))
+    ang = -math.pi / 2 + 2 * math.pi * (1 - restante / total)
+    pygame.draw.line(pantalla, color, centro, (centro[0] + round(math.cos(ang) * r * 0.8),
+                                               centro[1] + round(math.sin(ang) * r * 0.8)), px(2))
+    pygame.draw.line(pantalla, color, centro, (centro[0], centro[1] - r // 2), px(2))
+    texto = f"Viral: {math.ceil(restante)} s" + ("  Rapido!" if urgente else "")
+    img = fuentes.normal.render(texto, True, tema.texto)
+    pantalla.blit(img, img.get_rect(midleft=(caja.x + px(32), centro[1])))
+    barra = pygame.Rect(caja.x + px(8), caja.bottom - px(6), caja.w - px(16), px(3))
+    pygame.draw.rect(pantalla, tema.fondo, barra, border_radius=px(3))
+    lleno = barra.copy()
+    lleno.w = round(barra.w * max(0.0, min(1.0, restante / total)))
+    if lleno.w:
+        pygame.draw.rect(pantalla, color, lleno, border_radius=px(3))
+
+
 def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, personaje: Personaje,
                    animo: int, filas: list[tuple[str, int]], titulo_panel: str, texto_panel: str,
                    impacto: Impact | None, dialogo: CajaDialogo, botones: list[Boton],
                    animacion: AnimacionPropagacion | None = None, zona_id: str = "", nombre_zona: str = "",
-                   mapa: EstadoMapa | None = None, tarjeta: EstadoTarjeta | None = None, ayuda: str = AYUDA) -> None:
+                   mapa: EstadoMapa | None = None, tarjeta: EstadoTarjeta | None = None, ayuda: str = AYUDA,
+                   reloj: tuple[float, float] | None = None) -> None:
     pantalla.fill(tema.fondo)
     dibujar_fondo_zona(pantalla, zona_id, tema, RECT_ESCENA)
     _dibujar_hud(pantalla, fuentes, tema, filas)
@@ -93,6 +127,8 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
         pygame.draw.rect(pantalla, tema.panel, marco, border_radius=px(8))
         pygame.draw.rect(pantalla, tema.acento, marco, width=px(2), border_radius=px(8))
         pantalla.blit(etiqueta, etiqueta.get_rect(center=marco.center))
+    if reloj is not None:
+        dibujar_reloj(pantalla, fuentes, tema, *reloj, (px(16), RECT_ESCENA.y + px(56)))
     if animacion is not None:
         animacion.draw(pantalla, fuentes, tema, RECT_PANEL)
     else:

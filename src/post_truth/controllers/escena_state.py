@@ -10,7 +10,7 @@ from post_truth.game_state import CityState
 from post_truth.models import Role
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.models.pistas import Investigacion, Pista
-from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, PartidaSesion, ResultadoDecision
+from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, TIEMPO_VIRAL, PartidaSesion, ResultadoDecision
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
 from post_truth.views.componentes import Boton, CajaDialogo
@@ -131,6 +131,9 @@ class EscenaState(BaseState):
         if self.interior:
             self._sesion = self.app.partida
             self.animacion = None
+            if self._sesion.pendiente is not None:   # el reloj vencio en la calle: se muestra lo que paso
+                self._mostrar_decision(self._sesion.pendiente)
+                return
             self._preparar_turno()
             return
         todos = load_trees(RUTA_EVENTOS)
@@ -201,6 +204,7 @@ class EscenaState(BaseState):
         self._hover = self._hover_zona = None
         self.ruta_vista = ()
         self.dialogo.set_texto(self.arbol.event.content, "Civitas")
+        self.sesion.iniciar_reloj()   # si es viral, desde aqui corre su tiempo
         evidencia = self.investigacion.evidencia_en(self.zona)
         if evidencia is not None and self.investigacion.esta_descubierta(evidencia.id):
             self._decir_en_sitio(f"Ya estas en {self._nombre_zona(self.zona)}. "
@@ -226,8 +230,10 @@ class EscenaState(BaseState):
 
     def _decidir(self, nodo: DecisionNode) -> None:
         r = self.sesion.decidir(self.sesion.jugador_actual.id, nodo)
-        if not r.ok:
-            return
+        if r.ok:
+            self._mostrar_decision(r)
+
+    def _mostrar_decision(self, r: ResultadoDecision) -> None:
         if r.simulacion is None:
             self._cerrar_decision(r)
             return
@@ -308,6 +314,10 @@ class EscenaState(BaseState):
 
     def update(self, dt: float) -> None:
         self.dialogo.update(dt)
+        if self.fase == DECIDIENDO:
+            vencida = self.sesion.transcurrir(dt)
+            if vencida is not None:
+                self._mostrar_decision(vencida)
         if self.fase == PROPAGACION and self.animacion is not None:
             self.animacion.update(dt)
             narracion = self.animacion.narracion()
@@ -332,4 +342,9 @@ class EscenaState(BaseState):
                        self._nombre_zona(self.zona) if self.zona else "",
                        self._estado_mapa() if en_mapa else None,
                        EstadoTarjeta(self.arbol.event, self.investigacion, self._hover)
-                       if self.fase == DECIDIENDO else None, AYUDA_INTERIOR if self.interior else AYUDA)
+                       if self.fase == DECIDIENDO else None, AYUDA_INTERIOR if self.interior else AYUDA,
+                       self._reloj() if self.fase == DECIDIENDO else None)
+
+    def _reloj(self) -> tuple[float, float] | None:
+        restante = self.sesion.tiempo_restante
+        return None if restante is None else (restante, TIEMPO_VIRAL)
