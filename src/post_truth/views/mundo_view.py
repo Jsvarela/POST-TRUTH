@@ -12,7 +12,7 @@ from post_truth.models.personaje import Genero, Personaje
 from post_truth.views.arte_mundo import ARTE_FORMAS, ArteFormas
 from post_truth.views.decorado import Decorado
 from post_truth.views.componentes import Fuentes, ajustar_texto
-from post_truth.views.escena_view import RECT_HUD, _dibujar_hud
+from post_truth.views.escena_view import RECT_HUD, _dibujar_hud, dibujar_reloj
 from post_truth.views.mapa_view import _rombo
 from post_truth.views.theme import Tema
 
@@ -35,6 +35,7 @@ class EstadoMundo:
     centro_camara: tuple[float, float] | None = None
     decorado: Decorado | None = None
     t: float = 0.0
+    reloj: tuple[float, float] | None = None   # (restante, total) del reloj de una publicacion viral
     animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
 
 
@@ -136,6 +137,8 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
     if estado.indicadores:
         _dibujar_hud(pantalla, fuentes, tema, list(estado.indicadores))
     _minimapa(pantalla, tema, mundo, estado)
+    if estado.reloj is not None:
+        dibujar_reloj(pantalla, fuentes, tema, *estado.reloj, (px(16), RECT_HUD.bottom + px(12)))
     _franja(pantalla, fuentes, tema, _mensaje(estado))
 
 

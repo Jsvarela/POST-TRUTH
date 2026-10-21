@@ -11,7 +11,7 @@ from post_truth.models import Role
 from post_truth.models.animacion import AnimacionPersonaje
 from post_truth.models.mundo import MundoCiudad
 from post_truth.models.personaje import Genero, Personaje
-from post_truth.sesion import PartidaSesion
+from post_truth.sesion import TIEMPO_VIRAL, PartidaSesion
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
 from post_truth.views.decorado import generar as generar_decorado
@@ -131,6 +131,9 @@ class MundoState(BaseState):
         self.animacion.actualizar(dx, dy, math.dist(antes, self.mundo.jugador), dt)
         self.camara.seguir(self.mundo.jugador, dt)
         self.t += dt
+        if self.sesion.transcurrir(dt) is not None:      # vencio buscando evidencia: se ve adentro lo que paso
+            self.presionadas.clear()
+            self.app.estados.cambiar("escena", fundido=True)
         self._t_aviso = max(0.0, self._t_aviso - dt)
         if self._t_aviso == 0:
             self.aviso = ""
@@ -144,7 +147,8 @@ class MundoState(BaseState):
             accion=self.accion_disponible(),
             indicadores=s.ciudad.as_display_rows(), guia=ruta.zonas if ruta else (), aviso=self.aviso,
             personaje=self.personaje, animacion=self.animacion, centro_camara=self.camara.centro,
-            decorado=self.decorado, t=self.t)
+            decorado=self.decorado, t=self.t,
+            reloj=(s.tiempo_restante, TIEMPO_VIRAL) if s.reloj_activo else None)
 
     def draw(self, pantalla: pygame.Surface) -> None:
         dibujar_mundo(pantalla, self.app.fuentes, self.app.temas.actual, self.mundo, self.estado_vista())
