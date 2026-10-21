@@ -1,158 +1,36 @@
 # POST-TRUTH
 
-Videojuego educativo para Estructura de Datos II basado en el laboratorio
-"Alcalde Digital" (Universidad del Norte). Ciudad Nova esta en elecciones y el
-jugador decide que hacer con cada publicacion de la red Civitas: Compartir,
-Verificar, Ignorar o Reportar. Las decisiones y sus consecuencias, no las
-preguntas, ensenan a verificar antes de compartir y a no amplificar rumores.
+Videojuego educativo para Estructura de Datos II (laboratorio "Alcalde Digital", Universidad del Norte).
+Ciudad Nova esta en elecciones y el jugador decide que hacer con cada publicacion de la red Civitas:
+Compartir, Verificar, Ignorar o Reportar.
 
-## Estado del proyecto
+## Requisitos
 
-| Entrega | Contenido | Estado |
-|---|---|---|
-| 1 - Arboles | Arbol n-ario de decisiones, insercion, eliminacion, DFS y BFS | Hecha (version Tkinter en el tag `tkinter-entrega1`) |
-| 2 - Grafos | Grafo social, grafo de la ciudad, operaciones, integracion con el arbol y la mecanica, visualizacion | Hecha, en Pygame |
-| Final | Todo integrado y estable | En curso |
+- Python 3.10 o superior
+- Pygame
 
-El juego se migro de Tkinter a Pygame. El codigo Tkinter (`src/post_truth/app.py`) esta
-obsoleto: se conserva solo como referencia.
-
-## Estructuras de datos
-
-| Estructura | Donde | Para que |
-|---|---|---|
-| Arbol n-ario de decisiones | `decision_tree.py`, `data/events.json` | Ramas de cada publicacion y sus consecuencias (DFS acumula el impacto, BFS recorre por niveles) |
-| Grafo social (dirigido, ponderado) | `structures/grafo_social.py`, `data/grafo_social.json` | Como se propaga una publicacion al compartirla: BFS por olas y Dijkstra para el tiempo |
-| Grafo de la ciudad (no dirigido, ponderado) | `structures/grafo_ciudad.py`, `data/grafo_ciudad.json` | Mapa de lugares donde se investiga: se viaja por el camino mas corto (Dijkstra), que tambien es la guia del mundo caminable, y cada zona guarda evidencia de la noticia |
-
-La justificacion completa (problema, estructura, variante, insercion y eliminacion,
-recorridos y complejidad, efecto de la decision) esta en
-[`docs/entrega2_grafos.md`](docs/entrega2_grafos.md); la del arbol, en
-[`docs/entrega1_arboles.md`](docs/entrega1_arboles.md).
-
-## Como se juega
-
-Flujo: Menu -> Introduccion -> Seleccion de rol y personaje -> Escena -> Fin.
-
-- La **introduccion** (6 laminas: Ciudad Nova, las zonas, Civitas y los primeros rumores, los cuatro
-  candidatos y el cierre) se muestra sola la primera vez de la sesion y se puede ver de nuevo con la
-  tecla I en el menu. Clic o cualquier tecla avanzan (el primer clic completa el texto que se escribe
-  letra por letra) y ESC la salta. Sus textos, candidatos y zonas estan en `data/intro.json`.
-
-- Se elige un rol (Ciudadano, Periodista, Influencer, Candidato) y un personaje.
-- Cada publicacion es una **tarjeta de Civitas** (autor con avatar, fuente, fecha, texto, imagen, likes y
-  comentarios). Se decide con los botones (teclas 1-4).
-- **Investigar:** las partes de la tarjeta (autor, fuente, fecha, imagen, texto, reacciones) son zonas
-  clicables (o teclas A S D F G) que esconden pistas: una cuenta sospechosa, una fecha antigua, una imagen
-  reutilizada... Revisar una pista revela su hallazgo (algunas pistas son neutras y no prueban nada).
-- **Viajar por el mapa:** la noticia tambien deja **evidencia en lugares de la ciudad** (un testigo, un
-  documento, una grabacion). Se puede ir a cualquier zona con un clic en el minimapa (o Q W E R T); se va
-  por el camino mas corto (Dijkstra) y al llegar se revela la evidencia. El minimapa es limpio y no muestra cifras: cada lugar tiene su icono y su nombre, el pin marca
-  donde estas, un rombo marca los lugares donde queda algo por descubrir y, al pasar el mouse por un lugar,
-  se resalta el camino y una franja dice "Ir a ...".
-- **Compartir, Verificar o Reportar** muestran como viaja la noticia por la red social,
-  ola por ola, y despues sus consecuencias. Compartir parte del jugador (el Influencer
-  amplifica), Verificar frena la difusion de una noticia falsa y Reportar corta las
-  conexiones de su autor.
-- **Verificar y Reportar no exigen estar en ningun lugar:** su resultado depende del respaldo reunido
-  (nada, solo la tarjeta o evidencia de campo). Verificar rinde 15%, 40% o 100%; Reportar sin pruebas se
-  rechaza y baja la confianza, con pruebas de la tarjeta limita al autor y con evidencia de campo corta
-  sus conexiones. Los rumores se propagan solo por el grafo social (entre personas), no por el mapa.
-  Lo investigado tambien cambia el texto de la consecuencia.
-- **Mundo caminable (flujo por defecto: Menu -> Intro -> Seleccion -> Mundo):** Ciudad Nova vista desde arriba. Se
-  camina con WASD o flechas solo por las calles (las aristas del grafo de la ciudad) y las plazas (sus vertices).
-  La noticia activa se marca con un globo con "!" sobre su lugar y la evidencia pendiente con un rombo con "?".
-  Junto a la puerta: "E: entrar" abre la pantalla de noticias de ese lugar y "E: buscar evidencia" la revela. Al
-  decidir se vuelve a la calle con la siguiente noticia. G muestra la guia (camino mas corto, Dijkstra) hacia la
-  noticia. Arriba: indicadores y un minimapa con la posicion del jugador. M en el menu entra directo.
-- **Personaje animado:** el personaje elegido (rol y genero) camina en 4 direcciones con pasos, sombra y una
-  camara que lo sigue con suavidad; entrar y salir de un lugar tiene un fundido corto. Las animaciones se llaman
-  `idle_abajo`, `idle_arriba`, `idle_izquierda`, `idle_derecha`, `caminar_abajo`... (`models/animacion.py`):
-  idle tiene 2 cuadros y caminar 4, que es la forma que tendra la hoja de sprites PNG (una fila por animacion).
-- **Ciudad con vida:** cesped, arboles, arbustos con flores, faroles y bancas generados con una semilla fija
-  (`views/decorado.py`: siempre el mismo pueblo, nunca sobre calles, plazas ni edificios) y un ambiente que se
-  mueve con el tiempo: la copa de los arboles con el viento, el halo de los faroles, ventanas que se encienden y
-  pajaros que cruzan el cielo. Todo con colores del tema, tambien en alto contraste y daltonismo.
-- **Ritmo de las calles:** cada calle se cruza en (peso de su arista) x 1.2 segundos, sea cual sea su largo en
-  pantalla, pero nunca a mas de 1.6 veces la velocidad normal (330 px/s): una calle larga de poco peso, como
-  Barrio-Parque, no se cruza "volando". Por ese tope la guia G usa Dijkstra sobre el TIEMPO real de cada calle y
-  siempre marca el camino mas rapido a pie (viaje medio 4.4 s, el mas largo 7.7 s).
-- **Respaldo:** `POSTTRUTH_FLUJO=escena python src/main.py` usa el flujo anterior (Seleccion -> escena de noticias).
-- Otras teclas: Enter para continuar, Espacio para saltar el texto, I en el menu para ver la introduccion, T en el menu para cambiar
-  de tema (normal, alto contraste, daltonismo), ESC para volver.
+```
+pip install -r requirements.txt
+```
 
 ## Ejecutar
 
-Requisitos: Python 3.10 o superior y Pygame.
-
-```bash
-pip install -r requirements.txt
+```
 python src/main.py
 ```
 
-## Tamano de la interfaz
+## Controles
 
-La interfaz se diseno en 1024 x 640 y se agranda de forma uniforme con una sola escala
-(`config.ESCALA`, por defecto 1.25: ventana de 1280 x 800). `src/main.py` la baja sola en pantallas bajas
-(portatiles de 768 px) para que la ventana quepa, y se puede fijar a mano:
-
-```bash
-POSTTRUTH_ESCALA=1.0 python src/main.py     # tamano original (1024 x 640)
-POSTTRUTH_ESCALA=1.5 python src/main.py     # mas grande
-```
-
-## Balance del juego
-
-`tools/balance.py` juega cientos de partidas simuladas, sin ventana y con semillas fijas, con cuatro politicas
-(ignorar siempre, compartir siempre, verificar a ciegas e investigar con criterio) y muestra la desinformacion y
-la informacion verificada finales y el porcentaje de partidas ganadas (desinformacion < 40 e informacion
-verificada > 50):
-
-```bash
-python tools/balance.py 300            # 300 partidas por politica (unos 10 segundos)
-python tools/balance.py 300 --rol 1    # con otro rol: 0 Ciudadano, 1 Periodista, 2 Influencer, 3 Candidato
-```
-
-Resultado actual con el rol Ciudadano: ignorar gana 3%, compartir 0%, verificar a ciegas 43% e investigar
-con criterio 82%. La tabla antes y despues del ajuste esta en `docs/entrega2_grafos.md` (seccion 4.1).
-Cada partida juega 8 publicaciones sorteadas entre las 18 de `data/events.json`.
-
-## Ejecutar pruebas
-
-```bash
-python -m unittest discover -s tests
-```
-
-Las pruebas corren sin ventana (SDL en modo `dummy`). Incluyen pruebas unitarias de cada
-estructura, de las vistas y de la integracion, y `tests/test_partida_completa.py`, donde un
-jugador automatico juega partidas completas con teclado y mouse.
+- WASD o flechas: caminar por la ciudad
+- E: entrar a un lugar / buscar evidencia
+- G: mostrar la guia hacia la noticia
+- 1-4: decidir sobre una publicacion
+- I (en el menu): ver la introduccion
+- ESC: saltar la introduccion
 
 ## Estructura
 
-```text
-src/main.py                              Punto de entrada (Pygame)
-src/post_truth/pygame_app.py             Game loop (60 FPS, dt en segundos) y recursos compartidos
-src/post_truth/config.py                 Constantes y rutas de los datos
-src/post_truth/models/                   Logica pura: dominio (Impact, NewsEvent, Role), personaje, intro, publicacion, pistas y mundo (MundoCiudad)
-src/post_truth/game_state.py             CityState: indicadores de Ciudad Nova
-src/post_truth/sesion.py                 PartidaSesion: estado y reglas de la partida (1 a 4 jugadores, turnos), serializable
-src/post_truth/decision_tree.py          Arbol n-ario, DFS y BFS
-src/post_truth/structures/               grafo_social, propagacion, grafo_ciudad
-src/post_truth/controllers/              Estados: menu, intro, seleccion, escena (patron State)
-src/post_truth/views/                    Tema, componentes, personajes, retratos, intro, escena, tarjeta de Civitas, grafo, mapa, fondos por zona, mundo y su proveedor de arte
-src/post_truth/app.py                    Version Tkinter de la entrega 1 (obsoleta)
-data/                                    events.json (18 publicaciones), grafo_social.json, grafo_ciudad.json, intro.json, mundo.json
-tools/                                   balance.py: mide el balance con partidas simuladas
-docs/                                    Guias de sustentacion de las entregas 1 y 2
-tests/                                   Pruebas unitarias, de integracion y de partida completa
-```
-
-Reglas de arquitectura: `models` y `structures` son logica pura (sin pygame) y serializable;
-las vistas solo dibujan; los controladores conectan eventos con el modelo. Todos los colores
-salen de `views/theme.py` (alto contraste y daltonismo).
-
-## Lenguaje elegido
-
-Python. En la entrega 1 se uso Tkinter por no tener dependencias externas; para la entrega 2
-se migro a Pygame, que da una experiencia de juego (escenas, animaciones, personajes dibujados
-con formas) manteniendo la logica de las estructuras de datos separada de la interfaz.
+- `src/post_truth/decision_tree.py`: arbol n-ario de decisiones
+- `src/post_truth/structures/`: grafo social, grafo de la ciudad y propagacion
+- `src/post_truth/models/`, `views/`, `controllers/`: logica, dibujo y estados del juego
+- `data/`: publicaciones, grafos, mundo e introduccion en JSON

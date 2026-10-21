@@ -37,7 +37,7 @@ FRENO_AUTOR = 0.35      # el peso de las aristas del autor se multiplica por est
 FRENO_CONTACTOS = 0.6   # y el de las aristas de sus contactos directos (contencion a 2 saltos)
 
 # Fraccion de efecto segun el respaldo (0, 1 o 2) de cada accion
-# Balance (tools/balance.py): verificar a ciegas rinde casi nada, asi que investigar si vale la pena
+# Verificar a ciegas rinde casi nada, asi que investigar si vale la pena
 FUERZA_VERIFICAR = {0: 0.15, 1: 0.4, 2: 1.0}
 FUERZA_REPORTAR = {0: 0.0, 1: 0.3, 2: 1.0}
 FACTOR_LIMITE_REPORTE = 0.6          # con respaldo 1, las conexiones del autor conservan el 60% de su peso

@@ -177,7 +177,7 @@ class PartidaSesion:
         revisada = evidencia is None and j.investigacion.evidencia_en(zona) is not None
         return ResultadoViaje(True, "", zona, ruta.zonas, evidencia, revisada)
 
-    # --- mundo caminable (etapa M2): la sesion sigue siendo la fuente de verdad -------------------------
+    # --- mundo caminable: la sesion sigue siendo la fuente de verdad -------------------------
     @property
     def zona_noticia(self) -> str:
         """Lugar donde ocurre la publicacion activa: la zona de su imagen (cada noticia tiene una)."""

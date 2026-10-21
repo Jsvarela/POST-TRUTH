@@ -39,7 +39,7 @@ class EstadoMundo:
     aviso: str = ""
     personaje: Personaje = Personaje(Role.CITIZEN, Genero.MUJER)
     centro_camara: tuple[float, float] | None = None   # centro suavizado (Camara); None = sobre el jugador
-    decorado: Decorado | None = None           # arboles, faroles... (None: el mundo desnudo, como en M1)
+    decorado: Decorado | None = None           # arboles, faroles... (None: sin decorado)
     t: float = 0.0                             # segundos de partida: anima el viento, las luces y los pajaros
     animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
 

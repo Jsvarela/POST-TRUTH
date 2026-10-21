@@ -1,6 +1,6 @@
 """Controlador del mundo caminable: la calle entre noticia y noticia.
 
-Flujo (etapa M2): Menu -> Intro -> Seleccion -> MUNDO. La partida (PartidaSesion) vive en `app.partida` y es la
+Flujo: Menu -> Intro -> Seleccion -> MUNDO. La partida (PartidaSesion) vive en `app.partida` y es la
 fuente de verdad: este estado la crea al empezar una partida nueva y la conserva al volver del interior de un
 lugar. Llegar a una plaza actualiza la zona de la sesion (`llegar`), asi que la zona del mundo y la de la partida
 siempre coinciden.

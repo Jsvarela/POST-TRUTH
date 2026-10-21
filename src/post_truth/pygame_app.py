@@ -1,9 +1,8 @@
-"""Game loop de Pygame + StateManager (migracion desde Tkinter)."""
+"""Game loop de Pygame + StateManager."""
 import pygame
 
 from post_truth.config import FLUJO, ANCHO, ALTO, FPS, TITULO, px
 from post_truth.controllers.escena_state import EscenaState
-from post_truth.controllers.game_state import GameState
 from post_truth.controllers.intro_state import IntroState
 from post_truth.controllers.menu_state import MenuState
 from post_truth.controllers.mundo_state import MundoState
@@ -36,7 +35,6 @@ class App:
         self.estados.registrar("seleccion", SeleccionState(self))
         self.estados.registrar("escena", EscenaState(self))
         self.estados.registrar("mundo", MundoState(self))
-        self.estados.registrar("juego", GameState(self))  # prototipo anterior, ya fuera del flujo
         self.estados.cambiar("menu")
 
     def run(self) -> None:
