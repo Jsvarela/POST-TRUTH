@@ -1,8 +1,4 @@
-"""Modelo: lo que se ve en una publicacion de Civitas (autor, avatar, imagen). Logica pura, SIN pygame.
-
-Igual que `Personaje` y `AspectoRetrato`, solo guarda IDS (tipo de avatar, color, motivo de la
-imagen), nunca colores ni superficies: la vista decide como dibujarlos con el tema activo.
-"""
+"""Modelo: lo que se ve en una publicacion de Civitas."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -10,14 +6,12 @@ from dataclasses import dataclass
 from post_truth.models.intro import AspectoRetrato, COLORES
 
 TIPOS_AVATAR = ("retrato", "anonimo", "institucional")
-# La imagen placeholder se dibuja con el fondo de una zona de la ciudad (views/zona_view.py).
 MOTIVOS_IMAGEN = ("colegio", "barrio", "parque", "plaza", "alcaldia")
 
 
 @dataclass(frozen=True)
 class Avatar:
-    """tipo "retrato": cara dibujada con `aspecto`; "anonimo": silueta sin foto (cuenta sin
-    identidad); "institucional": escudo con la inicial del nombre (paginas, medios, grupos)."""
+    """tipo "retrato": cara dibujada con `aspecto`."""
     tipo: str
     color: int = 0
     aspecto: AspectoRetrato | None = None
@@ -63,7 +57,7 @@ class Autor:
 
 @dataclass(frozen=True)
 class Imagen:
-    motivo: str   # una de MOTIVOS_IMAGEN
+    motivo: str
     pie: str = ""
 
     def __post_init__(self) -> None:

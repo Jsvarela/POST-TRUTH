@@ -1,9 +1,4 @@
-"""Vista del mundo caminable: camara que sigue al jugador, marcas de la noticia y la evidencia, guia de ruta,
-HUD (indicadores) y minimapa. Todo el arte del mundo pasa por un proveedor (ver arte_mundo).
-
-El mundo (data/mundo.json) es mas grande que la pantalla: se ve una ventana de ANCHO/ESCALA x ALTO/ESCALA
-pixeles del mundo alrededor del jugador, y la camara se detiene en los bordes del mundo.
-"""
+"""Vista del mundo caminable."""
 import math
 from dataclasses import dataclass, field
 
@@ -22,33 +17,30 @@ from post_truth.views.mapa_view import _rombo
 from post_truth.views.theme import Tema
 
 AYUDA = "Caminar: WASD o flechas   |   E: entrar o buscar   |   G: guia   |   ESC: menu"
-ALTO_PERSONAJE = 3.2   # alto del personaje en radios de colision del jugador
-# Pajaros: (y de partida, velocidad en px del mundo/s, desfase): cruzan el mundo en bucle por encima de todo
+ALTO_PERSONAJE = 3.2
 PAJAROS = ((260, 70, 0.0), (300, 70, 0.6), (1100, -55, 9.0))
 RECT_MINIMAPA = pygame.Rect(ANCHO - px(16) - px(220), RECT_HUD.bottom + px(12), px(220), px(138))
 
 
 @dataclass
 class EstadoMundo:
-    """Lo que la vista necesita de la partida (la arma el controlador; la vista no decide nada)."""
-    noticia: str = ""                          # zona de la noticia activa ("" si no hay)
-    evidencias: frozenset | set = frozenset()  # zonas con evidencia pendiente de la noticia activa
-    accion: tuple[str, str] | None = None      # (zona, "entrar" | "evidencia") disponible con E
-    indicadores: list = ()                     # filas del HUD (CityState.as_display_rows)
-    guia: tuple[str, ...] = ()                 # ruta de plazas hacia la noticia (vacia: guia apagada)
+    """Lo que la vista necesita de la partida."""
+    noticia: str = ""
+    evidencias: frozenset | set = frozenset()
+    accion: tuple[str, str] | None = None
+    indicadores: list = ()
+    guia: tuple[str, ...] = ()
     aviso: str = ""
     personaje: Personaje = Personaje(Role.CITIZEN, Genero.MUJER)
-    centro_camara: tuple[float, float] | None = None   # centro suavizado (Camara); None = sobre el jugador
-    decorado: Decorado | None = None           # arboles, faroles... (None: sin decorado)
-    t: float = 0.0                             # segundos de partida: anima el viento, las luces y los pajaros
+    centro_camara: tuple[float, float] | None = None
+    decorado: Decorado | None = None
+    t: float = 0.0
     animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
 
 
 class Camara:
-    """Centro de la vista que persigue al jugador con amortiguacion exponencial: cada cuadro recorre la fraccion
-    1 - e^(-SUAVIDAD * dt) de lo que le falta. Como la fraccion depende de dt y no del numero de cuadros, la
-    camara llega igual a 30 y a 60 FPS (es la solucion exacta de x' = SUAVIDAD * (objetivo - x))."""
-    SUAVIDAD = 8.0   # 1/s: a los ~0.3 s ya recorrio el 90% del camino
+    """Centro de la vista que persigue al jugador con amortiguacion exponencial."""
+    SUAVIDAD = 8.0
 
     def __init__(self, centro: tuple[float, float] = (0.0, 0.0)) -> None:
         self.centro = centro
@@ -65,8 +57,7 @@ class Camara:
 
 def camara(mundo: MundoCiudad, ancho: int = ANCHO, alto: int = ALTO,
            centro: tuple[float, float] | None = None) -> tuple[float, float]:
-    """Esquina superior izquierda (en pixeles del mundo) de lo que se ve: centrada en `centro` (por defecto el
-    jugador) y sin salirse del mundo. Si el mundo es mas chico que la pantalla en un eje, se centra en ese eje."""
+    """Esquina superior izquierda de lo que se ve: centrada en `centro` y sin salirse del mundo."""
     vista_w, vista_h = ancho / ESCALA, alto / ESCALA
     mundo_w, mundo_h = mundo.tamano
 
@@ -83,7 +74,7 @@ def a_pantalla(p: tuple[float, float], cam: tuple[float, float]) -> tuple[int, i
 
 
 def _vista(mundo: MundoCiudad, cam: tuple[float, float], pantalla: pygame.Surface, margen: float = 90):
-    """Funcion que dice si un punto del mundo cae en pantalla (con margen): solo se dibuja el decorado visible."""
+    """Funcion que dice si un punto del mundo cae en pantalla."""
     ancho, alto = pantalla.get_size()
     x0, y0, x1, y1 = cam[0] - margen, cam[1] - margen, cam[0] + ancho / ESCALA + margen, cam[1] + alto / ESCALA + margen
     return lambda x, y: x0 <= x <= x1 and y0 <= y <= y1
@@ -128,18 +119,17 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
             _globo_noticia(pantalla, tema, fuentes, (rect.centerx, rect.top - px(8)))
         elif e.zona in estado.evidencias:
             _marca_evidencia(pantalla, tema, fuentes, (rect.centerx, rect.top - px(26)))
-    if deco is not None:   # la copa se mece con el viento; cada arbol con su propia fase
+    if deco is not None:
         for x, y, tam, fase in deco.arboles:
             if visible(x, y):
                 arte.arbol(pantalla, tema, a_pantalla((x, y), cam), px(34 * tam), math.sin(estado.t * 1.3 + fase))
-    # los pies van al borde inferior del circulo de colision; el cuerpo sobresale hacia arriba
     x, y = mundo.jugador
     arte.personaje(pantalla, tema, a_pantalla((x, y + mundo.radio_jugador), cam), px(ALTO_PERSONAJE * mundo.radio_jugador),
                    estado.personaje, estado.animacion.nombre, estado.animacion.cuadro)
     if deco is not None:
         ancho = mundo.tamano[0] + 400
         for i, (y0, v, desfase) in enumerate(PAJAROS):
-            bx = (y0 * 3 + v * (estado.t + desfase)) % ancho - 200   # entran por un lado y salen por el otro
+            bx = (y0 * 3 + v * (estado.t + desfase)) % ancho - 200
             by = y0 + 25 * math.sin(estado.t * 0.8 + i)
             if visible(bx, by):
                 arte.pajaro(pantalla, tema, a_pantalla((bx, by), cam), px(9), math.sin(estado.t * 9 + i * 1.7))
@@ -149,7 +139,6 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
     _franja(pantalla, fuentes, tema, _mensaje(estado))
 
 
-# --- marcas sobre los lugares (forma propia, no solo color) ---------------------------------------
 def _globo_noticia(pantalla: pygame.Surface, tema: Tema, fuentes: Fuentes, punta: tuple[int, int]) -> None:
     """Globo de dialogo con "!": aqui ocurre la noticia activa."""
     x, y = punta
@@ -163,7 +152,7 @@ def _globo_noticia(pantalla: pygame.Surface, tema: Tema, fuentes: Fuentes, punta
 
 
 def _marca_evidencia(pantalla: pygame.Surface, tema: Tema, fuentes: Fuentes, centro: tuple[int, int]) -> None:
-    """Rombo con "?" (el mismo del minimapa de la escena): aqui hay evidencia de la noticia por buscar."""
+    """Rombo con "?": aqui hay evidencia de la noticia por buscar."""
     _rombo(pantalla, tema.texto, centro, px(20), True)
     _rombo(pantalla, tema.detalle, centro, px(16), True)
     img = fuentes.normal.render("?", True, tema.fondo)
@@ -172,7 +161,7 @@ def _marca_evidencia(pantalla: pygame.Surface, tema: Tema, fuentes: Fuentes, cen
 
 def _guia(pantalla: pygame.Surface, tema: Tema, mundo: MundoCiudad, cam: tuple[float, float],
           ruta: tuple[str, ...]) -> None:
-    """Ruta tenue (camino mas corto, Dijkstra) por el centro de las calles: puntos espaciados, no una linea solida."""
+    """Ruta tenue por el centro de las calles: puntos espaciados, no una linea solida."""
     capa = pygame.Surface(pantalla.get_size(), pygame.SRCALPHA)
     color = (*tema.acento, 150)
     for a, b in zip(ruta, ruta[1:]):
@@ -183,9 +172,8 @@ def _guia(pantalla: pygame.Surface, tema: Tema, mundo: MundoCiudad, cam: tuple[f
     pantalla.blit(capa, (0, 0))
 
 
-# --- minimapa y franja inferior ---------------------------------------------------------------------
 def _minimapa(pantalla: pygame.Surface, tema: Tema, mundo: MundoCiudad, estado: EstadoMundo) -> None:
-    """Toda la ciudad en pequeno: calles, plazas, la noticia (cuadrado), la evidencia (rombo) y el jugador (circulo)."""
+    """Toda la ciudad en pequeno: calles, plazas, la noticia, la evidencia y el jugador."""
     r = RECT_MINIMAPA
     pygame.draw.rect(pantalla, tema.panel, r, border_radius=px(10))
     pygame.draw.rect(pantalla, tema.borde, r, px(2), border_radius=px(10))
@@ -198,7 +186,7 @@ def _minimapa(pantalla: pygame.Surface, tema: Tema, mundo: MundoCiudad, estado: 
         pygame.draw.line(pantalla, tema.borde, m(mundo.plazas[c.desde].pos), m(mundo.plazas[c.hasta].pos), px(3))
     for p in mundo.plazas.values():
         pygame.draw.circle(pantalla, tema.borde, m(p.pos), px(5))
-    if estado.noticia in mundo.plazas:      # la noticia: un cuadrado (forma distinta a la del jugador)
+    if estado.noticia in mundo.plazas:
         caja = pygame.Rect(0, 0, px(12), px(12))
         caja.center = m(mundo.plazas[estado.noticia].pos)
         pygame.draw.rect(pantalla, tema.texto, caja.inflate(px(4), px(4)))
@@ -222,7 +210,7 @@ def _mensaje(estado: EstadoMundo) -> str:
 
 
 def _franja(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mensaje: str) -> None:
-    """Franja inferior: el mensaje del momento (accion con E, aviso o guia) y los controles."""
+    """Franja inferior: el mensaje del momento y los controles."""
     ancho, alto = pantalla.get_size()
     lineas = ajustar_texto(mensaje, fuentes.normal, ancho - px(70)) if mensaje else []
     alto_caja = px(30) + max(1, len(lineas)) * fuentes.normal.get_linesize() + fuentes.chica.get_linesize()

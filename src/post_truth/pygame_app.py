@@ -22,14 +22,14 @@ class App:
         self.pantalla = pygame.display.set_mode((ANCHO, ALTO))
         self.reloj = pygame.time.Clock()
         self.fuente = pygame.font.SysFont("arial", px(24))
-        self.fuentes = Fuentes.crear()  # tamanos extra para la UI de novela visual
+        self.fuentes = Fuentes.crear()
         self.temas = GestorTemas()
         self.corriendo = True
-        self.intro_vista = False  # la introduccion se muestra sola la primera vez de la sesion
-        self.personaje: Personaje | None = None  # lo fija SeleccionState, lo lee EscenaState
-        self.flujo = FLUJO        # "mundo" o "escena" (respaldo): a donde lleva la seleccion
-        self.partida = None       # PartidaSesion compartida entre el mundo y el interior de los lugares
-        self.estados = StateManager(lambda: self.temas.actual.fondo)   # el fundido usa el fondo del tema
+        self.intro_vista = False
+        self.personaje: Personaje | None = None
+        self.flujo = FLUJO
+        self.partida = None
+        self.estados = StateManager(lambda: self.temas.actual.fondo)
         self.estados.registrar("menu", MenuState(self))
         self.estados.registrar("intro", IntroState(self))
         self.estados.registrar("seleccion", SeleccionState(self))
@@ -39,7 +39,7 @@ class App:
 
     def run(self) -> None:
         while self.corriendo:
-            dt = self.reloj.tick(FPS) / 1000.0  # segundos del frame (limita a 60 FPS)
+            dt = self.reloj.tick(FPS) / 1000.0
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.corriendo = False

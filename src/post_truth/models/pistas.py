@@ -1,23 +1,4 @@
-"""Modelo: pistas de una noticia, investigacion y texto de consecuencia. Logica pura.
-
-IDEA DE JUEGO
-    La tarjeta de una publicacion tiene partes revisables (autor, fuente, fecha, imagen, texto,
-    estadisticas). Cada una puede esconder una PISTA que apunta a que la noticia es falsa, a que
-    es verdadera o que no prueba nada (neutra). Investigar una pista revela su hallazgo (gratis).
-    Las pistas no cambian los puntajes: cambian lo que el jugador SABE y el texto de la
-    consecuencia (decidir con o sin evidencia no se cuenta igual). Nada cambia en la ciudad al
-    revisar o viajar, asi que investigar no delata si una noticia es falsa.
-
-EVIDENCIA POR ZONA
-    Ademas de las pistas de la tarjeta, cada noticia puede dejar EVIDENCIA en lugares del mapa de la
-    ciudad (un testigo, un documento, una grabacion). Al llegar a ese lugar la evidencia se revela
-    como una pista mas: entra en el mismo registro (`descubiertas`), en el veredicto y en el texto
-    de la consecuencia.
-
-RESPALDO
-    Verificar y Reportar no exigen ir a ningun lado: su resultado depende del respaldo reunido
-    (`Investigacion.respaldo`): 0 nada, 1 solo pistas de la tarjeta, 2 evidencia de campo.
-"""
+"""Modelo: pistas de una noticia, investigacion y texto de consecuencia."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -38,15 +19,15 @@ class Senal(Enum):
     """Hacia donde apunta una pista."""
     FALSA = "falsa"
     VERDADERA = "verdadera"
-    NEUTRA = "neutra"       # no prueba nada ("es muy viral", "foto de archivo"): una pista enganosa
+    NEUTRA = "neutra"
 
 
 @dataclass(frozen=True)
 class Pista:
     id: str
     zona: ZonaTarjeta
-    titulo: str          # etiqueta corta: "Cuenta sospechosa"
-    hallazgo: str        # lo que se descubre al investigar
+    titulo: str
+    hallazgo: str
     senal: Senal
 
     def __post_init__(self) -> None:
@@ -63,7 +44,7 @@ class Pista:
 
 
 def validar_pistas(pistas: Iterable[Pista]) -> tuple[Pista, ...]:
-    """Ids unicos y una sola pista por zona de la tarjeta (cada zona clicable abre una pista)."""
+    """Ids unicos y una sola pista por zona de la tarjeta."""
     pistas = tuple(pistas)
     ids = [p.id for p in pistas]
     zonas = [p.zona for p in pistas]
@@ -84,10 +65,10 @@ class TipoEvidencia(Enum):
 class Evidencia:
     """Evidencia de una noticia guardada en una zona del mapa: se revela al llegar a esa zona."""
     id: str
-    lugar: str           # id de la zona de la ciudad donde esta (structures/grafo_ciudad.py)
+    lugar: str
     tipo: TipoEvidencia
-    titulo: str          # "La directora del colegio"
-    hallazgo: str        # lo que se descubre al llegar
+    titulo: str
+    hallazgo: str
     senal: Senal
 
     def __post_init__(self) -> None:
@@ -103,7 +84,7 @@ class Evidencia:
         return cls(d["id"], d["lugar"], TipoEvidencia(d["tipo"]), d["titulo"], d["hallazgo"], Senal(d["senal"]))
 
 
-Hallazgo = Pista | Evidencia   # lo que se puede descubrir de una noticia
+Hallazgo = Pista | Evidencia
 
 
 def validar_evidencias(evidencias: Iterable[Evidencia]) -> tuple[Evidencia, ...]:
@@ -137,8 +118,7 @@ class VarianteTexto:
 
 
 def elegir_variante(variantes: Iterable[VarianteTexto], descubiertas: Iterable[str]) -> VarianteTexto | None:
-    """La variante MAS ESPECIFICA aplicable (la que exige mas pistas, todas ya descubiertas); si
-    empatan, la primera escrita. None si no aplica ninguna. Costo: O(variantes)."""
+    """La variante mas especifica aplicable."""
     descubiertas = set(descubiertas)
     mejor: VarianteTexto | None = None
     for v in variantes:
@@ -148,8 +128,7 @@ def elegir_variante(variantes: Iterable[VarianteTexto], descubiertas: Iterable[s
 
 
 def texto_consecuencia(base: str, variantes: Iterable[VarianteTexto], descubiertas: list[Hallazgo]) -> str:
-    """Texto final de una decision: la variante que corresponde a lo investigado; si no hay, el
-    texto base con una frase corta de las pistas revisadas; sin pistas, el texto base."""
+    """Texto final de una decision: la variante que corresponde a lo investigado."""
     variante = elegir_variante(variantes, (p.id for p in descubiertas))
     if variante is not None:
         return variante.texto
@@ -160,7 +139,7 @@ def texto_consecuencia(base: str, variantes: Iterable[VarianteTexto], descubiert
 
 @dataclass(frozen=True)
 class ResultadoInvestigacion:
-    estado: str   # "nueva": recien revelada | "repetida": ya estaba revelada
+    estado: str
     pista: Pista
 
 
@@ -168,8 +147,8 @@ class ResultadoInvestigacion:
 class Investigacion:
     """Estado de la revision de UNA publicacion: pistas y evidencias descubiertas."""
     pistas: tuple[Pista, ...]
-    descubiertas: list[str] = field(default_factory=list)   # ids (pistas y evidencias), en el orden en que se hallaron
-    evidencias: tuple[Evidencia, ...] = ()                  # lo que hay en el mapa de la ciudad
+    descubiertas: list[str] = field(default_factory=list)
+    evidencias: tuple[Evidencia, ...] = ()
 
     def __post_init__(self) -> None:
         validar_pistas(self.pistas)
@@ -200,10 +179,9 @@ class Investigacion:
         raise KeyError(f"No existe el hallazgo: {id}")
 
     def pistas_descubiertas(self) -> list[Hallazgo]:
-        """Todo lo descubierto (pistas de la tarjeta Y evidencias del mapa), en orden de hallazgo."""
+        """Todo lo descubierto, en orden de hallazgo."""
         return [self.hallazgo(id) for id in self.descubiertas]
 
-    # --- evidencia en el mapa ------------------------------------------------------------
     def evidencia_en(self, lugar: str) -> Evidencia | None:
         return next((e for e in self.evidencias if e.lugar == lugar), None)
 
@@ -215,8 +193,7 @@ class Investigacion:
         return {e.lugar for e in self.evidencias if e.id in self.descubiertas}
 
     def revelar_evidencia(self, lugar: str) -> Evidencia | None:
-        """Al llegar a una zona: revela su evidencia si la hay y es nueva. Devuelve la evidencia recien
-        descubierta, o None."""
+        """Al llegar a una zona: revela su evidencia si la hay y es nueva."""
         e = self.evidencia_en(lugar)
         if e is None or e.id in self.descubiertas:
             return None
@@ -224,11 +201,7 @@ class Investigacion:
         return e
 
     def respaldo(self, accion: str) -> int:
-        """Que tan respaldada esta una accion con lo descubierto: 0 nada, 1 solo pistas de la tarjeta,
-        2 evidencia de campo (testigo, documento o grabacion del mapa).
-        "reportar" cuenta lo que apunta a FALSA (es lo que justifica un reporte); "verificar" cuenta
-        todo lo que no es neutro (la verificacion se apoya en material concreto, sea a favor o en contra).
-        """
+        """Que tan respaldada esta una accion con lo descubierto."""
         def apoya(h: Hallazgo) -> bool:
             return h.senal is Senal.FALSA if accion == "reportar" else h.senal is not Senal.NEUTRA
         hallazgos = self.pistas_descubiertas()
@@ -239,7 +212,7 @@ class Investigacion:
         return 0
 
     def investigar(self, id: str) -> ResultadoInvestigacion:
-        """Revisa una pista (gratis); una ya revelada se relee. O(pistas)."""
+        """Revisa una pista."""
         pista = self.pista(id)
         if id in self.descubiertas:
             return ResultadoInvestigacion("repetida", pista)
@@ -247,8 +220,7 @@ class Investigacion:
         return ResultadoInvestigacion("nueva", pista)
 
     def veredicto(self) -> str:
-        """Lo que sugiere la evidencia reunida: "falsa", "verdadera" o "incierta" (sin pistas,
-        solo neutras o empate)."""
+        """Lo que sugiere la evidencia reunida: "falsa", "verdadera" o "incierta"."""
         falsas = sum(p.senal is Senal.FALSA for p in self.pistas_descubiertas())
         verdaderas = sum(p.senal is Senal.VERDADERA for p in self.pistas_descubiertas())
         if falsas > verdaderas:
@@ -262,5 +234,5 @@ class Investigacion:
 
     @classmethod
     def from_dict(cls, datos: dict, pistas: Iterable[Pista], evidencias: Iterable[Evidencia] = ()) -> "Investigacion":
-        """Las pistas y evidencias vienen de la noticia (events.json); aqui solo se guarda el progreso."""
+        """Las pistas y evidencias vienen de la noticia."""
         return cls(tuple(pistas), list(datos.get("descubiertas", [])), tuple(evidencias))

@@ -1,9 +1,4 @@
-"""Modelo: Personaje del jugador. Logica pura, SIN pygame.
-
-Solo guarda ids (rol, genero, apariencia), nunca superficies ni colores: asi se puede
-serializar a JSON para el servidor de sockets y la vista decide como dibujarlo
-(formas de Pygame hoy, PNG de assets/ mas adelante) sin cambiar el modelo.
-"""
+"""Modelo: Personaje del jugador."""
 from dataclasses import dataclass
 from enum import Enum
 
@@ -15,8 +10,6 @@ class Genero(Enum):
     MUJER = "Mujer"
 
 
-# Texto de ayuda por rol. Refleja lo que ya hace Impact.scaled_for_role, para que
-# lo que el jugador lee en la seleccion sea lo que realmente ocurre al decidir.
 ROL_DESCRIPCION: dict[Role, str] = {
     Role.CITIZEN: "Interactua con responsabilidad. Sus decisiones son estables.",
     Role.JOURNALIST: "Investiga y detecta falsas. Verificar rinde mas; ignorar rinde menos.",
@@ -24,7 +17,6 @@ ROL_DESCRIPCION: dict[Role, str] = {
     Role.CANDIDATE: "Construye confianza y enfrenta rumores. Pesa mas sobre la confianza.",
 }
 
-# Variantes de apariencia disponibles por genero (la vista las usa para tono de piel/cabello).
 APARIENCIAS = 2
 
 
@@ -32,7 +24,7 @@ APARIENCIAS = 2
 class Personaje:
     rol: Role
     genero: Genero
-    apariencia: int = 0  # id de apariencia, 0..APARIENCIAS-1
+    apariencia: int = 0
 
     def __post_init__(self) -> None:
         if not 0 <= self.apariencia < APARIENCIAS:

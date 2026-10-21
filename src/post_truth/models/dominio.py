@@ -58,9 +58,7 @@ class Impact:
         )
 
     def atenuar_beneficios(self, factor: float) -> "Impact":
-        """Escala por `factor` (0..1) SOLO los efectos beneficiosos (sube informacion verificada,
-        confianza, convivencia, bienestar o puntaje; baja desinformacion o conflictos). Los efectos
-        perjudiciales no se tocan: equivocarse no se vuelve mas barato por tener poco respaldo."""
+        """Escala por `factor` solo los efectos beneficiosos."""
         valores = {}
         for campo in fields(self):
             v = getattr(self, campo.name)
@@ -98,21 +96,18 @@ class NewsEvent:
     content: str
     kind: str
     truth_level: int
-    # Tarjeta de Civitas: quien publica, de donde sale, cuando, imagen y reacciones...
     author: Autor | None = None
     source: str = ""
     date: str = ""
     image: Imagen | None = None
     likes: int = 0
     comments: int = 0
-    # ...y las pistas que se pueden investigar (una por zona de la tarjeta)
     clues: tuple[Pista, ...] = ()
-    # Evidencia repartida por el mapa de la ciudad (una por zona): se halla viajando hasta alli
     evidences: tuple[Evidencia, ...] = ()
 
     @classmethod
     def from_dict(cls, d: dict) -> "NewsEvent":
-        """Lee un evento de data/events.json (los campos de la tarjeta y las pistas son opcionales)."""
+        """Lee un evento de data/events.json."""
         return cls(
             event_id=d["id"], title=d["title"], content=d["content"], kind=d["kind"],
             truth_level=d["truth_level"],
@@ -124,7 +119,7 @@ class NewsEvent:
             evidences=validar_evidencias(Evidencia.from_dict(e) for e in d.get("evidencias", [])))
 
     def to_dict(self) -> dict:
-        """Mismo formato que events.json (sin las decisiones, que viven en el arbol)."""
+        """Mismo formato que events.json."""
         d: dict = {"id": self.event_id, "title": self.title, "content": self.content, "kind": self.kind,
                    "truth_level": self.truth_level}
         if self.author is not None:

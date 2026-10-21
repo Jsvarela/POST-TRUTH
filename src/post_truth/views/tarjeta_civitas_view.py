@@ -1,16 +1,4 @@
-"""Vista: tarjeta tipo post de Civitas, con zonas clicables que esconden pistas.
-
-Solo dibuja lo que le entrega el controlador (la noticia, el estado de la `Investigacion` y la zona
-bajo el mouse) y responde "que zona hay bajo este punto"; no cambia el modelo. Todo se dibuja con
-formas de Pygame (avatar, imagen placeholder, corazon y globo de comentarios) y con colores del tema.
-
-Cada zona con pista muestra una insignia con su tecla (A S D F G); al revisarla
-la insignia pasa a una forma segun lo hallado: triangulo (alerta), circulo con visto (confianza) o
-circulo con guion (neutra), asi que no depende solo del color (daltonismo).
-
-Ojo: el titulo del evento NO se muestra en la tarjeta. Titulos como "Rumor sobre el colegio" delatarian
-que la noticia es falsa antes de investigar.
-"""
+"""Vista: tarjeta tipo post de Civitas, con zonas clicables que esconden pistas."""
 from dataclasses import dataclass
 
 import pygame
@@ -24,9 +12,9 @@ from post_truth.views.retrato_view import dibujar_retrato
 from post_truth.views.theme import Tema
 from post_truth.views.zona_view import dibujar_fondo_zona
 
-TECLAS_PISTA = "ASDFG"   # tecla de la 1.a, 2.a... pista de la noticia (como Q W E R para moverse)
+TECLAS_PISTA = "ASDFG"
 MAX_LINEAS_TEXTO = 3
-RESERVA_INSIGNIA = px(70)    # px a la derecha de fuente y texto que se dejan libres para la insignia
+RESERVA_INSIGNIA = px(70)
 
 
 @dataclass
@@ -34,26 +22,25 @@ class EstadoTarjeta:
     """Lo que la vista necesita para dibujar la tarjeta de la publicacion actual."""
     evento: NewsEvent
     investigacion: Investigacion
-    hover: ZonaTarjeta | None = None   # zona con pista bajo el mouse
+    hover: ZonaTarjeta | None = None
 
 
 def _layout(rect: pygame.Rect) -> dict[ZonaTarjeta, pygame.Rect]:
-    """Rectangulo de cada parte de la tarjeta (relativo a `rect`). Es la unica fuente de verdad: lo
-    usan el dibujo y la deteccion de clics."""
+    """Rectangulo de cada parte de la tarjeta."""
     m = px(10)
     x, y, w = rect.x + m, rect.y + m, rect.width - 2 * m
     return {
-        ZonaTarjeta.AUTOR: pygame.Rect(x, y, w - px(112), px(50)),            # avatar + nombre
-        ZonaTarjeta.FECHA: pygame.Rect(rect.right - px(112), y, px(102), px(50)),  # fecha (arriba a la derecha)
+        ZonaTarjeta.AUTOR: pygame.Rect(x, y, w - px(112), px(50)),
+        ZonaTarjeta.FECHA: pygame.Rect(rect.right - px(112), y, px(102), px(50)),
         ZonaTarjeta.FUENTE: pygame.Rect(x, y + px(54), w, px(24)),
         ZonaTarjeta.TEXTO: pygame.Rect(x, y + px(80), w, px(68)),
-        ZonaTarjeta.IMAGEN: pygame.Rect(x, y + px(152), w, (rect.bottom - m - px(28) - px(4)) - (y + px(152))),   # hasta un poco antes de las reacciones
+        ZonaTarjeta.IMAGEN: pygame.Rect(x, y + px(152), w, (rect.bottom - m - px(28) - px(4)) - (y + px(152))),
         ZonaTarjeta.ESTADISTICAS: pygame.Rect(x, rect.bottom - m - px(28), w, px(28)),
     }
 
 
 def zona_en(rect: pygame.Rect, punto: tuple[int, int], evento: NewsEvent) -> ZonaTarjeta | None:
-    """Zona clicable (con pista) bajo `punto`, o None. Las zonas sin pista no responden."""
+    """Zona clicable bajo `punto`, o None."""
     con_pista = {p.zona for p in evento.clues}
     for zona, r in _layout(rect).items():
         if zona in con_pista and r.collidepoint(punto):
@@ -71,29 +58,27 @@ def _recortar(fuente: pygame.font.Font, texto: str, ancho: int) -> str:
 
 
 def _centro_insignia(zona: ZonaTarjeta, r: pygame.Rect) -> tuple[int, int]:
-    """Esquina libre de cada zona: abajo a la derecha en autor y fecha (el nombre y la hora quedan
-    arriba), arriba a la derecha en las demas (donde el texto reserva margen)."""
+    """Esquina libre de cada zona."""
     if zona in (ZonaTarjeta.AUTOR, ZonaTarjeta.FECHA):
         return r.right - px(14), r.bottom - px(12)
     return r.right - px(14), r.y + px(12)
 
 
 def pista_con_tecla(evento: NewsEvent, letra: str) -> Pista | None:
-    """Pista asociada a una tecla (A S D F G, segun el orden en que vienen en la noticia)."""
+    """Pista asociada a una tecla."""
     i = TECLAS_PISTA.find(letra.upper())
     return evento.clues[i] if 0 <= i < len(evento.clues) else None
 
 
-# --- piezas ---------------------------------------------------------------------------------------
 def _avatar(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, avatar: Avatar, nombre: str,
             rect: pygame.Rect) -> None:
     if avatar.tipo == "retrato" and avatar.aspecto is not None:
         dibujar_retrato(pantalla, avatar.aspecto, tema, rect)
-    elif avatar.tipo == "anonimo":    # silueta gris: cuenta sin foto ni identidad
+    elif avatar.tipo == "anonimo":
         pygame.draw.circle(pantalla, tema.borde, rect.center, rect.width // 2)
         pygame.draw.circle(pantalla, tema.panel, (rect.centerx, rect.centery - px(5)), rect.width // 5)
         pygame.draw.ellipse(pantalla, tema.panel, (rect.x + px(9), rect.centery + px(3), rect.width - px(18), rect.height // 2))
-    else:                              # institucional: escudo con la inicial
+    else:
         color = tema.rol[avatar.color]
         pygame.draw.rect(pantalla, color, rect, border_radius=px(10))
         pygame.draw.rect(pantalla, tema.borde, rect, width=px(2), border_radius=px(10))
@@ -117,7 +102,7 @@ def _globo(pantalla: pygame.Surface, color: tuple[int, int, int], centro: tuple[
 def _insignia(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, centro: tuple[int, int], pista: Pista,
               descubierta: bool, letra: str) -> None:
     x, y = centro
-    if not descubierta:   # "aqui hay algo que revisar": su tecla
+    if not descubierta:
         pygame.draw.circle(pantalla, tema.acento, centro, px(11))
         glifo = fuentes.chica.render(letra, True, tema.fondo)
         pantalla.blit(glifo, glifo.get_rect(center=centro))
@@ -135,14 +120,14 @@ def _insignia(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, centro: tu
 
 def _tooltip(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, tarjeta: pygame.Rect, zona: pygame.Rect,
              pista: Pista, descubierta: bool) -> None:
-    """Cuadro junto a la zona: el hallazgo si ya se reviso; si no, solo la invitacion (sin delatar nada)."""
+    """Cuadro junto a la zona: el hallazgo si ya se reviso."""
     ancho = px(290)
     texto = f"{pista.titulo}\n{pista.hallazgo}" if descubierta else "Clic para investigar"
     lineas = ajustar_texto(texto, fuentes.chica, ancho - px(20))
     alto = len(lineas) * (fuentes.chica.get_linesize() + px(2)) + px(16)
     caja = pygame.Rect(0, 0, ancho, alto)
     caja.midtop = (zona.centerx, zona.bottom + px(6))
-    if caja.bottom > tarjeta.bottom:                 # no cabe abajo: va arriba de la zona
+    if caja.bottom > tarjeta.bottom:
         caja.midbottom = (zona.centerx, zona.top - px(6))
     caja.clamp_ip(tarjeta)
     pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(8))
@@ -154,7 +139,6 @@ def _tooltip(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, tarjeta: py
         y += fuentes.chica.get_linesize() + px(2)
 
 
-# --- tarjeta completa -------------------------------------------------------------------------------
 def dibujar_tarjeta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: pygame.Rect, evento: NewsEvent,
                     investigacion: Investigacion, hover: ZonaTarjeta | None = None) -> None:
     zonas = _layout(rect)
@@ -174,7 +158,6 @@ def dibujar_tarjeta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect
     texto_fuente = _recortar(fuentes.chica, f"Fuente: {evento.source}", fuente_r.width - RESERVA_INSIGNIA)
     pantalla.blit(fuentes.chica.render(texto_fuente, True, tema.borde), (fuente_r.x + px(2), fuente_r.y + px(3)))
 
-    # Texto de la publicacion (maximo 3 lineas; si sobra, se corta con puntos suspensivos)
     r = zonas[ZonaTarjeta.TEXTO]
     lineas = ajustar_texto(evento.content, fuentes.chica, r.width - RESERVA_INSIGNIA)
     if len(lineas) > MAX_LINEAS_TEXTO:
@@ -183,7 +166,6 @@ def dibujar_tarjeta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect
     for i, linea in enumerate(lineas):
         pantalla.blit(fuentes.chica.render(linea, True, tema.texto), (r.x + px(2), r.y + px(2) + i * (fuentes.chica.get_linesize() + px(1))))
 
-    # Imagen placeholder: el fondo de una zona de la ciudad, con marco, marca de foto y pie
     r = zonas[ZonaTarjeta.IMAGEN]
     if evento.image is not None:
         foto = pygame.Surface(r.size)
@@ -201,14 +183,12 @@ def dibujar_tarjeta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect
         pygame.draw.rect(pantalla, tema.detalle, marca, border_radius=px(6))
         pantalla.blit(etiqueta, etiqueta.get_rect(center=marca.center))
 
-    # Reacciones: corazon + likes, globo + comentarios
     r = zonas[ZonaTarjeta.ESTADISTICAS]
     _corazon(pantalla, tema.malo, (r.x + px(14), r.centery - px(1)))
     pantalla.blit(fuentes.normal.render(str(evento.likes), True, tema.texto), (r.x + px(30), r.y + px(1)))
     _globo(pantalla, tema.acento, (r.x + px(128), r.centery))
     pantalla.blit(fuentes.normal.render(str(evento.comments), True, tema.texto), (r.x + px(146), r.y + px(1)))
 
-    # Zonas con pista: borde al pasar el mouse e insignia con su tecla o con lo hallado
     for i, pista in enumerate(evento.clues):
         zr = zonas[pista.zona]
         descubierta = investigacion.esta_descubierta(pista.id)

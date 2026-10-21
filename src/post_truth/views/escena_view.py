@@ -1,5 +1,4 @@
-"""Vista de la escena de dialogo: HUD compacto, personaje, panel de noticia/consecuencias,
-caja de dialogo y botones. Solo dibuja datos que le entrega el controlador."""
+"""Vista de la escena de dialogo."""
 from dataclasses import fields
 
 import pygame
@@ -15,17 +14,13 @@ from post_truth.views.personaje_view import dibujar_personaje
 from post_truth.views.theme import Tema
 from post_truth.views.zona_view import dibujar_fondo_zona
 
-# Nombre corto de cada indicador en el HUD (las barras son pequenas a proposito:
-# los indicadores acompanan la historia, no son el protagonista).
 HUD_NOMBRES = {
     "Informacion verificada": "Info verificada", "Confianza ciudadana": "Confianza",
     "Convivencia": "Convivencia", "Bienestar digital": "Bienestar",
     "Desinformacion": "Desinformacion", "Conflictos": "Conflictos",
 }
-# Indicadores donde subir es malo (se pintan con el color de peligro del tema).
 NEGATIVOS = {"Desinformacion", "Conflictos"}
 
-# Campos de Impact -> (etiqueta, subir es malo?)
 ETIQUETAS_IMPACTO = {
     "verified_information": ("Info verificada", False), "trust": ("Confianza", False),
     "coexistence": ("Convivencia", False), "digital_wellbeing": ("Bienestar", False),
@@ -33,17 +28,16 @@ ETIQUETAS_IMPACTO = {
     "score": ("Puntaje", False),
 }
 
-# Toda la geometria se diseno en 1024 x 640 y se escala con px() (ver config.ESCALA)
 RECT_HUD = pygame.Rect(0, 0, ANCHO, px(56))
 RECT_PERSONAJE = pygame.Rect(px(40), px(114), px(260), px(286))
 RECT_PANEL = pygame.Rect(px(330), px(68), px(664), px(328))
-RECT_ESCENA = pygame.Rect(0, px(57), ANCHO, px(404) - px(57))      # fondo de la zona (entre el HUD y el dialogo)
-RECT_TARJETA = pygame.Rect(RECT_PANEL.x + px(12), RECT_PANEL.y + px(8), px(346), px(312))   # tarjeta de Civitas (izquierda)
-RECT_MAPA = pygame.Rect(RECT_PANEL.right - px(10) - px(290), RECT_PANEL.y + px(8), px(290), px(312))  # minimapa (derecha)
+RECT_ESCENA = pygame.Rect(0, px(57), ANCHO, px(404) - px(57))
+RECT_TARJETA = pygame.Rect(RECT_PANEL.x + px(12), RECT_PANEL.y + px(8), px(346), px(312))
+RECT_MAPA = pygame.Rect(RECT_PANEL.right - px(10) - px(290), RECT_PANEL.y + px(8), px(290), px(312))
 AYUDA_INTERIOR = "Investigar: clic en la publicacion o A S D F G   |   Decidir: 1-4   |   ESC: volver a la calle"
 AYUDA = "Investigar: clic en la publicacion o A S D F G   |   Viajar: clic en el mapa o Q W E R T   |   Decidir: 1-4"
-RECT_TEXTO_PANEL = pygame.Rect(RECT_PANEL.x + px(18), RECT_PANEL.y + px(52), px(340), px(256))  # texto a la izquierda del mapa
-ALFA_PANEL = 205  # el panel deja ver un poco el fondo de la zona
+RECT_TEXTO_PANEL = pygame.Rect(RECT_PANEL.x + px(18), RECT_PANEL.y + px(52), px(340), px(256))
+ALFA_PANEL = 205
 
 
 def _dibujar_hud(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema,
@@ -52,7 +46,7 @@ def _dibujar_hud(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema,
     pygame.draw.line(pantalla, tema.borde, RECT_HUD.bottomleft, RECT_HUD.bottomright, px(2))
     x = px(14)
     for nombre, valor in filas:
-        if nombre.startswith("Puntaje"):  # no es un indicador 0-100: va como texto
+        if nombre.startswith("Puntaje"):
             img = fuentes.normal.render(f"Puntaje {valor}", True, tema.texto)
             pantalla.blit(img, img.get_rect(midright=(RECT_HUD.right - px(16), RECT_HUD.centery)))
             continue
@@ -73,8 +67,6 @@ def _dibujar_consecuencias(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tem
         etiqueta, sube_es_malo = ETIQUETAS_IMPACTO[campo.name]
         bueno = (valor > 0) != sube_es_malo
         color = tema.bueno if bueno else tema.malo
-        # Triangulo ademas del color: la informacion no depende solo del tono (daltonismo).
-        # Se dibuja con poligono, no con un glifo, porque no toda fuente trae flechas.
         cy = y + fuentes.normal.get_linesize() // 2
         a, b, m = px(6), px(14), px(7)
         if valor > 0:
@@ -92,7 +84,7 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
                    animacion: AnimacionPropagacion | None = None, zona_id: str = "", nombre_zona: str = "",
                    mapa: EstadoMapa | None = None, tarjeta: EstadoTarjeta | None = None, ayuda: str = AYUDA) -> None:
     pantalla.fill(tema.fondo)
-    dibujar_fondo_zona(pantalla, zona_id, tema, RECT_ESCENA)  # el escenario cambia con la zona
+    dibujar_fondo_zona(pantalla, zona_id, tema, RECT_ESCENA)
     _dibujar_hud(pantalla, fuentes, tema, filas)
     dibujar_personaje(pantalla, personaje, tema, RECT_PERSONAJE, animo)
     if nombre_zona:
@@ -101,10 +93,9 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
         pygame.draw.rect(pantalla, tema.panel, marco, border_radius=px(8))
         pygame.draw.rect(pantalla, tema.acento, marco, width=px(2), border_radius=px(8))
         pantalla.blit(etiqueta, etiqueta.get_rect(center=marco.center))
-    if animacion is not None:  # la propagacion ocupa el lugar del panel de noticia
+    if animacion is not None:
         animacion.draw(pantalla, fuentes, tema, RECT_PANEL)
     else:
-        # Con tarjeta no hay titulo: titulos como "Rumor sobre el colegio" delatarian que es falsa
         panel = Panel(RECT_PANEL, "" if tarjeta is not None else titulo_panel, alfa=ALFA_PANEL)
         panel.draw(pantalla, fuentes, tema)
         area = RECT_TEXTO_PANEL if mapa is not None else panel.interior
@@ -119,6 +110,6 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
     dialogo.draw(pantalla, fuentes, tema)
     for boton in botones:
         boton.draw(pantalla, fuentes.normal, tema)
-    if tarjeta is not None:  # recordatorio de controles bajo los botones
+    if tarjeta is not None:
         ayuda = fuentes.chica.render(ayuda, True, tema.texto)
         pantalla.blit(ayuda, ayuda.get_rect(midbottom=(pantalla.get_width() // 2, pantalla.get_height() - px(6))))

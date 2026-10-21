@@ -1,10 +1,4 @@
-"""Modelo de la introduccion: laminas, zonas, candidatos y publicaciones. Logica pura, SIN pygame.
-
-Todo el contenido (textos, candidatos, zonas) vive en data/intro.json; aqui solo se carga y se
-valida. Igual que `Personaje`, el aspecto de un candidato son IDS (piel, cabello, peinado,
-accesorio, color de campana), nunca colores ni superficies: la vista decide como dibujarlos con
-el tema activo, y se podria cambiar por imagenes PNG sin tocar el modelo.
-"""
+"""Modelo de la introduccion: laminas, zonas, candidatos y publicaciones."""
 from __future__ import annotations
 
 import json
@@ -16,8 +10,8 @@ TIPOS_LAMINA = ("ciudad", "zonas", "civitas", "candidatos", "cierre")
 PEINADOS = ("corto", "largo", "rizado", "recogido")
 ACCESORIOS = ("corbata", "aretes", "lentes", "bufanda", "barba")
 TIPOS_PUBLICACION = ("rumor", "verdad")
-TONOS = 2    # tonos de piel y de cabello que ofrece el tema
-COLORES = 4  # colores de campana (uno por rol en el tema)
+TONOS = 2
+COLORES = 4
 
 
 @dataclass(frozen=True)
@@ -56,7 +50,7 @@ class ZonaIntro:
 class Publicacion:
     autor: str
     texto: str
-    tipo: str          # "rumor" o "verdad"
+    tipo: str
     reacciones: int
 
     def __post_init__(self) -> None:
@@ -69,8 +63,8 @@ class Lamina:
     id: str
     tipo: str
     titulo: str
-    texto: str                       # el subtitulo que se escribe letra por letra
-    candidatos: tuple[str, ...] = ()  # ids de los candidatos que muestra (solo tipo "candidatos")
+    texto: str
+    candidatos: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if self.tipo not in TIPOS_LAMINA:

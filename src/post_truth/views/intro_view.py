@@ -1,15 +1,4 @@
-"""Vista de la introduccion: laminas dibujadas con formas de Pygame, con fundido y subtitulo.
-
-Solo dibuja los datos que le entrega el controlador (modelo `Intro`, instante `t` de la lamina,
-opacidad `alfa`); no avanza nada por su cuenta. Cada lamina se pinta en un lienzo aparte al que se
-le aplica la opacidad (fundido). El subtitulo (la caja de dialogo con el texto que se escribe letra
-por letra) se dibuja DESPUES, encima y siempre opaco: el texto nunca desaparece con el fundido.
-
-Todos los colores salen del tema activo. Los rumores y las verdades de Civitas se distinguen por
-forma (triangulo de advertencia / circulo con visto) ademas de por color, y los candidatos por
-peinado y accesorio, para no depender solo del tono (daltonismo). Toda la geometria se diseno en
-1024 x 640 y se escala con px() (ver config.ESCALA).
-"""
+"""Vista de la introduccion: laminas dibujadas con formas de Pygame, con fundido y subtitulo."""
 import math
 import random
 from typing import Callable
@@ -28,10 +17,10 @@ from post_truth.views.retrato_view import dibujar_retrato
 from post_truth.views.theme import Tema
 from post_truth.views.zona_view import dibujar_fondo_zona
 
-ALTO_ARTE = px(486)                   # el dibujo ocupa lo de arriba; abajo van el subtitulo y la ayuda
+ALTO_ARTE = px(486)
 TAMANO_LIENZO = (ANCHO, ALTO_ARTE)
-SEGUNDOS_POR_ZONA = 3.2               # cuanto se queda resaltada cada zona en la lamina del mapa
-Y_SUELO = px(400)                     # donde terminan los edificios del horizonte
+SEGUNDOS_POR_ZONA = 3.2
+Y_SUELO = px(400)
 _ROLES = list(Role)
 
 Pintor = Callable[[pygame.Surface, Fuentes, Tema, Intro, GrafoCiudad, Lamina, float], None]
@@ -56,15 +45,13 @@ def _texto_con_borde(lienzo: pygame.Surface, fuente: pygame.font.Font, texto: st
     lienzo.blit(img, rect)
 
 
-# --- horizonte de la ciudad (laminas "ciudad" y "cierre") ---------------------------------------
-_rng = random.Random(3)  # fijo: la ciudad dibujada es siempre la misma
+_rng = random.Random(3)
 _EDIFICIOS: list[tuple[int, int, int]] = []
 _x = -px(10)
 while _x < ANCHO:
     _w = px(_rng.randint(56, 98))
     _EDIFICIOS.append((_x, _w, px(_rng.randint(90, 190))))
     _x += _w + px(_rng.randint(2, 10))
-# (indice de edificio, x, y, orden): `orden` define cuando se enciende cada ventana
 _VENTANAS: list[tuple[int, int, int, int]] = []
 for _i, (_bx, _bw, _bh) in enumerate(_EDIFICIOS):
     for _fila in range(_bh // px(28)):
@@ -78,23 +65,21 @@ def _horizonte(lienzo: pygame.Surface, tema: Tema, t: float, ventanas_encendidas
     for x, y, fase in _ESTRELLAS:
         brillo = 0.5 + 0.5 * math.sin(t * 1.6 + fase)
         pygame.draw.circle(lienzo, tema.texto, (x, y), px(2) if brillo > 0.6 else max(1, px(1)))
-    pygame.draw.circle(lienzo, tema.detalle, (ANCHO - px(144), px(86)), px(30))                    # luna
+    pygame.draw.circle(lienzo, tema.detalle, (ANCHO - px(144), px(86)), px(30))
     pygame.draw.circle(lienzo, tema.cielo, (ANCHO - px(130), px(78)), px(26))
     for x, w, h in _EDIFICIOS:
         pygame.draw.rect(lienzo, tema.edificio, (x, Y_SUELO - h, w, h))
         pygame.draw.rect(lienzo, tema.borde, (x, Y_SUELO - h, w, h), px(2))
-    if ventanas_encendidas:  # las ventanas se encienden una a una con el tiempo
+    if ventanas_encendidas:
         for _, x, y, orden in _VENTANAS:
             if t * 24 > orden:
                 pygame.draw.rect(lienzo, tema.detalle, (x, y, px(9), px(13)), border_radius=px(2))
     pygame.draw.rect(lienzo, tema.suelo, (0, Y_SUELO, ANCHO, ALTO_ARTE - Y_SUELO))
 
 
-# --- lamina 1: Ciudad Nova y las elecciones ------------------------------------------------------
 def _lamina_ciudad(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro: Intro, ciudad: GrafoCiudad,
                    lamina: Lamina, t: float) -> None:
     _horizonte(lienzo, tema, t)
-    # El titulo se escala a un ancho fijo: la fuente de titulo es grande pero esto lo hace aun mas
     ancho_titulo, alto_titulo = px(620), px(88)
     titulo = pygame.transform.smoothscale(fuentes.titulo.render(lamina.titulo.upper(), True, tema.texto),
                                           (ancho_titulo, alto_titulo))
@@ -103,7 +88,7 @@ def _lamina_ciudad(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro: 
     a = _aparicion(t, 0.7, 1.0)
     for superficie in (titulo, sombra):
         superficie.set_alpha(round(255 * a))
-    centro = (ANCHO // 2, px(96) - round(px(12) * (1 - a)))   # el titulo sube suavemente al aparecer
+    centro = (ANCHO // 2, px(96) - round(px(12) * (1 - a)))
     d = px(3)
     for dx, dy in ((-d, 0), (d, 0), (0, -d), (0, d)):
         lienzo.blit(sombra, sombra.get_rect(center=(centro[0] + dx, centro[1] + dy)))
@@ -112,7 +97,6 @@ def _lamina_ciudad(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro: 
                      (ANCHO // 2, px(160)), _aparicion(t, 1.6, 0.8))
 
 
-# --- lamina 2: la ciudad y sus zonas -------------------------------------------------------------
 def _lamina_zonas(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro: Intro, ciudad: GrafoCiudad,
                   lamina: Lamina, t: float) -> None:
     lienzo.fill(tema.fondo)
@@ -120,7 +104,6 @@ def _lamina_zonas(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro: I
     zona = intro.zonas[idx]
     mapa = pygame.Rect(px(36), px(30), px(520), px(420))
     dibujar_mapa(lienzo, fuentes, tema, mapa, EstadoMapa(ciudad, actual=zona.id, mostrar_ayuda=False))
-    # Tarjeta de la zona resaltada: su fondo (el mismo de la escena) y su descripcion
     tarjeta = pygame.Rect(px(590), px(30), px(400), px(420))
     pygame.draw.rect(lienzo, tema.panel, tarjeta, border_radius=px(14))
     foto = pygame.Rect(tarjeta.x + px(12), tarjeta.y + px(12), tarjeta.width - px(24), px(190))
@@ -135,16 +118,15 @@ def _lamina_zonas(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro: I
                            pygame.Rect(tarjeta.x + px(18), foto.bottom + px(56), tarjeta.width - px(36), px(150)))
 
 
-# --- lamina 3: Civitas y los primeros rumores ----------------------------------------------------
 def _icono_rumor(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, centro: tuple[int, int]) -> None:
-    x, y = centro   # triangulo de advertencia con "!"
+    x, y = centro
     pygame.draw.polygon(lienzo, tema.malo, [(x, y - px(12)), (x + px(13), y + px(10)), (x - px(13), y + px(10))])
     signo = fuentes.chica.render("!", True, tema.fondo)
     lienzo.blit(signo, signo.get_rect(center=(x, y + px(2))))
 
 
 def _icono_verdad(lienzo: pygame.Surface, tema: Tema, centro: tuple[int, int]) -> None:
-    x, y = centro   # circulo con visto
+    x, y = centro
     pygame.draw.circle(lienzo, tema.bueno, (x, y), px(12))
     pygame.draw.lines(lienzo, tema.fondo, False, [(x - px(6), y), (x - px(2), y + px(5)), (x + px(7), y - px(5))], px(3))
 
@@ -152,7 +134,7 @@ def _icono_verdad(lienzo: pygame.Surface, tema: Tema, centro: tuple[int, int]) -
 def _lamina_civitas(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro: Intro, ciudad: GrafoCiudad,
                     lamina: Lamina, t: float) -> None:
     lienzo.fill(tema.fondo)
-    for i in range(7):  # burbujas "?" que suben por los costados: el rumor flota en el aire
+    for i in range(7):
         x = px(70 + (i % 2) * 150 + (i // 2) * 12) if i < 4 else px(790 + (i % 2) * 120 + (i - 4) * 10)
         y = ALTO_ARTE - ((t * px(30) + i * px(90)) % (ALTO_ARTE + px(40)))
         pygame.draw.circle(lienzo, tema.borde, (round(x), round(y)), px(17), px(2))
@@ -173,9 +155,9 @@ def _lamina_civitas(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro:
         es_rumor = post.tipo == "rumor"
         color = tema.malo if es_rumor else tema.bueno
         pygame.draw.rect(capa, (*tema.fondo, 255), interior, border_radius=px(10))
-        grosor = px(3) if es_rumor and int(t * 3) % 2 == 0 else px(2)   # el rumor late
+        grosor = px(3) if es_rumor and int(t * 3) % 2 == 0 else px(2)
         pygame.draw.rect(capa, (*color, 255), interior, width=grosor, border_radius=px(10))
-        pygame.draw.circle(capa, tema.rol[i % 4], (px(30), px(28)), px(18))       # avatar
+        pygame.draw.circle(capa, tema.rol[i % 4], (px(30), px(28)), px(18))
         inicial = fuentes.normal.render(post.autor.strip("@")[0].upper(), True, tema.fondo)
         capa.blit(inicial, inicial.get_rect(center=(px(30), px(28))))
         capa.blit(fuentes.chica.render(post.autor, True, tema.acento), (px(58), px(6)))
@@ -185,14 +167,12 @@ def _lamina_civitas(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro:
          else _icono_verdad(capa, tema, (interior.right - px(24), px(24))))
         capa.set_alpha(round(255 * a))
         lienzo.blit(capa, tarjeta)
-    # Leyenda: forma + color
     _icono_rumor(lienzo, fuentes, tema, (telefono.x - px(150), telefono.y + px(40)))
     lienzo.blit(fuentes.normal.render("Rumor", True, tema.texto), (telefono.x - px(130), telefono.y + px(27)))
     _icono_verdad(lienzo, tema, (telefono.right + px(28), telefono.y + px(40)))
     lienzo.blit(fuentes.normal.render("Verdad", True, tema.texto), (telefono.right + px(48), telefono.y + px(27)))
 
 
-# --- laminas 4 y 5: los candidatos ---------------------------------------------------------------
 def _tarjeta_candidato(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, c: Candidato, rect: pygame.Rect,
                        a: float) -> None:
     capa = pygame.Surface(rect.size, pygame.SRCALPHA)
@@ -222,10 +202,9 @@ def _lamina_candidatos(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, int
                            pygame.Rect(x0 + i * (ancho + hueco), px(14), ancho, alto), _aparicion(t, 0.7 + i * 0.9, 0.6))
 
 
-# --- lamina 6: cierre, los cuatro roles ------------------------------------------------------------
 def _lamina_cierre(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro: Intro, ciudad: GrafoCiudad,
                    lamina: Lamina, t: float) -> None:
-    _horizonte(lienzo, tema, t, ventanas_encendidas=False)   # horizonte apagado: el texto de los roles manda
+    _horizonte(lienzo, tema, t, ventanas_encendidas=False)
     _texto_con_borde(lienzo, fuentes.titulo, "Elige quien seras", tema.texto, tema.fondo, (ANCHO // 2, px(48)),
                      _aparicion(t, 0.2, 0.6))
     ancho_carta, alto_carta, hueco = px(236), px(390), px(12)
@@ -265,12 +244,12 @@ def _puntos(pantalla: pygame.Surface, tema: Tema, indice: int, total: int) -> No
 def dibujar_intro(pantalla: pygame.Surface, lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema,
                   intro: Intro, ciudad: GrafoCiudad, indice: int, t: float, alfa: float,
                   dialogo: CajaDialogo, pie: str) -> None:
-    """Pinta la lamina `indice` en `lienzo` con opacidad `alfa` (0..255), y encima el subtitulo."""
+    """Pinta la lamina `indice` en `lienzo` con opacidad `alfa`, y encima el subtitulo."""
     pantalla.fill(tema.fondo)
     lamina = intro.laminas[indice]
     _PINTORES[lamina.tipo](lienzo, fuentes, tema, intro, ciudad, lamina, t)
     lienzo.set_alpha(max(0, min(255, round(alfa))))
     pantalla.blit(lienzo, (0, 0))
     _puntos(pantalla, tema, indice, len(intro.laminas))
-    dialogo.draw(pantalla, fuentes, tema)             # siempre opaco, nunca se desvanece
+    dialogo.draw(pantalla, fuentes, tema)
     pantalla.blit(fuentes.chica.render(pie, True, tema.texto), (px(24), pantalla.get_height() - px(26)))

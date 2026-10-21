@@ -1,9 +1,4 @@
-"""Proveedor de arte del mundo caminable: todo dibujado con formas y colores del tema.
-
-La vista (mundo_view) nunca dibuja el mundo directamente: le pide cada pieza al proveedor, ya en coordenadas
-de PANTALLA. Para pasar a tilesets o sprites PNG basta con otra clase con los mismos metodos (por ejemplo un
-ArtePNG que haga blit de imagenes de assets/) y pasarla a `dibujar_mundo`; el modelo y la vista no cambian.
-"""
+"""Proveedor de arte del mundo caminable: todo dibujado con formas y colores del tema."""
 import math
 
 import pygame
@@ -19,7 +14,7 @@ Punto = tuple[int, int]
 
 
 def _mezclar(a: tuple[int, int, int], b: tuple[int, int, int], f: float) -> tuple[int, int, int]:
-    """Tono intermedio entre dos colores del tema (asi el decorado sigue al tema activo, tambien en alto contraste)."""
+    """Tono intermedio entre dos colores del tema."""
     return tuple(round(x + (y - x) * f) for x, y in zip(a, b))
 
 
@@ -28,7 +23,6 @@ class ArteFormas:
         pantalla.fill(tema.suelo)
 
     def calle(self, pantalla: pygame.Surface, tema: Tema, a: Punto, b: Punto, ancho: int) -> None:
-        # Una calle es una capsula: linea gruesa con extremos redondos (se une limpio con las plazas)
         for color, grosor in ((tema.borde, ancho + px(6)), (tema.panel, ancho)):
             pygame.draw.line(pantalla, color, a, b, grosor)
             for extremo in (a, b):
@@ -37,7 +31,7 @@ class ArteFormas:
     def plaza(self, pantalla: pygame.Surface, tema: Tema, centro: Punto, radio: int) -> None:
         pygame.draw.circle(pantalla, tema.borde, centro, radio + px(3))
         pygame.draw.circle(pantalla, tema.panel, centro, radio)
-        pygame.draw.circle(pantalla, tema.borde, centro, max(1, radio * 2 // 3), px(2))   # baldosas
+        pygame.draw.circle(pantalla, tema.borde, centro, max(1, radio * 2 // 3), px(2))
 
     def edificio(self, pantalla: pygame.Surface, tema: Tema, fuentes: Fuentes, zona: str, nombre: str,
                  rect: pygame.Rect, resaltado: bool, t: float = 0.0) -> None:
@@ -45,7 +39,6 @@ class ArteFormas:
         techo = pygame.Rect(rect.x, rect.y, rect.w, rect.h // 7)
         pygame.draw.rect(pantalla, _mezclar(tema.edificio, tema.fondo, 0.45), techo,
                          border_top_left_radius=px(10), border_top_right_radius=px(10))
-        # Ventanas a los lados del icono: algunas se encienden y apagan despacio (la ciudad esta habitada)
         tam = max(3, rect.w // 11)
         for i, (fx, fy) in enumerate(((0.1, 0.3), (0.1, 0.55), (0.78, 0.3), (0.78, 0.55))):
             luz = (i * 7 + int(t / 2.5 + i * 0.37) + len(zona)) % 3 != 0
@@ -59,7 +52,6 @@ class ArteFormas:
         img = fuentes.chica.render(nombre, True, tema.texto)
         pantalla.blit(img, img.get_rect(midbottom=(rect.centerx, rect.bottom - px(6))))
 
-    # --- decorado (views/decorado.py): solo adorno, todo con colores del tema ---------------------
     def cesped(self, pantalla: pygame.Surface, tema: Tema, pos: Punto, tam: int, variante: int) -> None:
         color = _mezclar(tema.suelo, tema.verde, 0.35 + 0.15 * variante)
         x, y = pos
@@ -76,7 +68,7 @@ class ArteFormas:
                 pygame.draw.circle(pantalla, tema.detalle, (x + dx, y + dy), max(2, tam // 5))
 
     def arbol(self, pantalla: pygame.Surface, tema: Tema, base: Punto, tam: int, balanceo: float) -> None:
-        """`balanceo` (-1..1) mueve la copa con el viento; el tronco queda quieto."""
+        """`balanceo` mueve la copa con el viento."""
         x, y = base
         pygame.draw.ellipse(pantalla, _mezclar(tema.suelo, tema.fondo, 0.55), (x - tam, y - tam // 4, tam * 2, tam // 2))
         pygame.draw.rect(pantalla, _mezclar(tema.edificio, tema.fondo, 0.35), (x - tam // 6, y - tam, tam // 3, tam),
@@ -88,7 +80,7 @@ class ArteFormas:
             pygame.draw.circle(pantalla, color, (cx + dx, cy + dy), r)
 
     def farol(self, pantalla: pygame.Surface, tema: Tema, base: Punto, tam: int, brillo: float) -> None:
-        """`brillo` (0..1) late despacio: el halo es semitransparente."""
+        """`brillo` late despacio: el halo es semitransparente."""
         x, y = base
         lampara = (x, y - tam)
         halo = tam // 3 + round(brillo * tam // 10)
@@ -107,14 +99,14 @@ class ArteFormas:
         pygame.draw.rect(pantalla, madera, (x - tam // 2, y - tam // 2, tam, tam // 6), border_radius=max(1, tam // 10))
 
     def pajaro(self, pantalla: pygame.Surface, tema: Tema, pos: Punto, tam: int, aleteo: float) -> None:
-        """Una "v" que bate las alas (`aleteo` -1..1)."""
+        """Una "v" que bate las alas."""
         x, y = pos
         ala = round(aleteo * tam * 0.6)
         pygame.draw.lines(pantalla, tema.texto, False, [(x - tam, y - ala), (x, y), (x + tam, y - ala)], max(1, tam // 5))
 
     def personaje(self, pantalla: pygame.Surface, tema: Tema, pies: Punto, alto: int, personaje: Personaje,
                   animacion: str, cuadro: int) -> None:
-        """`animacion` y `cuadro` son la fila y la columna de la futura hoja de sprites (models/animacion.py)."""
+        """`animacion` y `cuadro` son la fila y la columna de la futura hoja de sprites."""
         dibujar_personaje_mundo(pantalla, personaje, tema, pies, alto, animacion, cuadro)
 
 

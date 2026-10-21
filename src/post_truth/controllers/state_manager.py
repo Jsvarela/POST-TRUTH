@@ -1,25 +1,19 @@
-"""Administrador de pantallas: delega eventos/update/draw en el estado activo.
-
-FUNDIDO (entrar y salir de un lugar del mundo): `cambiar(nombre, fundido=True)` oscurece el estado actual durante
-DURACION_FUNDIDO, cambia de estado en el punto mas oscuro y aclara el nuevo durante otro DURACION_FUNDIDO.
-Mientras dura se ignoran las teclas (nada de doble E ni ESC a mitad de camino) y el estado que se va queda
-congelado. El tiempo corre con dt, como todo lo demas.
-"""
+"""Administrador de pantallas: delega eventos/update/draw en el estado activo."""
 from typing import Callable
 
 import pygame
 
 from post_truth.controllers.base_state import BaseState
 
-DURACION_FUNDIDO = 0.2   # segundos de cada mitad (oscurecer y aclarar)
+DURACION_FUNDIDO = 0.2
 
 
 class StateManager:
     def __init__(self, color_fundido: Callable[[], tuple[int, int, int]] = lambda: (0, 0, 0)) -> None:
         self._estados: dict[str, BaseState] = {}
         self._actual: BaseState | None = None
-        self._color_fundido = color_fundido    # del tema activo (lo pasa la App)
-        self._fase: str | None = None          # None | "salida" | "entrada"
+        self._color_fundido = color_fundido
+        self._fase: str | None = None
         self._t = 0.0
         self._destino = ""
 
@@ -40,7 +34,7 @@ class StateManager:
 
     @property
     def opacidad_fundido(self) -> float:
-        """0 transparente .. 1 tapa todo."""
+        """Opacidad del fundido, de 0 a 1."""
         if self._fase == "salida":
             return min(1.0, self._t / DURACION_FUNDIDO)
         if self._fase == "entrada":
@@ -54,11 +48,11 @@ class StateManager:
     def update(self, dt: float) -> None:
         if self._fase == "salida":
             self._t += dt
-            if self._t >= DURACION_FUNDIDO:          # punto mas oscuro: aqui cambia el estado
+            if self._t >= DURACION_FUNDIDO:
                 self._actual = self._estados[self._destino]
                 self._actual.al_entrar()
                 self._fase, self._t = "entrada", 0.0
-            return                                     # el estado que se va queda congelado
+            return
         if self._fase == "entrada":
             self._t += dt
             if self._t >= DURACION_FUNDIDO:

@@ -1,27 +1,4 @@
-"""Mundo caminable de Ciudad Nova visto desde arriba. Logica pura (sin pygame) y serializable.
-
-El mapa ES el grafo de la ciudad: cada plaza es un vertice (un circulo) y cada calle una arista (un segmento
-con ancho, una "capsula"). Solo se puede estar sobre esa union de formas, asi que cualquier angulo de calle
-funciona igual (hay calles diagonales).
-
-MOVIMIENTO: `mover(dir_x, dir_y, dt)` avanza `velocidad * dt` (pixeles del mundo por segundo) en sub-pasos fijos
-de PASO segundos. Con sub-pasos fijos, 30 y 60 FPS recorren exactamente la misma secuencia de pasos: el resultado
-no depende de los FPS. Si un paso cae fuera de las calles, se corrige al punto valido mas cercano: el personaje
-resbala a lo largo del borde en vez de quedarse pegado.
-
-RITMO DE LAS CALLES: cada calle tiene el peso de su arista en el grafo de la ciudad y se cruza en
-peso * segundos_por_peso segundos, sea cual sea su largo en pantalla (la velocidad en la calle se ajusta), pero
-nunca a mas de tope_calle veces la velocidad normal: una calle larga de poco peso (Barrio-Parque) no se cruza
-"volando". Por ese tope el peso ya no es exactamente el tiempo, asi que la guia del mundo usa Dijkstra sobre el
-TIEMPO real de cada calle (`tiempo_calle`). Sin peso, la calle se camina a la velocidad normal; las plazas
-siempre a la velocidad normal.
-
-LLEGADA: al entrar a una plaza distinta de la ultima se avisa (`llegar`) para que la partida quede en la misma
-zona. Se llega recien al estar MARGEN_LLEGADA * radio_jugador dentro del borde (histeresis), para no "llegar" por
-rozar la boca de una calle.
-
-Las posiciones estan en pixeles del MUNDO (data/mundo.json), no de la pantalla: la vista las convierte.
-"""
+"""Mundo caminable de Ciudad Nova visto desde arriba."""
 from __future__ import annotations
 
 import json
@@ -30,8 +7,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
-PASO = 1 / 120   # segundos por sub-paso de movimiento
-MARGEN_LLEGADA = 2   # se "llega" a una plaza al estar a radio - MARGEN_LLEGADA * radio_jugador de su centro
+PASO = 1 / 120
+MARGEN_LLEGADA = 2
 
 Punto = tuple[float, float]
 
@@ -48,19 +25,19 @@ class Calle:
     desde: str
     hasta: str
     ancho: float
-    peso: float | None = None   # el de su arista en el grafo de la ciudad; None = velocidad normal
+    peso: float | None = None
 
 
 @dataclass(frozen=True)
 class Edificio:
     zona: str
-    rect: tuple[float, float, float, float]   # x, y, ancho, alto
-    entrada: Punto                             # donde hay que pararse para entrar (sobre la plaza)
-    radio: float                               # distancia a la entrada para poder interactuar
+    rect: tuple[float, float, float, float]
+    entrada: Punto
+    radio: float
 
 
 def _cercano_en_segmento(p: Punto, a: Punto, b: Punto) -> Punto:
-    """Punto del segmento ab mas cercano a p (proyeccion acotada a [0, 1])."""
+    """Punto del segmento ab mas cercano a p."""
     ax, ay = a
     dx, dy = b[0] - ax, b[1] - ay
     largo2 = dx * dx + dy * dy
@@ -69,7 +46,7 @@ def _cercano_en_segmento(p: Punto, a: Punto, b: Punto) -> Punto:
 
 
 def _acercar(p: Punto, centro: Punto, radio: float) -> Punto:
-    """p si esta a `radio` o menos de `centro`; si no, el punto a distancia `radio` en direccion a p."""
+    """p si esta a `radio` o menos de `centro`."""
     d = math.dist(p, centro)
     if d <= radio:
         return p
@@ -90,12 +67,11 @@ class MundoCiudad:
         self.velocidad = velocidad
         self.radio_jugador = radio_jugador
         self.segundos_por_peso = segundos_por_peso
-        self.tope_calle = tope_calle   # maximo en una calle, en veces la velocidad normal (None: sin tope)
+        self.tope_calle = tope_calle
         self._validar()
         self.jugador: Punto = jugador if jugador is not None else aparicion
         if not self.es_transitable(self.jugador):
             raise ValueError(f"El jugador no esta sobre una calle o plaza: {self.jugador}")
-        # Ultima plaza a la que se llego (la sesion de la partida tiene esta misma zona)
         self.ultima_plaza = ultima_plaza or self.plaza_en(self.jugador) or min(
             self.plazas.values(), key=lambda p: math.dist(p.pos, self.jugador)).id
         if self.ultima_plaza not in self.plazas:
@@ -126,9 +102,8 @@ class MundoCiudad:
         if not self.es_transitable(self.aparicion):
             raise ValueError("El punto de aparicion no esta sobre una calle o plaza")
 
-    # --- geometria ----------------------------------------------------------------------
     def _formas(self):
-        """Cada forma transitable como (centro_o_segmento, radio util para el CENTRO del jugador)."""
+        """Cada forma transitable como."""
         r = self.radio_jugador
         for p in self.plazas.values():
             yield (p.pos, p.pos), p.radio - r
@@ -136,11 +111,11 @@ class MundoCiudad:
             yield (self.plazas[c.desde].pos, self.plazas[c.hasta].pos), c.ancho / 2 - r
 
     def es_transitable(self, p: Punto) -> bool:
-        """El jugador (un circulo de radio_jugador centrado en p) cabe entero en alguna calle o plaza. O(V + E)."""
+        """El jugador cabe entero en alguna calle o plaza."""
         return any(math.dist(p, _cercano_en_segmento(p, a, b)) <= util + 1e-9 for (a, b), util in self._formas())
 
     def _corregir(self, p: Punto) -> Punto:
-        """El punto transitable mas cercano a p: si p ya es valido, p mismo. Es lo que produce el deslizamiento."""
+        """El punto transitable mas cercano a p: si p ya es valido, p mismo."""
         mejor, mejor_d = p, math.inf
         for (a, b), util in self._formas():
             q = _acercar(p, _cercano_en_segmento(p, a, b), util)
@@ -152,15 +127,14 @@ class MundoCiudad:
         return mejor
 
     def plaza_en(self, p: Punto, margen: float = 0) -> str | None:
-        """La plaza que contiene p (a `margen` o mas del borde hacia adentro), o None."""
+        """La plaza que contiene p, o None."""
         for pl in self.plazas.values():
             if math.dist(p, pl.pos) <= pl.radio - margen:
                 return pl.id
         return None
 
     def calle_en(self, p: Punto) -> Calle | None:
-        """La calle sobre la que esta p si no esta en una plaza (en los datos, fuera de las plazas las calles no
-        se solapan; si se solaparan, gana la mas cercana)."""
+        """La calle sobre la que esta p si no esta en una plaza."""
         if self.plaza_en(p) is not None:
             return None
         cerca = [(math.dist(p, _cercano_en_segmento(p, self.plazas[c.desde].pos, self.plazas[c.hasta].pos)), i)
@@ -169,13 +143,13 @@ class MundoCiudad:
         return self.calles[i] if d <= self.calles[i].ancho / 2 else None
 
     def velocidad_en(self, p: Punto) -> float:
-        """Pixeles por segundo en p (ver RITMO DE LAS CALLES)."""
+        """Pixeles por segundo en p."""
         calle = self.calle_en(p)
         return self.velocidad if calle is None else self.velocidad_calle(calle)
 
     def _tramo(self, calle: Calle) -> float:
         a, b = self.plazas[calle.desde], self.plazas[calle.hasta]
-        return math.dist(a.pos, b.pos) - a.radio - b.radio   # lo que se camina fuera de las plazas
+        return math.dist(a.pos, b.pos) - a.radio - b.radio
 
     def velocidad_calle(self, calle: Calle) -> float:
         if calle.peso is None or self.segundos_por_peso is None:
@@ -184,15 +158,12 @@ class MundoCiudad:
         return v if self.tope_calle is None else min(v, self.velocidad * self.tope_calle)
 
     def tiempo_calle(self, calle: Calle) -> float:
-        """Segundos para ir del centro de una plaza al de la otra por esta calle: el tramo a su velocidad mas medio
-        cruce de cada plaza a la velocidad normal (en una ruta, cada plaza intermedia suma sus dos mitades)."""
+        """Segundos para ir del centro de una plaza al de la otra por esta calle."""
         a, b = self.plazas[calle.desde], self.plazas[calle.hasta]
         return self._tramo(calle) / self.velocidad_calle(calle) + (a.radio + b.radio) / self.velocidad
 
-    # --- movimiento e interaccion --------------------------------------------------------
     def mover(self, dir_x: float, dir_y: float, dt: float, llegar: Callable[[str], None] | None = None) -> None:
-        """Mueve al jugador en la direccion (dir_x, dir_y) durante dt segundos. La diagonal no es mas rapida.
-        `llegar(zona)` avisa al llegar a una plaza distinta de la ultima."""
+        """Mueve al jugador en la direccion durante dt segundos."""
         largo = math.hypot(dir_x, dir_y)
         if largo == 0 or dt <= 0:
             return
@@ -210,13 +181,11 @@ class MundoCiudad:
                     llegar(plaza)
 
     def zona_al_alcance(self) -> str | None:
-        """La zona cuyo edificio tiene la entrada a menos de su radio del jugador (la mas cercana), o None. Solo
-        cuenta el lugar de la plaza a la que el jugador LLEGO, asi la zona coincide con la de la partida."""
+        """La zona cuyo edificio tiene la entrada a menos de su radio del jugador, o None."""
         cerca = [(math.dist(self.jugador, e.entrada), e.zona) for e in self.edificios
                  if math.dist(self.jugador, e.entrada) <= e.radio and e.zona == self.ultima_plaza]
         return min(cerca)[1] if cerca else None
 
-    # --- serializacion -------------------------------------------------------------------
     def to_dict(self) -> dict:
         """El mismo formato de data/mundo.json mas la posicion del jugador."""
         return {

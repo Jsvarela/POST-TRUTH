@@ -8,13 +8,12 @@ class MenuState(BaseState):
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RETURN:
-                # Menu -> Intro -> Seleccion la primera vez; despues va directo a la seleccion
                 self.app.estados.cambiar("seleccion" if self.app.intro_vista else "intro")
             elif event.key == pygame.K_i:
-                self.app.estados.cambiar("intro")   # volver a ver la introduccion
+                self.app.estados.cambiar("intro")
             elif event.key == pygame.K_m:
                 self.app.partida = None
-                self.app.estados.cambiar("mundo")   # atajo al mundo caminable sin pasar por la seleccion
+                self.app.estados.cambiar("mundo")
             elif event.key == pygame.K_t:
                 self.app.temas.siguiente()
             elif event.key == pygame.K_ESCAPE:

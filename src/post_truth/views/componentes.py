@@ -1,9 +1,4 @@
-"""Componentes de interfaz reutilizables: Fuentes, Boton, Panel y CajaDialogo.
-
-Ningun componente tiene colores propios: todo sale del `Tema` activo que se pasa a
-`draw` (regla de accesibilidad). Los componentes guardan estado de interaccion
-(hover, texto revelado) pero nunca modifican el modelo del juego.
-"""
+"""Componentes de interfaz reutilizables: Fuentes, Boton, Panel y CajaDialogo."""
 from dataclasses import dataclass
 from typing import Callable
 
@@ -15,7 +10,7 @@ from post_truth.views.theme import Tema
 
 @dataclass
 class Fuentes:
-    """Tamanos de fuente compartidos; se crean una sola vez (crear fuentes cada frame es caro)."""
+    """Tamanos de fuente compartidos."""
     chica: pygame.font.Font
     normal: pygame.font.Font
     grande: pygame.font.Font
@@ -29,12 +24,7 @@ class Fuentes:
 
 
 def ajustar_texto(texto: str, fuente: pygame.font.Font, ancho: int) -> list[str]:
-    """Parte `texto` en lineas que caben en `ancho` px (word-wrap por palabras).
-
-    Se mide con la fuente real (no por cantidad de caracteres) porque arial es
-    proporcional. Respeta los saltos de linea explicitos. Una palabra mas ancha que
-    la caja queda en su propia linea en vez de cortarse. Costo: O(n) medidas.
-    """
+    """Parte `texto` en lineas que caben en `ancho` px."""
     lineas: list[str] = []
     for parrafo in texto.split("\n"):
         actual = ""
@@ -51,7 +41,7 @@ def ajustar_texto(texto: str, fuente: pygame.font.Font, ancho: int) -> list[str]
 
 def dibujar_texto_ajustado(pantalla: pygame.Surface, fuente: pygame.font.Font, texto: str,
                            color: tuple[int, int, int], rect: pygame.Rect, interlineado: int | None = None) -> int:
-    """Dibuja texto ajustado al ancho de `rect`; devuelve la y donde termino."""
+    """Dibuja texto ajustado al ancho de `rect`."""
     y = rect.y
     interlineado = px(4) if interlineado is None else interlineado
     for linea in ajustar_texto(texto, fuente, rect.width):
@@ -61,17 +51,16 @@ def dibujar_texto_ajustado(pantalla: pygame.Surface, fuente: pygame.font.Font, t
 
 
 class Boton:
-    """Boton con hover y clic. El callback se dispara al SOLTAR el mouse dentro del boton
-    (como en cualquier UI: permite arrepentirse arrastrando fuera) o con su tecla de atajo."""
+    """Boton con hover y clic."""
 
     def __init__(self, rect: pygame.Rect, texto: str, al_hacer_clic: Callable[[], None],
                  atajo: int | None = None) -> None:
         self.rect = rect
         self.texto = texto
         self.al_hacer_clic = al_hacer_clic
-        self.atajo = atajo  # constante pygame.K_*, opcional
+        self.atajo = atajo
         self.hover = False
-        self.habilitado = True  # deshabilitado: se ve apagado y no responde a clics ni atajos
+        self.habilitado = True
         self._presionado = False
 
     def handle_event(self, event: pygame.event.Event) -> bool:
@@ -106,19 +95,19 @@ class Boton:
             color_texto = tema.boton_texto
         img = fuente.render(self.texto, True, color_texto)
         maximo = self.rect.width - px(16)
-        if img.get_width() > maximo:  # textos largos se reducen en vez de salirse del boton
+        if img.get_width() > maximo:
             alto = max(1, img.get_height() * maximo // img.get_width())
             img = pygame.transform.smoothscale(img, (maximo, alto))
         pantalla.blit(img, img.get_rect(center=self.rect.center))
 
 
 class Panel:
-    """Rectangulo redondeado con titulo opcional; contenedor visual para agrupar informacion."""
+    """Rectangulo redondeado con titulo opcional."""
 
     def __init__(self, rect: pygame.Rect, titulo: str = "", alfa: int = 255) -> None:
         self.rect = rect
         self.titulo = titulo
-        self.alfa = alfa  # < 255 deja ver el fondo de la zona a traves del panel
+        self.alfa = alfa
 
     @property
     def interior(self) -> pygame.Rect:
@@ -141,11 +130,7 @@ class Panel:
 
 
 class CajaDialogo:
-    """Caja de texto estilo novela visual: nombre del hablante y texto que se revela poco a poco.
-
-    La revelacion avanza con `dt` (caracteres por segundo), nunca con sleep, asi el
-    loop sigue a 60 FPS y el jugador puede saltarla con `completar()`.
-    """
+    """Caja de texto estilo novela visual."""
 
     def __init__(self, rect: pygame.Rect, caracteres_por_segundo: float = 80.0) -> None:
         self.rect = rect
@@ -153,7 +138,7 @@ class CajaDialogo:
         self.texto = ""
         self.hablante = ""
         self._visibles = 0.0
-        self._t = 0.0  # reloj del parpadeo del indicador "continuar"
+        self._t = 0.0
 
     def set_texto(self, texto: str, hablante: str = "") -> None:
         self.texto = texto
@@ -184,8 +169,8 @@ class CajaDialogo:
             if restante <= 0:
                 break
             pantalla.blit(fuentes.normal.render(linea[:restante], True, tema.texto), (self.rect.x + px(20), y))
-            restante -= len(linea) + 1  # +1: el espacio que el wrap quito al cortar la linea
+            restante -= len(linea) + 1
             y += fuentes.normal.get_linesize() + px(2)
-        if self.terminado and int(self._t * 2) % 2 == 0:  # triangulo parpadeante: "ya termino"
+        if self.terminado and int(self._t * 2) % 2 == 0:
             x, yb = self.rect.right - px(28), self.rect.bottom - px(22)
             pygame.draw.polygon(pantalla, tema.acento, [(x, yb), (x + px(14), yb), (x + px(7), yb + px(9))])

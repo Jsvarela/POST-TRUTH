@@ -1,27 +1,4 @@
-"""Grafo de la ciudad: lugares conectados por vias con distancia. Logica pura (sin pygame).
-
-PROBLEMA QUE RESUELVE
-    El grafo social dice COMO circula una noticia entre personas; este es el MAPA DE LUGARES donde se
-    investiga. Cada zona puede guardar evidencia de una noticia (un testigo, un documento, una
-    grabacion). El camino mas corto entre dos zonas es la ruta que sigue el jugador (y la guia del mundo
-    caminable que lo lleva hasta la noticia).
-    (Los rumores NO se propagan por aqui: eso ocurre solo en el grafo social, entre personas.)
-
-REPRESENTACION
-    Vertices = zonas (Colegio, Barrio, Parque, Plaza, Alcaldia). Aristas NO dirigidas y PONDERADAS: una
-    calle se recorre en los dos sentidos y su peso es la distancia (entero >= 1).
-    Lista de adyacencia `dict zona -> dict vecino -> distancia`, espacio O(V + E): con pocas zonas y
-    grado pequeno es mas que suficiente, y la consulta de una distancia directa es O(1).
-
-ALGORITMOS
-    * Dijkstra (heapq): el largo de un camino es la SUMA de distancias, y el camino con menos saltos no
-      siempre es el mas corto (Barrio -> Plaza: directo cuesta 3, por el Parque cuesta 1 + 1 = 2).
-      Con cola de prioridad binaria cuesta O((V + E) log V); aqui V = 5 y E = 6, asi que es trivial. Los
-      pesos deben ser positivos: con negativos Dijkstra daria resultados incorrectos.
-    * BFS: basta cuando todas las aristas pesan lo mismo (el costo es el numero de saltos) y cuesta
-      O(V + E). Aqui no sirve para el viaje, pero si para comprobar que el mapa es CONEXO: toda zona
-      debe ser alcanzable desde las demas, o algun viaje no tendria ruta.
-"""
+"""Grafo de la ciudad: lugares conectados por vias con distancia."""
 from __future__ import annotations
 
 import heapq
@@ -33,13 +10,13 @@ from pathlib import Path
 
 @dataclass(frozen=True)
 class Ruta:
-    """Camino de `zonas[0]` a `zonas[-1]` (ambos incluidos) y su distancia total."""
+    """Camino de `zonas[0]` a `zonas[-1]` y su distancia total."""
     zonas: tuple[str, ...]
     costo: int
 
     @property
     def tramos(self) -> list[tuple[str, str]]:
-        """Pares consecutivos (a, b) del camino: las aristas que se recorren."""
+        """Pares consecutivos del camino: las aristas que se recorren."""
         return list(zip(self.zonas, self.zonas[1:]))
 
 
@@ -47,7 +24,7 @@ class Ruta:
 class Zona:
     id: str
     nombre: str
-    pos: tuple[float, float] = (0.5, 0.5)  # 0..1, solo para que la vista sepa donde dibujar
+    pos: tuple[float, float] = (0.5, 0.5)
 
     def to_dict(self) -> dict:
         return {"id": self.id, "nombre": self.nombre, "pos": list(self.pos)}
@@ -62,9 +39,8 @@ class Zona:
 class GrafoCiudad:
     _zonas: dict[str, Zona] = field(default_factory=dict)
     _ady: dict[str, dict[str, int]] = field(default_factory=dict)
-    zona_inicial: str = ""  # donde empieza el jugador (dato de la ciudad, no del jugador)
+    zona_inicial: str = ""
 
-    # --- zonas --------------------------------------------------------------------------
     def agregar_zona(self, zona: Zona) -> None:
         """O(1)."""
         if zona.id in self._zonas:
@@ -73,8 +49,7 @@ class GrafoCiudad:
         self._ady[zona.id] = {}
 
     def eliminar_zona(self, id: str) -> None:
-        """Quita la zona y todas sus conexiones: se borra su id del diccionario de cada vecino
-        (O(1) por vecino), o sea O(grado de la zona)."""
+        """Quita la zona y todas sus conexiones."""
         self._exigir(id)
         for vecino in self._ady[id]:
             del self._ady[vecino][id]
@@ -93,9 +68,8 @@ class GrafoCiudad:
     def __contains__(self, id: str) -> bool:
         return id in self._zonas
 
-    # --- conexiones ---------------------------------------------------------------------
     def agregar_conexion(self, a: str, b: str, distancia: int = 1) -> None:
-        """Conexion fisica (no dirigida) de `distancia` >= 1: se anota en las dos zonas. O(1)."""
+        """Conexion fisica de `distancia` >= 1: se anota en las dos zonas."""
         self._exigir(a)
         self._exigir(b)
         if a == b:
@@ -108,7 +82,7 @@ class GrafoCiudad:
         self._ady[b][a] = distancia
 
     def eliminar_conexion(self, a: str, b: str) -> bool:
-        """Devuelve False si no existia. O(1)."""
+        """Devuelve False si no existia."""
         self._exigir(a)
         self._exigir(b)
         if b not in self._ady[a]:
@@ -118,18 +92,18 @@ class GrafoCiudad:
         return True
 
     def distancia(self, a: str, b: str) -> int | None:
-        """Distancia de la via DIRECTA a - b, o None si no estan conectadas. O(1)."""
+        """Distancia de la via directa a - b, o None si no estan conectadas."""
         self._exigir(a)
         self._exigir(b)
         return self._ady[a].get(b)
 
     def vecinos(self, id: str) -> list[str]:
-        """Zonas conectadas directamente a `id`, en orden de insercion. O(grado)."""
+        """Zonas conectadas directamente a `id`, en orden de insercion."""
         self._exigir(id)
         return list(self._ady[id])
 
     def conexiones(self) -> list[tuple[str, str, int]]:
-        """Cada conexion una sola vez: (a, b, distancia)."""
+        """Cada conexion una sola vez:."""
         vistas: set[frozenset[str]] = set()
         resultado: list[tuple[str, str, int]] = []
         for a, vecinos in self._ady.items():
@@ -140,38 +114,31 @@ class GrafoCiudad:
                     resultado.append((a, b, d))
         return resultado
 
-    # --- Dijkstra: viajes ---------------------------------------------------------------
     def costos_desde(self, origen: str) -> dict[str, int]:
-        """Costo del camino mas corto de `origen` a CADA zona alcanzable (Dijkstra, una sola corrida)."""
+        """Costo del camino mas corto de `origen` a cada zona alcanzable."""
         return self._dijkstra(origen)[0]
 
     def ruta(self, origen: str, destino: str) -> Ruta | None:
-        """Camino de menor costo (no de menos saltos) de `origen` a `destino`, o None si no hay ruta.
-
-        Dijkstra: se saca de la cola la zona con menor costo acumulado y se relajan sus vecinos
-        (si pasar por ella mejora el costo de un vecino, se actualiza). Como los pesos son positivos,
-        el primer costo con que se saca una zona de la cola ya es el minimo. Se corta en cuanto sale
-        `destino`. O((V + E) log V) con heapq.
-        """
+        """Camino de menor costo de `origen` a `destino`, o None si no hay ruta."""
         self._exigir(destino)
         costos, padres = self._dijkstra(origen, destino)
         if destino not in costos:
             return None
         camino = [destino]
         while padres[camino[-1]] is not None:
-            camino.append(padres[camino[-1]])  # type: ignore[arg-type]
+            camino.append(padres[camino[-1]])
         return Ruta(tuple(reversed(camino)), costos[destino])
 
     def _dijkstra(self, origen: str, destino: str | None = None) -> tuple[dict[str, int], dict[str, str | None]]:
         self._exigir(origen)
         costos: dict[str, int] = {origen: 0}
         padres: dict[str, str | None] = {origen: None}
-        cola: list[tuple[int, str]] = [(0, origen)]   # (costo, zona): el empate se resuelve por id, determinista
+        cola: list[tuple[int, str]] = [(0, origen)]
         hechas: set[str] = set()
         while cola:
             costo, u = heapq.heappop(cola)
             if u in hechas:
-                continue  # entrada vieja: esta zona ya salio con un costo menor
+                continue
             hechas.add(u)
             if u == destino:
                 break
@@ -183,10 +150,8 @@ class GrafoCiudad:
                     heapq.heappush(cola, (nuevo, v))
         return costos, padres
 
-    # --- BFS: conectividad --------------------------------------------------------------
     def saltos(self, origen: str) -> dict[str, int]:
-        """Numero minimo de saltos de `origen` a cada zona alcanzable (BFS, O(V + E)). Sirve cuando
-        todas las distancias valen lo mismo; con pesos distintos hay que usar Dijkstra (`ruta`)."""
+        """Numero minimo de saltos de `origen` a cada zona alcanzable (BFS, O(V + E))."""
         self._exigir(origen)
         dist = {origen: 0}
         cola = deque([origen])
@@ -199,12 +164,11 @@ class GrafoCiudad:
         return dist
 
     def es_conexo(self) -> bool:
-        """True si desde cualquier zona se puede llegar a todas las demas (BFS desde una zona). O(V + E)."""
+        """True si desde cualquier zona se puede llegar a todas las demas."""
         if not self._zonas:
             return True
         return len(self.saltos(next(iter(self._zonas)))) == len(self._zonas)
 
-    # --- serializacion (para el servidor de sockets) ------------------------------------
     def to_dict(self) -> dict:
         return {"zonas": [z.to_dict() for z in self._zonas.values()],
                 "conexiones": [{"origen": a, "destino": b, "distancia": d} for a, b, d in self.conexiones()],
@@ -224,7 +188,7 @@ class GrafoCiudad:
 
     @classmethod
     def cargar(cls, ruta: str | Path, exigir_conexo: bool = True) -> "GrafoCiudad":
-        """Carga el mapa de data/. Por defecto exige que sea conexo (todo viaje debe tener ruta)."""
+        """Carga el mapa de data/."""
         with Path(ruta).open("r", encoding="utf-8") as archivo:
             g = cls.from_dict(json.load(archivo))
         if exigir_conexo and not g.es_conexo():

@@ -1,27 +1,4 @@
-"""Grafo social de Ciudad Nova: lista de adyacencia dirigida y ponderada. Logica pura (sin pygame).
-
-PROBLEMA QUE RESUELVE
-    Cuando el jugador comparte una publicacion hay que saber quien la recibe, cuantas
-    personas, que tan rapido y que consecuencias deja. Eso es alcanzabilidad sobre una
-    red de relaciones con pesos: un grafo.
-
-REPRESENTACION (por que lista de adyacencia)
-    Vertices = ciudadanos con rol. Arista dirigida u -> v = "lo que u publica le llega a v"
-    (v es su amigo, confia en u o lo sigue). El peso en (0, 1] es la probabilidad base de
-    que v lo reciba y, a la vez, la velocidad: mas peso = mas rapido.
-    Se guarda como dict[origen] -> dict[destino] -> Arista. Es una lista de adyacencia
-    (cada vertice conoce solo sus vecinos) y espacio O(V + E); usar un dict por vertice
-    en vez de una lista permite consultar o borrar una arista en O(1) en lugar de O(grado).
-    El grafo es disperso (cada persona conoce a pocas), asi que una matriz de adyacencia
-    gastaria O(V^2) sin necesidad.
-
-ALGORITMOS (ver `propagar`)
-    * BFS por olas: da QUIEN la recibe en cada ola, CUANTOS y alimenta la animacion. O(V + E).
-    * Dijkstra (heapq): da QUE TAN RAPIDO. BFS cuenta saltos, pero no distingue una arista
-      de peso 0.9 (rapida) de una de 0.2 (lenta); con costo 1/peso el camino mas corto es el
-      mas rapido. O(E log V). Se justifica porque el tiempo de llegada es una suma de pesos,
-      que es justo el caso para el que BFS no sirve.
-"""
+"""Grafo social de Ciudad Nova: lista de adyacencia dirigida y ponderada."""
 from __future__ import annotations
 
 import heapq
@@ -33,23 +10,15 @@ from pathlib import Path
 
 from post_truth.models import Impact, Role
 
-# Piso del peso: un peso 0 equivaldria a no tener relacion (para eso esta eliminar_arista)
-# y haria infinito el costo 1/peso del Dijkstra.
 PESO_MIN = 0.02
 
-# Efecto de una propagacion segun cuantas personas alcanza (n): cada efecto es COEFICIENTE * n con un TOPE,
-# para que una sola publicacion no decida la partida. Son las perillas de balance.
-# Falsa: desinformacion, conflictos, confianza perdida y puntaje perdido -> (coeficiente, tope)
 PROPAGACION_FALSA = {"desinformacion": (3.5, 24), "conflictos": (0.8, 8), "confianza": (0.7, 8), "puntaje": (1.0, 10)}
-# Verdadera: informacion verificada, confianza, convivencia y puntaje ganados -> (coeficiente, tope)
 PROPAGACION_VERDADERA = {"verificada": (1.2, 10), "confianza": (0.5, 6), "convivencia": (0.3, 4), "puntaje": (1.0, 10)}
 
-# Cuanto cambia el rol de quien comparte la probabilidad de contagio de sus aristas.
-# El Influencer reutiliza el 1.35 de Impact.scaled_for_role para que ambos modelos coincidan.
 FACTOR_EMISOR: dict[Role, float] = {
     Role.CITIZEN: 1.0, Role.JOURNALIST: 1.0, Role.INFLUENCER: 1.35, Role.CANDIDATE: 1.1,
 }
-FACTOR_PERIODISTA_VERDADERA = 1.2  # un periodista difunde mas lo que ya esta verificado
+FACTOR_PERIODISTA_VERDADERA = 1.2
 
 
 class TipoRelacion(Enum):
@@ -63,7 +32,7 @@ class Ciudadano:
     id: str
     nombre: str
     rol: Role
-    pos: tuple[float, float] = (0.5, 0.5)  # 0..1, solo para que la vista sepa donde dibujar
+    pos: tuple[float, float] = (0.5, 0.5)
 
     def to_dict(self) -> dict:
         return {"id": self.id, "nombre": self.nombre, "rol": self.rol.name, "pos": list(self.pos)}
@@ -92,14 +61,14 @@ class Arista:
 
 @dataclass(frozen=True)
 class ResultadoPropagacion:
-    """Que paso al propagar una publicacion. Es un dato inmutable: la vista lo anima."""
+    """Que paso al propagar una publicacion."""
     origen: str
     es_falsa: bool
-    olas: tuple[tuple[str, ...], ...]        # olas[0] = (origen,); olas[k] = quienes la reciben en la ola k
-    padres: dict[str, str]                   # arista del arbol BFS: quien le paso la noticia a quien
-    frenados: tuple[str, ...]                # la recibieron pero no la retransmiten (periodista ante una falsa)
-    tiempos: dict[str, float]                # Dijkstra: tiempo minimo de llegada por ciudadano (horas simuladas)
-    poblacion: int                           # ciudadanos posibles receptores (sin contar al origen)
+    olas: tuple[tuple[str, ...], ...]
+    padres: dict[str, str]
+    frenados: tuple[str, ...]
+    tiempos: dict[str, float]
+    poblacion: int
 
     @property
     def alcanzados(self) -> int:
@@ -116,7 +85,7 @@ class ResultadoPropagacion:
 
     @property
     def tiempo_mitad(self) -> float:
-        """Tiempo hasta que la recibe la mitad de los alcanzados (mas estable que el maximo)."""
+        """Tiempo hasta que la recibe la mitad de los alcanzados."""
         llegadas = sorted(t for c, t in self.tiempos.items() if c != self.origen)
         return llegadas[(len(llegadas) - 1) // 2] if llegadas else 0.0
 
@@ -126,10 +95,7 @@ class ResultadoPropagacion:
         return self.alcanzados / self.tiempo_total if self.tiempo_total > 0 else 0.0
 
     def impacto(self) -> Impact:
-        """Consecuencia en la ciudad segun la veracidad y el alcance. Falsa: sube la
-        desinformacion y los conflictos y baja la confianza; verdadera: sube la informacion
-        verificada y la confianza. Cada efecto tiene tope para que una sola publicacion no
-        decida la partida."""
+        """Consecuencia en la ciudad segun la veracidad y el alcance."""
         n = self.alcanzados
         if n == 0:
             return Impact()
@@ -156,7 +122,6 @@ class GrafoSocial:
     _vertices: dict[str, Ciudadano] = field(default_factory=dict)
     _ady: dict[str, dict[str, Arista]] = field(default_factory=dict)
 
-    # --- vertices -----------------------------------------------------------------------
     def agregar_vertice(self, ciudadano: Ciudadano) -> None:
         """O(1)."""
         if ciudadano.id in self._vertices:
@@ -165,9 +130,7 @@ class GrafoSocial:
         self._ady[ciudadano.id] = {}
 
     def eliminar_vertice(self, id: str) -> None:
-        """Quita el vertice y TODAS sus aristas, salientes y entrantes. Las salientes se van con
-        su diccionario (O(1)); las entrantes viven en los diccionarios de los demas vertices, asi
-        que se hace un pop O(1) en cada uno: O(V) en total."""
+        """Quita el vertice y todas sus aristas, salientes y entrantes."""
         self._exigir(id)
         del self._vertices[id]
         del self._ady[id]
@@ -184,10 +147,9 @@ class GrafoSocial:
     def cambiar_rol(self, id: str, rol: Role) -> None:
         self.vertice(id).rol = rol
 
-    # --- aristas ------------------------------------------------------------------------
     def agregar_arista(self, origen: str, destino: str, peso: float,
                        tipo: TipoRelacion = TipoRelacion.AMISTAD) -> Arista:
-        """O(1). Dirigida: origen -> destino no implica destino -> origen."""
+        """O(1)."""
         self._exigir(origen)
         self._exigir(destino)
         if origen == destino:
@@ -201,7 +163,7 @@ class GrafoSocial:
         return arista
 
     def eliminar_arista(self, origen: str, destino: str) -> bool:
-        """O(1). Devuelve False si no existia."""
+        """O(1)."""
         self._exigir(origen)
         return self._ady[origen].pop(destino, None) is not None
 
@@ -210,17 +172,15 @@ class GrafoSocial:
         return self._ady[origen].get(destino)
 
     def vecinos(self, id: str) -> list[Arista]:
-        """Aristas salientes de `id` (a quienes les llega lo que publica). O(grado)."""
+        """Aristas salientes de `id`."""
         self._exigir(id)
         return list(self._ady[id].values())
 
     def aristas(self) -> list[Arista]:
         return [a for vecinos in self._ady.values() for a in vecinos.values()]
 
-    # --- intervenciones del jugador (Verificar / Reportar) --------------------------------
     def debilitar_salientes(self, id: str, factor: float) -> list[tuple[str, str]]:
-        """Multiplica por `factor` (0..1) el peso de las aristas salientes: la noticia sigue
-        circulando pero mas lento y con menos alcance (efecto de Verificar). O(grado)."""
+        """Multiplica por `factor` el peso de las aristas salientes."""
         if not 0 < factor <= 1:
             raise ValueError("factor debe estar en (0, 1]")
         for a in self.vecinos(id):
@@ -228,36 +188,21 @@ class GrafoSocial:
         return [(a.origen, a.destino) for a in self.vecinos(id)]
 
     def cortar_salientes(self, id: str) -> list[tuple[str, str]]:
-        """Elimina todas las aristas salientes: la cuenta deja de difundir (efecto de Reportar). O(grado)."""
+        """Elimina todas las aristas salientes: la cuenta deja de difundir."""
         cortadas = [(a.origen, a.destino) for a in self.vecinos(id)]
         self._ady[id].clear()
         return cortadas
 
-    # --- propagacion --------------------------------------------------------------------
     def propagar(self, origen: str, es_falsa: bool,
                  rng: random.Random | None = None) -> ResultadoPropagacion:
-        """Simula como se difunde una publicacion que parte de `origen`.
-
-        Modelo (cascada independiente): cuando un ciudadano ya contagiado es procesado, cada
-        arista saliente "se activa" una sola vez con probabilidad min(1, peso * factor_rol).
-        Para tener en cuenta el rol: el Influencer amplifica (x1.35); el Periodista no
-        retransmite una noticia falsa (la desmiente) y difunde mas una verdadera.
-
-        1) BFS por olas: la cola es la ola actual; sus vecinos nuevos forman la siguiente.
-           Cada arista se evalua una sola vez => O(V + E). Se eligio BFS porque la
-           pregunta es "quien recibe en cada ola" (nivel = ola) y eso es exactamente un BFS.
-        2) Dijkstra sobre las aristas que SI se activaron (costo 1/peso) => tiempo minimo de
-           llegada de cada ciudadano. No se usa BFS para el tiempo porque la ola solo cuenta
-           saltos, y un camino de 3 saltos fuertes puede ser mas rapido que uno de 2 debiles.
-           O(E log V) con cola de prioridad binaria.
-        """
+        """Simula como se difunde una publicacion que parte de `origen`."""
         self._exigir(origen)
         rng = rng or random.Random()
         visitados = {origen}
         olas: list[tuple[str, ...]] = [(origen,)]
         padres: dict[str, str] = {}
         frenados: list[str] = []
-        activas: dict[str, list[tuple[str, float]]] = {}  # aristas activadas: u -> [(v, costo)]
+        activas: dict[str, list[tuple[str, float]]] = {}
 
         frontera = [origen]
         while frontera:
@@ -265,7 +210,7 @@ class GrafoSocial:
             for u in frontera:
                 emisor = self._vertices[u]
                 if es_falsa and emisor.rol is Role.JOURNALIST and u != origen:
-                    frenados.append(u)  # lee la noticia pero la verifica en vez de reenviarla
+                    frenados.append(u)
                     continue
                 factor = FACTOR_EMISOR[emisor.rol]
                 if not es_falsa and emisor.rol is Role.JOURNALIST:
@@ -286,7 +231,6 @@ class GrafoSocial:
             frenados=tuple(frenados), tiempos=_dijkstra(origen, activas),
             poblacion=len(self._vertices) - 1)
 
-    # --- serializacion (para el servidor de sockets) ------------------------------------
     def to_dict(self) -> dict:
         return {"ciudadanos": [c.to_dict() for c in self._vertices.values()],
                 "relaciones": [a.to_dict() for a in self.aristas()]}
@@ -318,7 +262,7 @@ def _dijkstra(origen: str, activas: dict[str, list[tuple[str, float]]]) -> dict[
     while cola:
         d, u = heapq.heappop(cola)
         if d > dist.get(u, float("inf")):
-            continue  # entrada vieja: ya se encontro un camino mejor
+            continue
         for v, costo in activas.get(u, ()):
             nd = d + costo
             if nd < dist.get(v, float("inf")):

@@ -17,10 +17,7 @@ class DecisionNode:
     description: str
     impact: Impact = field(default_factory=Impact)
     children: list["DecisionNode"] = field(default_factory=list)
-    # Accion de juego que representa ("compartir", "verificar", "reportar", "ignorar"); "" si no aplica.
-    # Permite que la mecanica no dependa del texto del boton ("Compartir con enojo", ...).
     tipo: str = ""
-    # Textos de consecuencia segun las pistas que el jugador haya descubierto (ver models/pistas.py)
     variantes: tuple[VarianteTexto, ...] = ()
 
     def consecuencia(self, descubiertas: list[Pista]) -> str:

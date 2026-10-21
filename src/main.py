@@ -1,9 +1,9 @@
-"""Punto de entrada. Elige la escala de la interfaz segun la pantalla ANTES de importar el juego."""
+"""Punto de entrada."""
 from post_truth.escala import fijar_escala_inicial
 
-fijar_escala_inicial()   # deja POSTTRUTH_ESCALA en el entorno; config.py la lee al importarse
+fijar_escala_inicial()
 
-from post_truth.pygame_app import App  # noqa: E402  (debe importarse despues de fijar la escala)
+from post_truth.pygame_app import App  # noqa: E402
 
 
 def main() -> None:

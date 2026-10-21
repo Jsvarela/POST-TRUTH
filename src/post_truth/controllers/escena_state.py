@@ -1,29 +1,4 @@
-"""Controlador de la escena de dialogo (novela visual de decisiones).
-
-Flujo por publicacion: DECIDIENDO (noticia + botones) -> [PROPAGACION] -> CONSECUENCIA
-(mensaje + efecto en la ciudad) -> siguiente publicacion ... -> FIN. Todo el contenido sale
-del DecisionTree cargado desde data/events.json; aqui no hay noticias fijas.
-
-INVESTIGAR: cada publicacion es una tarjeta de Civitas con zonas clicables (autor, fuente,
-fecha, imagen, texto, estadisticas) que esconden pistas, y ademas deja EVIDENCIA en lugares del mapa
-de la ciudad (un testigo, un documento, una grabacion). Revisar y viajar son gratis.
-
-El ESTADO y las REGLAS (ciudad, jugadores, zona, hallazgos, puntos, turnos, decidir/viajar/investigar)
-viven en `sesion.PartidaSesion`, que no sabe de pygame y es serializable; este controlador solo traduce eventos
-a llamadas de la sesion y maneja lo visual (dialogo, botones, hover y la animacion de la propagacion).
-
-VIAJAR: el jugador puede ir a CUALQUIER zona (clic en el mapa o Q W E R T). El viaje cuesta la
-distancia del camino mas corto (Dijkstra, ver structures/grafo_ciudad.py) y al llegar se revela la
-evidencia de la noticia que haya alli. La posicion se mantiene entre publicaciones. Los rumores NO
-se propagan por el mapa: eso ocurre solo en el grafo social, entre personas.
-
-VERIFICAR Y REPORTAR no exigen estar en ningun lugar: su resultado depende del RESPALDO reunido
-(Investigacion.respaldo: 0 nada, 1 solo tarjeta, 2 evidencia de campo). Ver structures/propagacion.py.
-
-PROPAGACION solo ocurre si la decision mueve la publicacion por el grafo social (Compartir,
-Verificar, Reportar con pruebas; Ignorar no). El efecto sobre los indicadores se aplica DESPUES de
-la animacion, para que el jugador vea primero como viaja la noticia y luego sus consecuencias.
-"""
+"""Controlador de la escena de dialogo."""
 import random
 
 import pygame
@@ -44,57 +19,49 @@ from post_truth.views.grafo_view import AnimacionPropagacion
 from post_truth.views.mapa_view import EstadoMapa, zona_de_tecla, zona_en
 from post_truth.views.tarjeta_civitas_view import EstadoTarjeta, pista_con_tecla, zona_en as zona_de_tarjeta
 
-PROPAGACION = "propagacion"   # solo existe en la pantalla: la sesion sigue "decidiendo" con una decision pendiente
+PROPAGACION = "propagacion"
 RECT_DIALOGO = pygame.Rect(px(24), px(404), ANCHO - 2 * px(24), px(132))
 ATAJOS = [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4]
 Y_BOTONES, ALTO_BOTONES, MARGEN, SEPARACION = px(546), px(62), px(24), px(14)
-# Teclas para investigar la 1.a, 2.a... pista de la tarjeta (letras de views/tarjeta_civitas_view.TECLAS_PISTA)
 TECLAS_INVESTIGAR = {pygame.K_a: "A", pygame.K_s: "S", pygame.K_d: "D", pygame.K_f: "F", pygame.K_g: "G"}
-# Teclas para viajar a la 1.a, 2.a... zona del mapa (letras de views/mapa_view.TECLAS_VIAJE)
 TECLAS_VIAJAR = {pygame.K_q: "Q", pygame.K_w: "W", pygame.K_e: "E", pygame.K_r: "R", pygame.K_t: "T"}
 
 
-# Boton unico (Continuar, Saltar, Ver consecuencias...): centrado bajo el dialogo
 RECT_BOTON_CENTRAL = pygame.Rect((ANCHO - px(300)) // 2, Y_BOTONES, px(300), ALTO_BOTONES)
 
 
 def _rects_botones(n: int) -> list[pygame.Rect]:
-    """Reparte `n` botones a lo ancho de la pantalla (3 o 4 segun las ramas del evento)."""
+    """Reparte `n` botones a lo ancho de la pantalla."""
     ancho = (RECT_DIALOGO.width - SEPARACION * (n - 1)) // n
     return [pygame.Rect(MARGEN + i * (ancho + SEPARACION), Y_BOTONES, ancho, ALTO_BOTONES) for i in range(n)]
 
 
 class EscenaState(BaseState):
-    """Controlador delgado: traduce eventos de pygame a llamadas de `PartidaSesion` (donde viven el estado y las
-    reglas) y pide a la vista que dibuje. Aqui solo queda lo visual: dialogo, botones, hover y la animacion."""
+    """Traduce eventos de pygame a llamadas de `PartidaSesion`."""
 
     def __init__(self, app) -> None:
         super().__init__(app)
-        self._rng = random.Random()  # inyectable en pruebas para fijar el orden
-        self.eventos_por_partida: int | None = EVENTOS_POR_PARTIDA   # None = todas las publicaciones (pruebas)
+        self._rng = random.Random()
+        self.eventos_por_partida: int | None = EVENTOS_POR_PARTIDA
         self._sesion: PartidaSesion | None = None
         self.dialogo = CajaDialogo(RECT_DIALOGO)
         self.botones: list[Boton] = []
-        self.impacto = None                  # efecto ya escalado por rol, para mostrarlo
-        self.animo = 0                       # reaccion del personaje: -1, 0, 1
+        self.impacto = None
+        self.animo = 0
         self.animacion: AnimacionPropagacion | None = None
         self._narracion = ""
-        self.ruta_vista: tuple[str, ...] = ()   # ultima ruta recorrida en esta publicacion (se resalta en el mapa)
-        self._hover = None        # zona de la tarjeta bajo el mouse
-        self._hover_zona = None   # zona del mapa bajo el mouse
-        # True si se entro desde el mundo caminable: la partida es la del mundo, no se viaja con el minimapa
-        # (se camina) y al terminar cada noticia se vuelve a la calle
+        self.ruta_vista: tuple[str, ...] = ()
+        self._hover = None
+        self._hover_zona = None
         self.interior = False
 
-    # --- el estado vive en la sesion ----------------------------------------------------
     @property
     def sesion(self) -> PartidaSesion:
-        if self._sesion is None:   # antes de entrar a la escena: una sesion de relleno, sin tocar el rng
+        if self._sesion is None:
             self._sesion = self._crear_sesion(load_trees(RUTA_EVENTOS), random.Random(0))
         return self._sesion
 
     def _crear_sesion(self, arboles: list[DecisionTree], rng: random.Random) -> PartidaSesion:
-        # shortcut: un solo jugador; el multijugador pasara la lista de personajes aqui (ver PartidaSesion)
         return PartidaSesion.nueva([self.personaje], arboles, GrafoSocial.cargar(RUTA_GRAFO_SOCIAL),
                                    GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), rng)
 
@@ -110,7 +77,6 @@ class EscenaState(BaseState):
 
     @property
     def personaje(self) -> Personaje:
-        # Respaldo para poder abrir la escena directamente (pruebas) sin pasar por la seleccion.
         return getattr(self.app, "personaje", None) or Personaje(Role.CITIZEN, Genero.MUJER)
 
     @property
@@ -157,31 +123,29 @@ class EscenaState(BaseState):
     def fase(self) -> str:
         s = self.sesion
         if s.fase == DECIDIENDO and s.pendiente is not None:
-            return PROPAGACION     # la decision ya se calculo; falta ver como viaja la noticia
+            return PROPAGACION
         return s.fase
 
     def al_entrar(self) -> None:
         self.interior = self.app.partida is not None
-        if self.interior:                             # entrar a un lugar desde el mundo: misma partida
+        if self.interior:
             self._sesion = self.app.partida
             self.animacion = None
             self._preparar_turno()
             return
         todos = load_trees(RUTA_EVENTOS)
-        # Cada partida juega una seleccion al azar (y en orden al azar): el contenido cambia entre partidas
         arboles = self.rng.sample(todos, min(self.eventos_por_partida or len(todos), len(todos)))
         self._sesion = self._crear_sesion(arboles, self.rng)
         self.animacion = None
         self._preparar_turno()
 
-    # --- mapa y viajes ------------------------------------------------------------------
     def _nombre_zona(self, id: str) -> str:
         return self.mapa.zona(id).nombre if id in self.mapa else id
 
     def _estado_mapa(self) -> EstadoMapa:
         decidiendo = self.fase == DECIDIENDO
         ruta = self.ruta_vista
-        if decidiendo and self._hover_zona not in (None, self.zona):   # vista previa de la ruta bajo el mouse
+        if decidiendo and self._hover_zona not in (None, self.zona):
             previa = self.mapa.ruta(self.zona, self._hover_zona)
             if previa is not None:
                 ruta = previa.zonas
@@ -190,16 +154,16 @@ class EscenaState(BaseState):
             pendientes=self.investigacion.lugares_pendientes() if decidiendo else set(),
             revisadas=self.investigacion.lugares_revisados(),
             hover=self._hover_zona if decidiendo else None, teclas=decidiendo,
-            mostrar_ayuda=decidiendo and not self.interior)   # la franja de ayuda solo sirve mientras se decide
+            mostrar_ayuda=decidiendo and not self.interior)
 
     def _viajar(self, destino: str) -> None:
-        """Ir a una zona cualquiera (la sesion la mueve por el camino mas corto y revela la evidencia)."""
+        """Ir a una zona cualquiera."""
         r = self.sesion.viajar(self.sesion.jugador_actual.id, destino)
         nombre = self._nombre_zona(destino)
         if not r.ok:
             if r.motivo == "sin_camino":
                 self._decir_en_sitio(f"No hay camino hasta {nombre}.")
-            return    # fuera de turno, misma zona o zona desconocida: no pasa nada
+            return
         self.ruta_vista = r.ruta
         camino = " > ".join(self._nombre_zona(z) for z in r.ruta)
         aviso = f"Viajas a {nombre} por {camino}."
@@ -212,8 +176,7 @@ class EscenaState(BaseState):
         self._decir_en_sitio(aviso)
 
     def _manejar_mapa(self, event: pygame.event.Event) -> None:
-        """Viajar: clic sobre una zona del mapa o su letra (Q W E R T); el mouse encima muestra la ruta.
-        Dentro de un lugar del mundo no se viaja con el minimapa: se sale a la calle y se camina."""
+        """Viajar: clic sobre una zona del mapa o su letra."""
         if self.interior:
             return
         if event.type == pygame.MOUSEMOTION:
@@ -227,7 +190,6 @@ class EscenaState(BaseState):
             if zona is not None:
                 self._viajar(zona)
 
-    # --- transiciones -------------------------------------------------------------------
     def _cargar_evento(self) -> None:
         """Abre la publicacion actual y prepara la pantalla."""
         self.sesion.abrir_evento()
@@ -239,7 +201,6 @@ class EscenaState(BaseState):
         self._hover = self._hover_zona = None
         self.ruta_vista = ()
         self.dialogo.set_texto(self.arbol.event.content, "Civitas")
-        # Si el jugador ya esta parado donde la noticia dejo evidencia, la sesion la revelo sola
         evidencia = self.investigacion.evidencia_en(self.zona)
         if evidencia is not None and self.investigacion.esta_descubierta(evidencia.id):
             self._decir_en_sitio(f"Ya estas en {self._nombre_zona(self.zona)}. "
@@ -247,20 +208,18 @@ class EscenaState(BaseState):
         self._construir_botones()
 
     def _construir_botones(self) -> None:
-        """Un boton por rama del evento (las acciones cambian segun la noticia: "Verificar", "Buscar
-        video completo", ...). Siempre estan todas disponibles: lo que cambia es cuanto rinden segun
-        el respaldo reunido, no si se pueden elegir."""
+        """Un boton por rama del evento."""
         ramas = self.arbol.root.children[:4]
         self.botones = [Boton(rect, f"{i + 1}. {nodo.label}", lambda n=nodo: self._decidir(n), atajo=ATAJOS[i])
                         for i, (rect, nodo) in enumerate(zip(_rects_botones(len(ramas)), ramas))]
 
     def _decir_en_sitio(self, aviso: str) -> None:
-        """Muestra la noticia y debajo el aviso, sin volver a animar el texto (ya se leyo)."""
+        """Muestra la noticia y debajo el aviso, sin volver a animar el texto."""
         self.dialogo.set_texto(f"{self.arbol.event.content}\n{aviso}", "Civitas")
         self.dialogo.completar()
 
     def _investigar(self, pista: Pista) -> None:
-        """Revisa una pista de la tarjeta: revela el hallazgo (o lo relee) y marca la zona."""
+        """Revisa una pista de la tarjeta: revela el hallazgo y marca la zona."""
         r = self.sesion.investigar(self.sesion.jugador_actual.id, pista)
         if r.ok:
             self._decir_en_sitio(f"{pista.titulo}: {pista.hallazgo}")
@@ -269,7 +228,7 @@ class EscenaState(BaseState):
         r = self.sesion.decidir(self.sesion.jugador_actual.id, nodo)
         if not r.ok:
             return
-        if r.simulacion is None:          # Ignorar, una respuesta sin tipo o un reporte rechazado: nada que animar
+        if r.simulacion is None:
             self._cerrar_decision(r)
             return
         self.animacion = AnimacionPropagacion(self.grafo, r.simulacion)
@@ -280,11 +239,10 @@ class EscenaState(BaseState):
                               self.animacion.saltar, atajo=pygame.K_RETURN)]
 
     def _cerrar_decision(self, r: ResultadoDecision) -> None:
-        """La sesion aplica el impacto a la ciudad y a los puntos; aqui se muestra la consecuencia."""
+        """La sesion aplica el impacto a la ciudad y a los puntos."""
         self.sesion.aplicar()
         self.impacto = r.impacto
         self.animo = (r.impacto.score > 0) - (r.impacto.score < 0)
-        # El texto cambia segun lo hallado (variante escrita en events.json o "Habias revisado: ...")
         mensaje = r.nodo.consecuencia(self.investigacion.pistas_descubiertas()) or "Nada cambia por ahora."
         self.dialogo.set_texto(f"{mensaje}\n{r.aviso}" if r.aviso else mensaje, "Consecuencia")
         self.botones = [Boton(RECT_BOTON_CENTRAL, "Continuar (Enter)",
@@ -300,7 +258,7 @@ class EscenaState(BaseState):
         self.sesion.continuar()
         if self.sesion.fase != FIN:
             if self.interior:
-                self.app.estados.cambiar("mundo", fundido=True)   # noticia resuelta: de vuelta a la calle por la siguiente
+                self.app.estados.cambiar("mundo", fundido=True)
                 return
             self._preparar_turno()
             return
@@ -310,33 +268,31 @@ class EscenaState(BaseState):
                               atajo=pygame.K_RETURN)]
 
     def _volver_al_menu(self) -> None:
-        self.app.partida = None    # la partida termino
+        self.app.partida = None
         self.app.estados.cambiar("menu")
 
-    # --- ciclo del estado ---------------------------------------------------------------
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             if not self.interior:
                 self.app.estados.cambiar("menu")
             elif self.fase == DECIDIENDO:
-                self.app.estados.cambiar("mundo", fundido=True)   # salir a la calle sin decidir (la noticia sigue pendiente)
+                self.app.estados.cambiar("mundo", fundido=True)
             elif self.fase == FIN:
                 self._volver_al_menu()
             return
         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-            self.dialogo.completar()  # saltar la animacion del texto
+            self.dialogo.completar()
         if event.type == pygame.MOUSEBUTTONDOWN and RECT_DIALOGO.collidepoint(event.pos):
             self.dialogo.completar()
         if self.fase == DECIDIENDO:
             self._manejar_mapa(event)
             self._manejar_investigacion(event)
-        for boton in list(self.botones):  # copia: un clic reemplaza self.botones
+        for boton in list(self.botones):
             if boton.handle_event(event):
                 break
 
     def _manejar_investigacion(self, event: pygame.event.Event) -> None:
-        """Investigar: clic sobre una zona de la tarjeta con pista, o su letra (A S D F G); el mouse
-        encima la resalta."""
+        """Investigar: clic sobre una zona de la tarjeta con pista, o su letra."""
         evento = self.arbol.event
         if event.type == pygame.MOUSEMOTION:
             self._hover = zona_de_tarjeta(RECT_TARJETA, event.pos, evento)
@@ -355,7 +311,7 @@ class EscenaState(BaseState):
         if self.fase == PROPAGACION and self.animacion is not None:
             self.animacion.update(dt)
             narracion = self.animacion.narracion()
-            if narracion != self._narracion:  # la caja de dialogo narra cada ola
+            if narracion != self._narracion:
                 self._narracion = narracion
                 self.dialogo.set_texto(narracion, "Civitas")
             if self.animacion.terminada and self.botones[0].texto.startswith("Saltar"):
@@ -368,7 +324,6 @@ class EscenaState(BaseState):
         elif self.fase == CONSECUENCIA:
             titulo, texto = "Consecuencias", ""
         else:
-            # Al decidir se ve la tarjeta de Civitas (sin titulo: "Rumor sobre..." delataria la noticia)
             titulo, texto = "", ""
         en_mapa = self.fase in (DECIDIENDO, CONSECUENCIA)
         dibujar_escena(pantalla, self.app.fuentes, self.app.temas.actual, self.personaje, self.animo,

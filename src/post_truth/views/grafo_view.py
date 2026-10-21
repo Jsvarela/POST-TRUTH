@@ -1,15 +1,4 @@
-"""Vista animada de la propagacion de una noticia por el grafo social.
-
-Solo LEE el grafo y el resultado de la simulacion (que ya se calculo en el modelo): aqui
-unicamente se decide como dibujarlos y en que momento aparece cada ola. El tiempo avanza
-con `dt` (nunca con sleep), asi el loop sigue a 60 FPS y el jugador puede saltar la animacion.
-
-Colores (todos del tema, regla de accesibilidad):
-    noticia falsa -> tema.malo        noticia verificada -> tema.bueno
-    aro del nodo -> color del rol     conexion cortada   -> tema.acento
-Ademas del color, cada nodo lleva la sigla de su rol, las conexiones debilitadas se ven mas
-finas y las cortadas llevan una X, para que nada dependa solo del tono (daltonismo).
-"""
+"""Vista animada de la propagacion de una noticia por el grafo social."""
 import math
 
 import pygame
@@ -22,9 +11,9 @@ from post_truth.structures.propagacion import COMPARTIR, REPORTAR, SimulacionDec
 from post_truth.views.componentes import Fuentes
 from post_truth.views.theme import Tema
 
-DURACION_OLA = 1.0   # segundos que tarda en viajar una ola
-ENTRADA = 0.8        # pausa inicial: se ve el origen (y las conexiones cortadas) antes de salir
-SALIDA = 0.8         # pausa final con el resultado completo
+DURACION_OLA = 1.0
+ENTRADA = 0.8
+SALIDA = 0.8
 RADIO = px(15)
 _ROLES = list(Role)
 SIGLAS = {Role.CITIZEN: "Ci", Role.JOURNALIST: "Pe", Role.INFLUENCER: "In", Role.CANDIDATE: "Ca"}
@@ -38,14 +27,12 @@ class AnimacionPropagacion:
         self.sim = simulacion
         self.t = 0.0
 
-    # --- tiempo --------------------------------------------------------------------------
     @property
     def resultado(self) -> ResultadoPropagacion:
         return self.sim.resultado
 
     @property
     def duracion(self) -> float:
-        # Con 0 olas (p. ej. Reportar) igual se muestra 1 ola de pausa para ver el corte.
         return ENTRADA + max(1, self.resultado.n_olas) * DURACION_OLA + SALIDA
 
     @property
@@ -73,7 +60,6 @@ class AnimacionPropagacion:
     def _alcanzados_visibles(self) -> list[str]:
         return [c for ola in self.resultado.olas[1:self._olas_completas() + 1] for c in ola]
 
-    # --- texto narrado en la caja de dialogo --------------------------------------------
     def narracion(self) -> str:
         r, sim, g = self.resultado, self.sim, self.grafo
         nombre = lambda id: g.vertice(id).nombre  # noqa: E731
@@ -98,7 +84,6 @@ class AnimacionPropagacion:
         detalle = f" ({', '.join(nuevos)})" if len(nuevos) <= 3 else ""
         return f"Ola {k}: la reciben {len(nuevos)} persona(s){detalle}."
 
-    # --- dibujo --------------------------------------------------------------------------
     def draw(self, pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: pygame.Rect) -> None:
         r = self.resultado
         color_noticia = tema.malo if r.es_falsa else tema.bueno
@@ -110,22 +95,19 @@ class AnimacionPropagacion:
 
         completas = self._olas_completas()
         recibidos = {r.origen} | set(self._alcanzados_visibles())
-        usadas = {(r.padres[c], c) for c in recibidos if c in r.padres}  # aristas del arbol BFS ya recorridas
+        usadas = {(r.padres[c], c) for c in recibidos if c in r.padres}
 
-        # 1) conexiones existentes (grosor = peso: una conexion debilitada se ve mas fina)
         for a in self.grafo.aristas():
             ini, fin = _extremos(pos[a.origen], pos[a.destino])
             usada = (a.origen, a.destino) in usadas
             pygame.draw.line(pantalla, color_noticia if usada else tema.borde, ini, fin,
                              px(1) + round(px(3) * a.peso) + (px(1) if usada else 0))
             _flecha(pantalla, color_noticia if usada else tema.borde, ini, fin)
-        # 2) conexiones cortadas por un Reportar: punteadas, con X
         if self.t > ENTRADA * 0.4:
             for o, d in self.sim.aristas_cortadas:
                 ini, fin = _extremos(pos[o], pos[d])
                 _punteada(pantalla, tema.acento, ini, fin)
                 _equis(pantalla, tema.acento, ((ini[0] + fin[0]) / 2, (ini[1] + fin[1]) / 2))
-        # 3) la ola en viaje: el tramo ya recorrido y un punto que avanza por cada arista
         viaje = self._ola_en_viaje()
         if viaje:
             k, p = viaje
@@ -135,13 +117,11 @@ class AnimacionPropagacion:
                 pygame.draw.line(pantalla, color_noticia, ini, punta, px(4))
                 pygame.draw.circle(pantalla, color_noticia, (round(punta[0]), round(punta[1])), px(6))
                 pygame.draw.circle(pantalla, tema.texto, (round(punta[0]), round(punta[1])), px(6), 1)
-        # 4) nodos
         frenados = {c for c in r.frenados if c in recibidos}
         for c in self.grafo.vertices():
             self._nodo(pantalla, fuentes, tema, c.id, pos[c.id], c.nombre.split()[0], c.rol,
                        recibido=c.id in recibidos, color=color_noticia,
                        es_origen=c.id == r.origen, frenado=c.id in frenados)
-        # 5) contadores y leyenda
         vistos = len(recibidos) - 1
         texto = f"Ola {completas} de {r.n_olas}   |   {vistos} de {r.poblacion} personas la han visto"
         pantalla.blit(fuentes.normal.render(texto, True, tema.texto), (rect.x + px(18), rect.y + px(14)))
@@ -151,22 +131,21 @@ class AnimacionPropagacion:
               nombre: str, rol: Role, recibido: bool, color: tuple[int, int, int], es_origen: bool,
               frenado: bool) -> None:
         centro = (round(pos[0]), round(pos[1]))
-        if es_origen:  # aro pulsante: de aqui sale la noticia
+        if es_origen:
             pulso = px(4) + round(px(2) * math.sin(self.t * 6))
             pygame.draw.circle(pantalla, tema.acento, centro, RADIO + pulso, px(2))
         pygame.draw.circle(pantalla, color if recibido else tema.fondo, centro, RADIO)
         pygame.draw.circle(pantalla, tema.rol[_ROLES.index(rol)], centro, RADIO, px(3))
         sigla = fuentes.chica.render(SIGLAS[rol], True, tema.fondo if recibido else tema.texto)
         pantalla.blit(sigla, sigla.get_rect(center=centro))
-        if frenado:  # recibio la noticia pero no la reenvia (periodista ante una falsa)
+        if frenado:
             _equis(pantalla, tema.texto, (centro[0] + RADIO - px(2), centro[1] - RADIO + px(2)), px(5))
         etiqueta = fuentes.chica.render(nombre, True, tema.texto)
         pantalla.blit(etiqueta, etiqueta.get_rect(midtop=(centro[0], centro[1] + RADIO + px(3))))
 
 
 def _extremos(a: Punto, b: Punto) -> tuple[Punto, Punto]:
-    """Segmento a->b acortado para no tapar los nodos y desplazado a un lado, de modo que
-    las dos direcciones de una amistad mutua (a->b y b->a) no se dibujen encima una de otra."""
+    """Segmento a->b acortado y desplazado para que a->b y b->a no se encimen."""
     dx, dy = b[0] - a[0], b[1] - a[1]
     largo = math.hypot(dx, dy) or 1.0
     ux, uy = dx / largo, dy / largo
