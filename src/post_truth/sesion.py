@@ -28,11 +28,11 @@ MIN_JUGADORES, MAX_JUGADORES = 1, 4
 VERSION = 1
 PRESENTES = 3          # ciudadanos del grafo social en el lugar de la publicacion
 UMBRAL_VIRAL = 300     # likes desde los que una publicacion es viral y se decide con reloj
-TIEMPO_VIRAL = 30.0    # segundos por turno; corren tambien en la calle (buscar evidencia cuesta tiempo)
+TIEMPO_VIRAL = 25.0    # segundos por turno; corren tambien en la calle (buscar evidencia cuesta tiempo)
 AVISO_VENCIDO = "Se te acabo el tiempo: la publicacion siguio circulando sin que nadie la frenara."
 DIAS, NOTICIAS_POR_DIA = DIAS_CAMPANA, 2   # campana: cada dia trae sus noticias y una crisis viral
-DURACION_DIA = 150.0                  # segundos de un dia (corre en la calle y mientras se decide)
-MOMENTO_CRISIS = (0.3, 0.7)           # la crisis aparece entre el 30% y el 70% del dia
+DURACION_DIA = 100.0                  # segundos de un dia (calle, decision y minijuegos): 3 dias = 5 min de reloj
+MOMENTO_CRISIS = (0.2, 0.5)           # la crisis aparece entre el 20% y el 50% del dia (y su reloj cabe en el dia)
 FACTOR_TIEMPO_EXTENDIDO = 1.5         # accesibilidad: dias y relojes mas largos
 
 

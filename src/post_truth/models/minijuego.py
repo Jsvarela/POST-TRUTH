@@ -107,7 +107,7 @@ MENSAJES_ENSAYO = (
     ("Una cuenta nueva ofrece 'la encuesta real' de la eleccion.",
      ("Busco quien hizo la encuesta", "La publico en mi muro")),
 )
-SEGUNDOS_POR_MENSAJE = 8.0
+SEGUNDOS_POR_MENSAJE = 7.0
 
 
 @registrar

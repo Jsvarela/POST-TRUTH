@@ -28,6 +28,7 @@ class MinijuegoState(BaseState):
         if self.resultado is not None or self.pausado:
             return
         self.minijuego.update(dt)
+        self.app.partida.transcurrir(dt)   # jugar cuesta tiempo del dia (la pausa lo detiene todo)
         if self.minijuego.terminado:
             self.resultado = self.app.partida.terminar_minijuego()
 

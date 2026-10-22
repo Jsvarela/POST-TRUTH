@@ -18,7 +18,7 @@ ANCHO, ALTO = px(DISENO_ANCHO), px(DISENO_ALTO)
 
 RUTA_EVENTOS = Path(__file__).resolve().parents[2] / "data" / "events.json"
 EVENTOS_POR_PARTIDA = 8
-DIAS_CAMPANA = 6          # dias de la campana; con 6 se usan las 18 publicaciones (2 por dia + 1 crisis viral)
+DIAS_CAMPANA = 3          # dias de la campana (2 publicaciones + 1 crisis viral por dia; maximo 6)
 RUTA_GRAFO_SOCIAL = Path(__file__).resolve().parents[2] / "data" / "grafo_social.json"
 RUTA_GRAFO_CIUDAD = Path(__file__).resolve().parents[2] / "data" / "grafo_ciudad.json"
 RUTA_INTRO = Path(__file__).resolve().parents[2] / "data" / "intro.json"
