@@ -38,6 +38,7 @@ class EstadoMundo:
     reloj: tuple[float, float] | None = None   # (restante, total) del reloj de una publicacion viral
     dia: tuple[int, int] | None = None         # (dia, total) de la campana
     fraccion_dia: float = 0.0                  # 0 amanecer .. 1 noche
+    credibilidad: int | None = None
     animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
 
 
@@ -178,7 +179,7 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
     if estado.dia:
         _velo_del_dia(pantalla, tema, estado.fraccion_dia)
     if estado.indicadores:
-        _dibujar_hud(pantalla, fuentes, tema, list(estado.indicadores))
+        _dibujar_hud(pantalla, fuentes, tema, list(estado.indicadores), estado.credibilidad)
     _minimapa(pantalla, tema, mundo, estado)
     y = RECT_HUD.bottom + px(12)
     if estado.dia:

@@ -42,7 +42,7 @@ ALFA_PANEL = 205
 
 
 def _dibujar_hud(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema,
-                 filas: list[tuple[str, int]]) -> None:
+                 filas: list[tuple[str, int]], credibilidad: int | None = None) -> None:
     pygame.draw.rect(pantalla, tema.panel, RECT_HUD)
     pygame.draw.line(pantalla, tema.borde, RECT_HUD.bottomleft, RECT_HUD.bottomright, px(2))
     x = px(14)
@@ -56,6 +56,13 @@ def _dibujar_hud(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema,
         color = tema.malo if nombre in NEGATIVOS else tema.bueno
         pygame.draw.rect(pantalla, color, (x, px(32), round(px(126) * valor / 100), px(10)), border_radius=px(4))
         x += px(138)
+    if credibilidad is not None:   # dato del jugador (no de la ciudad): con un escudo, no solo otro color
+        escudo = [(x, px(8)), (x + px(10), px(8)), (x + px(10), px(15)), (x + px(5), px(21)), (x, px(15))]
+        pygame.draw.polygon(pantalla, tema.acento, escudo)
+        pantalla.blit(fuentes.chica.render(f"Credib. {credibilidad}", True, tema.texto), (x + px(14), px(6)))
+        pygame.draw.rect(pantalla, tema.fondo, (x, px(32), px(70), px(10)), border_radius=px(4))
+        pygame.draw.rect(pantalla, tema.acento, (x, px(32), round(px(70) * credibilidad / 100), px(10)),
+                         border_radius=px(4))
 
 
 def _dibujar_consecuencias(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema,
@@ -184,10 +191,10 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
                    animacion: AnimacionPropagacion | None = None, zona_id: str = "", nombre_zona: str = "",
                    mapa: EstadoMapa | None = None, tarjeta: EstadoTarjeta | None = None, ayuda: str = AYUDA,
                    reloj: tuple[float, float] | None = None, presentes: EstadoPresentes | None = None,
-                   reaccion_jugador: tuple[int, float] | None = None) -> None:
+                   reaccion_jugador: tuple[int, float] | None = None, credibilidad: int | None = None) -> None:
     pantalla.fill(tema.fondo)
     dibujar_fondo_zona(pantalla, zona_id, tema, RECT_ESCENA)
-    _dibujar_hud(pantalla, fuentes, tema, filas)
+    _dibujar_hud(pantalla, fuentes, tema, filas, credibilidad)
     dx, dy = desplazamiento_reaccion(*reaccion_jugador) if reaccion_jugador else (0, 0)
     dibujar_personaje(pantalla, personaje, tema, RECT_PERSONAJE.move(dx, dy), animo)
     if nombre_zona:

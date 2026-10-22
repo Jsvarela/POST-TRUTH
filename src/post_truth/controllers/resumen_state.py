@@ -27,6 +27,11 @@ class ResumenState(BaseState):
     def draw(self, pantalla: pygame.Surface) -> None:
         s = self.app.partida
         c = s.campana
-        decisiones = [(s.arboles[i].event.title, accion) for i, accion in c.resueltas]
+        j = s.jugadores[0]   # shortcut: un jugador en pantalla; con varios habra un resumen por jugador (R12)
+        hoy = {s.arboles[i].event.event_id for i, _ in c.resueltas}
+        por_evento = {h["evento"]: h["credibilidad"] for h in j.historial if h["evento"] in hoy}
+        decisiones = [(s.arboles[i].event.title, accion, por_evento.get(s.arboles[i].event.event_id, 0))
+                      for i, accion in c.resueltas]
         dibujar_resumen(pantalla, self.app.fuentes, self.app.temas.actual, c.dia + 1, len(c.dias),
-                        s.ciudad.as_display_rows(), self.cambio(), decisiones)
+                        s.ciudad.as_display_rows(), self.cambio(), decisiones, j.credibilidad,
+                        sum(por_evento.values()))

@@ -160,7 +160,8 @@ class MundoState(BaseState):
             personaje=self.personaje, animacion=self.animacion, centro_camara=self.camara.centro,
             decorado=self.decorado, t=self.t,
             reloj=(s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
-            dia=(s.campana.dia + 1, len(s.campana.dias)), fraccion_dia=s.campana.fraccion)
+            dia=(s.campana.dia + 1, len(s.campana.dias)), fraccion_dia=s.campana.fraccion,
+            credibilidad=s.jugador_actual.credibilidad)
 
     def draw(self, pantalla: pygame.Surface) -> None:
         dibujar_mundo(pantalla, self.app.fuentes, self.app.temas.actual, self.mundo, self.estado_vista())

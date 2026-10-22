@@ -379,7 +379,8 @@ class EscenaState(BaseState):
                        if self.fase == DECIDIENDO else None, AYUDA_INTERIOR if self.interior else AYUDA,
                        self._reloj() if self.fase == DECIDIENDO else None,
                        self._presentes() if self.interior and self.fase in (DECIDIENDO, CONSECUENCIA) else None,
-                       (self._reaccion[0], self._t_reaccion) if self._reaccion and self.fase == CONSECUENCIA else None)
+                       (self._reaccion[0], self._t_reaccion) if self._reaccion and self.fase == CONSECUENCIA else None,
+                       self.sesion.jugador_actual.credibilidad)
 
     def _reloj(self) -> tuple[float, float] | None:
         restante = self.sesion.tiempo_restante
