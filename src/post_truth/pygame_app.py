@@ -5,6 +5,7 @@ from post_truth.config import FLUJO, ANCHO, ALTO, FPS, TITULO, px
 from post_truth.controllers.escena_state import EscenaState
 from post_truth.controllers.intro_state import IntroState
 from post_truth.controllers.menu_state import MenuState
+from post_truth.controllers.minijuego_state import MinijuegoState
 from post_truth.controllers.mundo_state import MundoState
 from post_truth.controllers.resultado_state import ResultadoState
 from post_truth.controllers.resumen_state import ResumenState
@@ -39,6 +40,7 @@ class App:
         self.estados.registrar("escena", EscenaState(self))
         self.estados.registrar("mundo", MundoState(self))
         self.estados.registrar("resumen", ResumenState(self))
+        self.estados.registrar("minijuego", MinijuegoState(self))
         self.estados.registrar("resultado", ResultadoState(self))
         self.estados.cambiar("menu")
 

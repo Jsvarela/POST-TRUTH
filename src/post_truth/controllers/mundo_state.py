@@ -4,10 +4,11 @@ import random
 
 import pygame
 
-from post_truth.config import RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, RUTA_MUNDO
+from post_truth.config import RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, RUTA_MINIJUEGOS, RUTA_MUNDO
 from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import load_trees
 from post_truth.models import Role
+from post_truth.models import minijuego as mj
 from post_truth.models.animacion import AnimacionPersonaje
 from post_truth.models.mundo import MundoCiudad
 from post_truth.models.personaje import Genero, Personaje
@@ -64,7 +65,8 @@ class MundoState(BaseState):
         if self.app.partida is None:
             self.app.partida = PartidaSesion.nueva_campana(
                 [self.personaje], load_trees(RUTA_EVENTOS), GrafoSocial.cargar(RUTA_GRAFO_SOCIAL),
-                GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.rng, extendido=self.app.tiempo_extendido)
+                GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.rng, extendido=self.app.tiempo_extendido,
+                minijuegos=mj.cargar_lugares(RUTA_MINIJUEGOS))
             self._dia = -1
         if self.sesion.campana.dia != self._dia:   # amanece: de vuelta en la Plaza
             self._dia = self.sesion.campana.dia
@@ -75,6 +77,7 @@ class MundoState(BaseState):
         self.camara.saltar(self.mundo.jugador)
         self.presionadas.clear()
         self.aviso, self._t_aviso = "", 0.0
+        self.menu: list[str] = []   # opciones del lugar cuando hay mas de una (E las muestra, 1-3 elige)
 
     def _avisar(self, texto: str) -> None:
         self.aviso, self._t_aviso = texto, DURACION_AVISO
@@ -82,20 +85,37 @@ class MundoState(BaseState):
     def _llegar(self, zona: str) -> None:
         self.sesion.llegar(self.jugador_id, zona)
 
-    def accion_disponible(self) -> tuple[str, str] | None:
-        """(zona, "entrar" | "evidencia") de lo que se puede hacer con E aqui, o None."""
-        zona = self.mundo.zona_al_alcance()
-        if zona is None:
-            return None
-        if zona == self.sesion.zona_noticia:
-            return zona, "entrar"
+    def opciones(self, zona: str) -> list[str]:
+        """Lo que se puede hacer en `zona`: "entrar" (la noticia), "evidencia" y/o "minijuego"."""
         inv = self.sesion.jugador_actual.investigacion
         evidencia = inv.evidencia_en(zona)
-        if evidencia is not None and not inv.esta_descubierta(evidencia.id):
-            return zona, "evidencia"
-        return None
+        if zona == self.sesion.zona_noticia:
+            ops = ["entrar"]
+        elif evidencia is not None and not inv.esta_descubierta(evidencia.id):
+            ops = ["evidencia"]
+        else:
+            ops = []
+        return ops + (["minijuego"] if self.sesion.minijuego_en(zona) else [])
+
+    def accion_disponible(self) -> tuple[str, str] | None:
+        """(zona, "entrar" | "evidencia" | "minijuego" | "elegir") de lo que hace E aqui, o None."""
+        zona = self.mundo.zona_al_alcance()
+        ops = self.opciones(zona) if zona is not None else []
+        if not ops:
+            return None
+        return zona, ops[0] if len(ops) == 1 else "elegir"
+
+    def etiqueta(self, que: str, zona: str) -> str:
+        if que == "entrar":
+            return f"Entrar a la noticia de {zona.capitalize()}"
+        if que == "evidencia":
+            return f"Buscar evidencia en {zona.capitalize()}"
+        return f"Jugar {mj.REGISTRO[self.sesion.minijuego_en(zona)].nombre}"
 
     def _usar(self) -> None:
+        if self.menu:
+            self.menu = []
+            return
         accion = self.accion_disponible()
         if accion is None:
             zona = self.mundo.zona_al_alcance()
@@ -103,6 +123,18 @@ class MundoState(BaseState):
                 self._avisar(f"{zona.capitalize()}: aqui no hay nada de esta noticia.")
             return
         zona, que = accion
+        if que == "elegir":
+            self.menu = self.opciones(zona)
+            return
+        self._hacer(zona, que)
+
+    def _hacer(self, zona: str, que: str) -> None:
+        self.menu = []
+        if que == "minijuego":
+            if self.sesion.iniciar_minijuego(zona) is not None:
+                self.presionadas.clear()
+                self.app.estados.cambiar("minijuego", fundido=True)
+            return
         if que == "entrar":
             self.sesion.buscar_evidencia(self.jugador_id)
             self.presionadas.clear()
@@ -114,9 +146,13 @@ class MundoState(BaseState):
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
+            if event.key == pygame.K_ESCAPE and self.menu:
+                self.menu = []
+            elif event.key == pygame.K_ESCAPE:
                 self.app.partida = None
                 self.app.estados.cambiar("menu")
+            elif self.menu and pygame.K_1 <= event.key < pygame.K_1 + len(self.menu):
+                self._hacer(self.mundo.zona_al_alcance(), self.menu[event.key - pygame.K_1])
             elif event.key in DIRECCIONES:
                 self.presionadas.add(event.key)
             elif event.key == pygame.K_e:
@@ -131,6 +167,8 @@ class MundoState(BaseState):
         dy = sum(DIRECCIONES[k][1] for k in self.presionadas)
         antes = self.mundo.jugador
         self.mundo.mover(dx, dy, dt, self._llegar)
+        if self.menu and self.accion_disponible() is None:   # se alejo del lugar
+            self.menu = []
         self.animacion.actualizar(dx, dy, math.dist(antes, self.mundo.jugador), dt)
         self.camara.seguir(self.mundo.jugador, dt)
         self.t += dt
@@ -161,7 +199,10 @@ class MundoState(BaseState):
             decorado=self.decorado, t=self.t,
             reloj=(s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
             dia=(s.campana.dia + 1, len(s.campana.dias)), fraccion_dia=s.campana.fraccion,
-            credibilidad=s.jugador_actual.credibilidad)
+            credibilidad=s.jugador_actual.credibilidad,
+            menu=tuple(self.etiqueta(o, self.mundo.zona_al_alcance()) for o in self.menu),
+            texto_accion=self.etiqueta(accion[1], accion[0]) if (accion := self.accion_disponible())
+            and accion[1] != "elegir" else "")
 
     def draw(self, pantalla: pygame.Surface) -> None:
         dibujar_mundo(pantalla, self.app.fuentes, self.app.temas.actual, self.mundo, self.estado_vista())

@@ -39,6 +39,8 @@ class EstadoMundo:
     dia: tuple[int, int] | None = None         # (dia, total) de la campana
     fraccion_dia: float = 0.0                  # 0 amanecer .. 1 noche
     credibilidad: int | None = None
+    menu: tuple[str, ...] = ()                 # opciones del lugar abiertas con E (se eligen con 1-3)
+    texto_accion: str = ""                     # que hace E aqui, cuando hay una sola opcion
     animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
 
 
@@ -252,9 +254,13 @@ def _minimapa(pantalla: pygame.Surface, tema: Tema, mundo: MundoCiudad, estado: 
 def _mensaje(estado: EstadoMundo) -> str:
     if estado.aviso:
         return estado.aviso
+    if estado.menu:
+        return " | ".join(f"{i + 1}: {o}" for i, o in enumerate(estado.menu)) + " | E: cerrar"
     if estado.accion is not None:
         zona, que = estado.accion
-        return f"E: entrar a {zona.capitalize()}" if que == "entrar" else f"E: buscar evidencia en {zona.capitalize()}"
+        if que == "elegir":
+            return f"E: ver que hacer en {zona.capitalize()}"
+        return f"E: {estado.texto_accion[0].lower()}{estado.texto_accion[1:]}" if estado.texto_accion else ""
     if estado.guia:
         return f"Guia: la noticia esta en {estado.noticia.capitalize()}"
     return ""
