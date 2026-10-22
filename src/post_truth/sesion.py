@@ -10,6 +10,7 @@ from post_truth.config import DIAS_CAMPANA, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD
 from post_truth.decision_tree import DecisionNode, DecisionTree, load_trees
 from post_truth.game_state import CityState
 from post_truth.models import Impact
+from post_truth.models import credibilidad as cred
 from post_truth.models import eleccion
 from post_truth.models.personaje import Personaje
 from post_truth.models.pistas import Evidencia, Investigacion, Pista
@@ -80,6 +81,12 @@ class Jugador:
     zona: str
     puntos: int = 0
     investigacion: Investigacion = field(default_factory=lambda: Investigacion(()))
+    credibilidad: int = cred.INICIAL
+    historial: list[dict] = field(default_factory=list)   # {evento, accion, falsa, respaldo, credibilidad}
+
+    @property
+    def falsas_compartidas(self) -> int:
+        return sum(1 for h in self.historial if h["falsa"] and h["accion"] == "compartir")
 
     @property
     def rol(self):
@@ -115,6 +122,7 @@ class ResultadoDecision:
     simulacion: SimulacionDecision | None = None
     vencido: bool = False   # la decidio el reloj, no el jugador
     alcance: float = 0.0    # fraccion de la red que recibio la publicacion (para la eleccion)
+    respaldo: int = 0
 
 
 class PartidaSesion:
@@ -307,10 +315,11 @@ class PartidaSesion:
             raise KeyError(f"No existe la decision: {accion}")
         impacto = self.arbol.accumulated_impact(nodo.node_id).scaled_for_role(j.rol)
         respaldo = j.investigacion.respaldo(nodo.tipo) if nodo.tipo in (VERIFICAR, REPORTAR) else 2
+        f = cred.factor(j.credibilidad)
         if nodo.tipo == VERIFICAR:
-            impacto = impacto.atenuar_beneficios(fuerza_verificar(respaldo))
+            impacto = impacto.atenuar_beneficios(min(1.0, fuerza_verificar(respaldo) * f))
         elif nodo.tipo == REPORTAR:
-            impacto = impacto.atenuar_beneficios(fuerza_reportar(respaldo))
+            impacto = impacto.atenuar_beneficios(min(1.0, fuerza_reportar(respaldo) * f))
             if reporte_rechazado(respaldo):
                 impacto = impacto + REPORTE_INFUNDADO
         simulacion = self._simular(j, nodo, respaldo)
@@ -319,7 +328,8 @@ class PartidaSesion:
         res = simulacion.resultado if simulacion is not None else None
         alcance = res.alcanzados / max(1, res.poblacion - 1) if res is not None else 0.0
         self.pendiente = ResultadoDecision(True, "", j.id, nodo, impacto, mensaje_respaldo(nodo.tipo, respaldo),
-                                           simulacion, alcance=alcance)
+                                           simulacion, alcance=alcance,
+                                           respaldo=j.investigacion.respaldo(nodo.tipo or "verificar"))   # lo reunido de verdad
         return self.pendiente
 
     def _simular(self, j: Jugador, nodo: DecisionNode, respaldo: int) -> SimulacionDecision | None:
@@ -328,7 +338,7 @@ class PartidaSesion:
         propios = {x.id for x in self.jugadores}
         autor = self.rng.choice([c.id for c in self.grafo.vertices() if c.id not in propios])
         return simular_decision(self.grafo, nodo.tipo, es_falsa(self.arbol.event.truth_level), j.id, autor,
-                                self.rng, respaldo=respaldo)
+                                self.rng, respaldo=respaldo, credibilidad=cred.factor(j.credibilidad))
 
     def aplicar(self) -> ResultadoDecision:
         """Cierra la decision pendiente."""
@@ -339,6 +349,7 @@ class PartidaSesion:
         self.jugador(r.jugador).puntos += r.impacto.score
         self._accion_aplicada = "se acabo el tiempo" if r.vencido else r.nodo.label
         self._mover_apoyo(r)
+        self._anotar(self.jugador(r.jugador), r)
         self.pendiente, self.fase = None, CONSECUENCIA
         return r
 
@@ -382,6 +393,14 @@ class PartidaSesion:
             if falsa:
                 self.por_rumores[candidato] += nuevo - self.apoyo[candidato]
             self.apoyo[candidato] = nuevo
+
+    def _anotar(self, j: Jugador, r: ResultadoDecision) -> None:
+        """Historial y credibilidad del jugador que decidio."""
+        falsa = es_falsa(self.arbol.event.truth_level)
+        delta = cred.cambio(r.nodo.tipo, falsa, r.respaldo, r.vencido, j.falsas_compartidas)
+        j.credibilidad = cred.acotar(j.credibilidad + delta)
+        j.historial.append({"evento": self.arbol.event.event_id, "accion": "vencido" if r.vencido else r.nodo.tipo,
+                            "falsa": falsa, "respaldo": r.respaldo, "credibilidad": delta})
 
     def resultado_eleccion(self) -> eleccion.ResultadoEleccion:
         return eleccion.calcular(self.apoyo, self.por_rumores, self.ciudad)
@@ -464,12 +483,14 @@ class PartidaSesion:
             "version": VERSION,
             "ciudad": self.ciudad.to_dict(),
             "jugadores": [{"id": j.id, "personaje": j.personaje.to_dict(), "zona": j.zona, "puntos": j.puntos,
-                           "investigacion": j.investigacion.to_dict()} for j in self.jugadores],
+                           "investigacion": j.investigacion.to_dict(), "credibilidad": j.credibilidad,
+                           "historial": j.historial} for j in self.jugadores],
             "eventos": [a.event.event_id for a in self.arboles],
             "indice": self.indice, "turno": self.turno, "fase": self.fase,
             "pendiente": None if p is None else {"jugador": p.jugador, "nodo": p.nodo.node_id,
                                                  "impacto": asdict(p.impacto), "aviso": p.aviso,
-                                                 "vencido": p.vencido, "alcance": p.alcance},
+                                                 "vencido": p.vencido, "alcance": p.alcance,
+                                                 "respaldo": p.respaldo},
             "reloj": {"restante": self.tiempo_restante, "activo": self.reloj_activo},
             "campana": None if self.campana is None else self.campana.to_dict(),
             "apoyo": self.apoyo, "por_rumores": self.por_rumores,
@@ -490,7 +511,8 @@ class PartidaSesion:
         indice = int(datos["indice"])
         evento = arboles[min(indice, len(arboles) - 1)].event
         jugadores = [Jugador(d["id"], Personaje.from_dict(d["personaje"]), d["zona"], int(d["puntos"]),
-                             Investigacion.from_dict(d["investigacion"], evento.clues, evento.evidences))
+                             Investigacion.from_dict(d["investigacion"], evento.clues, evento.evidences),
+                             int(d.get("credibilidad", cred.INICIAL)), list(d.get("historial", [])))
                      for d in datos["jugadores"]]
         rng = random.Random()
         s = datos["rng"]
@@ -512,7 +534,8 @@ class PartidaSesion:
                 raise ValueError(f"Decision pendiente desconocida: {p['nodo']}")
             sesion.pendiente = ResultadoDecision(True, "", p["jugador"], nodo, Impact.from_dict(p["impacto"]),
                                                  p["aviso"], vencido=bool(p.get("vencido", False)),
-                                                 alcance=float(p.get("alcance", 0.0)))
+                                                 alcance=float(p.get("alcance", 0.0)),
+                                                 respaldo=int(p.get("respaldo", 0)))
         return sesion
 
 

@@ -193,8 +193,8 @@ class GrafoSocial:
         self._ady[id].clear()
         return cortadas
 
-    def propagar(self, origen: str, es_falsa: bool,
-                 rng: random.Random | None = None) -> ResultadoPropagacion:
+    def propagar(self, origen: str, es_falsa: bool, rng: random.Random | None = None,
+                 alcance_origen: float = 1.0) -> ResultadoPropagacion:
         """Simula como se difunde una publicacion que parte de `origen`."""
         self._exigir(origen)
         rng = rng or random.Random()
@@ -212,7 +212,7 @@ class GrafoSocial:
                 if es_falsa and emisor.rol is Role.JOURNALIST and u != origen:
                     frenados.append(u)
                     continue
-                factor = FACTOR_EMISOR[emisor.rol]
+                factor = FACTOR_EMISOR[emisor.rol] * (alcance_origen if u == origen else 1.0)
                 if not es_falsa and emisor.rol is Role.JOURNALIST:
                     factor *= FACTOR_PERIODISTA_VERDADERA
                 for a in self._ady[u].values():

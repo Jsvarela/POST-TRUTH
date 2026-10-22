@@ -71,8 +71,10 @@ class SimulacionDecision:
 
 
 def simular_decision(grafo: GrafoSocial, tipo: str, es_falsa: bool, jugador: str, autor: str,
-                     rng: random.Random | None = None, respaldo: int = 2) -> SimulacionDecision | None:
-    """Aplica al grafo el efecto de `tipo` y devuelve la propagacion resultante."""
+                     rng: random.Random | None = None, respaldo: int = 2,
+                     credibilidad: float = 1.0) -> SimulacionDecision | None:
+    """Aplica al grafo el efecto de `tipo` y devuelve la propagacion resultante. `credibilidad` (factor 0.5..1.5
+    del jugador) agranda lo que comparte y la fuerza de sus desmentidos."""
     cortadas: list[Arista] = []
     debilitadas: list[Arista] = []
     if tipo == COMPARTIR:
@@ -80,7 +82,7 @@ def simular_decision(grafo: GrafoSocial, tipo: str, es_falsa: bool, jugador: str
     elif tipo == VERIFICAR:
         origen = autor
         if es_falsa:
-            fuerza = fuerza_verificar(respaldo)
+            fuerza = min(1.0, fuerza_verificar(respaldo) * credibilidad)
             contactos = [a.destino for a in grafo.vecinos(autor)]
             debilitadas += grafo.debilitar_salientes(autor, 1 - (1 - FRENO_AUTOR) * fuerza)
             for c in contactos:
@@ -92,8 +94,9 @@ def simular_decision(grafo: GrafoSocial, tipo: str, es_falsa: bool, jugador: str
         if _nivel(respaldo) >= 2:
             cortadas += grafo.cortar_salientes(autor)
         else:
-            debilitadas += grafo.debilitar_salientes(autor, FACTOR_LIMITE_REPORTE)
+            debilitadas += grafo.debilitar_salientes(
+                autor, 1 - (1 - FACTOR_LIMITE_REPORTE) * min(1.0, credibilidad))
     else:
         return None
-    resultado = grafo.propagar(origen, es_falsa, rng)
+    resultado = grafo.propagar(origen, es_falsa, rng, credibilidad if tipo == COMPARTIR else 1.0)
     return SimulacionDecision(tipo, autor, resultado, tuple(cortadas), tuple(debilitadas))
