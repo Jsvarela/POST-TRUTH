@@ -14,7 +14,7 @@ from post_truth.views.decorado import Decorado
 from post_truth.views.componentes import Fuentes, ajustar_texto
 from post_truth.views.escena_view import RECT_HUD, _dibujar_hud, dibujar_reloj
 from post_truth.views.mapa_view import _rombo
-from post_truth.views.theme import Tema
+from post_truth.views.theme import TEMAS, Tema
 
 AYUDA = "Caminar: WASD o flechas   |   E: entrar o buscar   |   G: guia   |   ESC: menu"
 ALTO_PERSONAJE = 3.2
@@ -36,6 +36,8 @@ class EstadoMundo:
     decorado: Decorado | None = None
     t: float = 0.0
     reloj: tuple[float, float] | None = None   # (restante, total) del reloj de una publicacion viral
+    dia: tuple[int, int] | None = None         # (dia, total) de la campana
+    fraccion_dia: float = 0.0                  # 0 amanecer .. 1 noche
     animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
 
 
@@ -74,6 +76,43 @@ def a_pantalla(p: tuple[float, float], cam: tuple[float, float]) -> tuple[int, i
     return px(p[0] - cam[0]), px(p[1] - cam[1])
 
 
+def _anochecer(fraccion: float) -> float:
+    """0 de dia; sube de 0 a 1 entre el 60% y el 100% del dia."""
+    return max(0.0, min(1.0, (fraccion - 0.6) / 0.4))
+
+
+def _velo_del_dia(pantalla: pygame.Surface, tema: Tema, fraccion: float) -> None:
+    """Tarde calida y anochecer oscuro, con colores del tema; en alto contraste el velo es mas suave."""
+    tarde = max(0.0, min(1.0, (fraccion - 0.4) / 0.3)) * (1 - _anochecer(fraccion))
+    suave = 0.5 if tema is TEMAS["alto_contraste"] else 1.0
+    capa = pygame.Surface(pantalla.get_size(), pygame.SRCALPHA)
+    if tarde:
+        capa.fill((*tema.detalle, round(28 * tarde * suave)))
+    noche = _anochecer(fraccion)
+    if noche:
+        capa.fill((*tema.fondo, round(120 * noche * suave)))
+    pantalla.blit(capa, (0, 0))
+
+
+def _dibujar_dia(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, dia: int, total: int, fraccion: float,
+                 topleft: tuple[int, int]) -> None:
+    """Dia de campana y un sol (luego luna) que cruza un arco: la hora sin cifras."""
+    caja = pygame.Rect(*topleft, px(200), px(40))
+    pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(8))
+    pygame.draw.rect(pantalla, tema.borde, caja, px(2), border_radius=px(8))
+    img = fuentes.normal.render(f"Dia {dia} de {total}", True, tema.texto)
+    pantalla.blit(img, img.get_rect(midleft=(caja.x + px(10), caja.centery)))
+    arco = pygame.Rect(caja.right - px(78), caja.y + px(8), px(66), px(52))
+    pygame.draw.arc(pantalla, tema.borde, arco, 0, math.pi, px(2))
+    ang = math.pi * (1 - fraccion)
+    astro = (round(arco.centerx + math.cos(ang) * arco.w / 2), round(arco.centery - math.sin(ang) * arco.h / 2))
+    if _anochecer(fraccion) > 0.5:   # luna: circulo con un mordisco
+        pygame.draw.circle(pantalla, tema.texto, astro, px(7))
+        pygame.draw.circle(pantalla, tema.panel, (astro[0] + px(3), astro[1] - px(2)), px(6))
+    else:
+        pygame.draw.circle(pantalla, tema.detalle, astro, px(7))
+
+
 def _vista(mundo: MundoCiudad, cam: tuple[float, float], pantalla: pygame.Surface, margen: float = 90):
     """Funcion que dice si un punto del mundo cae en pantalla."""
     ancho, alto = pantalla.get_size()
@@ -104,9 +143,11 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
         for x, y, tam, flores in deco.arbustos:
             if visible(x, y):
                 arte.arbusto(pantalla, tema, a_pantalla((x, y), cam), px(16 * tam), flores)
+        luz = 0.15 + 0.85 * _anochecer(estado.fraccion_dia) if estado.dia else 1.0   # se encienden al atardecer
         for x, y, fase in deco.faroles:
             if visible(x, y):
-                arte.farol(pantalla, tema, a_pantalla((x, y), cam), px(48), 0.5 + 0.5 * math.sin(estado.t * 1.5 + fase))
+                arte.farol(pantalla, tema, a_pantalla((x, y), cam), px(48),
+                           luz * (0.5 + 0.5 * math.sin(estado.t * 1.5 + fase)))
     if estado.guia:
         _guia(pantalla, tema, mundo, cam, estado.guia)
     resaltada = estado.accion[0] if estado.accion else None
@@ -134,11 +175,17 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
             by = y0 + 25 * math.sin(estado.t * 0.8 + i)
             if visible(bx, by):
                 arte.pajaro(pantalla, tema, a_pantalla((bx, by), cam), px(9), math.sin(estado.t * 9 + i * 1.7))
+    if estado.dia:
+        _velo_del_dia(pantalla, tema, estado.fraccion_dia)
     if estado.indicadores:
         _dibujar_hud(pantalla, fuentes, tema, list(estado.indicadores))
     _minimapa(pantalla, tema, mundo, estado)
+    y = RECT_HUD.bottom + px(12)
+    if estado.dia:
+        _dibujar_dia(pantalla, fuentes, tema, *estado.dia, estado.fraccion_dia, (px(16), y))
+        y += px(48)
     if estado.reloj is not None:
-        dibujar_reloj(pantalla, fuentes, tema, *estado.reloj, (px(16), RECT_HUD.bottom + px(12)))
+        dibujar_reloj(pantalla, fuentes, tema, *estado.reloj, (px(16), y))
     _franja(pantalla, fuentes, tema, _mensaje(estado))
 
 

@@ -10,7 +10,7 @@ from post_truth.game_state import CityState
 from post_truth.models import Role
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.models.pistas import Investigacion, Pista
-from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, TIEMPO_VIRAL, PartidaSesion, ResultadoDecision
+from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, FIN_DIA, PartidaSesion, ResultadoDecision
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
 from post_truth.views.componentes import Boton, CajaDialogo
@@ -287,6 +287,9 @@ class EscenaState(BaseState):
 
     def _continuar(self) -> None:
         self.sesion.continuar()
+        if self.sesion.campana is not None and self.sesion.fase in (FIN_DIA, FIN):
+            self.app.estados.cambiar("resumen", fundido=True)
+            return
         if self.sesion.fase != FIN:
             if self.interior:
                 self.app.estados.cambiar("mundo", fundido=True)
@@ -345,6 +348,10 @@ class EscenaState(BaseState):
             vencida = self.sesion.transcurrir(dt)
             if vencida is not None:
                 self._mostrar_decision(vencida)
+            elif self.interior and self.sesion.novedad == "crisis":   # la crisis llama a la calle
+                self.app.estados.cambiar("mundo", fundido=True)
+            elif self.interior and self.sesion.fase == FIN_DIA:      # se acabo el dia aqui adentro
+                self.app.estados.cambiar("resumen", fundido=True)
         if self.fase == PROPAGACION and self.animacion is not None:
             self.animacion.update(dt)
             narracion = self.animacion.narracion()
@@ -376,4 +383,4 @@ class EscenaState(BaseState):
 
     def _reloj(self) -> tuple[float, float] | None:
         restante = self.sesion.tiempo_restante
-        return None if restante is None else (restante, TIEMPO_VIRAL)
+        return None if restante is None else (restante, self.sesion.tiempo_viral_total)

@@ -4,14 +4,14 @@ import random
 
 import pygame
 
-from post_truth.config import EVENTOS_POR_PARTIDA, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, RUTA_MUNDO
+from post_truth.config import RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, RUTA_MUNDO
 from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import load_trees
 from post_truth.models import Role
 from post_truth.models.animacion import AnimacionPersonaje
 from post_truth.models.mundo import MundoCiudad
 from post_truth.models.personaje import Genero, Personaje
-from post_truth.sesion import TIEMPO_VIRAL, PartidaSesion
+from post_truth.sesion import FIN, FIN_DIA, PartidaSesion
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
 from post_truth.views.decorado import generar as generar_decorado
@@ -46,6 +46,7 @@ class MundoState(BaseState):
         self.decorado = generar_decorado(self.mundo)
         self.mapa_guia = mapa_de_tiempos(GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.mundo)
         self.t = 0.0
+        self._dia = -1   # dia de campana que ya se preparo en el mundo
 
     @property
     def personaje(self) -> Personaje:
@@ -61,10 +62,12 @@ class MundoState(BaseState):
 
     def al_entrar(self) -> None:
         if self.app.partida is None:
-            todos = load_trees(RUTA_EVENTOS)
-            arboles = self.rng.sample(todos, min(EVENTOS_POR_PARTIDA, len(todos)))
-            self.app.partida = PartidaSesion.nueva([self.personaje], arboles, GrafoSocial.cargar(RUTA_GRAFO_SOCIAL),
-                                                   GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.rng)
+            self.app.partida = PartidaSesion.nueva_campana(
+                [self.personaje], load_trees(RUTA_EVENTOS), GrafoSocial.cargar(RUTA_GRAFO_SOCIAL),
+                GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.rng, extendido=self.app.tiempo_extendido)
+            self._dia = -1
+        if self.sesion.campana.dia != self._dia:   # amanece: de vuelta en la Plaza
+            self._dia = self.sesion.campana.dia
             self.mundo = MundoCiudad.cargar(RUTA_MUNDO)
             self.sesion.llegar(self.jugador_id, self.mundo.ultima_plaza)
             self.guia = False
@@ -131,9 +134,17 @@ class MundoState(BaseState):
         self.animacion.actualizar(dx, dy, math.dist(antes, self.mundo.jugador), dt)
         self.camara.seguir(self.mundo.jugador, dt)
         self.t += dt
-        if self.sesion.transcurrir(dt) is not None:      # vencio buscando evidencia: se ve adentro lo que paso
+        s = self.sesion
+        vencida = s.transcurrir(dt)
+        if s.novedad == "crisis":
+            s.novedad = ""
+            self._avisar(f"Crisis viral en {s.zona_noticia.capitalize()}! Corre antes de que se riegue.")
+        if vencida is not None:                           # vencio buscando evidencia: se ve adentro lo que paso
             self.presionadas.clear()
             self.app.estados.cambiar("escena", fundido=True)
+        elif s.fase in (FIN_DIA, FIN):                    # se acabo el dia en la calle
+            self.presionadas.clear()
+            self.app.estados.cambiar("resumen", fundido=True)
         self._t_aviso = max(0.0, self._t_aviso - dt)
         if self._t_aviso == 0:
             self.aviso = ""
@@ -148,7 +159,8 @@ class MundoState(BaseState):
             indicadores=s.ciudad.as_display_rows(), guia=ruta.zonas if ruta else (), aviso=self.aviso,
             personaje=self.personaje, animacion=self.animacion, centro_camara=self.camara.centro,
             decorado=self.decorado, t=self.t,
-            reloj=(s.tiempo_restante, TIEMPO_VIRAL) if s.reloj_activo else None)
+            reloj=(s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
+            dia=(s.campana.dia + 1, len(s.campana.dias)), fraccion_dia=s.campana.fraccion)
 
     def draw(self, pantalla: pygame.Surface) -> None:
         dibujar_mundo(pantalla, self.app.fuentes, self.app.temas.actual, self.mundo, self.estado_vista())
