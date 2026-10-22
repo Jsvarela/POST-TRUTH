@@ -17,6 +17,7 @@ from post_truth.models.personaje import Personaje
 from post_truth.models.pistas import Evidencia, Investigacion, Pista
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import Ciudadano, GrafoSocial
+from post_truth.structures.propagacion_vivo import PropagacionEnVivo
 from post_truth.structures.propagacion import (REPORTAR, REPORTE_INFUNDADO, VERIFICAR, SimulacionDecision, es_falsa,
                                                fuerza_reportar, fuerza_verificar, mensaje_respaldo, reporte_rechazado,
                                                simular_decision)
@@ -151,6 +152,7 @@ class PartidaSesion:
         self._accion_aplicada = ""                  # la ultima decision aplicada (para el resumen del dia)
         self.minijuegos: dict[str, str] = {}        # lugar -> id del minijuego (data/minijuegos.json)
         self.minijuego: mj.Minijuego | None = None  # el que se esta jugando
+        self.en_vivo: PropagacionEnVivo | None = None  # rumor corriendo en vivo por el grafo social (R2)
         self.apoyo = {c: eleccion.APOYO_INICIAL for c in eleccion.CANDIDATOS}   # para la eleccion del alcalde
         self.por_rumores = {c: 0.0 for c in eleccion.CANDIDATOS}               # parte movida por publicaciones falsas
 
@@ -444,6 +446,26 @@ class PartidaSesion:
         self.minijuego = None
         return r
 
+    # --- propagacion en vivo -------------------------------------------------------------------
+    def iniciar_en_vivo(self, autor: str | None = None, es_falsa: bool = True) -> PropagacionEnVivo:
+        """Un rumor empieza a correr solo por el grafo social desde `autor` (al azar si no se dice)."""
+        propios = {j.id for j in self.jugadores}
+        if autor is None:
+            autor = self.rng.choice([c.id for c in self.grafo.vertices() if c.id not in propios])
+        j = self.jugador_actual
+        self.en_vivo = PropagacionEnVivo(self.grafo, autor, j.id, j.credibilidad, self.rng.randrange(2 ** 31), es_falsa)
+        return self.en_vivo
+
+    def cerrar_en_vivo(self) -> Impact:
+        """Lo que dejo el rumor entra a la ciudad y a los puntos de quien lo enfrento."""
+        if self.en_vivo is None:
+            raise ValueError("No hay un rumor en vivo")
+        impacto = self.en_vivo.impacto()
+        self.ciudad.apply(impacto)
+        self.jugador(self.en_vivo.jugador).puntos += impacto.score
+        self.en_vivo = None
+        return impacto
+
     def resultado_eleccion(self) -> eleccion.ResultadoEleccion:
         return eleccion.calcular(self.apoyo, self.por_rumores, self.ciudad)
 
@@ -538,6 +560,7 @@ class PartidaSesion:
             "apoyo": self.apoyo, "por_rumores": self.por_rumores,
             "minijuegos": self.minijuegos,
             "minijuego": None if self.minijuego is None else self.minijuego.to_dict(),
+            "en_vivo": None if self.en_vivo is None else self.en_vivo.to_dict(),
             "en_pausa": {str(k): v for k, v in self._en_pausa.items()},
             "grafo": self.grafo.to_dict(),
             "rng": [estado_rng[0], list(estado_rng[1]), estado_rng[2]],
@@ -568,6 +591,8 @@ class PartidaSesion:
         sesion.minijuegos = dict(datos.get("minijuegos", {}))
         if datos.get("minijuego") is not None:
             sesion.minijuego = mj.desde_dict(datos["minijuego"])
+        if datos.get("en_vivo") is not None:
+            sesion.en_vivo = PropagacionEnVivo.from_dict(datos["en_vivo"], sesion.grafo)
         sesion.por_rumores.update(datos.get("por_rumores", {}))
         if datos.get("campana") is not None:
             sesion.campana = Campana.from_dict(datos["campana"])
