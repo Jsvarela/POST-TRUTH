@@ -6,6 +6,8 @@ from post_truth.controllers.escena_state import EscenaState
 from post_truth.controllers.intro_state import IntroState
 from post_truth.controllers.menu_state import MenuState
 from post_truth.controllers.mundo_state import MundoState
+from post_truth.controllers.resultado_state import ResultadoState
+from post_truth.controllers.resumen_state import ResumenState
 from post_truth.controllers.seleccion_state import SeleccionState
 from post_truth.controllers.state_manager import StateManager
 from post_truth.models.personaje import Personaje
@@ -29,12 +31,15 @@ class App:
         self.personaje: Personaje | None = None
         self.flujo = FLUJO
         self.partida = None
+        self.tiempo_extendido = False   # accesibilidad: dias y relojes x1.5 (X en el menu)
         self.estados = StateManager(lambda: self.temas.actual.fondo)
         self.estados.registrar("menu", MenuState(self))
         self.estados.registrar("intro", IntroState(self))
         self.estados.registrar("seleccion", SeleccionState(self))
         self.estados.registrar("escena", EscenaState(self))
         self.estados.registrar("mundo", MundoState(self))
+        self.estados.registrar("resumen", ResumenState(self))
+        self.estados.registrar("resultado", ResultadoState(self))
         self.estados.cambiar("menu")
 
     def run(self) -> None:

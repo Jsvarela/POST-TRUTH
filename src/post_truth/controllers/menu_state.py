@@ -16,6 +16,8 @@ class MenuState(BaseState):
                 self.app.estados.cambiar("mundo")
             elif event.key == pygame.K_t:
                 self.app.temas.siguiente()
+            elif event.key == pygame.K_x:
+                self.app.tiempo_extendido = not self.app.tiempo_extendido
             elif event.key == pygame.K_ESCAPE:
                 self.app.corriendo = False
 
@@ -23,4 +25,4 @@ class MenuState(BaseState):
         pass
 
     def draw(self, pantalla: pygame.Surface) -> None:
-        dibujar_menu(pantalla, self.app.fuente, self.app.temas.actual)
+        dibujar_menu(pantalla, self.app.fuente, self.app.temas.actual, self.app.tiempo_extendido)
