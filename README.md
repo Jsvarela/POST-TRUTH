@@ -26,6 +26,7 @@ python src/main.py
 - G: mostrar la guia hacia la noticia
 - 1-4: decidir sobre una publicacion
 - I (en el menu): ver la introduccion
+- X (en el menu): tiempo extendido (dias y relojes mas largos)
 - ESC: saltar la introduccion
 
 ## Estructura
