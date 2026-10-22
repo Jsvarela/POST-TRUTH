@@ -89,6 +89,9 @@ class Impact:
         ]
 
 
+SENTIDOS = {"favor": 1, "contra": -1}   # como afecta una publicacion a un candidato si circula
+
+
 @dataclass(frozen=True)
 class NewsEvent:
     event_id: str
@@ -104,6 +107,7 @@ class NewsEvent:
     comments: int = 0
     clues: tuple[Pista, ...] = ()
     evidences: tuple[Evidencia, ...] = ()
+    candidatos: tuple[tuple[str, int], ...] = ()   # (candidato, 1 la favorece / -1 lo perjudica)
 
     @classmethod
     def from_dict(cls, d: dict) -> "NewsEvent":
@@ -116,7 +120,8 @@ class NewsEvent:
             image=Imagen.from_dict(d["imagen"]) if d.get("imagen") else None,
             likes=int(d.get("likes", 0)), comments=int(d.get("comentarios", 0)),
             clues=validar_pistas(Pista.from_dict(p) for p in d.get("pistas", [])),
-            evidences=validar_evidencias(Evidencia.from_dict(e) for e in d.get("evidencias", [])))
+            evidences=validar_evidencias(Evidencia.from_dict(e) for e in d.get("evidencias", [])),
+            candidatos=tuple((c, SENTIDOS[s]) for c, s in d.get("candidatos", {}).items()))
 
     def to_dict(self) -> dict:
         """Mismo formato que events.json."""
@@ -129,4 +134,6 @@ class NewsEvent:
             d["imagen"] = self.image.to_dict()
         d.update({"likes": self.likes, "comentarios": self.comments, "pistas": [p.to_dict() for p in self.clues],
                   "evidencias": [e.to_dict() for e in self.evidences]})
+        if self.candidatos:
+            d["candidatos"] = {c: "favor" if s > 0 else "contra" for c, s in self.candidatos}
         return d

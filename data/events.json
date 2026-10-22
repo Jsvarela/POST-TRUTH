@@ -250,7 +250,10 @@
           "score": 7
         }
       }
-    ]
+    ],
+    "candidatos": {
+      "juan": "contra"
+    }
   },
   {
     "id": "parques-cerrados",
@@ -618,7 +621,10 @@
           "score": 0
         }
       }
-    ]
+    ],
+    "candidatos": {
+      "maria": "favor"
+    }
   },
   {
     "id": "video-debate-editado",
@@ -828,7 +834,10 @@
           "score": 7
         }
       }
-    ]
+    ],
+    "candidatos": {
+      "lucia": "contra"
+    }
   },
   {
     "id": "campana-convivencia",
@@ -1226,7 +1235,10 @@
           "score": 7
         }
       }
-    ]
+    ],
+    "candidatos": {
+      "andres": "contra"
+    }
   },
   {
     "id": "encuesta-inventada",
@@ -1456,7 +1468,10 @@
           "score": 8
         }
       }
-    ]
+    ],
+    "candidatos": {
+      "lucia": "contra"
+    }
   },
   {
     "id": "agua-contaminada",
@@ -1687,7 +1702,10 @@
           "score": 6
         }
       }
-    ]
+    ],
+    "candidatos": {
+      "juan": "contra"
+    }
   },
   {
     "id": "pasajes-gratis",
@@ -1911,7 +1929,10 @@
           "score": 7
         }
       }
-    ]
+    ],
+    "candidatos": {
+      "maria": "contra"
+    }
   },
   {
     "id": "foto-con-contratista",
@@ -2134,7 +2155,10 @@
           "score": 8
         }
       }
-    ]
+    ],
+    "candidatos": {
+      "andres": "contra"
+    }
   },
   {
     "id": "faltas-de-juan",
@@ -2337,7 +2361,10 @@
           "score": -6
         }
       }
-    ]
+    ],
+    "candidatos": {
+      "juan": "contra"
+    }
   },
   {
     "id": "debate-en-el-colegio",
@@ -2714,7 +2741,10 @@
           "score": -6
         }
       }
-    ]
+    ],
+    "candidatos": {
+      "andres": "favor"
+    }
   },
   {
     "id": "obras-en-la-plaza",
