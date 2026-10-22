@@ -6,7 +6,7 @@ import random
 from dataclasses import asdict, dataclass, field, replace
 from typing import Sequence
 
-from post_truth.config import RUTA_EVENTOS, RUTA_GRAFO_CIUDAD
+from post_truth.config import DIAS_CAMPANA, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD
 from post_truth.decision_tree import DecisionNode, DecisionTree, load_trees
 from post_truth.game_state import CityState
 from post_truth.models import Impact
@@ -28,8 +28,8 @@ PRESENTES = 3          # ciudadanos del grafo social en el lugar de la publicaci
 UMBRAL_VIRAL = 300     # likes desde los que una publicacion es viral y se decide con reloj
 TIEMPO_VIRAL = 30.0    # segundos por turno; corren tambien en la calle (buscar evidencia cuesta tiempo)
 AVISO_VENCIDO = "Se te acabo el tiempo: la publicacion siguio circulando sin que nadie la frenara."
-DIAS, NOTICIAS_POR_DIA = 3, 2         # campana: cada dia trae sus noticias y una crisis viral
-DURACION_DIA = 180.0                  # segundos de un dia (corre en la calle y mientras se decide)
+DIAS, NOTICIAS_POR_DIA = DIAS_CAMPANA, 2   # campana: cada dia trae sus noticias y una crisis viral
+DURACION_DIA = 150.0                  # segundos de un dia (corre en la calle y mientras se decide)
 MOMENTO_CRISIS = (0.3, 0.7)           # la crisis aparece entre el 30% y el 70% del dia
 FACTOR_TIEMPO_EXTENDIDO = 1.5         # accesibilidad: dias y relojes mas largos
 
