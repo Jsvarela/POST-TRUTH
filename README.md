@@ -24,6 +24,8 @@ python src/main.py
 - WASD o flechas: caminar por la ciudad
 - E: entrar a un lugar / buscar evidencia
 - G: mostrar la guia hacia la noticia
+- 1-3: elegir que hacer en un lugar con varias opciones (noticia, evidencia o minijuego)
+- P (en un minijuego): pausa
 - 1-4: decidir sobre una publicacion
 - I (en el menu): ver la introduccion
 - X (en el menu): tiempo extendido (dias y relojes mas largos)
