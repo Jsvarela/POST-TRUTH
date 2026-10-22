@@ -12,6 +12,7 @@ from post_truth.game_state import CityState
 from post_truth.models import Impact
 from post_truth.models import credibilidad as cred
 from post_truth.models import eleccion
+from post_truth.models import minijuego as mj
 from post_truth.models.personaje import Personaje
 from post_truth.models.pistas import Evidencia, Investigacion, Pista
 from post_truth.structures.grafo_ciudad import GrafoCiudad
@@ -49,6 +50,7 @@ class Campana:
     crisis_lanzada: bool = False
     resueltas: list[tuple[int, str]] = field(default_factory=list)   # (indice, accion) del dia, para el resumen
     ciudad_al_amanecer: dict = field(default_factory=dict)
+    minijuegos_hoy: list[str] = field(default_factory=list)          # lugares cuyo minijuego ya se jugo hoy
 
     @property
     def duracion(self) -> float:
@@ -65,13 +67,15 @@ class Campana:
     def to_dict(self) -> dict:
         return {"dias": self.dias, "crisis": self.crisis, "momento_crisis": self.momento_crisis, "factor": self.factor,
                 "dia": self.dia, "t": self.t, "cola": self.cola, "crisis_lanzada": self.crisis_lanzada,
-                "resueltas": [list(r) for r in self.resueltas], "ciudad_al_amanecer": self.ciudad_al_amanecer}
+                "resueltas": [list(r) for r in self.resueltas], "ciudad_al_amanecer": self.ciudad_al_amanecer,
+                "minijuegos_hoy": self.minijuegos_hoy}
 
     @classmethod
     def from_dict(cls, d: dict) -> "Campana":
         return cls([list(x) for x in d["dias"]], list(d["crisis"]), list(d["momento_crisis"]), float(d["factor"]),
                    int(d["dia"]), float(d["t"]), list(d["cola"]), bool(d["crisis_lanzada"]),
-                   [(int(i), a) for i, a in d["resueltas"]], dict(d["ciudad_al_amanecer"]))
+                   [(int(i), a) for i, a in d["resueltas"]], dict(d["ciudad_al_amanecer"]),
+                   list(d.get("minijuegos_hoy", [])))
 
 
 @dataclass
@@ -145,6 +149,8 @@ class PartidaSesion:
         self.novedad = ""                           # "crisis" cuando aparece una; el controlador la avisa y la limpia
         self._en_pausa: dict[int, list[dict]] = {}  # investigacion de una noticia interrumpida por la crisis
         self._accion_aplicada = ""                  # la ultima decision aplicada (para el resumen del dia)
+        self.minijuegos: dict[str, str] = {}        # lugar -> id del minijuego (data/minijuegos.json)
+        self.minijuego: mj.Minijuego | None = None  # el que se esta jugando
         self.apoyo = {c: eleccion.APOYO_INICIAL for c in eleccion.CANDIDATOS}   # para la eleccion del alcalde
         self.por_rumores = {c: 0.0 for c in eleccion.CANDIDATOS}               # parte movida por publicaciones falsas
 
@@ -166,7 +172,7 @@ class PartidaSesion:
     @classmethod
     def nueva_campana(cls, personajes: Sequence[Personaje], todos: list[DecisionTree], grafo: GrafoSocial,
                       mapa: GrafoCiudad, rng: random.Random, dias: int = DIAS, por_dia: int = NOTICIAS_POR_DIA,
-                      extendido: bool = False) -> "PartidaSesion":
+                      extendido: bool = False, minijuegos: dict[str, str] | None = None) -> "PartidaSesion":
         """Sortea las noticias del dia (no virales) y una crisis por dia (virales), sin repetir."""
         virales = [a for a in todos if a.event.likes >= UMBRAL_VIRAL]
         normales = [a for a in todos if a.event.likes < UMBRAL_VIRAL]
@@ -179,6 +185,7 @@ class PartidaSesion:
                           FACTOR_TIEMPO_EXTENDIDO if extendido else 1.0)
         sesion = cls.nueva(personajes, elegidas, grafo, mapa, rng)
         sesion.campana = campana
+        sesion.minijuegos = dict(minijuegos or {})
         sesion._amanecer()
         return sesion
 
@@ -403,13 +410,47 @@ class PartidaSesion:
         j.historial.append({"evento": self.arbol.event.event_id, "accion": "vencido" if r.vencido else r.nodo.tipo,
                             "falsa": falsa, "respaldo": r.respaldo, "credibilidad": delta})
 
+    # --- minijuegos -------------------------------------------------------------------------
+    def minijuego_en(self, zona: str) -> str | None:
+        """Id del minijuego disponible en `zona` para el jugador de turno (uno por lugar y por dia), o None."""
+        if (self.campana is None or self.fase != DECIDIENDO or self.pendiente is not None
+                or zona in self.campana.minijuegos_hoy):
+            return None
+        return self.minijuegos.get(zona)
+
+    def iniciar_minijuego(self, zona: str) -> mj.Minijuego | None:
+        id = self.minijuego_en(zona)
+        if id is None:
+            return None
+        j = self.jugador_actual
+        contexto = mj.ContextoMinijuego(zona, j.id, j.rol.value, j.credibilidad, self.campana.dia,
+                                        self.campana.factor > 1)
+        self.minijuego = mj.crear(id, contexto)
+        return self.minijuego
+
+    def terminar_minijuego(self) -> mj.ResultadoMinijuego:
+        """Aplica el resultado: impacto a la ciudad y puntos, credibilidad e historial al jugador."""
+        m = self.minijuego
+        if m is None:
+            raise ValueError("No hay un minijuego en curso")
+        r = m.resultado()
+        j = self.jugador(m.contexto.jugador)
+        self.ciudad.apply(r.impacto)
+        j.puntos += r.impacto.score
+        j.credibilidad = cred.acotar(j.credibilidad + r.credibilidad)
+        j.historial.append({"evento": f"minijuego:{m.id}:{m.contexto.lugar}", "accion": "minijuego",
+                            "falsa": False, "respaldo": 0, "credibilidad": r.credibilidad})
+        self.campana.minijuegos_hoy.append(m.contexto.lugar)
+        self.minijuego = None
+        return r
+
     def resultado_eleccion(self) -> eleccion.ResultadoEleccion:
         return eleccion.calcular(self.apoyo, self.por_rumores, self.ciudad)
 
     # --- campana ---------------------------------------------------------------------------
     def _amanecer(self) -> None:
         c = self.campana
-        c.t, c.crisis_lanzada, c.resueltas = 0.0, False, []
+        c.t, c.crisis_lanzada, c.resueltas, c.minijuegos_hoy = 0.0, False, [], []
         c.cola = list(c.dias[c.dia][1:])
         c.ciudad_al_amanecer = self.ciudad.to_dict()
         self._en_pausa.clear()
@@ -495,6 +536,8 @@ class PartidaSesion:
             "reloj": {"restante": self.tiempo_restante, "activo": self.reloj_activo},
             "campana": None if self.campana is None else self.campana.to_dict(),
             "apoyo": self.apoyo, "por_rumores": self.por_rumores,
+            "minijuegos": self.minijuegos,
+            "minijuego": None if self.minijuego is None else self.minijuego.to_dict(),
             "en_pausa": {str(k): v for k, v in self._en_pausa.items()},
             "grafo": self.grafo.to_dict(),
             "rng": [estado_rng[0], list(estado_rng[1]), estado_rng[2]],
@@ -522,6 +565,9 @@ class PartidaSesion:
                      CityState.from_dict(datos["ciudad"]))
         sesion.indice, sesion.turno, sesion.fase = indice, int(datos["turno"]), datos["fase"]
         sesion.apoyo.update(datos.get("apoyo", {}))
+        sesion.minijuegos = dict(datos.get("minijuegos", {}))
+        if datos.get("minijuego") is not None:
+            sesion.minijuego = mj.desde_dict(datos["minijuego"])
         sesion.por_rumores.update(datos.get("por_rumores", {}))
         if datos.get("campana") is not None:
             sesion.campana = Campana.from_dict(datos["campana"])
