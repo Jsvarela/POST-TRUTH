@@ -10,6 +10,7 @@ from post_truth.config import RUTA_EVENTOS, RUTA_GRAFO_CIUDAD
 from post_truth.decision_tree import DecisionNode, DecisionTree, load_trees
 from post_truth.game_state import CityState
 from post_truth.models import Impact
+from post_truth.models import eleccion
 from post_truth.models.personaje import Personaje
 from post_truth.models.pistas import Evidencia, Investigacion, Pista
 from post_truth.structures.grafo_ciudad import GrafoCiudad
@@ -113,6 +114,7 @@ class ResultadoDecision:
     aviso: str = ""
     simulacion: SimulacionDecision | None = None
     vencido: bool = False   # la decidio el reloj, no el jugador
+    alcance: float = 0.0    # fraccion de la red que recibio la publicacion (para la eleccion)
 
 
 class PartidaSesion:
@@ -135,6 +137,8 @@ class PartidaSesion:
         self.novedad = ""                           # "crisis" cuando aparece una; el controlador la avisa y la limpia
         self._en_pausa: dict[int, list[dict]] = {}  # investigacion de una noticia interrumpida por la crisis
         self._accion_aplicada = ""                  # la ultima decision aplicada (para el resumen del dia)
+        self.apoyo = {c: eleccion.APOYO_INICIAL for c in eleccion.CANDIDATOS}   # para la eleccion del alcalde
+        self.por_rumores = {c: 0.0 for c in eleccion.CANDIDATOS}               # parte movida por publicaciones falsas
 
     @classmethod
     def nueva(cls, personajes: Sequence[Personaje], arboles: list[DecisionTree], grafo: GrafoSocial,
@@ -312,8 +316,10 @@ class PartidaSesion:
         simulacion = self._simular(j, nodo, respaldo)
         if simulacion is not None:
             impacto = impacto + simulacion.resultado.impacto()
+        res = simulacion.resultado if simulacion is not None else None
+        alcance = res.alcanzados / max(1, res.poblacion - 1) if res is not None else 0.0
         self.pendiente = ResultadoDecision(True, "", j.id, nodo, impacto, mensaje_respaldo(nodo.tipo, respaldo),
-                                           simulacion)
+                                           simulacion, alcance=alcance)
         return self.pendiente
 
     def _simular(self, j: Jugador, nodo: DecisionNode, respaldo: int) -> SimulacionDecision | None:
@@ -332,6 +338,7 @@ class PartidaSesion:
         self.ciudad.apply(r.impacto)
         self.jugador(r.jugador).puntos += r.impacto.score
         self._accion_aplicada = "se acabo el tiempo" if r.vencido else r.nodo.label
+        self._mover_apoyo(r)
         self.pendiente, self.fase = None, CONSECUENCIA
         return r
 
@@ -365,6 +372,19 @@ class PartidaSesion:
         for j in self.jugadores:
             j.investigacion = Investigacion(evento.clues, evidencias=evento.evidences)
             j.investigacion.revelar_evidencia(j.zona)
+
+    def _mover_apoyo(self, r: ResultadoDecision) -> None:
+        evento = self.arbol.event
+        falsa = es_falsa(evento.truth_level)
+        for candidato, sentido in evento.candidatos:
+            delta = eleccion.efecto_en_apoyo(sentido, falsa, r.nodo.tipo, r.alcance, r.vencido)
+            nuevo = max(eleccion.APOYO_MINIMO, self.apoyo[candidato] + delta)
+            if falsa:
+                self.por_rumores[candidato] += nuevo - self.apoyo[candidato]
+            self.apoyo[candidato] = nuevo
+
+    def resultado_eleccion(self) -> eleccion.ResultadoEleccion:
+        return eleccion.calcular(self.apoyo, self.por_rumores, self.ciudad)
 
     # --- campana ---------------------------------------------------------------------------
     def _amanecer(self) -> None:
@@ -449,9 +469,10 @@ class PartidaSesion:
             "indice": self.indice, "turno": self.turno, "fase": self.fase,
             "pendiente": None if p is None else {"jugador": p.jugador, "nodo": p.nodo.node_id,
                                                  "impacto": asdict(p.impacto), "aviso": p.aviso,
-                                                 "vencido": p.vencido},
+                                                 "vencido": p.vencido, "alcance": p.alcance},
             "reloj": {"restante": self.tiempo_restante, "activo": self.reloj_activo},
             "campana": None if self.campana is None else self.campana.to_dict(),
+            "apoyo": self.apoyo, "por_rumores": self.por_rumores,
             "en_pausa": {str(k): v for k, v in self._en_pausa.items()},
             "grafo": self.grafo.to_dict(),
             "rng": [estado_rng[0], list(estado_rng[1]), estado_rng[2]],
@@ -477,6 +498,8 @@ class PartidaSesion:
         sesion = cls(jugadores, arboles, GrafoSocial.from_dict(datos["grafo"]), GrafoCiudad.cargar(ruta_mapa), rng,
                      CityState.from_dict(datos["ciudad"]))
         sesion.indice, sesion.turno, sesion.fase = indice, int(datos["turno"]), datos["fase"]
+        sesion.apoyo.update(datos.get("apoyo", {}))
+        sesion.por_rumores.update(datos.get("por_rumores", {}))
         if datos.get("campana") is not None:
             sesion.campana = Campana.from_dict(datos["campana"])
             sesion._en_pausa = {int(k): v for k, v in datos.get("en_pausa", {}).items()}
@@ -488,7 +511,8 @@ class PartidaSesion:
             if nodo is None:
                 raise ValueError(f"Decision pendiente desconocida: {p['nodo']}")
             sesion.pendiente = ResultadoDecision(True, "", p["jugador"], nodo, Impact.from_dict(p["impacto"]),
-                                                 p["aviso"], vencido=bool(p.get("vencido", False)))
+                                                 p["aviso"], vencido=bool(p.get("vencido", False)),
+                                                 alcance=float(p.get("alcance", 0.0)))
         return sesion
 
 
