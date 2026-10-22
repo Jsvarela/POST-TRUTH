@@ -9,16 +9,29 @@ from post_truth.views.retrato_view import dibujar_retrato
 from post_truth.views.theme import Tema
 
 
+POR_LA_CIUDAD = {"juan": "una ciudad con mas conflictos pidio mano dura", "maria": "la convivencia le dio la razon",
+                 "andres": "el bienestar digital lo respaldo",
+                 "lucia": "la informacion verificada y la confianza le dieron la razon"}
+
+
 def explicacion(r: ResultadoEleccion, nombres: dict[str, str]) -> str:
     ganador = nombres[r.ganador]
     if r.hundido_por_rumor:
         return f"Gano {ganador}, pero sin los rumores falsos habria ganado {nombres[r.hundido_por_rumor]}."
+    if r.por_la_ciudad:
+        return f"Gano {ganador}: {POR_LA_CIUDAD[r.ganador]}."
     return f"Gano {ganador} con sus propuestas: los rumores no decidieron la eleccion."
 
 
+TANDAS = 12   # el conteo avanza por tandas de votos, como un escrutinio
+
+
 def dibujar_resultado(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, r: ResultadoEleccion,
-                      candidatos: list[Candidato], puntos: int, progreso: float) -> None:
-    """`progreso` (0..1) hace crecer las barras al entrar."""
+                      candidatos: list[Candidato], puntos: int, progreso: float,
+                      jugadores: list[tuple[str, int, int]] = ()) -> None:
+    """`progreso` (0..1) es el avance del conteo; el ganador se revela al final.
+    `jugadores`: (rol, puntos, credibilidad) de cada jugador."""
+    progreso = int(progreso * TANDAS) / TANDAS
     pantalla.fill(tema.fondo)
     titulo = fuentes.titulo.render("Eleccion del alcalde", True, tema.acento)
     pantalla.blit(titulo, titulo.get_rect(midtop=(ANCHO // 2, px(24))))
@@ -28,7 +41,7 @@ def dibujar_resultado(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, r:
     base = px(400)
     for i, c in enumerate(candidatos):
         x = x0 + i * ancho_col + ancho_col // 2
-        gano = c.id == r.ganador
+        gano = c.id == r.ganador and progreso >= 1   # el ganador se revela al terminar el conteo
         retrato = pygame.Rect(x - px(55), px(100), px(110), px(130))
         dibujar_retrato(pantalla, c.aspecto, tema, retrato)
         alto = round(px(160) * r.votos[c.id] / max(r.votos.values()) * progreso)   # la mas alta llena la columna
@@ -43,10 +56,15 @@ def dibujar_resultado(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, r:
                                 (f"{r.votos[c.id] * progreso:.0f}%", base + px(32), tema.acento if gano else tema.texto)):
             img = fuentes.normal.render(texto, True, color)
             pantalla.blit(img, img.get_rect(midtop=(x, y)))
+    if progreso < 1:
+        img = fuentes.normal.render(f"Contando votos... {round(progreso * 100)}%   (Espacio: saltar)", True, tema.texto)
+        pantalla.blit(img, img.get_rect(midtop=(ANCHO // 2, px(480))))
+        return
     lineas = [(explicacion(r, nombres), tema.texto),
-              (f"Participacion: {r.participacion}% de la ciudad voto.", tema.texto),
-              (f"Tu resultado: {r.titulo_jugador}  |  Puntaje {puntos}", tema.acento)]
-    y = px(480)
+              (f"Participacion: {r.participacion}% de la ciudad voto.  Ciudad: {r.titulo_jugador}, puntaje {puntos}",
+               tema.texto)]
+    lineas += [(f"{rol}: {p} puntos, credibilidad {c}", tema.acento) for rol, p, c in jugadores]
+    y = px(472)
     for texto, color in lineas:
         img = fuentes.normal.render(texto, True, color)
         pantalla.blit(img, img.get_rect(midtop=(ANCHO // 2, y)))

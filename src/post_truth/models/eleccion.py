@@ -11,7 +11,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from post_truth.game_state import CityState
+
 CANDIDATOS = ("juan", "maria", "andres", "lucia")   # los mismos ids de data/intro.json
+# Afinidad con la ciudad al final: cuanto gana cada uno por punto de cambio de un indicador desde el inicio.
+# Lucia ("Hablemos claro") crece con la informacion verificada y la confianza; Maria con la convivencia; Andres con
+# el bienestar digital; Juan ("mas orden") crece cuando hay conflictos.
+PERFILES = {
+    "juan": {"conflicts": 0.4},
+    "maria": {"coexistence": 0.4},
+    "andres": {"digital_wellbeing": 0.4},
+    "lucia": {"verified_information": 0.2, "trust": 0.2},
+}
 APOYO_INICIAL = 25.0
 PESO_RUMOR, PESO_VERDAD = 6.0, 4.0
 APOYO_MINIMO = 1.0
@@ -42,6 +53,7 @@ class ResultadoEleccion:
     participacion: int               # % de la ciudad que voto
     hundido_por_rumor: str           # candidato que habria ganado sin rumores falsos ("" si nadie)
     titulo_jugador: str
+    por_la_ciudad: bool = False      # el ganador debe mas a como quedo la ciudad que a sus propuestas
 
 
 def participacion(ciudad) -> int:
@@ -58,11 +70,23 @@ def titulo(ciudad) -> str:
     return "Ciudad desinformada"
 
 
-def calcular(apoyo: dict[str, float], por_rumores: dict[str, float], ciudad) -> ResultadoEleccion:
-    """`por_rumores`: la parte del apoyo de cada candidato que movieron publicaciones FALSAS."""
+def afinidad(ciudad) -> dict[str, float]:
+    """Apoyo que gana cada candidato por como quedo la ciudad (respecto a como empezo la campana)."""
+    inicio = CityState()
+    return {c: sum(peso * (getattr(ciudad, campo) - getattr(inicio, campo)) for campo, peso in PERFILES[c].items())
+            for c in CANDIDATOS}
+
+
+def calcular(apoyo_decisiones: dict[str, float], por_rumores: dict[str, float], ciudad) -> ResultadoEleccion:
+    """Apoyo = lo que movieron las decisiones (rumores incluidos) + la afinidad con la ciudad final.
+    `por_rumores`: la parte que movieron publicaciones FALSAS."""
+    extra = afinidad(ciudad)
+    apoyo = {c: max(APOYO_MINIMO, apoyo_decisiones[c] + extra[c]) for c in CANDIDATOS}
     total = sum(apoyo.values())
     votos = {c: 100 * apoyo[c] / total for c in CANDIDATOS}
     ganador = max(CANDIDATOS, key=lambda c: (apoyo[c], -CANDIDATOS.index(c)))
     sin_rumores = {c: apoyo[c] - por_rumores.get(c, 0.0) for c in CANDIDATOS}
     justo = max(CANDIDATOS, key=lambda c: (sin_rumores[c], -CANDIDATOS.index(c)))
-    return ResultadoEleccion(votos, ganador, participacion(ciudad), justo if justo != ganador else "", titulo(ciudad))
+    por_ciudad = extra[ganador] > apoyo_decisiones[ganador] - APOYO_INICIAL
+    return ResultadoEleccion(votos, ganador, participacion(ciudad), justo if justo != ganador else "", titulo(ciudad),
+                             por_ciudad)

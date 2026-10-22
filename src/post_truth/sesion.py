@@ -389,6 +389,7 @@ class PartidaSesion:
         falsa = es_falsa(evento.truth_level)
         for candidato, sentido in evento.candidatos:
             delta = eleccion.efecto_en_apoyo(sentido, falsa, r.nodo.tipo, r.alcance, r.vencido)
+            delta *= cred.factor(self.jugador(r.jugador).credibilidad)   # a un jugador creible se le cree mas
             nuevo = max(eleccion.APOYO_MINIMO, self.apoyo[candidato] + delta)
             if falsa:
                 self.por_rumores[candidato] += nuevo - self.apoyo[candidato]
