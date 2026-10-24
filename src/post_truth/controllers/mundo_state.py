@@ -15,6 +15,7 @@ from post_truth.models.personaje import Genero, Personaje
 from post_truth.sesion import FIN, FIN_DIA, PartidaSesion
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
+from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.decorado import generar as generar_decorado
 from post_truth.views.mundo_view import Camara, EstadoMundo, dibujar_mundo
 
@@ -48,6 +49,8 @@ class MundoState(BaseState):
         self.mapa_guia = mapa_de_tiempos(GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.mundo)
         self.t = 0.0
         self._dia = -1   # dia de campana que ya se preparo en el mundo
+        self.anuncio: Anuncio | None = None   # grande, en el centro (la crisis pausa el mundo mientras se ve)
+        self.toast: Anuncio | None = None     # corto, arriba
 
     @property
     def personaje(self) -> Personaje:
@@ -74,13 +77,25 @@ class MundoState(BaseState):
             self.sesion.llegar(self.jugador_id, self.mundo.ultima_plaza)
             self.guia = False
             self.animacion = AnimacionPersonaje()
+            c = self.sesion.campana
+            texto = ("Empieza la campana: frena los rumores antes de la eleccion." if c.dia == 0
+                     else "Amanece en Ciudad Nova. Nuevas noticias circulan por la red.")
+            self.anuncio = Anuncio(f"Dia {c.dia + 1} de {len(c.dias)}", texto, "dia", duracion=2.4)
         self.camara.saltar(self.mundo.jugador)
         self.presionadas.clear()
         self.aviso, self._t_aviso = "", 0.0
         self.menu: list[str] = []   # opciones del lugar cuando hay mas de una (E las muestra, 1-3 elige)
 
-    def _avisar(self, texto: str) -> None:
+    def _avisar(self, texto: str, titulo: str = "", tipo: str = "info") -> None:
+        """El texto queda en la franja; con `titulo` ademas baja un toast animado."""
         self.aviso, self._t_aviso = texto, DURACION_AVISO
+        if titulo:
+            self.toast = Anuncio(titulo, texto, tipo, grande=False, duracion=DURACION_AVISO)
+
+    @property
+    def en_pausa(self) -> bool:
+        """La crisis se anuncia en grande y detiene el mundo (y su reloj) mientras se lee."""
+        return self.anuncio is not None and self.anuncio.tipo == "crisis"
 
     def _llegar(self, zona: str) -> None:
         self.sesion.llegar(self.jugador_id, zona)
@@ -120,7 +135,7 @@ class MundoState(BaseState):
         if accion is None:
             zona = self.mundo.zona_al_alcance()
             if zona is not None:
-                self._avisar(f"{zona.capitalize()}: aqui no hay nada de esta noticia.")
+                self._avisar(f"{zona.capitalize()}: aqui no hay nada de esta noticia.", "Nada por aqui")
             return
         zona, que = accion
         if que == "elegir":
@@ -142,9 +157,13 @@ class MundoState(BaseState):
             return
         evidencia = self.sesion.buscar_evidencia(self.jugador_id)
         if evidencia is not None:
-            self._avisar(f"{evidencia.titulo}: {evidencia.hallazgo}")
+            self._avisar(f"{evidencia.titulo}: {evidencia.hallazgo}", "Evidencia encontrada", "bueno")
 
     def handle_event(self, event: pygame.event.Event) -> None:
+        if self.en_pausa and event.type == pygame.KEYDOWN:   # solo la crisis detiene el mundo y las teclas
+            if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_e):
+                self.anuncio.cerrar()                         # Enter, Espacio o E: seguir sin esperar
+            return
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE and self.menu:
                 self.menu = []
@@ -163,6 +182,14 @@ class MundoState(BaseState):
             self.presionadas.discard(event.key)
 
     def update(self, dt: float) -> None:
+        for anuncio in ("anuncio", "toast"):
+            a = getattr(self, anuncio)
+            if a is not None:
+                a.avanzar(dt)
+                if a.terminado:
+                    setattr(self, anuncio, None)
+        if self.en_pausa:
+            return
         dx = sum(DIRECCIONES[k][0] for k in self.presionadas)
         dy = sum(DIRECCIONES[k][1] for k in self.presionadas)
         antes = self.mundo.jugador
@@ -177,6 +204,9 @@ class MundoState(BaseState):
         if s.novedad == "crisis":
             s.novedad = ""
             self._avisar(f"Crisis viral en {s.zona_noticia.capitalize()}! Corre antes de que se riegue.")
+            self.presionadas.clear()
+            self.anuncio = Anuncio("Crisis viral!", f"Algo se esta regando en {s.zona_noticia.capitalize()}. Tienes "
+                                   f"{round(s.tiempo_restante or 0)} s para frenarlo.", "crisis", duracion=3.0)
         if vencida is not None:                           # vencio buscando evidencia: se ve adentro lo que paso
             self.presionadas.clear()
             self.app.estados.cambiar("escena", fundido=True)
@@ -205,4 +235,8 @@ class MundoState(BaseState):
             and accion[1] != "elegir" else "")
 
     def draw(self, pantalla: pygame.Surface) -> None:
-        dibujar_mundo(pantalla, self.app.fuentes, self.app.temas.actual, self.mundo, self.estado_vista())
+        tema = self.app.temas.actual
+        dibujar_mundo(pantalla, self.app.fuentes, tema, self.mundo, self.estado_vista())
+        for a in (self.toast, self.anuncio):
+            if a is not None:
+                dibujar_anuncio(pantalla, self.app.fuentes, tema, a)

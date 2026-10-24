@@ -13,6 +13,7 @@ from post_truth.models.pistas import Investigacion, Pista
 from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, FIN_DIA, PartidaSesion, ResultadoDecision
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
+from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.componentes import Boton, CajaDialogo
 from post_truth.views.escena_view import (AYUDA, AYUDA_INTERIOR, RECT_MAPA, RECT_TARJETA, EstadoPresentes,
                                           dibujar_escena)
@@ -66,6 +67,7 @@ class EscenaState(BaseState):
         self._t = 0.0                  # reloj de la escena (respiracion de los presentes)
         self._reaccion: tuple[int, frozenset[str]] | None = None   # signo del impacto y a quienes les llego
         self._t_reaccion = 0.0
+        self.anuncio: Anuncio | None = None   # se acabo el tiempo, cambio de credibilidad...
 
     @property
     def sesion(self) -> PartidaSesion:
@@ -256,6 +258,9 @@ class EscenaState(BaseState):
             self._mostrar_decision(r)
 
     def _mostrar_decision(self, r: ResultadoDecision) -> None:
+        if r.vencido:
+            self.anuncio = Anuncio("Se acabo el tiempo!", "La publicacion siguio circulando sin que nadie la frenara.",
+                                   "malo", duracion=2.4)
         if r.simulacion is None:
             self._cerrar_decision(r)
             return
@@ -273,6 +278,11 @@ class EscenaState(BaseState):
         self.animo = _signo(r.impacto)
         olas = r.simulacion.resultado.olas[1:] if r.simulacion is not None else ()
         self._reaccion = (self.animo, frozenset(id for ola in olas for id in ola))   # quienes la recibieron
+        historial = self.sesion.jugador(r.jugador).historial
+        delta = historial[-1]["credibilidad"] if historial else 0
+        if delta and (self.anuncio is None or self.anuncio.terminado):
+            self.anuncio = Anuncio(f"Credibilidad {delta:+}", "Lo que decides cambia cuanto te cree la red.",
+                                   "bueno" if delta > 0 else "malo", grande=False, duracion=2.6)
         self._t_reaccion = 0.0
         mensaje = r.nodo.consecuencia(self.investigacion.pistas_descubiertas()) or "Nada cambia por ahora."
         self.dialogo.set_texto(f"{mensaje}\n{r.aviso}" if r.aviso else mensaje, "Consecuencia")
@@ -344,6 +354,10 @@ class EscenaState(BaseState):
         self.dialogo.update(dt)
         self._t += dt
         self._t_reaccion += dt
+        if self.anuncio is not None:
+            self.anuncio.avanzar(dt)
+            if self.anuncio.terminado:
+                self.anuncio = None
         if self.fase == DECIDIENDO:
             vencida = self.sesion.transcurrir(dt)
             if vencida is not None:
@@ -381,6 +395,8 @@ class EscenaState(BaseState):
                        self._presentes() if self.interior and self.fase in (DECIDIENDO, CONSECUENCIA) else None,
                        (self._reaccion[0], self._t_reaccion) if self._reaccion and self.fase == CONSECUENCIA else None,
                        self.sesion.jugador_actual.credibilidad)
+        if self.anuncio is not None:
+            dibujar_anuncio(pantalla, self.app.fuentes, self.app.temas.actual, self.anuncio)
 
     def _reloj(self) -> tuple[float, float] | None:
         restante = self.sesion.tiempo_restante
