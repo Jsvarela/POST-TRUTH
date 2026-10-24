@@ -93,7 +93,6 @@ class MundoState(BaseState):
         self.camara.saltar(self.mundo.jugador)
         self.presionadas.clear()
         self.aviso, self._t_aviso = "", 0.0
-        self.menu: list[str] = []   # opciones del lugar cuando hay mas de una (E las muestra, 1-3 elige)
 
     def _avisar(self, texto: str, titulo: str = "", tipo: str = "info") -> None:
         """El texto queda en la franja; con `titulo` ademas baja un toast animado."""
@@ -108,64 +107,18 @@ class MundoState(BaseState):
         """La zona que pisa el jugador: E funciona en cualquier punto dentro de ella."""
         return self.mundo.zona_en(self.mundo.jugador)
 
-    def opciones(self, zona: str) -> list[str]:
-        """Lo que se puede hacer en `zona`: "entrar" (la noticia), "evidencia" y/o "minijuego"."""
-        inv = self.sesion.jugador_actual.investigacion
-        evidencia = inv.evidencia_en(zona)
-        if zona == self.sesion.zona_noticia:
-            ops = ["entrar"]
-        elif evidencia is not None and not inv.esta_descubierta(evidencia.id):
-            ops = ["evidencia"]
-        else:
-            ops = []
-        return ops + (["minijuego"] if self.sesion.minijuego_en(zona) else [])
-
     def accion_disponible(self) -> tuple[str, str] | None:
-        """(zona, "entrar" | "evidencia" | "minijuego" | "elegir") de lo que hace E aqui, o None."""
+        """(zona, "entrar") si el jugador esta dentro de un lugar: E entra siempre y adentro se decide."""
         zona = self.zona_aqui()
-        ops = self.opciones(zona) if zona is not None else []
-        if not ops:
-            return None
-        return zona, ops[0] if len(ops) == 1 else "elegir"
+        return (zona, "entrar") if zona is not None else None
 
     def etiqueta(self, que: str, zona: str) -> str:
-        if que == "entrar":
-            return f"Entrar a la noticia de {zona.capitalize()}"
-        if que == "evidencia":
-            return f"Buscar evidencia en {zona.capitalize()}"
-        return f"Jugar {mj.REGISTRO[self.sesion.minijuego_en(zona)].nombre}"
+        return f"Entrar a {self.mundo.zonas[zona].nombre}"
 
     def _usar(self) -> None:
-        if self.menu:
-            self.menu = []
-            return
-        accion = self.accion_disponible()
-        if accion is None:
-            zona = self.zona_aqui()
-            if zona is not None:
-                self._avisar(f"{zona.capitalize()}: aqui no hay nada de esta noticia.", "Nada por aqui")
-            return
-        zona, que = accion
-        if que == "elegir":
-            self.menu = self.opciones(zona)
-            return
-        self._hacer(zona, que)
-
-    def _hacer(self, zona: str, que: str) -> None:
-        self.menu = []
-        if que == "minijuego":
-            if self.sesion.iniciar_minijuego(zona) is not None:
-                self.presionadas.clear()
-                self.app.estados.cambiar("minijuego", fundido=True)
-            return
-        if que == "entrar":
-            self.sesion.buscar_evidencia(self.jugador_id)
+        if self.zona_aqui() is not None:
             self.presionadas.clear()
-            self.app.estados.cambiar("escena", fundido=True)
-            return
-        evidencia = self.sesion.buscar_evidencia(self.jugador_id)
-        if evidencia is not None:
-            self._avisar(f"{evidencia.titulo}: {evidencia.hallazgo}", "Evidencia encontrada", "bueno")
+            self.app.estados.cambiar("lugar", fundido=True)
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
@@ -174,13 +127,9 @@ class MundoState(BaseState):
                 self._avisar(aviso[1], aviso[0], aviso[2])
             if era:
                 return
-            if event.key == pygame.K_ESCAPE and self.menu:
-                self.menu = []
-            elif event.key == pygame.K_ESCAPE:
+            if event.key == pygame.K_ESCAPE:
                 self.app.partida = None
                 self.app.estados.cambiar("menu")
-            elif self.menu and pygame.K_1 <= event.key < pygame.K_1 + len(self.menu):
-                self._hacer(self.zona_aqui(), self.menu[event.key - pygame.K_1])
             elif event.key in DIRECCIONES:
                 self.presionadas.add(event.key)
             elif event.key == pygame.K_e:
@@ -212,8 +161,6 @@ class MundoState(BaseState):
         if zona is not None and zona != zona_antes:
             self._avisar(f"Entraste a {self.mundo.zonas[zona].nombre}.")
         self._situar()
-        if self.menu and self.accion_disponible() is None:   # se alejo del lugar
-            self.menu = []
         self.animacion.actualizar(dx, dy, math.dist(antes, self.mundo.jugador), dt)
         self.camara.seguir(self.mundo.jugador, dt)
         self.t += dt
@@ -261,7 +208,6 @@ class MundoState(BaseState):
             reloj=(s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
             dia=(s.campana.dia + 1, len(s.campana.dias)), fraccion_dia=s.campana.fraccion,
             credibilidad=s.jugador_actual.credibilidad,
-            menu=tuple(self.etiqueta(o, self.zona_aqui()) for o in self.menu),
             texto_accion=self.etiqueta(accion[1], accion[0]) if (accion := self.accion_disponible())
             and accion[1] != "elegir" else "")
 

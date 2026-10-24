@@ -17,7 +17,7 @@ from post_truth.views.hud import PLACA
 from post_truth.views.mapa_view import _rombo
 from post_truth.views.theme import TEMAS, TOKENS, Tema, esp
 
-AYUDA = "WASD: caminar   |   E: entrar o buscar   |   G: guia   |   H: habilidad   |   Y: aliados   |   F3   |   ESC: menu"
+AYUDA = "WASD: caminar   |   E: entrar al lugar   |   G: guia   |   H: habilidad   |   Y: aliados   |   F3   |   ESC: menu"
 ALTO_PERSONAJE = 3.2
 PAJAROS = ((260, 70, 0.0), (300, 70, 0.6), (1100, -55, 9.0))
 RECT_MINIMAPA = pygame.Rect(ANCHO - px(16) - px(220), px(16), px(220), px(138))
@@ -48,7 +48,6 @@ class EstadoMundo:
     dia: tuple[int, int] | None = None         # (dia, total) de la campana
     fraccion_dia: float = 0.0                  # 0 amanecer .. 1 noche
     credibilidad: int | None = None
-    menu: tuple[str, ...] = ()                 # opciones del lugar abiertas con E (se eligen con 1-3)
     texto_accion: str = ""                     # que hace E aqui, cuando hay una sola opcion
     animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
 
@@ -341,8 +340,6 @@ def _minimapa(pantalla: pygame.Surface, tema: Tema, mundo: MapaAbierto, estado: 
 def _mensaje(estado: EstadoMundo) -> str:
     if estado.aviso:
         return estado.aviso
-    if estado.menu:
-        return " | ".join(f"{i + 1}: {o}" for i, o in enumerate(estado.menu)) + " | E: cerrar"
     if estado.accion is not None:
         zona, que = estado.accion
         if que == "elegir":

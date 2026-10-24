@@ -6,6 +6,7 @@ from post_truth.controllers.escena_state import EscenaState
 from post_truth.controllers.fase_state import FaseState
 from post_truth.controllers.intro_state import IntroState
 from post_truth.controllers.investigacion_state import InvestigacionState
+from post_truth.controllers.lugar_state import LugarState
 from post_truth.controllers.menu_state import MenuState
 from post_truth.controllers.minijuego_state import MinijuegoState
 from post_truth.controllers.mundo_state import MundoState
@@ -54,6 +55,7 @@ class App:
         self.estados.registrar("telefono", TelefonoState(self))
         self.estados.registrar("investigacion", InvestigacionState(self))
         self.estados.registrar("fase", FaseState(self))
+        self.estados.registrar("lugar", LugarState(self))
         self.estados.cambiar("menu")
 
     def run(self) -> None:
