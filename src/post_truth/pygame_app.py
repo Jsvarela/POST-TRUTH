@@ -11,6 +11,7 @@ from post_truth.controllers.resultado_state import ResultadoState
 from post_truth.controllers.resumen_state import ResumenState
 from post_truth.controllers.seleccion_state import SeleccionState
 from post_truth.controllers.state_manager import StateManager
+from post_truth.controllers.telefono_state import TelefonoState
 from post_truth.models.personaje import Personaje
 from post_truth.views.componentes import Fuentes
 from post_truth.views.theme import GestorTemas
@@ -42,6 +43,7 @@ class App:
         self.estados.registrar("resumen", ResumenState(self))
         self.estados.registrar("minijuego", MinijuegoState(self))
         self.estados.registrar("resultado", ResultadoState(self))
+        self.estados.registrar("telefono", TelefonoState(self))
         self.estados.cambiar("menu")
 
     def run(self) -> None:

@@ -4,7 +4,7 @@ import random
 
 import pygame
 
-from post_truth.config import RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, RUTA_MINIJUEGOS, RUTA_MUNDO
+from post_truth.config import px, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, RUTA_MINIJUEGOS, RUTA_MUNDO
 from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import load_trees
 from post_truth.models import Role
@@ -15,15 +15,19 @@ from post_truth.models.personaje import Genero, Personaje
 from post_truth.sesion import FIN, FIN_DIA, PartidaSesion
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
+from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.decorado import generar as generar_decorado
-from post_truth.views.mundo_view import Camara, EstadoMundo, dibujar_mundo
+from post_truth.views.mundo_view import RECT_MINIMAPA, Camara, EstadoMundo, dibujar_mundo
+from post_truth.views.telefono_view import dibujar_icono
 
 DIRECCIONES = {
     pygame.K_w: (0, -1), pygame.K_UP: (0, -1), pygame.K_s: (0, 1), pygame.K_DOWN: (0, 1),
     pygame.K_a: (-1, 0), pygame.K_LEFT: (-1, 0), pygame.K_d: (1, 0), pygame.K_RIGHT: (1, 0),
 }
 DURACION_AVISO = 4.0
+ALERTA_VIRAL = 3.0   # segundos que late el icono del telefono cuando algo se vuelve viral
+RECT_TELEFONO = pygame.Rect(RECT_MINIMAPA.right - px(160), RECT_MINIMAPA.bottom + px(10), px(160), px(40))
 
 
 def mapa_de_tiempos(mapa: GrafoCiudad, mundo: MundoCiudad) -> GrafoCiudad:
@@ -49,8 +53,9 @@ class MundoState(BaseState):
         self.mapa_guia = mapa_de_tiempos(GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.mundo)
         self.t = 0.0
         self._dia = -1   # dia de campana que ya se preparo en el mundo
-        self.anuncio: Anuncio | None = None   # grande, en el centro (la crisis pausa el mundo mientras se ve)
+        self.anuncio: Anuncio | None = None   # grande, en el centro (el nuevo dia)
         self.toast: Anuncio | None = None     # corto, arriba
+        self.alerta = 0.0
 
     @property
     def personaje(self) -> Personaje:
@@ -91,11 +96,6 @@ class MundoState(BaseState):
         self.aviso, self._t_aviso = texto, DURACION_AVISO
         if titulo:
             self.toast = Anuncio(titulo, texto, tipo, grande=False, duracion=DURACION_AVISO)
-
-    @property
-    def en_pausa(self) -> bool:
-        """La crisis se anuncia en grande y detiene el mundo (y su reloj) mientras se lee."""
-        return self.anuncio is not None and self.anuncio.tipo == "crisis"
 
     def _llegar(self, zona: str) -> None:
         self.sesion.llegar(self.jugador_id, zona)
@@ -160,10 +160,6 @@ class MundoState(BaseState):
             self._avisar(f"{evidencia.titulo}: {evidencia.hallazgo}", "Evidencia encontrada", "bueno")
 
     def handle_event(self, event: pygame.event.Event) -> None:
-        if self.en_pausa and event.type == pygame.KEYDOWN:   # solo la crisis detiene el mundo y las teclas
-            if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_e):
-                self.anuncio.cerrar()                         # Enter, Espacio o E: seguir sin esperar
-            return
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE and self.menu:
                 self.menu = []
@@ -178,6 +174,9 @@ class MundoState(BaseState):
                 self._usar()
             elif event.key == pygame.K_g:
                 self.guia = not self.guia
+            elif event.key == pygame.K_t:
+                self.presionadas.clear()
+                self.app.estados.cambiar("telefono")
         elif event.type == pygame.KEYUP:
             self.presionadas.discard(event.key)
 
@@ -188,8 +187,7 @@ class MundoState(BaseState):
                 a.avanzar(dt)
                 if a.terminado:
                     setattr(self, anuncio, None)
-        if self.en_pausa:
-            return
+        self.alerta = max(0.0, self.alerta - dt)
         dx = sum(DIRECCIONES[k][0] for k in self.presionadas)
         dy = sum(DIRECCIONES[k][1] for k in self.presionadas)
         antes = self.mundo.jugador
@@ -201,13 +199,17 @@ class MundoState(BaseState):
         self.t += dt
         s = self.sesion
         vencida = s.transcurrir(dt)
-        if s.novedad == "crisis":
+        if s.novedad == "viral":
             s.novedad = ""
+            self.alerta = ALERTA_VIRAL
+            sonido.alerta()
+            self._avisar("El rumor ya llega a mucha gente: abre el telefono (T).", "Se volvio viral!", "malo")
+        if s.novedad == "crisis":                         # la crisis abre el telefono (que la anuncia)
             self._avisar(f"Crisis viral en {s.zona_noticia.capitalize()}! Corre antes de que se riegue.")
             self.presionadas.clear()
-            self.anuncio = Anuncio("Crisis viral!", f"Algo se esta regando en {s.zona_noticia.capitalize()}. Tienes "
-                                   f"{round(s.tiempo_restante or 0)} s para frenarlo.", "crisis", duracion=3.0)
-        if vencida is not None:                           # vencio buscando evidencia: se ve adentro lo que paso
+            self.anuncio = None
+            self.app.estados.cambiar("telefono")
+        elif vencida is not None:                           # vencio buscando evidencia: se ve adentro lo que paso
             self.presionadas.clear()
             self.app.estados.cambiar("escena", fundido=True)
         elif s.fase in (FIN_DIA, FIN):                    # se acabo el dia en la calle
@@ -237,6 +239,9 @@ class MundoState(BaseState):
     def draw(self, pantalla: pygame.Surface) -> None:
         tema = self.app.temas.actual
         dibujar_mundo(pantalla, self.app.fuentes, tema, self.mundo, self.estado_vista())
+        dibujar_icono(pantalla, self.app.fuentes, tema, RECT_TELEFONO, self.sesion.sin_leer, self.alerta, self.t)
+        if self.app.estados.actual is not self:   # detras del telefono: sin anuncios encima
+            return
         for a in (self.toast, self.anuncio):
             if a is not None:
                 dibujar_anuncio(pantalla, self.app.fuentes, tema, a)

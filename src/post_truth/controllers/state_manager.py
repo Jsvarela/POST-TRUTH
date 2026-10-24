@@ -20,6 +20,13 @@ class StateManager:
     def registrar(self, nombre: str, estado: BaseState) -> None:
         self._estados[nombre] = estado
 
+    @property
+    def actual(self) -> BaseState | None:
+        return self._actual
+
+    def estado(self, nombre: str) -> BaseState:
+        return self._estados[nombre]
+
     def cambiar(self, nombre: str, fundido: bool = False) -> None:
         if fundido and self._actual is not None:
             self._destino, self._fase, self._t = nombre, "salida", 0.0
