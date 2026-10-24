@@ -4,13 +4,14 @@ import pygame
 from post_truth.config import ANCHO, px
 from post_truth.models.fases import Fase
 from post_truth.views.anuncio_view import _icono, _rebote
-from post_truth.views.componentes import Fuentes, ajustar_texto
+from post_truth.views.componentes import Fuentes, ajustar_texto, panel
+from post_truth.views.fondo import dibujar_fondo_ciudad
 from post_truth.views.theme import Tema
 
 
 def dibujar_fase(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, numero: int, total: int, fase: Fase,
                  cambios: list[tuple[str, str]], t: float) -> None:
-    pantalla.fill(tema.fondo)
+    dibujar_fondo_ciudad(pantalla, tema, t)
     entrada = min(1.0, t / 0.4)
     escala = max(0.05, _rebote(entrada))
     titulo = fuentes.titulo.render(f"Fase {numero} de {total}: {fase.nombre}", True, tema.acento)
@@ -23,8 +24,7 @@ def dibujar_fase(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, numero:
         pantalla.blit(img, img.get_rect(midtop=(ANCHO // 2, y)))
         y += fuentes.normal.get_linesize()
     caja = pygame.Rect(px(130), y + px(20), px(764), px(300))
-    pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(12))
-    pygame.draw.rect(pantalla, tema.borde, caja, px(2), border_radius=px(12))
+    panel(pantalla, tema, caja, 240)
     pantalla.blit(fuentes.normal.render("Asi cambio la ciudad", True, tema.acento), (caja.x + px(16), caja.y + px(12)))
     fila = caja.y + px(54)
     for i, (tipo, texto) in enumerate(cambios or [("info", "La ciudad sigue igual que ayer.")]):

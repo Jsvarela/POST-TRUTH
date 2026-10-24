@@ -93,5 +93,12 @@ class GestorTemas:
     def actual(self) -> Tema:
         return TEMAS[self._orden[self._i]]
 
+    @property
+    def nombre(self) -> str:
+        return self._orden[self._i]
+
     def siguiente(self) -> None:
         self._i = (self._i + 1) % len(self._orden)
+
+    def anterior(self) -> None:
+        self._i = (self._i - 1) % len(self._orden)

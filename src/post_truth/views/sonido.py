@@ -7,6 +7,7 @@ from array import array
 import pygame
 
 _cache: dict[str, pygame.mixer.Sound] = {}
+VOLUMEN = [0.7]   # lo cambia el menu de opciones (lista: se comparte sin reimportar)
 
 
 def _tonos(frecuencias: tuple[int, ...], duracion: float) -> pygame.mixer.Sound:
@@ -29,6 +30,7 @@ def alerta() -> None:
             pygame.mixer.init()
         if "alerta" not in _cache:
             _cache["alerta"] = _tonos((880, 660), 0.12)
+        _cache["alerta"].set_volume(VOLUMEN[0])
         _cache["alerta"].play()
     except pygame.error:
         pass

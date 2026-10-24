@@ -21,10 +21,12 @@ class SeleccionState(BaseState):
         self.rol: Role | None = None
         self.elegidos: list[Personaje] = []
         self.botones: list[Boton] = []
+        self.t = 0.0
         self._construir()
 
     def al_entrar(self) -> None:
         self.fase, self.rol, self.elegidos = FASE_ROL, None, []
+        self.t = 0.0
         self._construir()
 
     @property
@@ -113,7 +115,7 @@ class SeleccionState(BaseState):
                 break
 
     def update(self, dt: float) -> None:
-        pass
+        self.t += dt
 
     def draw(self, pantalla: pygame.Surface) -> None:
         fuentes, tema = self.app.fuentes, self.app.temas.actual
@@ -128,7 +130,8 @@ class SeleccionState(BaseState):
                 pantalla, fuentes, tema, f"Jugador {jugador}: elige tu rol", "Cada jugador lleva un rol distinto",
                 [panel], [(ejemplo, pygame.Rect(px(470), px(190), px(190), px(330)))],
                 (pygame.Rect(px(680), px(190), px(280), px(300)), ejemplo.descripcion_rol),
-                self.botones, "Clic o teclas 1-4 (los roles ya elegidos no estan disponibles)  |  ESC: volver")
+                self.botones, "Clic o teclas 1-4 (los roles ya elegidos no estan disponibles)  |  ESC: volver",
+                self.t)
         elif self.fase == FASE_GENERO:
             assert self.rol is not None
             paneles = [Panel(pygame.Rect(px(130), px(130), px(360), px(400))),
@@ -139,7 +142,7 @@ class SeleccionState(BaseState):
             ]
             dibujar_seleccion(
                 pantalla, fuentes, tema, f"Jugador {jugador}: elige tu personaje", f"Rol: {self.rol.value}",
-                paneles, previas, None, self.botones, "Clic o teclas 1-2  |  ESC: volver")
+                paneles, previas, None, self.botones, "Clic o teclas 1-2  |  ESC: volver", self.t)
         else:
             paneles, previas, etiquetas = [], [], []
             for i, p in enumerate(self.elegidos):
@@ -149,5 +152,6 @@ class SeleccionState(BaseState):
                 etiquetas.append((p.rol.value, (caja.centerx, caja.bottom - px(22))))
             dibujar_seleccion(
                 pantalla, fuentes, tema, "Jugadores listos", "Todos tienen un rol distinto: ya pueden empezar",
-                paneles, previas, None, self.botones, "1: agregar jugador  |  Enter: iniciar  |  ESC: quitar al ultimo")
+                paneles, previas, None, self.botones, "1: agregar jugador  |  Enter: iniciar  |  ESC: quitar al ultimo",
+                self.t)
             dibujar_etiquetas(pantalla, fuentes, tema, etiquetas)

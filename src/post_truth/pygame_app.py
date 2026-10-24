@@ -38,6 +38,7 @@ class App:
         self.flujo = FLUJO
         self.partida = None
         self.tiempo_extendido = False   # accesibilidad: dias y relojes x1.5 (X en el menu)
+        self.volumen = 0.7              # de 0 a 1 (Opciones del menu)
         self.estados = StateManager(lambda: self.temas.actual.fondo)
         self.estados.capa = CapaRetro(self.fuentes, self.temas)
         self.estados.registrar("menu", MenuState(self))
