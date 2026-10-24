@@ -40,7 +40,8 @@ DIAS, NOTICIAS_POR_DIA = DIAS_CAMPANA, 2   # campana: cada dia trae sus noticias
 DURACION_DIA = 80.0                   # segundos de un dia (calle, decision y minijuegos): 4 dias = 5.3 min de reloj
 MOMENTO_CRISIS = (0.2, 0.5)           # la crisis aparece entre el 20% y el 50% del dia (y su reloj cabe en el dia)
 FACTOR_TIEMPO_EXTENDIDO = 1.5         # accesibilidad: dias y relojes mas largos
-RITMO_TELEFONO = 0.25                 # con el telefono abierto el mundo corre al 25%
+RITMO_TELEFONO = 0.25                 # con el telefono abierto el mundo corre al 25%...
+RITMO_RUMOR_TELEFONO = 0.6            # ...pero el rumor al 60%, para que atajarlo sea un juego de reflejos
 IMPACTO_EN_VIVO = 0.5                 # el rumor de cada crisis pesa la mitad: sin defender, la ciudad empeora sin hundirse
 VIRAL_EN_VIVO = 0.35                  # fraccion de la red que cree el rumor para avisar que se volvio viral
 CONCLUSION = {"buena": (2, 4), "a_ciegas": (1, 1), "error": (-4, -3), "no_concluyente": (0, 0)}   # (cred, puntos)
@@ -576,6 +577,11 @@ class PartidaSesion:
             self._liquidar_post()
         self.en_vivo = None
         return impacto
+
+    def avanzar_rumor(self, dt: float) -> None:
+        """Solo el rumor en vivo (el telefono lo adelanta aparte del dia)."""
+        if self.campana is not None and self.fase == DECIDIENDO and self.pendiente is None:
+            self._avanzar_en_vivo(dt / self.campana.factor)
 
     def _avanzar_en_vivo(self, dt: float) -> None:
         v = self.en_vivo

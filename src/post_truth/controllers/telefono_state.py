@@ -1,21 +1,24 @@
-"""Telefono Civitas (T en la calle): defender la red del rumor en vivo. Mientras esta abierto el mundo corre al 25%."""
+"""Telefono Civitas (T en la calle). Pestana Red = "Frena el rumor": mueve el escudo (WASD, flechas o raton) para
+atajar los rumores que viajan por la red y lanza el desmentido en onda con Espacio. El mundo corre al 25%."""
 import pygame
 
 from post_truth.controllers import roles_teclas
 from post_truth.controllers.base_state import BaseState
 from post_truth.controllers.mundo_state import RECT_HABILIDAD
 from post_truth.models import posts
-from post_truth.sesion import FIN, FIN_DIA, HERRAMIENTAS, RITMO_TELEFONO
+from post_truth.sesion import FIN, FIN_DIA, RITMO_RUMOR_TELEFONO, RITMO_TELEFONO
 from post_truth.views.hud import DatosHud
 from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.componentes import Modal
 from post_truth.views.roles_view import dibujar_habilidad, dibujar_menu_aliados
-from post_truth.views.telefono_view import (CERRAR, HERRAMIENTAS as ORDEN, PESTANAS, RECT_PUBLICAR, VistaPublicar,
-                                            VistaTelefono, ciudadano_en, dibujar_telefono, rect_fila,
-                                            rect_herramienta, rect_pestana)
+from post_truth.views.telefono_view import (AREA_RED, ASPECTO, CERRAR, ONDA, PESTANAS, RADIO_ESCUDO, RADIO_ONDA,
+                                            RECT_PUBLICAR, VistaPublicar, VistaTelefono, de_pantalla,
+                                            dibujar_telefono, rect_fila, rect_pestana)
 
-TECLAS_HERRAMIENTA = {pygame.K_1: 0, pygame.K_2: 1, pygame.K_3: 2, pygame.K_4: 3}
+MOVER = {pygame.K_w: (0, -1), pygame.K_UP: (0, -1), pygame.K_s: (0, 1), pygame.K_DOWN: (0, 1),
+         pygame.K_a: (-1, 0), pygame.K_LEFT: (-1, 0), pygame.K_d: (1, 0), pygame.K_RIGHT: (1, 0)}
+VELOCIDAD_ESCUDO = 0.9   # alto del area por segundo (tiempo real: el escudo no se frena con el mundo)
 ALERTA = 3.0   # segundos que parpadea el aviso de "se volvio viral"
 MOTIVOS = {"enfriando": "Aun se esta recargando.", "sin_rumor": "No hay un rumor corriendo ahora.",
            "en_curso": "Tu post anterior sigue circulando.",
@@ -30,7 +33,10 @@ class TelefonoState(BaseState):
         self.modal: Modal | None = None
         self.pulsos: dict[str, float] = {}
         self._previo: dict[str, str] = dict(s.en_vivo.estado) if s.en_vivo is not None else {}
-        self.seleccionado = s.en_vivo.autor if s.en_vivo is not None else self._orden()[0]
+        self.escudo = (0.5, 0.5)
+        self.teclas: set[int] = set()
+        self.ondas: list[list] = []   # [centro, edad]
+        self.atajo = 0.0
         self.fila = 0
         self.menu_aliados = False
         self.eleccion = getattr(self, "eleccion", None) or {p: 0 for p in posts.PIEZAS}   # se recuerda lo armado
@@ -46,23 +52,25 @@ class TelefonoState(BaseState):
         """El modal de la crisis detiene todo mientras se lee."""
         return self.modal is not None
 
-    def _orden(self) -> list[str]:
-        """Ciudadanos de izquierda a derecha: las flechas los recorren en el orden en que se ven."""
-        return [c.id for c in sorted(self.app.partida.grafo.vertices(), key=lambda c: (c.pos[0], c.pos[1]))]
-
     def _cerrar(self) -> None:
         self.app.estados.cambiar("mundo")
 
     def _avisar(self, titulo: str, texto: str, tipo: str) -> None:
         self.toast = Anuncio(titulo, texto, tipo, grande=False, duracion=2.2)
 
-    def usar(self, i: int) -> None:
-        accion = ORDEN[i]
-        r = self.app.partida.usar_herramienta(accion, self.seleccionado)
-        if r.ok:
-            self._avisar(HERRAMIENTAS[accion], "Hecho: mira como cambia la red.", "bueno")
+    @property
+    def radio(self) -> float:
+        return RADIO_ESCUDO * (1.4 if self.app.partida.campana.factor > 1 else 1.0)
+
+    def lanzar_onda(self) -> None:
+        v = self.app.partida.en_vivo
+        if v is None:
+            self._avisar("Desmentido", MOTIVOS["sin_rumor"], "info")
+            return
+        if v.onda(self.escudo, RADIO_ONDA, ASPECTO).ok:
+            self.ondas.append([self.escudo, 0.0])
         else:
-            self._avisar(HERRAMIENTAS[accion], MOTIVOS.get(r.motivo, "No se pudo."), "malo")
+            self._avisar("Desmentido", MOTIVOS["enfriando"], "malo")
 
     def _opciones(self, pieza: str) -> list[dict]:
         return posts.reglas().opciones(pieza, self.app.partida.jugador_actual.rol.name)
@@ -83,10 +91,6 @@ class TelefonoState(BaseState):
         else:
             self._avisar("No se pudo publicar", MOTIVOS.get(motivo, "No se pudo."), "malo")
 
-    def _mover_seleccion(self, paso: int) -> None:
-        orden = self._orden()
-        self.seleccionado = orden[(orden.index(self.seleccionado) + paso) % len(orden)]
-
     def handle_event(self, event: pygame.event.Event) -> None:
         if self.modal is not None:
             if self.modal.handle_event(event) is not None:
@@ -104,12 +108,14 @@ class TelefonoState(BaseState):
                 self.pestana = (self.pestana + 1) % len(PESTANAS)
             elif self.pestana == 2:
                 self._tecla_publicar(event.key)
-            elif self.pestana == 0 and event.key in TECLAS_HERRAMIENTA:
-                self.usar(TECLAS_HERRAMIENTA[event.key])
-            elif self.pestana == 0 and event.key in (pygame.K_LEFT, pygame.K_a, pygame.K_UP, pygame.K_w):
-                self._mover_seleccion(-1)
-            elif self.pestana == 0 and event.key in (pygame.K_RIGHT, pygame.K_d, pygame.K_DOWN, pygame.K_s):
-                self._mover_seleccion(1)
+            elif self.pestana == 0 and event.key in MOVER:
+                self.teclas.add(event.key)
+            elif self.pestana == 0 and event.key == pygame.K_SPACE:
+                self.lanzar_onda()
+        elif event.type == pygame.KEYUP:
+            self.teclas.discard(event.key)
+        elif event.type == pygame.MOUSEMOTION and self.pestana == 0 and AREA_RED.collidepoint(event.pos):
+            self.escudo = de_pantalla(event.pos)
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self._clic(event.pos)
 
@@ -143,15 +149,9 @@ class TelefonoState(BaseState):
             if RECT_PUBLICAR.collidepoint(punto):
                 self.publicar()
             return
-        if self.pestana != 0:
-            return
-        for i in range(len(ORDEN)):
-            if rect_herramienta(i).collidepoint(punto):
-                self.usar(i)
-                return
-        id = ciudadano_en(self.app.partida.grafo, punto)
-        if id is not None:
-            self.seleccionado = id
+        if self.pestana == 0 and AREA_RED.collidepoint(punto):   # clic en la red: onda donde esta el escudo
+            self.escudo = de_pantalla(punto)
+            self.lanzar_onda()
 
     def update(self, dt: float) -> None:
         if self.toast is not None:
@@ -163,7 +163,17 @@ class TelefonoState(BaseState):
             self.modal.update(dt)
             return
         self.pulsos = {id: e + dt for id, e in self.pulsos.items() if e + dt < 1.0}
+        self.ondas = [[c, e + dt] for c, e in self.ondas if e + dt < ONDA]
+        dx = sum(MOVER[k][0] for k in self.teclas)
+        dy = sum(MOVER[k][1] for k in self.teclas)
+        if dx or dy:   # el escudo se mueve en tiempo real (el mundo va al 25%, el jugador no)
+            x, y = self.escudo
+            self.escudo = (min(1.0, max(0.0, x + dx * VELOCIDAD_ESCUDO * dt / ASPECTO)),
+                           min(1.0, max(0.0, y + dy * VELOCIDAD_ESCUDO * dt)))
         v = self.app.partida.en_vivo
+        self.atajo = max(0.0, self.atajo - dt)
+        if v is not None and v.interceptar(self.escudo, self.radio, ASPECTO):
+            self.atajo = 0.35   # destello del escudo: lo atajaste
         if v is not None:   # a quien le acaba de llegar algo: pulso
             for id, estado in v.estado.items():
                 if estado != self._previo.get(id, estado):
@@ -172,6 +182,7 @@ class TelefonoState(BaseState):
         self.alerta = max(0.0, self.alerta - dt)
         s = self.app.partida
         vencida = s.transcurrir(dt * RITMO_TELEFONO)
+        s.avanzar_rumor(dt * (RITMO_RUMOR_TELEFONO - RITMO_TELEFONO))   # transcurrir ya lo movio al 25%
         if s.novedad == "viral":
             s.novedad = ""
             self.alerta = ALERTA
@@ -192,9 +203,10 @@ class TelefonoState(BaseState):
         filas = [(p, next(o["texto"] for o in self._opciones(p) if o["id"] == getattr(post, p))) for p in posts.PIEZAS]
         publicar = VistaPublicar(filas, self.fila, reglas.evaluar(post, s.jugador_actual.rol.name),
                                  s.enfriamiento_post, reglas.reglas["enfriamiento"], s.post is not None)
-        return VistaTelefono(s.grafo, s.en_vivo, self.pestana, self.seleccionado, s.notificaciones, s.leidas,
+        return VistaTelefono(s.grafo, s.en_vivo, self.pestana, self.escudo, s.notificaciones, s.leidas,
                              (s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
-                             s.campana.factor > 1, self.alerta, self.t, publicar, self.pulsos, s.campana.fraccion)
+                             s.campana.factor > 1, self.alerta, self.t, publicar, self.pulsos, s.campana.fraccion,
+                             tuple((tuple(c), e) for c, e in self.ondas), self.atajo)
 
     def datos_hud(self) -> DatosHud | None:
         return None   # el telefono tapa el centro: lleva su propia barra de estado y la cuenta de la crisis

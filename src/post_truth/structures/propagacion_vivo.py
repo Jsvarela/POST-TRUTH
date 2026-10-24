@@ -10,9 +10,13 @@ reciben forman el frente del paso siguiente. Asi se sabe quien la recibe y CUAND
 
 Dos frentes compiten: el RUMOR (falso) y el DESMENTIDO (verdadero). Estados de cada ciudadano:
 sin_enterarse -> enterado (la cree) -> compartio (la difunde); o inmune (verifico o le llego el desmentido).
+
+Cada transmision del rumor VIAJA durante un paso por su arista y llega al paso siguiente: mientras viaja, el escudo
+del jugador puede atajarla (`interceptar`) y la onda de desmentido (`onda`) vuelve inmunes a los que toca.
 """
 from __future__ import annotations
 
+import math
 import random
 from dataclasses import dataclass
 
@@ -27,7 +31,7 @@ ACTIVO = 10             # pasos que un ciudadano sigue difundiendo (ajustado con
 TRANSMISION = 0.7       # escala de la probabilidad por intento
 COMPARTE = {Role.CITIZEN: 0.9, Role.INFLUENCER: 1.0, Role.CANDIDATE: 0.8, Role.JOURNALIST: 0.0}
 CREDIBILIDAD_ROL = {Role.CITIZEN: 50, Role.INFLUENCER: 50, Role.CANDIDATE: 60, Role.JOURNALIST: 80}
-ENFRIAMIENTO = {"verificador": 8.0, "limitar": 10.0, "desmentido": 15.0, "alertar": 20.0}
+ENFRIAMIENTO = {"verificador": 8.0, "limitar": 10.0, "desmentido": 15.0, "alertar": 20.0, "onda": 6.0}
 FACTOR_LIMITAR = 0.4    # primera vez: sus aristas salientes conservan el 40%; segunda vez: se eliminan
 ACELERA_PERIODISTAS, DURACION_ALERTA = 2.0, 10.0
 CRISIS_ZONA = 1.3       # R9: en una zona en crisis el rumor pasa con mas fuerza
@@ -56,13 +60,15 @@ class PropagacionEnVivo:
         self.limitadas: list[str] = []
         self.alerta = 0.0                     # segundos que quedan de periodistas acelerados
         self.t, self._acumulado, self.pasos = 0.0, 0.0, 0
+        self.viajes: list[tuple[str, str]] = []   # rumores en camino (origen, destino): llegan al paso siguiente
+        self.frenados = 0                          # atajados por el escudo o la onda
         self.estado[autor] = COMPARTIO
         self.rumor[autor] = ACTIVO
 
     # --- reloj --------------------------------------------------------------------------------
     @property
     def terminada(self) -> bool:
-        return not self.rumor and not self.desmentido
+        return not self.rumor and not self.desmentido and not self.viajes
 
     def avanzar(self, dt: float) -> None:
         """Acumula `dt` y da un paso por cada PASO segundos: igual a 30 y a 60 FPS."""
@@ -104,11 +110,15 @@ class PropagacionEnVivo:
                     self.estado[a.destino] = INMUNE
                     nuevo_desmentido[a.destino] = ACTIVO
         nuevo_rumor: dict[str, int] = {}
+        llegan, self.viajes = self.viajes, []
+        for _, d in llegan:                     # los que viajaron durante el paso anterior llegan ahora
+            if self.estado.get(d) == SIN_ENTERARSE:
+                self._recibir_rumor(d, nuevo_rumor)
         for u in self.rumor:
             for a in self.grafo.vecinos(u):
                 if self.estado.get(a.destino) == SIN_ENTERARSE and self.rng.random() < self._probabilidad(
                         u, a.peso, False, a.destino):
-                    self._recibir_rumor(a.destino, nuevo_rumor)
+                    self.viajes.append((u, a.destino))
         self.desmentido = _seguir(self.desmentido, nuevo_desmentido)
         self.rumor = _seguir({u: n for u, n in self.rumor.items() if self.estado[u] == COMPARTIO}, nuevo_rumor)
 
@@ -121,6 +131,35 @@ class PropagacionEnVivo:
             nuevo[id] = ACTIVO
         else:
             self.estado[id] = ENTERADO
+
+    # --- "Frena el rumor": escudo y onda (posiciones normalizadas como Ciudadano.pos) ---------------
+    def posicion_viaje(self, viaje: tuple[str, str]) -> tuple[float, float]:
+        (x0, y0), (x1, y1) = self.grafo.vertice(viaje[0]).pos, self.grafo.vertice(viaje[1]).pos
+        f = self.progreso_paso
+        return x0 + (x1 - x0) * f, y0 + (y1 - y0) * f
+
+    @staticmethod
+    def _dist(a: tuple[float, float], b: tuple[float, float], aspecto: float) -> float:
+        """Distancia en la pantalla: `aspecto` = ancho/alto del area donde se dibuja la red."""
+        return math.hypot((a[0] - b[0]) * aspecto, a[1] - b[1])
+
+    def interceptar(self, pos: tuple[float, float], radio: float, aspecto: float = 1.0) -> int:
+        """El escudo ataja los rumores en camino que toca. Devuelve cuantos."""
+        quedan = [v for v in self.viajes if self._dist(self.posicion_viaje(v), pos, aspecto) > radio]
+        atajados = len(self.viajes) - len(quedan)
+        self.viajes, self.frenados = quedan, self.frenados + atajados
+        return atajados
+
+    def onda(self, pos: tuple[float, float], radio: float, aspecto: float = 1.0) -> ResultadoAccion:
+        """Desmentido en onda: vuelve inmunes a los que toca (si no lo estan compartiendo) y ataja lo que viaja."""
+        r = self._puede("onda")
+        if r.ok:
+            for c in self.grafo.vertices():
+                if self.estado[c.id] in (SIN_ENTERARSE, ENTERADO) and self._dist(c.pos, pos, aspecto) <= radio:
+                    self.estado[c.id] = INMUNE
+            self.interceptar(pos, radio, aspecto)
+            self.enfriando["onda"] = ENFRIAMIENTO["onda"]
+        return r
 
     # --- acciones del jugador --------------------------------------------------------------------
     def _puede(self, accion: str, ciudadano: str | None = None) -> ResultadoAccion:
@@ -211,6 +250,7 @@ class PropagacionEnVivo:
                 "credibilidad_jugador": self.credibilidad_jugador, "estado": self.estado, "rumor": self.rumor,
                 "desmentido": self.desmentido, "enfriando": self.enfriando, "limitadas": self.limitadas,
                 "alerta": self.alerta, "t": self.t, "acumulado": self._acumulado, "pasos": self.pasos,
+                "viajes": [list(v) for v in self.viajes], "frenados": self.frenados,
                 "rng": [s[0], list(s[1]), s[2]]}
 
     @classmethod
@@ -222,7 +262,8 @@ class PropagacionEnVivo:
         p.zonas_crisis = set(d.get("zonas_crisis", []))
         p.credibilidad_jugador = int(d["credibilidad_jugador"])
         p.estado, p.rumor, p.desmentido = dict(d["estado"]), dict(d["rumor"]), dict(d["desmentido"])
-        p.enfriando, p.limitadas = dict(d["enfriando"]), list(d["limitadas"])
+        p.enfriando, p.limitadas = {a: 0.0 for a in ENFRIAMIENTO} | dict(d["enfriando"]), list(d["limitadas"])
+        p.viajes, p.frenados = [tuple(v) for v in d.get("viajes", [])], int(d.get("frenados", 0))
         p.alerta, p.t, p._acumulado, p.pasos = float(d["alerta"]), float(d["t"]), float(d["acumulado"]), int(d["pasos"])
         p.rng = random.Random()
         p.rng.setstate((d["rng"][0], tuple(d["rng"][1]), d["rng"][2]))

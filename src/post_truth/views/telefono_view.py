@@ -7,7 +7,6 @@ import pygame
 
 from post_truth.config import ANCHO, px
 from post_truth.models.posts import Evaluacion
-from post_truth.sesion import HERRAMIENTAS as NOMBRES
 from post_truth.structures.grafo_social import GrafoSocial
 from post_truth.structures.propagacion_vivo import (COMPARTIO, ENFRIAMIENTO, ENTERADO, INMUNE, SIN_ENTERARSE,
                                                     PropagacionEnVivo)
@@ -17,7 +16,9 @@ from post_truth.views.grafo_view import _equis
 from post_truth.views.theme import Tema, mezclar
 
 PESTANAS = ("Red", "Notificaciones", "Publicar")
-HERRAMIENTAS = tuple(NOMBRES)   # en el orden de las teclas 1-4
+RADIO_ESCUDO = 0.11   # fraccion del alto del area de la red
+RADIO_ONDA = 0.36
+ONDA = 0.6            # segundos que dura la animacion de la onda
 RADIO = px(11)
 SUBIDA = 0.25   # segundos que tarda el telefono en subir
 PULSO = 0.8     # segundos que dura el anillo de un ciudadano al que le acaba de llegar la noticia
@@ -32,12 +33,6 @@ def rect_pestana(i: int) -> pygame.Rect:
     return pygame.Rect(TELEFONO.x + px(18) + i * ancho, TELEFONO.y + px(52), ancho - px(4), px(34))
 
 
-def rect_herramienta(i: int) -> pygame.Rect:
-    ancho = (TELEFONO.w - px(52)) // 2
-    return pygame.Rect(TELEFONO.x + px(18) + (i % 2) * (ancho + px(16)), TELEFONO.y + px(420) + (i // 2) * px(64),
-                       ancho, px(56))
-
-
 def rect_fila(i: int) -> pygame.Rect:
     """Fila de una pieza del post en la pestana Publicar."""
     return pygame.Rect(TELEFONO.x + px(18), TELEFONO.y + px(98) + i * px(46), TELEFONO.w - px(36), px(40))
@@ -49,14 +44,6 @@ RECT_PUBLICAR = pygame.Rect(TELEFONO.x + px(18), TELEFONO.y + px(468), TELEFONO.
 def posiciones(grafo: GrafoSocial) -> dict[str, tuple[int, int]]:
     return {c.id: (round(AREA_RED.x + c.pos[0] * AREA_RED.w), round(AREA_RED.y + c.pos[1] * AREA_RED.h))
             for c in grafo.vertices()}
-
-
-def ciudadano_en(grafo: GrafoSocial, punto: tuple[int, int]) -> str | None:
-    """El ciudadano bajo el raton (con un margen para que sea facil atinarle)."""
-    for id, p in posiciones(grafo).items():
-        if math.dist(p, punto) <= RADIO * 1.6:
-            return id
-    return None
 
 
 @dataclass
@@ -74,7 +61,7 @@ class VistaTelefono:
     grafo: GrafoSocial
     en_vivo: PropagacionEnVivo | None
     pestana: int
-    seleccionado: str
+    escudo: tuple[float, float]         # posicion normalizada del escudo sobre la red
     notificaciones: list[dict]
     leidas: int
     reloj: tuple[float, float] | None   # (restante, total) de la crisis
@@ -84,6 +71,8 @@ class VistaTelefono:
     publicar: VistaPublicar | None = None
     pulsos: dict[str, float] | None = None   # ciudadano -> segundos desde que le llego algo (anillo que crece)
     hora: float = 0.0                         # fraccion del dia (la hora de la barra de estado)
+    ondas: tuple = ()                         # (centro normalizado, edad) de los desmentidos en onda
+    atajo: float = 0.0                        # destello del escudo cuando acaba de atajar un rumor
 
 
 def dibujar_telefono(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) -> None:
@@ -151,36 +140,22 @@ def _marco(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) 
         img = fuentes.chica.render(etiqueta, True, tema.boton_texto if activa else tema.texto)
         sup.blit(img, img.get_rect(center=r.center))
     ayuda = ("Flechas: armar   Enter: publicar   Tab: pestana   T: cerrar" if v.pestana == 2
-             else "1-4: herramientas   Flechas: elegir   Tab: pestana   T: cerrar")
+             else "WASD, flechas o raton: escudo   Espacio: desmentido   Tab   T: cerrar")
     img = fuentes.chica.render(ayuda, True, tema.texto_off)
     sup.blit(img, img.get_rect(midbottom=(TELEFONO.centerx, TELEFONO.bottom - px(10))))
 
 
 def _red(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) -> None:
+    """Frena el rumor: los rumores son bolitas que viajan por las conexiones; el escudo las ataja y la onda
+    (Espacio) vuelve inmunes a los que toca."""
     p, pos = v.en_vivo, posiciones(v.grafo)
     if p is None:
         resumen = "La red esta en calma: no hay rumores corriendo."
     else:
-        resumen = (f"La creen {p.creen}   |   Inmunes {p.contar(INMUNE)}   |   "
-                   f"Sin enterarse {p.contar(SIN_ENTERARSE)}")
-    sup.blit(fuentes.chica.render(resumen, True, tema.texto), (TELEFONO.x + px(22), TELEFONO.y + px(96)))
+        resumen = f"Frenados {p.frenados}   |   La creen {p.creen}   |   Inmunes {p.contar(INMUNE)}"
+    sup.blit(fuentes.normal.render(resumen, True, tema.texto), (TELEFONO.x + px(22), TELEFONO.y + px(94)))
     for a in v.grafo.aristas():
         pygame.draw.line(sup, tema.borde, pos[a.origen], pos[a.destino], max(1, round(px(3) * a.peso)))
-    if p is not None:   # la noticia viajando: rumor = circulo, desmentido = cuadrado
-        avance = p.progreso_paso
-        for frente, destinos, desmentido in ((p.rumor, (SIN_ENTERARSE,), False),
-                                             (p.desmentido, (SIN_ENTERARSE, ENTERADO), True)):
-            for u in frente:
-                for a in v.grafo.vecinos(u):
-                    if p.estado[a.destino] in destinos:
-                        x0, y0 = pos[u]
-                        x1, y1 = pos[a.destino]
-                        punto = (round(x0 + (x1 - x0) * avance), round(y0 + (y1 - y0) * avance))
-                        if desmentido:
-                            pygame.draw.rect(sup, tema.bueno, pygame.Rect(0, 0, px(8), px(8)).move(
-                                punto[0] - px(4), punto[1] - px(4)))
-                        else:
-                            pygame.draw.circle(sup, tema.malo, punto, px(4))
     for c in v.grafo.vertices():
         estado = p.estado[c.id] if p is not None else SIN_ENTERARSE
         activo = p is not None and (c.id in p.rumor or c.id in p.desmentido)
@@ -190,15 +165,60 @@ def _red(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) ->
             pygame.draw.circle(sup, (*color, round(220 * (1 - edad / PULSO))), pos[c.id],
                                RADIO + round(px(26) * edad / PULSO), px(3))
         _nodo(sup, tema, pos[c.id], estado, activo, v.t)
-        if p is not None and c.id in p.limitadas:
-            _equis(sup, tema.acento, (pos[c.id][0] + RADIO, pos[c.id][1] - RADIO), px(4))
-        if c.id == v.seleccionado:
-            pygame.draw.circle(sup, tema.acento, pos[c.id], RADIO + px(6), px(2))
+    for centro, edad in v.ondas:   # la onda de desmentido crece y se apaga
+        r = round(radio_onda() * min(1.0, edad / ONDA))
+        pygame.draw.circle(sup, (*tema.bueno, round(200 * (1 - edad / ONDA))), a_pantalla(centro), max(1, r), px(4))
+    if p is not None:   # los rumores en camino: bolitas que se mueven por su arista
+        for viaje in p.viajes:
+            centro = a_pantalla(p.posicion_viaje(viaje))
+            pygame.draw.circle(sup, tema.texto, centro, px(7))
+            pygame.draw.circle(sup, tema.malo, centro, px(5))
+    escudo = a_pantalla(v.escudo)   # el escudo del jugador: anillo con una cruz al centro
+    r = radio_escudo(v.extendido)
+    color = tema.bueno if v.atajo > 0 else tema.acento   # al atajar, el escudo se ilumina y crece un poco
+    r += round(px(6) * v.atajo / 0.35)
+    pygame.draw.circle(sup, (*color, 60), escudo, r)
+    pygame.draw.circle(sup, color, escudo, r, px(3))
+    pygame.draw.line(sup, tema.acento, (escudo[0] - px(6), escudo[1]), (escudo[0] + px(6), escudo[1]), px(2))
+    pygame.draw.line(sup, tema.acento, (escudo[0], escudo[1] - px(6)), (escudo[0], escudo[1] + px(6)), px(2))
     _leyenda(sup, fuentes, tema)
-    nombre = v.grafo.vertice(v.seleccionado).nombre
-    sup.blit(fuentes.chica.render(f"Elegido: {nombre}", True, tema.acento), (TELEFONO.x + px(22), TELEFONO.y + px(394)))
-    for i, accion in enumerate(HERRAMIENTAS):
-        _herramienta(sup, fuentes, tema, i, accion, p)
+    caja = pygame.Rect(TELEFONO.x + px(18), TELEFONO.y + px(404), TELEFONO.w - px(36), px(120))
+    pygame.draw.rect(sup, tema.fondo, caja, border_radius=px(12))
+    pygame.draw.rect(sup, tema.borde, caja, px(2), border_radius=px(12))
+    for k, linea in enumerate(("Mueve el escudo y ataja las bolitas rojas antes de que lleguen.",
+                               "Espacio: desmentido en onda (vuelve inmunes a los que toca).")):
+        sup.blit(fuentes.chica.render(linea, True, tema.texto), (caja.x + px(14), caja.y + px(10) + k * px(22)))
+    falta = p.enfriando["onda"] if p is not None else 0.0
+    barra = pygame.Rect(caja.x + px(14), caja.y + px(66), caja.w - px(28), px(14))
+    pygame.draw.rect(sup, tema.panel, barra, border_radius=px(7))
+    lleno = 1 - falta / ENFRIAMIENTO["onda"] if p is not None else 0
+    pygame.draw.rect(sup, tema.bueno, (barra.x, barra.y, round(barra.w * lleno), barra.h), border_radius=px(7))
+    estado = ("Sin rumor" if p is None else "Desmentido listo (Espacio)" if falta == 0
+              else f"Recargando {math.ceil(falta)} s")
+    sup.blit(fuentes.chica.render(estado, True, tema.bueno if p is not None and falta == 0 else tema.texto_off),
+             (barra.x, barra.bottom + px(6)))
+
+
+def radio_escudo(extendido: bool) -> int:
+    """En pixeles; con tiempo extendido es mas grande (atajar es mas facil)."""
+    return round(AREA_RED.h * RADIO_ESCUDO * (1.4 if extendido else 1.0))
+
+
+def radio_onda() -> int:
+    return round(AREA_RED.h * RADIO_ONDA)
+
+
+def a_pantalla(p: tuple[float, float]) -> tuple[int, int]:
+    return round(AREA_RED.x + p[0] * AREA_RED.w), round(AREA_RED.y + p[1] * AREA_RED.h)
+
+
+def de_pantalla(punto: tuple[int, int]) -> tuple[float, float]:
+    """Del raton a la posicion normalizada de la red (acotada al area)."""
+    return (min(1.0, max(0.0, (punto[0] - AREA_RED.x) / AREA_RED.w)),
+            min(1.0, max(0.0, (punto[1] - AREA_RED.y) / AREA_RED.h)))
+
+
+ASPECTO = AREA_RED.w / AREA_RED.h   # para que el radio del escudo sea redondo en pantalla
 
 
 def _nodo(sup: pygame.Surface, tema: Tema, centro: tuple[int, int], estado: str, activo: bool, t: float) -> None:
@@ -226,22 +246,6 @@ def _leyenda(sup: pygame.Surface, fuentes: Fuentes, tema: Tema) -> None:
         img = fuentes.chica.render(texto, True, tema.texto)
         sup.blit(img, (x + RADIO + px(6), y))
         x += RADIO + img.get_width() + px(26)
-
-
-def _herramienta(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, i: int, accion: str,
-                 p: PropagacionEnVivo | None) -> None:
-    r = rect_herramienta(i)
-    falta = p.enfriando[accion] if p is not None else 0.0
-    lista = p is not None and falta == 0
-    pygame.draw.rect(sup, tema.boton if lista else tema.boton_off, r, border_radius=px(10))
-    if p is not None and falta > 0:   # la barra se llena mientras recarga
-        lleno = r.w * (1 - falta / ENFRIAMIENTO[accion])
-        pygame.draw.rect(sup, tema.boton, pygame.Rect(r.x, r.y, round(lleno), r.h), border_radius=px(10))
-    pygame.draw.rect(sup, tema.acento if lista else tema.texto_off, r, px(2), border_radius=px(10))
-    color = tema.boton_texto if lista else tema.texto_off
-    sup.blit(fuentes.normal.render(f"{i + 1}. {NOMBRES[accion]}", True, color), (r.x + px(12), r.y + px(5)))
-    estado = "Lista" if lista else f"Recargando {math.ceil(falta)} s" if p is not None else "Sin rumor"
-    sup.blit(fuentes.chica.render(estado, True, color), (r.x + px(12), r.y + px(32)))
 
 
 def _notificaciones(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) -> None:
