@@ -17,6 +17,7 @@ import random
 from dataclasses import dataclass
 
 from post_truth.models import Impact, Role
+from post_truth.models.roles import fuerza_desmentido
 from post_truth.structures.grafo_social import (FACTOR_EMISOR, PROPAGACION_FALSA, PROPAGACION_VERDADERA,
                                                 GrafoSocial)
 
@@ -43,6 +44,7 @@ class PropagacionEnVivo:
         self.grafo = grafo
         self.autor, self.jugador, self.es_falsa = autor, jugador, es_falsa
         self.alcance = alcance                # multiplica la transmision de la noticia (un post llamativo llega mas)
+        self.fuerza_desmentido = fuerza_desmentido(grafo.vertice(jugador).rol)   # el Influencer llega mas lejos
         self.credibilidad_jugador = credibilidad_jugador
         self.rng = random.Random(semilla)
         self.estado = {c.id: SIN_ENTERARSE for c in grafo.vertices()}
@@ -84,8 +86,7 @@ class PropagacionEnVivo:
         p = peso * FACTOR_EMISOR[rol] * (0.5 + self._credibilidad(emisor) / 100) * TRANSMISION
         if desmentido and rol is Role.JOURNALIST and self.alerta > 0:
             p *= ACELERA_PERIODISTAS
-        if not desmentido:
-            p *= self.alcance
+        p *= self.fuerza_desmentido if desmentido else self.alcance
         return min(1.0, p)
 
     def paso(self) -> None:
@@ -138,13 +139,17 @@ class PropagacionEnVivo:
         """Primera vez: sus aristas salientes bajan al 40%. Sobre una cuenta ya limitada: se eliminan."""
         r = self._puede("limitar", ciudadano)
         if r.ok:
-            if ciudadano in self.limitadas:
-                self.grafo.cortar_salientes(ciudadano)
-            else:
-                self.grafo.debilitar_salientes(ciudadano, FACTOR_LIMITAR)
-                self.limitadas.append(ciudadano)
+            self.limitar(ciudadano)
             self.enfriando["limitar"] = ENFRIAMIENTO["limitar"]
         return r
+
+    def limitar(self, ciudadano: str) -> None:
+        """Sin enfriamiento (lo usa tambien el Ciudadano aliado)."""
+        if ciudadano in self.limitadas:
+            self.grafo.cortar_salientes(ciudadano)
+        else:
+            self.grafo.debilitar_salientes(ciudadano, FACTOR_LIMITAR)
+            self.limitadas.append(ciudadano)
 
     def lanzar_desmentido(self) -> ResultadoAccion:
         """Un frente verdadero que parte del jugador, con la fuerza de su credibilidad."""
@@ -197,6 +202,7 @@ class PropagacionEnVivo:
         """Todo menos el grafo, que lo guarda la sesion (las cuentas limitadas quedan en el)."""
         s = self.rng.getstate()
         return {"autor": self.autor, "jugador": self.jugador, "es_falsa": self.es_falsa, "alcance": self.alcance,
+                "fuerza_desmentido": self.fuerza_desmentido,
                 "credibilidad_jugador": self.credibilidad_jugador, "estado": self.estado, "rumor": self.rumor,
                 "desmentido": self.desmentido, "enfriando": self.enfriando, "limitadas": self.limitadas,
                 "alerta": self.alerta, "t": self.t, "acumulado": self._acumulado, "pasos": self.pasos,
@@ -207,6 +213,7 @@ class PropagacionEnVivo:
         p = cls.__new__(cls)
         p.grafo, p.autor, p.jugador, p.es_falsa = grafo, d["autor"], d["jugador"], d["es_falsa"]
         p.alcance = float(d.get("alcance", 1.0))
+        p.fuerza_desmentido = float(d.get("fuerza_desmentido", 1.0))
         p.credibilidad_jugador = int(d["credibilidad_jugador"])
         p.estado, p.rumor, p.desmentido = dict(d["estado"]), dict(d["rumor"]), dict(d["desmentido"])
         p.enfriando, p.limitadas = dict(d["enfriando"]), list(d["limitadas"])

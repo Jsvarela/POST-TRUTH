@@ -9,11 +9,12 @@ from typing import Sequence
 from post_truth.config import DIAS_CAMPANA, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD
 from post_truth.decision_tree import DecisionNode, DecisionTree, load_trees
 from post_truth.game_state import CityState
-from post_truth.models import Impact
+from post_truth.models import Impact, Role
 from post_truth.models import credibilidad as cred
 from post_truth.models import eleccion
 from post_truth.models import minijuego as mj
 from post_truth.models import posts
+from post_truth.models import roles
 from post_truth.models import testigos as tg
 from post_truth.models.personaje import Personaje
 from post_truth.models.pistas import Evidencia, Investigacion, Pista
@@ -62,6 +63,7 @@ class Campana:
     resueltas: list[tuple[int, str]] = field(default_factory=list)   # (indice, accion) del dia, para el resumen
     ciudad_al_amanecer: dict = field(default_factory=dict)
     minijuegos_hoy: list[str] = field(default_factory=list)          # lugares cuyo minijuego ya se jugo hoy
+    aliados_hoy: list[str] = field(default_factory=list)             # aliados que ya actuaron solos hoy
 
     @property
     def duracion(self) -> float:
@@ -79,14 +81,14 @@ class Campana:
         return {"dias": self.dias, "crisis": self.crisis, "momento_crisis": self.momento_crisis, "factor": self.factor,
                 "dia": self.dia, "t": self.t, "cola": self.cola, "crisis_lanzada": self.crisis_lanzada,
                 "resueltas": [list(r) for r in self.resueltas], "ciudad_al_amanecer": self.ciudad_al_amanecer,
-                "minijuegos_hoy": self.minijuegos_hoy}
+                "minijuegos_hoy": self.minijuegos_hoy, "aliados_hoy": self.aliados_hoy}
 
     @classmethod
     def from_dict(cls, d: dict) -> "Campana":
         return cls([list(x) for x in d["dias"]], list(d["crisis"]), list(d["momento_crisis"]), float(d["factor"]),
                    int(d["dia"]), float(d["t"]), list(d["cola"]), bool(d["crisis_lanzada"]),
                    [(int(i), a) for i, a in d["resueltas"]], dict(d["ciudad_al_amanecer"]),
-                   list(d.get("minijuegos_hoy", [])))
+                   list(d.get("minijuegos_hoy", [])), list(d.get("aliados_hoy", [])))
 
 
 @dataclass
@@ -178,6 +180,8 @@ class PartidaSesion:
         self.leidas = 0                             # cuantas notificaciones ya se vieron
         self.post: dict | None = None               # post del jugador que esta corriendo: se cobra al apagarse
         self.enfriamiento_post = 0.0                # segundos para poder publicar otra vez
+        self.asignacion: dict[str, str] = {}        # Role.name -> id del jugador humano o roles.ALIADO
+        self.enfriamientos: dict[str, float] = {}   # "habilidad:<jugador>" o "aliado:<ROL>" -> segundos
         self.apoyo = {c: eleccion.APOYO_INICIAL for c in eleccion.CANDIDATOS}   # para la eleccion del alcalde
         self.por_rumores = {c: 0.0 for c in eleccion.CANDIDATOS}               # parte movida por publicaciones falsas
 
@@ -193,6 +197,7 @@ class PartidaSesion:
             grafo.cambiar_rol(id, personaje.rol)
             jugadores.append(Jugador(id, personaje, mapa.zona_inicial))
         sesion = cls(jugadores, arboles, grafo, mapa, rng)
+        sesion.asignacion = _asignar_roles(jugadores)
         sesion.abrir_evento()
         return sesion
 
@@ -268,6 +273,8 @@ class PartidaSesion:
                 return None   # se acabo el dia, o la crisis recien aparece: su reloj corre desde el proximo paso
             self._avanzar_en_vivo(dt / self.campana.factor)   # tiempo extendido: el rumor tambien va mas lento
             self.enfriamiento_post = max(0.0, self.enfriamiento_post - dt)
+            for k in self.enfriamientos:
+                self.enfriamientos[k] = max(0.0, self.enfriamientos[k] - dt)
         if not self.reloj_activo or self.tiempo_restante is None:
             return None
         self.tiempo_restante = max(0.0, self.tiempo_restante - dt)
@@ -479,7 +486,7 @@ class PartidaSesion:
     def _anotar(self, j: Jugador, r: ResultadoDecision) -> None:
         """Historial y credibilidad del jugador que decidio."""
         falsa = es_falsa(self.arbol.event.truth_level)
-        delta = cred.cambio(r.nodo.tipo, falsa, r.respaldo, r.vencido, j.falsas_compartidas)
+        delta = cred.cambio(r.nodo.tipo, falsa, r.respaldo, r.vencido, j.falsas_compartidas, roles.costo_reporte(j.rol))
         j.credibilidad = cred.acotar(j.credibilidad + delta)
         j.historial.append({"evento": self.arbol.event.event_id, "accion": "vencido" if r.vencido else r.nodo.tipo,
                             "falsa": falsa, "respaldo": r.respaldo, "credibilidad": delta})
@@ -553,6 +560,7 @@ class PartidaSesion:
         v.avanzar(dt)
         if not self.en_vivo_viral and v.creen >= VIRAL_EN_VIVO * len(v.estado):
             self.en_vivo_viral = True
+            self._aliados_reaccionan()
             self.novedad = self.novedad or "viral"   # no tapa el aviso de una crisis que aun no se ha visto
             self.notificar("malo" if v.es_falsa else "info", "Se volvio viral!",
                            f"{v.creen} personas ya creen " + ("el rumor. Frenalo desde la red." if v.es_falsa
@@ -609,6 +617,99 @@ class PartidaSesion:
         self.notificar("bueno" if delta >= 0 else "malo", f"Tu publicacion: credibilidad {delta:+}",
                        "Sin fuente, agresiva o falsa cuesta; veraz y verificable suma.")
 
+    # --- roles: habilidades y aliados (R7) ------------------------------------------------------
+    def aliados(self) -> list[Role]:
+        """Los roles que juega la computadora, en el orden de Role."""
+        return [r for r in Role if self.asignacion.get(r.name) == roles.ALIADO]
+
+    def asignar(self, rol: Role, jugador: str | None) -> None:
+        """Un rol pasa a un humano (su id) o, con None, a un aliado (el multijugador reemplaza aliados)."""
+        if jugador is not None:
+            self.jugador(jugador)   # valida que exista
+        self.asignacion[rol.name] = jugador or roles.ALIADO
+
+    def falta(self, clave: str) -> float:
+        return self.enfriamientos.get(clave, 0.0)
+
+    def nodo_aliado(self, rol: Role) -> str | None:
+        """El ciudadano del grafo social que hace de aliado: el primero de ese rol que no es un jugador."""
+        propios = {j.id for j in self.jugadores}
+        return next((c.id for c in sorted(self.grafo.vertices(), key=lambda c: c.id)
+                     if c.rol is rol and c.id not in propios), None)
+
+    def usar_habilidad(self, jugador: str) -> ResultadoAccion:
+        j, motivo = self._turno_de(jugador)
+        if motivo:
+            return ResultadoAccion(False, motivo)
+        clave = f"habilidad:{j.id}"
+        if self.falta(clave) > 0:
+            return ResultadoAccion(False, "enfriando")
+        v = self.en_vivo
+        if j.rol is Role.JOURNALIST:
+            r = self._revelar_a_distancia(j)
+        elif j.rol is Role.INFLUENCER:
+            if v is None:
+                return ResultadoAccion(False, "sin_rumor")
+            v.estado[j.id], v.desmentido[j.id] = INMUNE, ACTIVO
+            v.fuerza_desmentido *= roles.DESMENTIDO_VIRAL
+            r = ResultadoAccion(True)
+        else:
+            self.ciudad.apply(roles.COMUNICADO if j.rol is Role.CANDIDATE else roles.CONVIVENCIA)
+            r = ResultadoAccion(True)
+        if r.ok:
+            h = roles.HABILIDADES[j.rol]
+            self.enfriamientos[clave] = h.enfriamiento
+            self.notificar("bueno", h.nombre, h.descripcion)
+        return r
+
+    def _revelar_a_distancia(self, j: Jugador) -> ResultadoAccion:
+        pendientes = j.investigacion.lugares_pendientes()
+        if not pendientes:
+            return ResultadoAccion(False, "nada_pendiente")
+        costos = self.mapa.costos_desde(j.zona)   # Dijkstra: la mas cercana
+        j.investigacion.revelar_evidencia(min(pendientes, key=lambda z: (costos.get(z, float("inf")), z)))
+        return ResultadoAccion(True)
+
+    def pedir_ayuda(self, rol: Role) -> ResultadoAccion:
+        """Politica sencilla de cada aliado; con enfriamiento por aliado."""
+        if self.asignacion.get(rol.name) != roles.ALIADO:
+            return ResultadoAccion(False, "no_es_aliado")
+        clave = f"aliado:{rol.name}"
+        if self.falta(clave) > 0:
+            return ResultadoAccion(False, "enfriando")
+        v, j = self.en_vivo, self.jugador_actual
+        if rol is Role.JOURNALIST:      # verifica la noticia pendiente: revela una senal (las que dicen algo primero)
+            inv = j.investigacion
+            pendientes = sorted((p for p in inv.pistas if not inv.esta_descubierta(p.id)),
+                                key=lambda p: p.senal.value == "neutra")
+            if not pendientes:
+                return ResultadoAccion(False, "nada_pendiente")
+            inv.investigar(pendientes[0].id)
+        elif rol is Role.INFLUENCER:    # difunde tu desmentido desde su cuenta
+            nodo = self.nodo_aliado(rol)
+            if v is None:
+                return ResultadoAccion(False, "sin_rumor")
+            if not v.desmentido or nodo is None:
+                return ResultadoAccion(False, "sin_desmentido")
+            v.estado[nodo], v.desmentido[nodo] = INMUNE, ACTIVO
+        elif rol is Role.CANDIDATE:
+            self.ciudad.apply(roles.COMUNICADO_ALIADO)
+        elif v is not None:             # Ciudadano: reporta la cuenta que solto el rumor
+            v.limitar(v.autor)
+        else:
+            self.ciudad.apply(roles.CONVIVENCIA_ALIADO)
+        self.enfriamientos[clave] = roles.ENFRIAMIENTO_ALIADO
+        self.notificar("bueno", f"{rol.value} aliado", roles.AYUDAS[rol])
+        return ResultadoAccion(True)
+
+    def _aliados_reaccionan(self) -> None:
+        """Cuando un rumor se vuelve viral, cada aliado actua solo una vez por dia (si esta listo)."""
+        if self.campana is None:
+            return
+        for rol in self.aliados():
+            if rol.name not in self.campana.aliados_hoy and self.pedir_ayuda(rol).ok:
+                self.campana.aliados_hoy.append(rol.name)
+
     def notificar(self, tipo: str, titulo: str, texto: str) -> None:
         self.notificaciones.append({"tipo": tipo, "titulo": titulo, "texto": texto})
 
@@ -634,7 +735,7 @@ class PartidaSesion:
     # --- campana ---------------------------------------------------------------------------
     def _amanecer(self) -> None:
         c = self.campana
-        c.t, c.crisis_lanzada, c.resueltas, c.minijuegos_hoy = 0.0, False, [], []
+        c.t, c.crisis_lanzada, c.resueltas, c.minijuegos_hoy, c.aliados_hoy = 0.0, False, [], [], []
         c.cola = list(c.dias[c.dia][1:])
         c.ciudad_al_amanecer = self.ciudad.to_dict()
         self._en_pausa.clear()
@@ -736,6 +837,7 @@ class PartidaSesion:
             "en_vivo": None if self.en_vivo is None else self.en_vivo.to_dict(),
             "en_vivo_viral": self.en_vivo_viral, "notificaciones": self.notificaciones, "leidas": self.leidas,
             "post": self.post, "enfriamiento_post": self.enfriamiento_post,
+            "asignacion": self.asignacion, "enfriamientos": self.enfriamientos,
             "en_pausa": {str(k): v for k, v in self._en_pausa.items()},
             "grafo": self.grafo.to_dict(),
             "rng": [estado_rng[0], list(estado_rng[1]), estado_rng[2]],
@@ -773,6 +875,8 @@ class PartidaSesion:
         sesion.leidas = int(datos.get("leidas", 0))
         sesion.post = datos.get("post")
         sesion.enfriamiento_post = float(datos.get("enfriamiento_post", 0.0))
+        sesion.asignacion = dict(datos.get("asignacion") or _asignar_roles(sesion.jugadores))
+        sesion.enfriamientos = {k: float(v) for k, v in datos.get("enfriamientos", {}).items()}
         sesion.por_rumores.update(datos.get("por_rumores", {}))
         if datos.get("campana") is not None:
             sesion.campana = Campana.from_dict(datos["campana"])
@@ -789,6 +893,14 @@ class PartidaSesion:
                                                  alcance=float(p.get("alcance", 0.0)),
                                                  respaldo=int(p.get("respaldo", 0)))
         return sesion
+
+
+def _asignar_roles(jugadores: Sequence[Jugador]) -> dict[str, str]:
+    """Cada rol elegido queda con su jugador (el primero que lo eligio); los demas, con un aliado."""
+    asignacion = {r.name: roles.ALIADO for r in Role}
+    for j in reversed(jugadores):
+        asignacion[j.rol.name] = j.id
+    return asignacion
 
 
 def _validar_cantidad(n: int) -> None:

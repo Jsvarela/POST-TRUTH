@@ -18,8 +18,10 @@ def acotar(valor: float) -> int:
     return round(max(MINIMO, min(MAXIMO, valor)))
 
 
-def cambio(tipo: str, falsa: bool, respaldo: int, vencido: bool = False, falsas_compartidas: int = 0) -> int:
-    """Cuanto cambia la credibilidad por una decision (`respaldo`: 0 nada, 1 tarjeta, 2 evidencia de campo)."""
+def cambio(tipo: str, falsa: bool, respaldo: int, vencido: bool = False, falsas_compartidas: int = 0,
+           costo_reporte: int = 5) -> int:
+    """Cuanto cambia la credibilidad por una decision (`respaldo`: 0 nada, 1 tarjeta, 2 evidencia de campo).
+    `costo_reporte`: lo que cuesta reportar sin pruebas o reportar algo cierto (menos para el Ciudadano)."""
     if vencido:
         return -3
     if not tipo:              # respuesta a una opinion: no se juega la credibilidad
@@ -29,11 +31,11 @@ def cambio(tipo: str, falsa: bool, respaldo: int, vencido: bool = False, falsas_
             return -16 if falsas_compartidas >= REINCIDENCIA else -8
         if tipo in ("verificar", "reportar"):
             if tipo == "reportar" and respaldo == 0:
-                return -5     # reporte rechazado por infundado
+                return -costo_reporte   # reporte rechazado por infundado
             return (0, 3, 6)[min(respaldo, 2)]
         return 0
     if tipo == "reportar":
-        return -5             # reportar algo cierto
+        return -costo_reporte   # reportar algo cierto
     if tipo in ("compartir", "verificar") and respaldo >= 2:
         return 3              # acerto con buena evidencia
     return 0
