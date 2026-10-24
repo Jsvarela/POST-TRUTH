@@ -70,6 +70,11 @@ class PropagacionEnVivo:
             self._acumulado -= PASO
             self.paso()
 
+    @property
+    def progreso_paso(self) -> float:
+        """0..1 del paso en curso: la vista lo usa para mover la noticia por las aristas."""
+        return min(1.0, self._acumulado / PASO)
+
     def _credibilidad(self, id: str) -> int:
         return self.credibilidad_jugador if id == self.jugador else CREDIBILIDAD_ROL[self.grafo.vertice(id).rol]
 

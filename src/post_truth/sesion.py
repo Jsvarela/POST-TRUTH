@@ -17,7 +17,7 @@ from post_truth.models.personaje import Personaje
 from post_truth.models.pistas import Evidencia, Investigacion, Pista
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import Ciudadano, GrafoSocial
-from post_truth.structures.propagacion_vivo import PropagacionEnVivo
+from post_truth.structures.propagacion_vivo import PropagacionEnVivo, ResultadoAccion
 from post_truth.structures.propagacion import (REPORTAR, REPORTE_INFUNDADO, VERIFICAR, SimulacionDecision, es_falsa,
                                                fuerza_reportar, fuerza_verificar, mensaje_respaldo, reporte_rechazado,
                                                simular_decision)
@@ -35,6 +35,11 @@ DIAS, NOTICIAS_POR_DIA = DIAS_CAMPANA, 2   # campana: cada dia trae sus noticias
 DURACION_DIA = 100.0                  # segundos de un dia (calle, decision y minijuegos): 3 dias = 5 min de reloj
 MOMENTO_CRISIS = (0.2, 0.5)           # la crisis aparece entre el 20% y el 50% del dia (y su reloj cabe en el dia)
 FACTOR_TIEMPO_EXTENDIDO = 1.5         # accesibilidad: dias y relojes mas largos
+RITMO_TELEFONO = 0.25                 # con el telefono abierto el mundo corre al 25%
+IMPACTO_EN_VIVO = 0.5                 # el rumor de cada crisis pesa la mitad: sin defender, la ciudad empeora sin hundirse
+VIRAL_EN_VIVO = 0.35                  # fraccion de la red que cree el rumor para avisar que se volvio viral
+HERRAMIENTAS = {"verificador": "Verificador", "limitar": "Limitar cuenta", "desmentido": "Desmentido",
+                "alertar": "Alertar prensa"}
 
 
 @dataclass
@@ -153,6 +158,9 @@ class PartidaSesion:
         self.minijuegos: dict[str, str] = {}        # lugar -> id del minijuego (data/minijuegos.json)
         self.minijuego: mj.Minijuego | None = None  # el que se esta jugando
         self.en_vivo: PropagacionEnVivo | None = None  # rumor corriendo en vivo por el grafo social (R2)
+        self.en_vivo_viral = False                  # ya se aviso que el rumor en vivo se volvio viral
+        self.notificaciones: list[dict] = []        # {"tipo", "titulo", "texto"} del telefono, la mas nueva al final
+        self.leidas = 0                             # cuantas notificaciones ya se vieron
         self.apoyo = {c: eleccion.APOYO_INICIAL for c in eleccion.CANDIDATOS}   # para la eleccion del alcalde
         self.por_rumores = {c: 0.0 for c in eleccion.CANDIDATOS}               # parte movida por publicaciones falsas
 
@@ -241,6 +249,7 @@ class PartidaSesion:
             ya_estaba = self.campana.crisis_lanzada
             if self._avanzar_dia(dt) or self.campana.crisis_lanzada != ya_estaba:
                 return None   # se acabo el dia, o la crisis recien aparece: su reloj corre desde el proximo paso
+            self._avanzar_en_vivo(dt / self.campana.factor)   # tiempo extendido: el rumor tambien va mas lento
         if not self.reloj_activo or self.tiempo_restante is None:
             return None
         self.tiempo_restante = max(0.0, self.tiempo_restante - dt)
@@ -456,17 +465,52 @@ class PartidaSesion:
             autor = self.rng.choice([c.id for c in self.grafo.vertices() if c.id not in propios])
         j = self.jugador_actual
         self.en_vivo = PropagacionEnVivo(self.grafo, autor, j.id, j.credibilidad, self.rng.randrange(2 ** 31), es_falsa)
+        self.en_vivo_viral = False
         return self.en_vivo
 
     def cerrar_en_vivo(self) -> Impact:
         """Lo que dejo el rumor entra a la ciudad y a los puntos de quien lo enfrento."""
         if self.en_vivo is None:
             raise ValueError("No hay un rumor en vivo")
-        impacto = self.en_vivo.impacto()
+        impacto = Impact(**{k: round(v * IMPACTO_EN_VIVO) for k, v in asdict(self.en_vivo.impacto()).items()})
         self.ciudad.apply(impacto)
         self.jugador(self.en_vivo.jugador).puntos += impacto.score
         self.en_vivo = None
         return impacto
+
+    def _avanzar_en_vivo(self, dt: float) -> None:
+        v = self.en_vivo
+        if v is None:
+            return
+        v.avanzar(dt)
+        if not self.en_vivo_viral and v.creen >= VIRAL_EN_VIVO * len(v.estado):
+            self.en_vivo_viral = True
+            self.novedad = self.novedad or "viral"   # no tapa el aviso de una crisis que aun no se ha visto
+            self.notificar("malo", "Se volvio viral!", f"{v.creen} personas ya creen el rumor. Frenalo desde la red.")
+        if v.terminada:
+            creen, total = v.creen, len(v.estado)
+            self.cerrar_en_vivo()
+            self.notificar("malo" if self.en_vivo_viral else "bueno", "El rumor se apago",
+                           f"Al final lo creyeron {creen} de {total} personas.")
+
+    def notificar(self, tipo: str, titulo: str, texto: str) -> None:
+        self.notificaciones.append({"tipo": tipo, "titulo": titulo, "texto": texto})
+
+    @property
+    def sin_leer(self) -> int:
+        return len(self.notificaciones) - self.leidas
+
+    def usar_herramienta(self, accion: str, ciudadano: str | None = None) -> ResultadoAccion:
+        """Las herramientas del telefono sobre el rumor en vivo: verificador, limitar, desmentido o alertar."""
+        v = self.en_vivo
+        if v is None:
+            return ResultadoAccion(False, "sin_rumor")
+        r = {"verificador": lambda: v.poner_verificador(ciudadano), "limitar": lambda: v.limitar_cuenta(ciudadano),
+             "desmentido": v.lanzar_desmentido, "alertar": v.alertar_periodistas}[accion]()
+        if r.ok:
+            sobre = f" sobre {self.grafo.vertice(ciudadano).nombre}" if accion in ("verificador", "limitar") else ""
+            self.notificar("bueno", HERRAMIENTAS[accion], f"Usaste {HERRAMIENTAS[accion].lower()}{sobre}.")
+        return r
 
     def resultado_eleccion(self) -> eleccion.ResultadoEleccion:
         return eleccion.calcular(self.apoyo, self.por_rumores, self.ciudad)
@@ -501,6 +545,15 @@ class PartidaSesion:
         self.abrir_evento(c.crisis[c.dia])
         self.reloj_activo = self.tiempo_restante is not None   # la crisis no espera a que la vean
         self.novedad = "crisis"
+        self.notificar("crisis", "Crisis viral!", f"Algo se esta regando en {self.zona_noticia.capitalize()}.")
+        if self.en_vivo is None:   # el rumor de la crisis corre solo por la red (semilla por hash: no toca el rng)
+            semilla = int(hashlib.md5(f"{self.arbol.event.event_id}:{c.dia}".encode()).hexdigest()[:8], 16)
+            propios = {j.id for j in self.jugadores}
+            autores = sorted(v.id for v in self.grafo.vertices() if v.id not in propios)
+            j = self.jugador_actual
+            self.en_vivo = PropagacionEnVivo(self.grafo, autores[semilla % len(autores)], j.id, j.credibilidad,
+                                             semilla, es_falsa(self.arbol.event.truth_level))
+            self.en_vivo_viral = False
 
     def _siguiente_de_la_campana(self) -> None:
         c = self.campana
@@ -540,6 +593,8 @@ class PartidaSesion:
             c.resueltas.append((indice, "sin respuesta"))
         c.cola, c.crisis_lanzada = [], True
         self.pendiente, self.reloj_activo, self.fase = None, False, FIN_DIA
+        if self.en_vivo is not None:   # el rumor que quedaba corriendo deja su huella en la ciudad
+            self.cerrar_en_vivo()
 
     def to_dict(self) -> dict:
         """Todo el estado en tipos de JSON."""
@@ -563,6 +618,7 @@ class PartidaSesion:
             "minijuegos": self.minijuegos,
             "minijuego": None if self.minijuego is None else self.minijuego.to_dict(),
             "en_vivo": None if self.en_vivo is None else self.en_vivo.to_dict(),
+            "en_vivo_viral": self.en_vivo_viral, "notificaciones": self.notificaciones, "leidas": self.leidas,
             "en_pausa": {str(k): v for k, v in self._en_pausa.items()},
             "grafo": self.grafo.to_dict(),
             "rng": [estado_rng[0], list(estado_rng[1]), estado_rng[2]],
@@ -595,6 +651,9 @@ class PartidaSesion:
             sesion.minijuego = mj.desde_dict(datos["minijuego"])
         if datos.get("en_vivo") is not None:
             sesion.en_vivo = PropagacionEnVivo.from_dict(datos["en_vivo"], sesion.grafo)
+        sesion.en_vivo_viral = bool(datos.get("en_vivo_viral", False))
+        sesion.notificaciones = [dict(n) for n in datos.get("notificaciones", [])]
+        sesion.leidas = int(datos.get("leidas", 0))
         sesion.por_rumores.update(datos.get("por_rumores", {}))
         if datos.get("campana") is not None:
             sesion.campana = Campana.from_dict(datos["campana"])
