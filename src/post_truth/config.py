@@ -18,7 +18,7 @@ ANCHO, ALTO = px(DISENO_ANCHO), px(DISENO_ALTO)
 
 RUTA_EVENTOS = Path(__file__).resolve().parents[2] / "data" / "events.json"
 EVENTOS_POR_PARTIDA = 8
-DIAS_CAMPANA = 3          # dias de la campana (2 publicaciones + 1 crisis viral por dia; maximo 6)
+DIAS_CAMPANA = 4          # dias de la campana, uno por fase de data/fases.json (2 publicaciones + 1 crisis por dia)
 RUTA_GRAFO_SOCIAL = Path(__file__).resolve().parents[2] / "data" / "grafo_social.json"
 RUTA_GRAFO_CIUDAD = Path(__file__).resolve().parents[2] / "data" / "grafo_ciudad.json"
 RUTA_INTRO = Path(__file__).resolve().parents[2] / "data" / "intro.json"
@@ -27,6 +27,7 @@ if FLUJO not in ("mundo", "escena"):
     raise ValueError(f"POSTTRUTH_FLUJO debe ser 'mundo' o 'escena', no {FLUJO!r}")
 RUTA_MINIJUEGOS = Path(__file__).resolve().parents[2] / "data" / "minijuegos.json"
 RUTA_MAPA = Path(__file__).resolve().parents[2] / "data" / "mapa.json"
+RUTA_FASES = Path(__file__).resolve().parents[2] / "data" / "fases.json"
 RUTA_POSTS = Path(__file__).resolve().parents[2] / "data" / "posts.json"
 RUTA_CHAT = Path(__file__).resolve().parents[2] / "data" / "chat_colegio.json"
 RUTA_MITIN = Path(__file__).resolve().parents[2] / "data" / "mitin.json"

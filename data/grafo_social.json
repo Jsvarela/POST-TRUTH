@@ -16,7 +16,7 @@
       "pos": [
         0.24,
         0.18
-      ]
+      ], "zona": "colegio"
     },
     {
       "id": "valentina",
@@ -25,7 +25,7 @@
       "pos": [
         0.24,
         0.5
-      ]
+      ], "zona": "plaza"
     },
     {
       "id": "camila",
@@ -34,7 +34,7 @@
       "pos": [
         0.24,
         0.84
-      ]
+      ], "zona": "alcaldia"
     },
     {
       "id": "tomas",
@@ -43,7 +43,7 @@
       "pos": [
         0.42,
         0.12
-      ]
+      ], "zona": "barrio"
     },
     {
       "id": "sofia",
@@ -52,7 +52,7 @@
       "pos": [
         0.42,
         0.38
-      ]
+      ], "zona": "barrio"
     },
     {
       "id": "andres",
@@ -61,7 +61,7 @@
       "pos": [
         0.42,
         0.64
-      ]
+      ], "zona": "alcaldia"
     },
     {
       "id": "nicolas",
@@ -70,7 +70,7 @@
       "pos": [
         0.42,
         0.9
-      ]
+      ], "zona": "parque"
     },
     {
       "id": "isabela",
@@ -79,7 +79,7 @@
       "pos": [
         0.6,
         0.22
-      ]
+      ], "zona": "colegio"
     },
     {
       "id": "julian",
@@ -88,7 +88,7 @@
       "pos": [
         0.6,
         0.52
-      ]
+      ], "zona": "plaza"
     },
     {
       "id": "daniela",
@@ -97,7 +97,7 @@
       "pos": [
         0.6,
         0.84
-      ]
+      ], "zona": "barrio"
     },
     {
       "id": "esteban",
@@ -106,7 +106,7 @@
       "pos": [
         0.78,
         0.14
-      ]
+      ], "zona": "parque"
     },
     {
       "id": "renata",
@@ -115,7 +115,7 @@
       "pos": [
         0.78,
         0.48
-      ]
+      ], "zona": "parque"
     },
     {
       "id": "gael",
@@ -124,7 +124,7 @@
       "pos": [
         0.92,
         0.8
-      ]
+      ], "zona": "colegio"
     }
   ],
   "relaciones": [

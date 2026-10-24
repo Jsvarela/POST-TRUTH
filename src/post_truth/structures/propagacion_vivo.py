@@ -30,6 +30,7 @@ CREDIBILIDAD_ROL = {Role.CITIZEN: 50, Role.INFLUENCER: 50, Role.CANDIDATE: 60, R
 ENFRIAMIENTO = {"verificador": 8.0, "limitar": 10.0, "desmentido": 15.0, "alertar": 20.0}
 FACTOR_LIMITAR = 0.4    # primera vez: sus aristas salientes conservan el 40%; segunda vez: se eliminan
 ACELERA_PERIODISTAS, DURACION_ALERTA = 2.0, 10.0
+CRISIS_ZONA = 1.3       # R9: en una zona en crisis el rumor pasa con mas fuerza
 
 
 @dataclass(frozen=True)
@@ -45,6 +46,7 @@ class PropagacionEnVivo:
         self.autor, self.jugador, self.es_falsa = autor, jugador, es_falsa
         self.alcance = alcance                # multiplica la transmision de la noticia (un post llamativo llega mas)
         self.fuerza_desmentido = fuerza_desmentido(grafo.vertice(jugador).rol)   # el Influencer llega mas lejos
+        self.zonas_crisis: set[str] = set()   # el rumor pasa mas facil a quien vive en una zona en crisis (R9)
         self.credibilidad_jugador = credibilidad_jugador
         self.rng = random.Random(semilla)
         self.estado = {c.id: SIN_ENTERARSE for c in grafo.vertices()}
@@ -81,12 +83,14 @@ class PropagacionEnVivo:
     def _credibilidad(self, id: str) -> int:
         return self.credibilidad_jugador if id == self.jugador else CREDIBILIDAD_ROL[self.grafo.vertice(id).rol]
 
-    def _probabilidad(self, emisor: str, peso: float, desmentido: bool) -> float:
+    def _probabilidad(self, emisor: str, peso: float, desmentido: bool, receptor: str | None = None) -> float:
         rol = self.grafo.vertice(emisor).rol
         p = peso * FACTOR_EMISOR[rol] * (0.5 + self._credibilidad(emisor) / 100) * TRANSMISION
         if desmentido and rol is Role.JOURNALIST and self.alerta > 0:
             p *= ACELERA_PERIODISTAS
         p *= self.fuerza_desmentido if desmentido else self.alcance
+        if not desmentido and receptor is not None and self.grafo.vertice(receptor).zona in self.zonas_crisis:
+            p *= CRISIS_ZONA
         return min(1.0, p)
 
     def paso(self) -> None:
@@ -96,13 +100,14 @@ class PropagacionEnVivo:
         for u in self.desmentido:
             for a in self.grafo.vecinos(u):
                 if self.estado.get(a.destino) in (SIN_ENTERARSE, ENTERADO) \
-                        and self.rng.random() < self._probabilidad(u, a.peso, True):
+                        and self.rng.random() < self._probabilidad(u, a.peso, True, a.destino):
                     self.estado[a.destino] = INMUNE
                     nuevo_desmentido[a.destino] = ACTIVO
         nuevo_rumor: dict[str, int] = {}
         for u in self.rumor:
             for a in self.grafo.vecinos(u):
-                if self.estado.get(a.destino) == SIN_ENTERARSE and self.rng.random() < self._probabilidad(u, a.peso, False):
+                if self.estado.get(a.destino) == SIN_ENTERARSE and self.rng.random() < self._probabilidad(
+                        u, a.peso, False, a.destino):
                     self._recibir_rumor(a.destino, nuevo_rumor)
         self.desmentido = _seguir(self.desmentido, nuevo_desmentido)
         self.rumor = _seguir({u: n for u, n in self.rumor.items() if self.estado[u] == COMPARTIO}, nuevo_rumor)
@@ -202,7 +207,7 @@ class PropagacionEnVivo:
         """Todo menos el grafo, que lo guarda la sesion (las cuentas limitadas quedan en el)."""
         s = self.rng.getstate()
         return {"autor": self.autor, "jugador": self.jugador, "es_falsa": self.es_falsa, "alcance": self.alcance,
-                "fuerza_desmentido": self.fuerza_desmentido,
+                "fuerza_desmentido": self.fuerza_desmentido, "zonas_crisis": sorted(self.zonas_crisis),
                 "credibilidad_jugador": self.credibilidad_jugador, "estado": self.estado, "rumor": self.rumor,
                 "desmentido": self.desmentido, "enfriando": self.enfriando, "limitadas": self.limitadas,
                 "alerta": self.alerta, "t": self.t, "acumulado": self._acumulado, "pasos": self.pasos,
@@ -214,6 +219,7 @@ class PropagacionEnVivo:
         p.grafo, p.autor, p.jugador, p.es_falsa = grafo, d["autor"], d["jugador"], d["es_falsa"]
         p.alcance = float(d.get("alcance", 1.0))
         p.fuerza_desmentido = float(d.get("fuerza_desmentido", 1.0))
+        p.zonas_crisis = set(d.get("zonas_crisis", []))
         p.credibilidad_jugador = int(d["credibilidad_jugador"])
         p.estado, p.rumor, p.desmentido = dict(d["estado"]), dict(d["rumor"]), dict(d["desmentido"])
         p.enfriando, p.limitadas = dict(d["enfriando"]), list(d["limitadas"])

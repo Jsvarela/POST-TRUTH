@@ -40,7 +40,7 @@ class Chat(Minijuego):
 
     @property
     def limite(self) -> float:
-        return datos()[0]["segundos_por_turno"] * (1.5 if self.contexto.extendido else 1.0)
+        return datos()[0]["segundos_por_turno"] * self.contexto.ritmo
 
     @property
     def nodo_actual(self) -> NodoDialogo | None:

@@ -23,6 +23,12 @@ class ContextoMinijuego:
     dia: int
     extendido: bool = False   # accesibilidad: mas tiempo (y sin ritmo en el mitin)
     evidencias: int = 0       # evidencia que el jugador ya reunio (el mitin la usa)
+    crisis: bool = False      # el lugar esta en crisis (R9): menos tiempo
+
+    @property
+    def ritmo(self) -> float:
+        """Multiplica los tiempos: mas con tiempo extendido, menos si el lugar esta en crisis."""
+        return (1.5 if self.extendido else 1.0) * (0.8 if self.crisis else 1.0)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -130,7 +136,7 @@ class Ensayo(Minijuego):
 
     @property
     def limite(self) -> float:
-        return SEGUNDOS_POR_MENSAJE * (1.5 if self.contexto.extendido else 1.0)
+        return SEGUNDOS_POR_MENSAJE * self.contexto.ritmo
 
     @property
     def mensaje_actual(self) -> tuple[str, tuple[str, str]] | None:

@@ -12,6 +12,7 @@ from post_truth.game_state import CityState
 from post_truth.models import Impact, Role
 from post_truth.models import credibilidad as cred
 from post_truth.models import eleccion
+from post_truth.models import fases
 from post_truth.models import minijuego as mj
 from post_truth.models import posts
 from post_truth.models import roles
@@ -19,8 +20,8 @@ from post_truth.models import testigos as tg
 from post_truth.models.personaje import Personaje
 from post_truth.models.pistas import Evidencia, Investigacion, Pista
 from post_truth.structures.arbol_dialogo import NodoDialogo
-from post_truth.structures.grafo_ciudad import GrafoCiudad
-from post_truth.structures.grafo_social import Ciudadano, GrafoSocial
+from post_truth.structures.grafo_ciudad import GrafoCiudad, Zona
+from post_truth.structures.grafo_social import Ciudadano, GrafoSocial, TipoRelacion
 from post_truth.structures.propagacion_vivo import ACTIVO, COMPARTIO, INMUNE, PropagacionEnVivo, ResultadoAccion
 from post_truth.structures.propagacion import (REPORTAR, REPORTE_INFUNDADO, VERIFICAR, SimulacionDecision, es_falsa,
                                                fuerza_reportar, fuerza_verificar, mensaje_respaldo, reporte_rechazado,
@@ -36,7 +37,7 @@ UMBRAL_VIRAL = 300     # likes desde los que una publicacion es viral y se decid
 TIEMPO_VIRAL = 25.0    # segundos por turno; corren tambien en la calle (buscar evidencia cuesta tiempo)
 AVISO_VENCIDO = "Se te acabo el tiempo: la publicacion siguio circulando sin que nadie la frenara."
 DIAS, NOTICIAS_POR_DIA = DIAS_CAMPANA, 2   # campana: cada dia trae sus noticias y una crisis viral
-DURACION_DIA = 100.0                  # segundos de un dia (calle, decision y minijuegos): 3 dias = 5 min de reloj
+DURACION_DIA = 80.0                   # segundos de un dia (calle, decision y minijuegos): 4 dias = 5.3 min de reloj
 MOMENTO_CRISIS = (0.2, 0.5)           # la crisis aparece entre el 20% y el 50% del dia (y su reloj cabe en el dia)
 FACTOR_TIEMPO_EXTENDIDO = 1.5         # accesibilidad: dias y relojes mas largos
 RITMO_TELEFONO = 0.25                 # con el telefono abierto el mundo corre al 25%
@@ -184,6 +185,15 @@ class PartidaSesion:
         self.enfriamiento_post = 0.0                # segundos para poder publicar otra vez
         self.asignacion: dict[str, str] = {}        # Role.name -> id del jugador humano o roles.ALIADO
         self.enfriamientos: dict[str, float] = {}   # "habilidad:<jugador>" o "aliado:<ROL>" -> segundos
+        # --- estado del grafo de la ciudad en la campana (R9); el servidor sera autoritativo sobre esto ---
+        self.fase_campana = -1                      # indice en data/fases.json (-1: aun no empieza)
+        self.protestas: dict[str, int] = {}         # "a|b" -> distancia original de la arista que se cerro
+        self.desinfo_zona: dict[str, int] = {}      # desinformacion acumulada por las noticias de cada zona
+        self.zonas_crisis: list[str] = []
+        self.aisladas: list[str] = []               # zonas sin camino a la Alcaldia
+        self.sociales_cortadas: list[dict] = []     # aristas del grafo social cortadas por el aislamiento
+        self.cambios_fase: list[tuple[str, str]] = []   # (tipo, texto) para la pantalla de la nueva fase
+        self.anunciar_fase = False                  # empezo una fase: la pantalla de transicion la anuncia
         self.apoyo = {c: eleccion.APOYO_INICIAL for c in eleccion.CANDIDATOS}   # para la eleccion del alcalde
         self.por_rumores = {c: 0.0 for c in eleccion.CANDIDATOS}               # parte movida por publicaciones falsas
 
@@ -275,6 +285,7 @@ class PartidaSesion:
             ya_estaba = self.campana.crisis_lanzada
             if self._avanzar_dia(dt) or self.campana.crisis_lanzada != ya_estaba:
                 return None   # se acabo el dia, o la crisis recien aparece: su reloj corre desde el proximo paso
+            self._actualizar_ciudad()
             self._avanzar_en_vivo(dt / self.campana.factor)   # tiempo extendido: el rumor tambien va mas lento
             self.enfriamiento_post = max(0.0, self.enfriamiento_post - dt)
             for k in self.enfriamientos:
@@ -446,6 +457,7 @@ class PartidaSesion:
             raise ValueError("No hay una decision pendiente")
         self.ciudad.apply(r.impacto)
         self.jugador(r.jugador).puntos += r.impacto.score
+        self._sumar_desinformacion(r.impacto.misinformation)
         self._accion_aplicada = "se acabo el tiempo" if r.vencido else r.nodo.label
         self._mover_apoyo(r)
         self._anotar(self.jugador(r.jugador), r)
@@ -517,7 +529,7 @@ class PartidaSesion:
         j = self.jugador_actual
         evidencias = len(j.investigacion.descubiertas) + sum(1 for h in j.historial if h.get("respaldo", 0) >= 1)
         contexto = mj.ContextoMinijuego(zona, j.id, j.rol.value, j.credibilidad, self.campana.dia,
-                                        self.campana.factor > 1, evidencias)
+                                        self.campana.factor > 1, evidencias, zona in self.zonas_crisis)
         self.minijuego = mj.crear(id, contexto)
         return self.minijuego
 
@@ -559,6 +571,7 @@ class PartidaSesion:
         impacto = Impact(**{k: round(v * IMPACTO_EN_VIVO) for k, v in asdict(self.en_vivo.impacto()).items()})
         self.ciudad.apply(impacto)
         self.jugador(self.en_vivo.jugador).puntos += impacto.score
+        self._sumar_desinformacion(impacto.misinformation)
         if self.post is not None:
             self._liquidar_post()
         self.en_vivo = None
@@ -568,6 +581,7 @@ class PartidaSesion:
         v = self.en_vivo
         if v is None:
             return
+        v.zonas_crisis = set(self.zonas_crisis)   # el rumor corre mas fuerte entre quienes viven en una zona en crisis
         v.avanzar(dt)
         if not self.en_vivo_viral and v.creen >= VIRAL_EN_VIVO * len(v.estado):
             self.en_vivo_viral = True
@@ -750,7 +764,108 @@ class PartidaSesion:
         c.cola = list(c.dias[c.dia][1:])
         c.ciudad_al_amanecer = self.ciudad.to_dict()
         self._en_pausa.clear()
+        self._entrar_fase()
         self.abrir_evento(c.dias[c.dia][0])
+
+    # --- fases que cambian el grafo de la ciudad (R9) ----------------------------------------------
+    @property
+    def fase_actual(self) -> fases.Fase | None:
+        return fases.reglas().fases[self.fase_campana] if self.fase_campana >= 0 else None
+
+    def _entrar_fase(self) -> None:
+        """Si el dia empieza una fase nueva, inserta sus zonas (vertice + aristas) y anota lo que cambio."""
+        reglas = fases.reglas()
+        i = reglas.indice_del_dia(self.campana.dia)
+        if i == self.fase_campana:
+            return
+        self.anunciar_fase = self.fase_campana >= 0   # la primera fase la anuncia el dia, no una pantalla
+        self.fase_campana = i
+        cambios: list[tuple[str, str]] = []
+        for id in reglas.fases[i].abre:
+            if id not in self.mapa:
+                self._abrir_zona(id, reglas.zonas_nuevas[id])
+                cambios.append(("bueno", f"Se abrio {reglas.zonas_nuevas[id]['nombre']}: termino la obra."))
+        antes = (set(self.protestas), set(self.aisladas), set(self.zonas_crisis))
+        cambios += self._actualizar_ciudad()
+        nombre = lambda z: self.mapa.zona(z).nombre if z in self.mapa else z  # noqa: E731
+        sigue = ([("malo", f"Sigue la protesta en {' - '.join(nombre(z) for z in c.split('|'))}.")
+                  for c in antes[0] & set(self.protestas)]                  # lo que ya estaba mal y sigue igual
+                 + [("malo", f"{nombre(z)} sigue aislada.") for z in antes[1] & set(self.aisladas)]
+                 + [("malo", f"{nombre(z)} sigue en crisis.") for z in antes[2] & set(self.zonas_crisis)])
+        self.cambios_fase = cambios + sorted(sigue)
+
+    def _abrir_zona(self, id: str, datos: dict) -> None:
+        """Insertar el vertice es O(1) y cada arista O(1): en total O(grado de la zona nueva)."""
+        self.mapa.agregar_zona(Zona(id, datos["nombre"], tuple(datos["pos"])))
+        for vecino, distancia in datos["conexiones"].items():
+            if vecino in self.mapa:
+                self.mapa.agregar_conexion(id, vecino, distancia)
+
+    def _sumar_desinformacion(self, cantidad: int) -> None:
+        """La desinformacion de una noticia se queda en su zona (la del lugar de la publicacion)."""
+        if self.campana is not None and cantidad:
+            z = self.zona_noticia
+            self.desinfo_zona[z] = max(0, self.desinfo_zona.get(z, 0) + cantidad)
+
+    def _actualizar_ciudad(self) -> list[tuple[str, str]]:
+        """Protestas, zonas en crisis y conectividad. Devuelve (y notifica) lo que cambio."""
+        reglas = fases.reglas()
+        cambios: list[tuple[str, str]] = []
+        grafo_cambio = False
+        for p in reglas.protestas:   # eliminar o restaurar una arista: O(1) cada una
+            valor = getattr(self.ciudad, p.indicador)
+            nombre = f"{self.mapa.zona(p.a).nombre}-{self.mapa.zona(p.b).nombre}" if p.a in self.mapa and p.b in self.mapa else ""
+            if p.clave not in self.protestas and valor > p.cierra and nombre and self.mapa.distancia(p.a, p.b):
+                self.protestas[p.clave] = self.mapa.distancia(p.a, p.b)
+                self.mapa.eliminar_conexion(p.a, p.b)
+                cambios.append(("malo", f"Protesta: se cerro la calle {nombre}."))
+                grafo_cambio = True
+            elif p.clave in self.protestas and valor < p.reabre and nombre:
+                self.mapa.agregar_conexion(p.a, p.b, self.protestas.pop(p.clave))
+                cambios.append(("bueno", f"Termino la protesta: se reabrio la calle {nombre}."))
+                grafo_cambio = True
+        for z in [z.id for z in self.mapa.zonas()]:   # crisis por zona, con histeresis
+            d = self.desinfo_zona.get(z, 0)
+            if z not in self.zonas_crisis and d >= reglas.crisis_entra:
+                self.zonas_crisis.append(z)
+                cambios.append(("malo", f"Zona en crisis: {self.mapa.zona(z).nombre}. Los rumores corren mas rapido."))
+            elif z in self.zonas_crisis and d < reglas.crisis_sale:
+                self.zonas_crisis.remove(z)
+                cambios.append(("bueno", f"{self.mapa.zona(z).nombre} salio de la crisis."))
+        aisladas = self._aisladas(reglas.centro)
+        if grafo_cambio or aisladas != self.aisladas or not self.aisladas and self.sociales_cortadas:
+            for z in sorted(set(aisladas) - set(self.aisladas)):
+                cambios.append(("malo", f"{self.mapa.zona(z).nombre} quedo aislada: no le llegan los desmentidos."))
+            for z in sorted(set(self.aisladas) - set(aisladas)):
+                if z in self.mapa:
+                    cambios.append(("bueno", f"{self.mapa.zona(z).nombre} volvio a estar conectada."))
+            self.aisladas = aisladas
+            self._aislar_grafo_social()
+        for tipo, texto in cambios:
+            self.notificar(tipo, "La ciudad cambia", texto)
+        if cambios and self.fase == DECIDIENDO:
+            self.novedad = self.novedad or "mapa"
+        return cambios
+
+    def _aisladas(self, centro: str) -> list[str]:
+        """BFS desde la Alcaldia, O(V+E): toda zona que no alcanza queda aislada. BFS (y no DFS ni Dijkstra) porque
+        solo importa SI hay camino, no cual ni cuanto cuesta, y lo da en tiempo lineal."""
+        alcanzadas = self.mapa.saltos(centro) if centro in self.mapa else {}
+        return sorted(z.id for z in self.mapa.zonas() if z.id not in alcanzadas)
+
+    def _aislar_grafo_social(self) -> None:
+        """El grafo de la ciudad afecta al social: se restauran las aristas cortadas antes y se cortan las que entran
+        desde fuera a quien vive en una zona aislada (asi no le llegan los desmentidos). O(E social)."""
+        for a in self.sociales_cortadas:
+            if self.grafo.arista(a["origen"], a["destino"]) is None:
+                self.grafo.agregar_arista(a["origen"], a["destino"], a["peso"], TipoRelacion(a["tipo"]))
+        self.sociales_cortadas = []
+        aisladas = set(self.aisladas)
+        for a in self.grafo.aristas():
+            zona = self.grafo.vertice(a.destino).zona
+            if zona in aisladas and self.grafo.vertice(a.origen).zona != zona:
+                self.sociales_cortadas.append(a.to_dict())
+                self.grafo.eliminar_arista(a.origen, a.destino)
 
     def empezar_siguiente_dia(self) -> bool:
         """Despues del resumen del dia. False (y fase FIN: elegir alcalde) si ya fue el ultimo."""
@@ -850,6 +965,10 @@ class PartidaSesion:
             "en_vivo_viral": self.en_vivo_viral, "notificaciones": self.notificaciones, "leidas": self.leidas,
             "post": self.post, "enfriamiento_post": self.enfriamiento_post,
             "asignacion": self.asignacion, "enfriamientos": self.enfriamientos,
+            "mapa": self.mapa.to_dict(), "fase_campana": self.fase_campana, "protestas": self.protestas,
+            "desinfo_zona": self.desinfo_zona, "zonas_crisis": self.zonas_crisis, "aisladas": self.aisladas,
+            "sociales_cortadas": self.sociales_cortadas, "cambios_fase": self.cambios_fase,
+            "anunciar_fase": self.anunciar_fase,
             "en_pausa": {str(k): v for k, v in self._en_pausa.items()},
             "grafo": self.grafo.to_dict(),
             "rng": [estado_rng[0], list(estado_rng[1]), estado_rng[2]],
@@ -874,7 +993,8 @@ class PartidaSesion:
         rng = random.Random()
         s = datos["rng"]
         rng.setstate((s[0], tuple(s[1]), s[2]))
-        sesion = cls(jugadores, arboles, GrafoSocial.from_dict(datos["grafo"]), GrafoCiudad.cargar(ruta_mapa), rng,
+        sesion = cls(jugadores, arboles, GrafoSocial.from_dict(datos["grafo"]),
+                     GrafoCiudad.from_dict(datos["mapa"]) if "mapa" in datos else GrafoCiudad.cargar(ruta_mapa), rng,
                      CityState.from_dict(datos["ciudad"]))
         sesion.indice, sesion.turno, sesion.fase = indice, int(datos["turno"]), datos["fase"]
         sesion.apoyo.update(datos.get("apoyo", {}))
@@ -890,6 +1010,13 @@ class PartidaSesion:
         sesion.enfriamiento_post = float(datos.get("enfriamiento_post", 0.0))
         sesion.asignacion = dict(datos.get("asignacion") or _asignar_roles(sesion.jugadores))
         sesion.enfriamientos = {k: float(v) for k, v in datos.get("enfriamientos", {}).items()}
+        sesion.fase_campana = int(datos.get("fase_campana", -1))
+        sesion.protestas = {k: int(v) for k, v in datos.get("protestas", {}).items()}
+        sesion.desinfo_zona = {k: int(v) for k, v in datos.get("desinfo_zona", {}).items()}
+        sesion.zonas_crisis, sesion.aisladas = list(datos.get("zonas_crisis", [])), list(datos.get("aisladas", []))
+        sesion.sociales_cortadas = [dict(a) for a in datos.get("sociales_cortadas", [])]
+        sesion.cambios_fase = [tuple(c) for c in datos.get("cambios_fase", [])]
+        sesion.anunciar_fase = bool(datos.get("anunciar_fase", False))
         sesion.por_rumores.update(datos.get("por_rumores", {}))
         if datos.get("campana") is not None:
             sesion.campana = Campana.from_dict(datos["campana"])

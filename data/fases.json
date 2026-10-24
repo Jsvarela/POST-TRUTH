@@ -1,0 +1,23 @@
+{
+  "centro": "alcaldia",
+  "fases": [
+    {"id": "inicio", "nombre": "Inicio de campana", "dias": [1], "abre": [],
+     "descripcion": "Los candidatos salen a la calle y Civitas se llena de promesas."},
+    {"id": "debates", "nombre": "Debates", "dias": [2], "abre": ["auditorio"],
+     "descripcion": "Abre el Auditorio para los debates. Cada frase se recorta y se comparte."},
+    {"id": "semana_final", "nombre": "Semana final", "dias": [3], "abre": [],
+     "descripcion": "Los rumores se aceleran: cualquier chispa puede volverse viral."},
+    {"id": "eleccion", "nombre": "Dia de eleccion", "dias": [4], "abre": ["registraduria"], "variante": "noche",
+     "descripcion": "Abre la Registraduria. La ciudad vota esta noche."}
+  ],
+  "zonas_nuevas": {
+    "auditorio": {"nombre": "Auditorio", "pos": [0.5, 0.0], "conexiones": {"plaza": 1, "colegio": 2}},
+    "registraduria": {"nombre": "Registraduria", "pos": [0.5, 1.0], "conexiones": {"barrio": 2, "parque": 2}}
+  },
+  "protestas": [
+    {"arista": ["barrio", "plaza"], "indicador": "conflicts", "cierra": 40, "reabre": 34},
+    {"arista": ["barrio", "parque"], "indicador": "conflicts", "cierra": 50, "reabre": 44},
+    {"arista": ["colegio", "barrio"], "indicador": "misinformation", "cierra": 60, "reabre": 52}
+  ],
+  "crisis": {"entra": 12, "sale": 6}
+}

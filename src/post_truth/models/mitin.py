@@ -41,7 +41,7 @@ class Mitin(Minijuego):
 
     @property
     def periodo(self) -> float:
-        return datos()["periodo"] * (1.5 if self.contexto.extendido else 1.0)
+        return datos()["periodo"] * self.contexto.ritmo
 
     @property
     def limite(self) -> float:

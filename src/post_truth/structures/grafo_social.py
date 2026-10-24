@@ -33,14 +33,16 @@ class Ciudadano:
     nombre: str
     rol: Role
     pos: tuple[float, float] = (0.5, 0.5)
+    zona: str | None = None   # zona de la ciudad donde vive (R9: si queda aislada, no le llegan desmentidos)
 
     def to_dict(self) -> dict:
-        return {"id": self.id, "nombre": self.nombre, "rol": self.rol.name, "pos": list(self.pos)}
+        d = {"id": self.id, "nombre": self.nombre, "rol": self.rol.name, "pos": list(self.pos)}
+        return d | ({"zona": self.zona} if self.zona else {})
 
     @classmethod
     def from_dict(cls, d: dict) -> "Ciudadano":
         x, y = d.get("pos", (0.5, 0.5))
-        return cls(d["id"], d["nombre"], Role[d["rol"]], (float(x), float(y)))
+        return cls(d["id"], d["nombre"], Role[d["rol"]], (float(x), float(y)), d.get("zona"))
 
 
 @dataclass
