@@ -78,8 +78,8 @@ class MundoState(BaseState):
             self.guia = False
             self.animacion = AnimacionPersonaje()
             c = self.sesion.campana
-            texto = ("Empieza la campana: frena los rumores antes de la eleccion." if c.dia == 0
-                     else "Amanece en Ciudad Nova. Nuevas noticias circulan por la red.")
+            f = self.sesion.fase_actual
+            texto = f"{f.nombre}: {f.descripcion}" if f else "Amanece en Ciudad Nova." 
             self.anuncio = Anuncio(f"Dia {c.dia + 1} de {len(c.dias)}", texto, "dia", duracion=2.4)
         self.mundo.sincronizar(self.sesion.mapa)   # el grafo manda: aristas que faltan = barreras
         self.camara.saltar(self.mundo.jugador)
@@ -197,6 +197,7 @@ class MundoState(BaseState):
         self.alerta = max(0.0, self.alerta - dt)
         dx = sum(DIRECCIONES[k][0] for k in self.presionadas)
         dy = sum(DIRECCIONES[k][1] for k in self.presionadas)
+        self.mundo.sincronizar(self.sesion.mapa)   # una protesta puede cerrar una frontera a mitad del dia
         antes, zona_antes = self.mundo.jugador, self.zona_aqui()
         self.mundo.mover(dx, dy, dt)
         zona = self.zona_aqui()
@@ -215,6 +216,10 @@ class MundoState(BaseState):
             self.alerta = ALERTA_VIRAL
             sonido.alerta()
             self._avisar("El rumor ya llega a mucha gente: abre el telefono (T).", "Se volvio viral!", "malo")
+        if s.novedad == "mapa":                           # una protesta, una crisis de zona o un aislamiento
+            s.novedad = ""
+            n = s.notificaciones[-1]
+            self._avisar(n["texto"], n["titulo"], n["tipo"])
         if s.novedad == "crisis":                         # la crisis abre el telefono (que la anuncia)
             self._avisar(f"Crisis viral en {s.zona_noticia.capitalize()}! Corre antes de que se riegue.")
             self.presionadas.clear()
@@ -240,6 +245,8 @@ class MundoState(BaseState):
             accion=self.accion_disponible(),
             indicadores=s.ciudad.as_display_rows(), guia=zonas, guia_puntos=tuple(puntos), aviso=self.aviso,
             crisis=s.campana.crisis_lanzada and s.indice in s.campana.crisis, depuracion=self.depuracion,
+            abiertas=frozenset(z.id for z in s.mapa.zonas()), zonas_crisis=frozenset(s.zonas_crisis),
+            aisladas=frozenset(s.aisladas), noche=bool(s.fase_actual and s.fase_actual.variante == "noche"),
             personaje=self.personaje, animacion=self.animacion, centro_camara=self.camara.centro,
             decorado=self.decorado, t=self.t,
             reloj=(s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,

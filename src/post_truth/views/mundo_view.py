@@ -33,6 +33,10 @@ class EstadoMundo:
     guia_puntos: tuple = ()                    # sus puntos de paso por cada frontera
     crisis: bool = False                       # la noticia activa es una crisis: senal sobre su lugar
     depuracion: bool = False                   # F3
+    abiertas: frozenset | None = None          # zonas que son vertices del grafo (las demas estan en obras)
+    zonas_crisis: frozenset = frozenset()
+    aisladas: frozenset = frozenset()
+    noche: bool = False                        # variante del mapa (Dia de eleccion)
     aviso: str = ""
     personaje: Personaje = Personaje(Role.CITIZEN, Genero.MUJER)
     centro_camara: tuple[float, float] | None = None
@@ -166,6 +170,40 @@ def _depuracion(pantalla: pygame.Surface, fuentes: Fuentes, mundo: MapaAbierto, 
     pantalla.blit(img, (px(16), pantalla.get_height() - px(150)))
 
 
+def _franjas(capa: pygame.Surface, color: tuple, paso: int) -> None:
+    """Rayado diagonal: el estado se lee por la forma, no solo por el color."""
+    w, h = capa.get_size()
+    for k in range(-h, w, paso):
+        pygame.draw.line(capa, color, (k, h), (k + h, 0), px(5))
+
+
+def _estados_de_zona(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo: MapaAbierto,
+                     cam: tuple[float, float], estado: EstadoMundo) -> None:
+    """Superposiciones alineadas con la region de cada zona: obras (aun no es vertice), crisis o aislada."""
+    for z in mundo.zonas.values():
+        if estado.abiertas is not None and z.id not in estado.abiertas:
+            fondo, rayas, texto = (*tema.fondo, 150), (*tema.detalle, 140), "En obras"
+        elif z.id in estado.zonas_crisis:
+            fondo, rayas = (*tema.malo, 45), (*tema.malo, 90)
+            texto = "En crisis y aislada" if z.id in estado.aisladas else "Zona en crisis"
+        elif z.id in estado.aisladas:
+            fondo, rayas, texto = (*tema.fondo, 120), (*tema.texto_off, 70), "Aislada: sin desmentidos"
+        else:
+            continue
+        x, y, w, h = z.rect
+        rect = pygame.Rect(*a_pantalla((x, y), cam), px(w), px(h))
+        if not rect.colliderect(pantalla.get_rect()):
+            continue
+        capa = pygame.Surface(rect.size, pygame.SRCALPHA)
+        capa.fill(fondo)
+        _franjas(capa, rayas, px(46))
+        pantalla.blit(capa, rect)
+        img = fuentes.normal.render(texto, True, tema.texto)
+        caja = img.get_rect(center=a_pantalla(z.centro, cam)).inflate(px(16), px(8))
+        pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(8))
+        pantalla.blit(img, img.get_rect(center=caja.center))
+
+
 def _barrera(pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect) -> None:
     """Valla de obra con franjas: la arista que el grafo cerro, hecha objeto."""
     pygame.draw.rect(pantalla, tema.fondo, rect.inflate(px(4), px(4)), border_radius=px(4))
@@ -183,7 +221,9 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
     estado = estado or EstadoMundo()
     cam = camara(mundo, *pantalla.get_size(), estado.centro_camara)
     pantalla.fill(tema.suelo)
-    pantalla.blit(_capa(mundo.imagenes["mapa"]), (0, 0), pygame.Rect(px(cam[0]), px(cam[1]), *pantalla.get_size()))
+    fondo = mundo.imagenes["noche" if estado.noche and "noche" in mundo.imagenes else "mapa"]
+    pantalla.blit(_capa(fondo), (0, 0), pygame.Rect(px(cam[0]), px(cam[1]), *pantalla.get_size()))
+    _estados_de_zona(pantalla, fuentes, tema, mundo, cam, estado)
     deco = estado.decorado
     visible = _vista(mundo, cam, pantalla)
     if deco is not None:
@@ -295,7 +335,9 @@ def _minimapa(pantalla: pygame.Surface, tema: Tema, mundo: MapaAbierto, estado: 
             pygame.draw.lines(pantalla, tema.borde, False,
                               [m(mundo.zonas[f.desde].centro), m(f.paso), m(mundo.zonas[f.hasta].centro)], px(3))
     for z in mundo.zonas.values():
-        pygame.draw.circle(pantalla, tema.borde, m(z.centro), px(5))
+        if estado.abiertas is None or z.id in estado.abiertas:
+            color = tema.malo if z.id in estado.zonas_crisis else tema.texto_off if z.id in estado.aisladas else tema.borde
+            pygame.draw.circle(pantalla, color, m(z.centro), px(5))
     if estado.noticia in mundo.zonas:
         caja = pygame.Rect(0, 0, px(12), px(12))
         caja.center = m(mundo.zonas[estado.noticia].centro)

@@ -11,7 +11,7 @@ class ResumenState(BaseState):
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_SPACE):
             if self.app.partida.empezar_siguiente_dia():
-                self.app.estados.cambiar("mundo", fundido=True)
+                self.app.estados.cambiar("fase" if self.app.partida.anunciar_fase else "mundo", fundido=True)
             else:
                 self.app.estados.cambiar("resultado", fundido=True)
 

@@ -38,6 +38,10 @@ python src/main.py
 - X (en el menu): tiempo extendido (dias y relojes mas largos)
 - ESC: saltar la introduccion
 
+## Fases de la campana
+
+Cuatro dias, uno por fase (data/fases.json): Inicio de campana, Debates (abre el Auditorio), Semana final y Dia de eleccion (abre la Registraduria, de noche). Si los conflictos o la desinformacion suben, una protesta cierra una calle; si una zona queda sin camino a la Alcaldia, a sus vecinos no les llegan los desmentidos. Las zonas con mucha desinformacion entran en crisis.
+
 ## Estructura
 
 - `src/post_truth/decision_tree.py`: arbol n-ario de decisiones
