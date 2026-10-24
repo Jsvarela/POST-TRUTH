@@ -100,6 +100,8 @@ class Jugador:
     investigacion: Investigacion = field(default_factory=lambda: Investigacion(()))
     credibilidad: int = cred.INICIAL
     historial: list[dict] = field(default_factory=list)   # {evento, accion, falsa, respaldo, credibilidad}
+    posicion: tuple[float, float] | None = None           # donde esta en el mapa abierto (R8)
+    en_zona: str | None = None                            # la zona bajo sus pies; None en la calle
 
     @property
     def falsas_compartidas(self) -> int:
@@ -383,6 +385,13 @@ class PartidaSesion:
         """Lugar donde ocurre la publicacion activa: la zona de su imagen."""
         imagen = self.arbol.event.image
         return imagen.motivo if imagen is not None else self.mapa.zona_inicial
+
+    def situar(self, jugador: str, posicion: tuple[float, float], en_zona: str | None) -> None:
+        """Posicion libre en el mapa y la zona que pisa; al pisar una zona, esa queda como su zona."""
+        j = self.jugador(jugador)
+        j.posicion, j.en_zona = (float(posicion[0]), float(posicion[1])), en_zona
+        if en_zona is not None:
+            self.llegar(jugador, en_zona)
 
     def llegar(self, jugador: str, zona: str) -> None:
         """El jugador del mundo llego a la plaza `zona`: la sesion queda en la misma zona."""
@@ -824,7 +833,8 @@ class PartidaSesion:
             "ciudad": self.ciudad.to_dict(),
             "jugadores": [{"id": j.id, "personaje": j.personaje.to_dict(), "zona": j.zona, "puntos": j.puntos,
                            "investigacion": j.investigacion.to_dict(), "credibilidad": j.credibilidad,
-                           "historial": j.historial} for j in self.jugadores],
+                           "historial": j.historial, "posicion": j.posicion, "en_zona": j.en_zona}
+                          for j in self.jugadores],
             "eventos": [a.event.event_id for a in self.arboles],
             "indice": self.indice, "turno": self.turno, "fase": self.fase,
             "pendiente": None if p is None else {"jugador": p.jugador, "nodo": p.nodo.node_id,
@@ -858,7 +868,8 @@ class PartidaSesion:
         evento = arboles[min(indice, len(arboles) - 1)].event
         jugadores = [Jugador(d["id"], Personaje.from_dict(d["personaje"]), d["zona"], int(d["puntos"]),
                              Investigacion.from_dict(d["investigacion"], evento.clues, evento.evidences),
-                             int(d.get("credibilidad", cred.INICIAL)), list(d.get("historial", [])))
+                             int(d.get("credibilidad", cred.INICIAL)), list(d.get("historial", [])),
+                             tuple(d["posicion"]) if d.get("posicion") else None, d.get("en_zona"))
                      for d in datos["jugadores"]]
         rng = random.Random()
         s = datos["rng"]
