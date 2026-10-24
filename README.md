@@ -26,6 +26,7 @@ python src/main.py
 - G: mostrar la guia hacia la noticia
 - 1-3: elegir que hacer en un lugar con varias opciones (noticia, evidencia o minijuego)
 - P (en un minijuego): pausa
+- T: abrir o cerrar el telefono Civitas (la red en vivo; el mundo corre al 25%). Dentro: 1-4 herramientas, flechas o clic para elegir ciudadano, Tab o clic para cambiar de pestana
 - 1-4: decidir sobre una publicacion
 - I (en el menu): ver la introduccion
 - X (en el menu): tiempo extendido (dias y relojes mas largos)
