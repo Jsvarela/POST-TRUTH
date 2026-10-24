@@ -1,0 +1,32 @@
+{
+  "tamano": [2560, 1600],
+  "imagenes": {"mapa": "assets/mapa/mapa.png", "zonas": "assets/mapa/zonas.png", "colisiones": "assets/mapa/colisiones.png"},
+  "velocidad": 330,
+  "pies": [24, 14],
+  "aparicion": [1280, 900],
+  "sin_zona": "#000000",
+  "zonas": {
+    "colegio":  {"nombre": "Colegio",  "color": "#ff0000", "rect": [120, 100, 760, 640],  "centro": [500, 520],
+                 "edificio": [160, 140, 300, 200]},
+    "alcaldia": {"nombre": "Alcaldia", "color": "#0000ff", "rect": [1680, 100, 760, 640], "centro": [2060, 520],
+                 "edificio": [2100, 140, 300, 200]},
+    "plaza":    {"nombre": "Plaza",    "color": "#00ff00", "rect": [1020, 480, 520, 600], "centro": [1280, 900],
+                 "edificio": [1180, 520, 200, 110]},
+    "barrio":   {"nombre": "Barrio",   "color": "#ffff00", "rect": [120, 940, 760, 560],  "centro": [500, 1180],
+                 "edificio": [160, 1260, 300, 200]},
+    "parque":   {"nombre": "Parque",   "color": "#ff00ff", "rect": [1680, 940, 760, 560], "centro": [2060, 1180],
+                 "edificio": [2100, 1260, 300, 200]}
+  },
+  "obstaculos": [
+    {"tipo": "fuente", "centro": [1280, 740], "radio": 60},
+    {"tipo": "estanque", "centro": [2260, 1120], "radio": 90}
+  ],
+  "fronteras": [
+    {"desde": "colegio", "hasta": "barrio",  "calle": [380, 740, 240, 200], "barrera": [380, 828, 240, 24], "paso": [500, 840]},
+    {"desde": "barrio",  "hasta": "parque",  "calle": [880, 1260, 800, 200], "barrera": [1268, 1260, 24, 200], "paso": [1280, 1360]},
+    {"desde": "colegio", "hasta": "plaza",   "calle": [880, 600, 140, 120], "barrera": [938, 600, 24, 120], "paso": [950, 660]},
+    {"desde": "plaza",   "hasta": "alcaldia","calle": [1540, 600, 140, 120], "barrera": [1598, 600, 24, 120], "paso": [1610, 660]},
+    {"desde": "barrio",  "hasta": "plaza",   "calle": [880, 950, 140, 120], "barrera": [938, 950, 24, 120], "paso": [950, 1010]},
+    {"desde": "parque",  "hasta": "plaza",   "calle": [1540, 950, 140, 120], "barrera": [1598, 950, 24, 120], "paso": [1610, 1010]}
+  ]
+}
