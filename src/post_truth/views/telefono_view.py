@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import pygame
 
 from post_truth.config import ANCHO, px
+from post_truth.models.posts import Evaluacion
 from post_truth.sesion import HERRAMIENTAS as NOMBRES
 from post_truth.structures.grafo_social import GrafoSocial
 from post_truth.structures.propagacion_vivo import (COMPARTIO, ENFRIAMIENTO, ENTERADO, INMUNE, SIN_ENTERARSE,
@@ -36,6 +37,14 @@ def rect_herramienta(i: int) -> pygame.Rect:
                        ancho, px(56))
 
 
+def rect_fila(i: int) -> pygame.Rect:
+    """Fila de una pieza del post en la pestana Publicar."""
+    return pygame.Rect(TELEFONO.x + px(18), TELEFONO.y + px(98) + i * px(46), TELEFONO.w - px(36), px(40))
+
+
+RECT_PUBLICAR = pygame.Rect(TELEFONO.x + px(18), TELEFONO.y + px(468), TELEFONO.w - px(36), px(50))
+
+
 def posiciones(grafo: GrafoSocial) -> dict[str, tuple[int, int]]:
     return {c.id: (round(AREA_RED.x + c.pos[0] * AREA_RED.w), round(AREA_RED.y + c.pos[1] * AREA_RED.h))
             for c in grafo.vertices()}
@@ -50,6 +59,16 @@ def ciudadano_en(grafo: GrafoSocial, punto: tuple[int, int]) -> str | None:
 
 
 @dataclass
+class VistaPublicar:
+    filas: list[tuple[str, str]]   # (pieza, opcion elegida)
+    fila: int
+    evaluacion: Evaluacion
+    enfriamiento: float
+    enfriamiento_total: float
+    en_curso: bool                 # ya hay un post tuyo corriendo
+
+
+@dataclass
 class VistaTelefono:
     grafo: GrafoSocial
     en_vivo: PropagacionEnVivo | None
@@ -61,6 +80,7 @@ class VistaTelefono:
     extendido: bool
     alerta: float                       # segundos que quedan del destello de "se volvio viral"
     t: float
+    publicar: VistaPublicar | None = None
 
 
 def dibujar_telefono(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) -> None:
@@ -75,8 +95,8 @@ def dibujar_telefono(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: 
         _red(sup, fuentes, tema, v)
     elif v.pestana == 1:
         _notificaciones(sup, fuentes, tema, v)
-    else:
-        _texto_centrado(sup, fuentes, tema, "Muy pronto: arma tus propias publicaciones y mira como viajan.")
+    elif v.publicar is not None:
+        _publicar(sup, fuentes, tema, v.publicar)
     pantalla.blit(sup, (0, dy))
 
 
@@ -106,7 +126,8 @@ def _marco(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) 
         etiqueta = f"{nombre} ({sin_leer})" if i == 1 and sin_leer > 0 else nombre
         img = fuentes.chica.render(etiqueta, True, tema.boton_texto if activa else tema.texto)
         sup.blit(img, img.get_rect(center=r.center))
-    ayuda = "1-4: herramientas   Flechas: elegir   Tab: pestana   T: cerrar"
+    ayuda = ("Flechas: armar   Enter: publicar   Tab: pestana   T: cerrar" if v.pestana == 2
+             else "1-4: herramientas   Flechas: elegir   Tab: pestana   T: cerrar")
     img = fuentes.chica.render(ayuda, True, tema.texto_off)
     sup.blit(img, img.get_rect(midbottom=(TELEFONO.centerx, TELEFONO.bottom - px(10))))
 
@@ -212,6 +233,48 @@ def _notificaciones(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaT
         linea = ajustar_texto(n["texto"], fuentes.chica, caja.w - px(62))[0]
         sup.blit(fuentes.chica.render(linea, True, tema.texto), (caja.x + px(50), caja.y + px(34)))
         y += caja.h + px(8)
+
+
+ETIQUETAS = {"formato": "Formato", "titular": "Titular", "imagen": "Imagen", "fuente": "Fuente", "tono": "Tono"}
+
+
+def _publicar(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, p: VistaPublicar) -> None:
+    for i, (pieza, opcion) in enumerate(p.filas):
+        r = rect_fila(i)
+        activa = i == p.fila
+        pygame.draw.rect(sup, tema.boton if activa else tema.fondo, r, border_radius=px(8))
+        pygame.draw.rect(sup, tema.acento if activa else tema.borde, r, px(2), border_radius=px(8))
+        color = tema.boton_texto if activa else tema.texto
+        sup.blit(fuentes.chica.render(ETIQUETAS[pieza], True, color), (r.x + px(10), r.y + px(10)))
+        texto = fuentes.chica.render(f"<  {opcion}  >", True, color)
+        sup.blit(texto, texto.get_rect(midright=(r.right - px(10), r.centery)))
+    e = p.evaluacion
+    y = TELEFONO.y + px(334)
+    for nombre, valor, color in (("Veracidad", e.veracidad, tema.malo if e.es_falsa else tema.bueno),
+                                 ("Alcance", e.alcance_100, tema.acento),
+                                 ("Riesgo de conflicto", e.riesgo, tema.malo)):
+        sup.blit(fuentes.chica.render(f"{nombre} {valor}", True, tema.texto), (TELEFONO.x + px(22), y))
+        barra = pygame.Rect(TELEFONO.x + px(220), y + px(4), TELEFONO.w - px(242), px(12))
+        pygame.draw.rect(sup, tema.fondo, barra, border_radius=px(6))
+        pygame.draw.rect(sup, color, (barra.x, barra.y, round(barra.w * valor / 100), barra.h), border_radius=px(6))
+        y += px(26)
+    color = tema.bueno if e.convivencia > 0 else tema.malo if e.convivencia < 0 else tema.texto
+    sup.blit(fuentes.chica.render(f"Convivencia {e.convivencia:+}", True, color), (TELEFONO.x + px(22), y))
+    y += px(26)
+    if e.es_falsa or e.riesgo >= 50:
+        aviso = "Puede volverse viral, pero luego te costara credibilidad."
+        sup.blit(fuentes.chica.render(aviso, True, tema.malo), (TELEFONO.x + px(22), y))
+    lista = p.enfriamiento == 0 and not p.en_curso
+    pygame.draw.rect(sup, tema.boton if lista else tema.boton_off, RECT_PUBLICAR, border_radius=px(10))
+    if p.enfriamiento > 0:
+        lleno = RECT_PUBLICAR.w * (1 - p.enfriamiento / p.enfriamiento_total)
+        pygame.draw.rect(sup, tema.boton, (RECT_PUBLICAR.x, RECT_PUBLICAR.y, round(lleno), RECT_PUBLICAR.h),
+                         border_radius=px(10))
+    pygame.draw.rect(sup, tema.acento if lista else tema.texto_off, RECT_PUBLICAR, px(2), border_radius=px(10))
+    texto = ("Publicar (Enter)" if lista else "Tu post sigue circulando" if p.en_curso
+             else f"Podras publicar en {math.ceil(p.enfriamiento)} s")
+    img = fuentes.normal.render(texto, True, tema.boton_texto if lista else tema.texto_off)
+    sup.blit(img, img.get_rect(center=RECT_PUBLICAR.center))
 
 
 def _texto_centrado(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, texto: str) -> None:
