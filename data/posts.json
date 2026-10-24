@@ -1,0 +1,53 @@
+{
+  "titulares": [
+    {"id": "obras", "texto": "Cronograma oficial de obras del parque", "veracidad": 75, "gancho": 0.9},
+    {"id": "debate", "texto": "Lo que dijo cada candidato en el debate", "veracidad": 65, "gancho": 1.0},
+    {"id": "agua", "texto": "Cortaran el agua una semana en el barrio!", "veracidad": 25, "gancho": 1.35},
+    {"id": "fraude", "texto": "Filtran que la eleccion ya esta decidida", "veracidad": 10, "gancho": 1.5}
+  ],
+  "imagenes": [
+    {"id": "propia", "texto": "Foto propia tomada hoy", "veracidad": 10, "gancho": 1.0},
+    {"id": "grafico", "texto": "Grafico con datos oficiales", "veracidad": 15, "gancho": 1.0},
+    {"id": "reutilizada", "texto": "Foto vieja de otra ciudad", "veracidad": -25, "gancho": 1.2},
+    {"id": "ninguna", "texto": "Sin imagen", "veracidad": 0, "gancho": 0.8}
+  ],
+  "fuentes": [
+    {"id": "verificable", "texto": "Verificable (enlace oficial)", "veracidad": 20, "alcance": 1.0},
+    {"id": "dudosa", "texto": "Dudosa (un amigo me dijo)", "veracidad": -10, "alcance": 1.05},
+    {"id": "ninguna", "texto": "Ninguna", "veracidad": -20, "alcance": 1.15}
+  ],
+  "tonos": [
+    {"id": "informativo", "texto": "Informativo", "alcance": 1.0, "conflicto": 0, "convivencia": 2},
+    {"id": "emotivo", "texto": "Emotivo", "alcance": 1.2, "conflicto": 20, "convivencia": 0},
+    {"id": "agresivo", "texto": "Agresivo", "alcance": 1.5, "conflicto": 50, "convivencia": -4}
+  ],
+  "formatos": {
+    "CITIZEN": [
+      {"id": "comentario", "texto": "Comentar", "veracidad": 0, "alcance": 0.8, "conflicto": 0},
+      {"id": "compartido", "texto": "Compartir con mi opinion", "veracidad": 0, "alcance": 1.0, "conflicto": 5}
+    ],
+    "JOURNALIST": [
+      {"id": "nota", "texto": "Nota verificada", "veracidad": 15, "alcance": 1.0, "conflicto": 0,
+       "requiere_fuente": "verificable", "penalizacion": 25}
+    ],
+    "INFLUENCER": [
+      {"id": "amplificar", "texto": "Amplificar a mis seguidores", "veracidad": 0, "alcance": 1.4, "conflicto": 10}
+    ],
+    "CANDIDATE": [
+      {"id": "propuesta", "texto": "Propuesta de campana", "veracidad": 5, "alcance": 1.0, "conflicto": 0,
+       "convivencia": 2},
+      {"id": "desmentido", "texto": "Desmentido oficial", "veracidad": 10, "alcance": 1.1, "conflicto": 5,
+       "desmiente": true}
+    ]
+  },
+  "reglas": {
+    "umbral_falsa": 50,
+    "enfriamiento": 30,
+    "costo_sin_fuente": 6,
+    "costo_agresivo": 6,
+    "costo_falsa": 8,
+    "multiplicador_viral": 1.5,
+    "premio_veraz_verificable": 3,
+    "conflictos_maximo": 8
+  }
+}

@@ -39,9 +39,10 @@ class ResultadoAccion:
 
 class PropagacionEnVivo:
     def __init__(self, grafo: GrafoSocial, autor: str, jugador: str, credibilidad_jugador: int,
-                 semilla: int = 0, es_falsa: bool = True) -> None:
+                 semilla: int = 0, es_falsa: bool = True, alcance: float = 1.0) -> None:
         self.grafo = grafo
         self.autor, self.jugador, self.es_falsa = autor, jugador, es_falsa
+        self.alcance = alcance                # multiplica la transmision de la noticia (un post llamativo llega mas)
         self.credibilidad_jugador = credibilidad_jugador
         self.rng = random.Random(semilla)
         self.estado = {c.id: SIN_ENTERARSE for c in grafo.vertices()}
@@ -83,6 +84,8 @@ class PropagacionEnVivo:
         p = peso * FACTOR_EMISOR[rol] * (0.5 + self._credibilidad(emisor) / 100) * TRANSMISION
         if desmentido and rol is Role.JOURNALIST and self.alerta > 0:
             p *= ACELERA_PERIODISTAS
+        if not desmentido:
+            p *= self.alcance
         return min(1.0, p)
 
     def paso(self) -> None:
@@ -107,7 +110,7 @@ class PropagacionEnVivo:
         rol = self.grafo.vertice(id).rol
         if self.es_falsa and rol is Role.JOURNALIST:      # un periodista verifica antes de compartir
             self.estado[id] = INMUNE
-        elif self.rng.random() < COMPARTE[rol]:
+        elif self.rng.random() < COMPARTE[rol] * min(1.0, self.alcance):   # un post poco llamativo se comparte menos
             self.estado[id] = COMPARTIO
             nuevo[id] = ACTIVO
         else:
@@ -174,13 +177,16 @@ class PropagacionEnVivo:
 
     def impacto(self) -> Impact:
         """Mismas tablas que la propagacion de siempre: la desinformacion sube con los que la creen y la
-        informacion verificada con los inmunes (sin contar al jugador)."""
+        informacion verificada con los inmunes (sin contar al jugador). Si la noticia es cierta, creerla suma
+        a la informacion verificada."""
         def efecto(tabla: dict, clave: str, n: int) -> int:
             coeficiente, tope = tabla[clave]
             return min(tope, round(coeficiente * n))
         creen = self.creen
         inmunes = self.contar(INMUNE) - (self.estado.get(self.jugador) == INMUNE)
         f, v = PROPAGACION_FALSA, PROPAGACION_VERDADERA
+        if not self.es_falsa:
+            inmunes, creen = inmunes + creen, 0
         return (Impact(misinformation=efecto(f, "desinformacion", creen), conflicts=efecto(f, "conflictos", creen),
                        trust=-efecto(f, "confianza", creen), score=-efecto(f, "puntaje", creen))
                 + Impact(verified_information=efecto(v, "verificada", inmunes), trust=efecto(v, "confianza", inmunes),
@@ -190,7 +196,7 @@ class PropagacionEnVivo:
     def to_dict(self) -> dict:
         """Todo menos el grafo, que lo guarda la sesion (las cuentas limitadas quedan en el)."""
         s = self.rng.getstate()
-        return {"autor": self.autor, "jugador": self.jugador, "es_falsa": self.es_falsa,
+        return {"autor": self.autor, "jugador": self.jugador, "es_falsa": self.es_falsa, "alcance": self.alcance,
                 "credibilidad_jugador": self.credibilidad_jugador, "estado": self.estado, "rumor": self.rumor,
                 "desmentido": self.desmentido, "enfriando": self.enfriando, "limitadas": self.limitadas,
                 "alerta": self.alerta, "t": self.t, "acumulado": self._acumulado, "pasos": self.pasos,
@@ -200,6 +206,7 @@ class PropagacionEnVivo:
     def from_dict(cls, d: dict, grafo: GrafoSocial) -> "PropagacionEnVivo":
         p = cls.__new__(cls)
         p.grafo, p.autor, p.jugador, p.es_falsa = grafo, d["autor"], d["jugador"], d["es_falsa"]
+        p.alcance = float(d.get("alcance", 1.0))
         p.credibilidad_jugador = int(d["credibilidad_jugador"])
         p.estado, p.rumor, p.desmentido = dict(d["estado"]), dict(d["rumor"]), dict(d["desmentido"])
         p.enfriando, p.limitadas = dict(d["enfriando"]), list(d["limitadas"])

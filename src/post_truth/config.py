@@ -27,3 +27,4 @@ if FLUJO not in ("mundo", "escena"):
     raise ValueError(f"POSTTRUTH_FLUJO debe ser 'mundo' o 'escena', no {FLUJO!r}")
 RUTA_MINIJUEGOS = Path(__file__).resolve().parents[2] / "data" / "minijuegos.json"
 RUTA_MUNDO = Path(__file__).resolve().parents[2] / "data" / "mundo.json"
+RUTA_POSTS = Path(__file__).resolve().parents[2] / "data" / "posts.json"

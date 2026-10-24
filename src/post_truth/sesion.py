@@ -13,11 +13,12 @@ from post_truth.models import Impact
 from post_truth.models import credibilidad as cred
 from post_truth.models import eleccion
 from post_truth.models import minijuego as mj
+from post_truth.models import posts
 from post_truth.models.personaje import Personaje
 from post_truth.models.pistas import Evidencia, Investigacion, Pista
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import Ciudadano, GrafoSocial
-from post_truth.structures.propagacion_vivo import PropagacionEnVivo, ResultadoAccion
+from post_truth.structures.propagacion_vivo import ACTIVO, COMPARTIO, INMUNE, PropagacionEnVivo, ResultadoAccion
 from post_truth.structures.propagacion import (REPORTAR, REPORTE_INFUNDADO, VERIFICAR, SimulacionDecision, es_falsa,
                                                fuerza_reportar, fuerza_verificar, mensaje_respaldo, reporte_rechazado,
                                                simular_decision)
@@ -161,6 +162,8 @@ class PartidaSesion:
         self.en_vivo_viral = False                  # ya se aviso que el rumor en vivo se volvio viral
         self.notificaciones: list[dict] = []        # {"tipo", "titulo", "texto"} del telefono, la mas nueva al final
         self.leidas = 0                             # cuantas notificaciones ya se vieron
+        self.post: dict | None = None               # post del jugador que esta corriendo: se cobra al apagarse
+        self.enfriamiento_post = 0.0                # segundos para poder publicar otra vez
         self.apoyo = {c: eleccion.APOYO_INICIAL for c in eleccion.CANDIDATOS}   # para la eleccion del alcalde
         self.por_rumores = {c: 0.0 for c in eleccion.CANDIDATOS}               # parte movida por publicaciones falsas
 
@@ -250,6 +253,7 @@ class PartidaSesion:
             if self._avanzar_dia(dt) or self.campana.crisis_lanzada != ya_estaba:
                 return None   # se acabo el dia, o la crisis recien aparece: su reloj corre desde el proximo paso
             self._avanzar_en_vivo(dt / self.campana.factor)   # tiempo extendido: el rumor tambien va mas lento
+            self.enfriamiento_post = max(0.0, self.enfriamiento_post - dt)
         if not self.reloj_activo or self.tiempo_restante is None:
             return None
         self.tiempo_restante = max(0.0, self.tiempo_restante - dt)
@@ -475,6 +479,8 @@ class PartidaSesion:
         impacto = Impact(**{k: round(v * IMPACTO_EN_VIVO) for k, v in asdict(self.en_vivo.impacto()).items()})
         self.ciudad.apply(impacto)
         self.jugador(self.en_vivo.jugador).puntos += impacto.score
+        if self.post is not None:
+            self._liquidar_post()
         self.en_vivo = None
         return impacto
 
@@ -486,12 +492,60 @@ class PartidaSesion:
         if not self.en_vivo_viral and v.creen >= VIRAL_EN_VIVO * len(v.estado):
             self.en_vivo_viral = True
             self.novedad = self.novedad or "viral"   # no tapa el aviso de una crisis que aun no se ha visto
-            self.notificar("malo", "Se volvio viral!", f"{v.creen} personas ya creen el rumor. Frenalo desde la red.")
+            self.notificar("malo" if v.es_falsa else "info", "Se volvio viral!",
+                           f"{v.creen} personas ya creen " + ("el rumor. Frenalo desde la red." if v.es_falsa
+                                                              else "la noticia."))
         if v.terminada:
             creen, total = v.creen, len(v.estado)
             self.cerrar_en_vivo()
-            self.notificar("malo" if self.en_vivo_viral else "bueno", "El rumor se apago",
+            self.notificar("malo" if self.en_vivo_viral and v.es_falsa else "bueno",
+                           "El rumor se apago" if v.es_falsa else "La noticia se apago",
                            f"Al final lo creyeron {creen} de {total} personas.")
+
+    def publicar(self, post: posts.Post) -> tuple[bool, str, posts.Evaluacion | None]:
+        """El jugador publica: si la red esta en calma su post arranca una propagacion en vivo; si ya corre una
+        noticia, uno que dice lo mismo se suma a ella y uno veraz que la contradice sale como desmentido."""
+        if self.enfriamiento_post > 0:
+            return False, "enfriando", None
+        if self.post is not None:
+            return False, "en_curso", None
+        j = self.jugador_actual
+        reglas = posts.reglas()
+        ev = reglas.evaluar(post, j.rol.name)
+        v = self.en_vivo
+        if v is None:
+            semilla = int(hashlib.md5(f"{post.to_dict()}:{self.campana.dia if self.campana else 0}:"
+                                      f"{len(self.notificaciones)}".encode()).hexdigest()[:8], 16)
+            self.en_vivo = PropagacionEnVivo(self.grafo, j.id, j.id, j.credibilidad, semilla, ev.es_falsa,
+                                             ev.alcance * (0.5 if ev.desmiente else 1.0))   # desmentir la nada no interesa
+            self.en_vivo_viral = False
+        elif ev.es_falsa == v.es_falsa:
+            v.estado[j.id], v.rumor[j.id] = COMPARTIO, ACTIVO
+        elif not ev.es_falsa:
+            v.estado[j.id], v.desmentido[j.id] = INMUNE, ACTIVO
+        else:
+            return False, "contradice_verdad", ev
+        self.post = {"post": post.to_dict(), "jugador": j.id}
+        self.enfriamiento_post = reglas.reglas["enfriamiento"]
+        titular = next(t["texto"] for t in reglas.opciones("titular", j.rol.name) if t["id"] == post.titular)
+        self.notificar("info", "Publicaste", titular)
+        return True, "", ev
+
+    def _liquidar_post(self) -> None:
+        """Se apago la noticia: el post deja sus conflictos y convivencia y se cobra (o premia) la credibilidad."""
+        v, datos = self.en_vivo, self.post
+        self.post = None
+        post, j = posts.Post(**datos["post"]), self.jugador(datos["jugador"])
+        reglas = posts.reglas()
+        ev = reglas.evaluar(post, j.rol.name)
+        llego = 1 - v.contar("sin_enterarse") / len(v.estado)
+        self.ciudad.apply(Impact(conflicts=reglas.conflictos(ev, llego), coexistence=ev.convivencia))
+        delta = reglas.credibilidad(post, ev, self.en_vivo_viral)
+        j.credibilidad = cred.acotar(j.credibilidad + delta)
+        j.historial.append({"evento": f"post:{post.titular}", "accion": "publicar", "falsa": ev.es_falsa,
+                            "respaldo": 0, "credibilidad": delta})
+        self.notificar("bueno" if delta >= 0 else "malo", f"Tu publicacion: credibilidad {delta:+}",
+                       "Sin fuente, agresiva o falsa cuesta; veraz y verificable suma.")
 
     def notificar(self, tipo: str, titulo: str, texto: str) -> None:
         self.notificaciones.append({"tipo": tipo, "titulo": titulo, "texto": texto})
@@ -619,6 +673,7 @@ class PartidaSesion:
             "minijuego": None if self.minijuego is None else self.minijuego.to_dict(),
             "en_vivo": None if self.en_vivo is None else self.en_vivo.to_dict(),
             "en_vivo_viral": self.en_vivo_viral, "notificaciones": self.notificaciones, "leidas": self.leidas,
+            "post": self.post, "enfriamiento_post": self.enfriamiento_post,
             "en_pausa": {str(k): v for k, v in self._en_pausa.items()},
             "grafo": self.grafo.to_dict(),
             "rng": [estado_rng[0], list(estado_rng[1]), estado_rng[2]],
@@ -654,6 +709,8 @@ class PartidaSesion:
         sesion.en_vivo_viral = bool(datos.get("en_vivo_viral", False))
         sesion.notificaciones = [dict(n) for n in datos.get("notificaciones", [])]
         sesion.leidas = int(datos.get("leidas", 0))
+        sesion.post = datos.get("post")
+        sesion.enfriamiento_post = float(datos.get("enfriamiento_post", 0.0))
         sesion.por_rumores.update(datos.get("por_rumores", {}))
         if datos.get("campana") is not None:
             sesion.campana = Campana.from_dict(datos["campana"])
