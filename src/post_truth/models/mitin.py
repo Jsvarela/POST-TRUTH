@@ -1,16 +1,20 @@
-"""Minijuego de la Plaza, "Mitin": la multitud tiene una barra de animo; aparecen interrupciones y rumores y hay que
-responder con el argumento adecuado en el momento justo (cuando el marcador pasa por la zona marcada). Los argumentos
-con datos necesitan evidencia reunida antes. Con tiempo extendido no hay ritmo: cualquier momento vale."""
+"""Minijuego de la Plaza, "Mitin" (de accion): los rumores suben desde la multitud como globos hacia el escenario.
+Cada globo pide una respuesta segun su forma: 1 dato (cuadrado), 2 pregunta (circulo) o 3 calma (triangulo). La
+tecla revienta el globo de ese tipo que este mas cerca del escenario; si llega arriba, el rumor se queda en el aire.
+Los globos de dato necesitan evidencia reunida antes. Con tiempo extendido suben mas lento."""
 from __future__ import annotations
 
 import json
+import random
 from functools import lru_cache
 
 from post_truth.config import RUTA_MITIN
 from post_truth.models.dominio import Impact
 from post_truth.models.minijuego import ContextoMinijuego, Minijuego, ResultadoMinijuego, registrar
 
-ACIERTO, DESTIEMPO, SIN_PRUEBAS, FALLO = "acierto", "destiempo", "sin_pruebas", "fallo"
+ACIERTO, SIN_PRUEBAS, FALLO, LLEGA = "acierto", "sin_pruebas", "fallo", "llega"
+TIPOS = {"1": "dato", "2": "pregunta", "3": "calma"}
+COLUMNAS = 5
 
 
 @lru_cache(maxsize=1)
@@ -23,85 +27,80 @@ def datos() -> dict:
 class Mitin(Minijuego):
     id = "mitin"
     nombre = "Mitin"
-    ayuda = ("Te interrumpen con rumores. Elige el argumento correcto (1, 2 o 3) cuando el marcador pase por la "
-             "zona clara. Los argumentos con datos necesitan evidencia que hayas reunido antes.")
+    ayuda = ("Los rumores suben como globos hacia el escenario. Revientalos con la respuesta que pide su forma: "
+             "1 dato (cuadrado), 2 pregunta (circulo), 3 calma (triangulo). Los datos necesitan evidencia reunida.")
 
     def __init__(self, contexto: ContextoMinijuego) -> None:
         super().__init__(contexto)
-        d = datos()
-        n = len(d["interrupciones"])
-        self.orden = [(contexto.dia + k) % n for k in range(d["por_mitin"])]   # cada dia empieza por otra
+        self.rng = random.Random(2000 + contexto.dia)
+        self.globos: list[list] = []      # [columna, altura 1 abajo .. 0 escenario, tipo, grito]
         self.resultados: list[str] = []
-        self.animo = float(d["animo_inicial"])
-        self.t = 0.0
+        self.animo = float(datos()["animo_inicial"])
+        self.t, self._proximo = 0.0, 0.4
 
     @property
-    def sin_ritmo(self) -> bool:
-        return self.contexto.extendido
+    def duracion(self) -> float:
+        return datos()["duracion"]
 
     @property
-    def periodo(self) -> float:
-        return datos()["periodo"] * self.contexto.ritmo
-
-    @property
-    def limite(self) -> float:
-        return self.periodo * datos()["ciclos"]
-
-    @property
-    def marcador(self) -> float:
-        """0..1: donde va el marcador del ritmo."""
-        return (self.t % self.periodo) / self.periodo
-
-    @property
-    def en_ventana(self) -> bool:
-        a, b = datos()["ventana"]
-        return self.sin_ritmo or a <= self.marcador <= b
-
-    @property
-    def actual(self) -> dict | None:
-        return None if self.terminado else datos()["interrupciones"][self.orden[len(self.resultados)]]
+    def subida(self) -> float:
+        return datos()["subida"] / self.contexto.ritmo
 
     def update(self, dt: float) -> None:
         if self.terminado:
             return
         self.t += dt
-        if self.t >= self.limite:   # se quedo callado: el rumor queda en el aire
-            self._marcar(FALLO)
+        self._proximo -= dt
+        if self._proximo <= 0 and self.t < self.duracion - 2:
+            r = self.rng.choice(datos()["interrupciones"])
+            self.globos.append([self.rng.randrange(COLUMNAS), 1.0, r["tipo"], r["grito"]])
+            self._proximo = datos()["intervalo"] * self.contexto.ritmo
+        quedan = []
+        for g in self.globos:
+            g[1] -= self.subida * dt
+            if g[1] <= 0:              # llego al escenario: el rumor queda en el aire
+                self._marcar(LLEGA)
+            else:
+                quedan.append(g)
+        self.globos = quedan
 
     def accion(self, nombre: str) -> None:
-        r = self.actual
-        if r is None or nombre not in ("1", "2", "3"):
+        if self.terminado or nombre not in TIPOS:
             return
-        if int(nombre) - 1 != r["correcto"]:
+        tipo = TIPOS[nombre]
+        candidatos = [g for g in self.globos if g[2] == tipo]
+        if not candidatos:             # respuesta equivocada: no habia ningun globo de ese tipo
             self._marcar(FALLO)
-        elif r["requiere_evidencia"] and self.contexto.evidencias == 0:
-            self._marcar(SIN_PRUEBAS)   # razon sin pruebas: la gente duda
-        else:
-            self._marcar(ACIERTO if self.en_ventana else DESTIEMPO)
+            return
+        g = min(candidatos, key=lambda x: x[1])   # el mas cerca del escenario
+        self.globos.remove(g)
+        self._marcar(SIN_PRUEBAS if tipo == "dato" and self.contexto.evidencias == 0 else ACIERTO)
 
     def _marcar(self, como: str) -> None:
         self.resultados.append(como)
         self.animo = max(0.0, min(100.0, self.animo + datos()["efectos"][como]))
-        self.t = 0.0
 
     @property
     def terminado(self) -> bool:
-        return len(self.resultados) >= len(self.orden)
+        return self.t >= self.duracion
 
     def resultado(self) -> ResultadoMinijuego:
-        aciertos, destiempo, fallos = (self.resultados.count(c) for c in (ACIERTO, DESTIEMPO, FALLO))
-        buenos = aciertos + destiempo
-        impacto = Impact(trust=2 * aciertos + destiempo, misinformation=2 * fallos,
-                         score=2 * aciertos + destiempo - 2 * fallos)
-        rumor = fallos >= 2
-        texto = f"Respondiste bien {buenos} de {len(self.orden)} interrupciones (animo {round(self.animo)})."
+        aciertos, sin, fallos = (self.resultados.count(c) for c in (ACIERTO, SIN_PRUEBAS, FALLO))
+        llegan = self.resultados.count(LLEGA)
+        malos = fallos + llegan
+        impacto = Impact(trust=aciertos // 2 + sin // 3, misinformation=llegan, score=aciertos - malos)
+        rumor = llegan >= 3
+        texto = f"Reventaste {aciertos + sin} rumores; {llegan} llegaron al escenario (animo {round(self.animo)})."
         if rumor:
             texto += " Lo que no aclaraste arranca un rumor en la red."
-        return ResultadoMinijuego(impacto, 2 * aciertos - 2 * fallos, texto, rumor)
+        return ResultadoMinijuego(impacto, max(-6, min(6, (aciertos - 2 * malos) // 2)), texto, rumor)
 
     def estado(self) -> dict:
-        return {"orden": self.orden, "resultados": self.resultados, "animo": self.animo, "t": self.t}
+        s = self.rng.getstate()
+        return {"globos": self.globos, "resultados": self.resultados, "animo": self.animo, "t": self.t,
+                "proximo": self._proximo, "rng": [s[0], list(s[1]), s[2]]}
 
     def restaurar(self, estado: dict) -> None:
-        self.orden, self.resultados = list(estado["orden"]), list(estado["resultados"])
-        self.animo, self.t = float(estado["animo"]), float(estado["t"])
+        self.globos, self.resultados = [list(g) for g in estado["globos"]], list(estado["resultados"])
+        self.animo, self.t, self._proximo = float(estado["animo"]), float(estado["t"]), float(estado["proximo"])
+        self.rng.setstate((estado["rng"][0], tuple(estado["rng"][1]), estado["rng"][2]))

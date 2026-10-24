@@ -1,28 +1,5 @@
 {
  "grupo": "Chat del 8B - Colegio Nova",
- "segundos_por_turno": 9,
- "efectos": {
-  "desescalar": {
-   "coexistence": 2,
-   "digital_wellbeing": 2,
-   "score": 1,
-   "credibilidad": 2
-  },
-  "ignorar": {
-   "digital_wellbeing": -1,
-   "credibilidad": 0
-  },
-  "amplificar": {
-   "coexistence": -3,
-   "digital_wellbeing": -3,
-   "conflicts": 1,
-   "score": -1,
-   "credibilidad": -3
-  },
-  "tarde": {
-   "digital_wellbeing": -1
-  }
- },
  "arbol": {
   "hablante": "anonimo_77",
   "texto": "Miren la foto que le edite a Sofi jajaja, compartanla.",
@@ -283,5 +260,9 @@
     }
    }
   ]
- }
+ },
+ "duracion": 24,
+ "intervalo": 1.1,
+ "caida": 0.33,
+ "prob_apoyo": 0.38
 }

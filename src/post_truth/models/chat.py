@@ -1,9 +1,11 @@
-"""Minijuego del Colegio, "Chat bajo presion": un chat donde atacan a una estudiante; el jugador responde con tiempo
-limite por turno. La conversacion es un arbol de dialogo N-ario (structures/arbol_dialogo.py) con ramas de
-desescalar, ignorar o amplificar; jugar es bajar de la raiz a una hoja por las respuestas elegidas."""
+"""Minijuego del Colegio, "Chat bajo presion" (de accion): los mensajes del chat del curso caen por tres carriles.
+Mueves a Sofi (izquierda/derecha) para atrapar los mensajes de apoyo y esquivar los ataques; tres apoyos llenan la
+calma y Espacio la usa para borrar los ataques que hay en pantalla. Los textos salen del arbol de dialogo de
+data/chat_colegio.json (ataques = lo que dicen los atacantes; apoyo = las respuestas que desescalan)."""
 from __future__ import annotations
 
 import json
+import random
 from functools import lru_cache
 
 from post_truth.config import RUTA_CHAT
@@ -11,7 +13,10 @@ from post_truth.models.dominio import Impact
 from post_truth.models.minijuego import ContextoMinijuego, Minijuego, ResultadoMinijuego, registrar
 from post_truth.structures.arbol_dialogo import NodoDialogo
 
-TECLAS = ("1", "2", "3")
+CARRILES = 3
+FILA_SOFI = 0.86     # altura (0 arriba, 1 abajo) donde esta Sofi
+CALMA_LLENA = 3
+ATAQUE, APOYO = "ataque", "apoyo"
 
 
 @lru_cache(maxsize=1)
@@ -21,81 +26,112 @@ def datos() -> tuple[dict, NodoDialogo]:
     return d, NodoDialogo.from_dict(d["arbol"])
 
 
+@lru_cache(maxsize=1)
+def textos() -> dict[str, list[str]]:
+    """Recorre el arbol (DFS) y separa lo que dicen los atacantes de las respuestas que desescalan."""
+    ataques, apoyos = [], []
+
+    def recorrer(n: NodoDialogo) -> None:
+        if n.hablante.startswith("anonimo"):
+            ataques.append(n.texto)
+        for o in n.opciones:
+            if o.tipo == "desescalar":
+                apoyos.append(o.texto)
+            if o.hijo is not None:
+                recorrer(o.hijo)
+    recorrer(datos()[1])
+    return {ATAQUE: ataques, APOYO: apoyos}
+
+
 @registrar
 class Chat(Minijuego):
     id = "chat"
     nombre = "Chat bajo presion"
-    ayuda = ("Atacan a Sofi en el chat del curso. Elige tu respuesta con 1, 2 o 3 antes de que se acabe el tiempo: "
-             "calmar, ignorar o echarle lena. Lo que escribes cambia como sigue la conversacion.")
+    ayuda = ("Atacan a Sofi en el chat del curso. Muevela con las flechas (o A/D) para atrapar los mensajes de apoyo "
+             "(circulos verdes) y esquivar los ataques (triangulos rojos). Con 3 apoyos, Espacio borra los ataques.")
 
     def __init__(self, contexto: ContextoMinijuego) -> None:
         super().__init__(contexto)
-        self.camino: list[int] = []      # opcion elegida en cada turno (el recorrido raiz -> hoja)
-        self.tipos: list[str] = []       # desescalar | ignorar | amplificar | tarde
-        self.t = 0.0
+        self.rng = random.Random(1000 + contexto.dia)
+        self.carril = CARRILES // 2
+        self.mensajes: list[list] = []     # [carril, altura 0..1, tipo, texto]
+        self.t, self._proximo = 0.0, 0.5
+        self.golpes = self.apoyos = self.borrados = 0
+        self.calma = 0
 
     @property
-    def raiz(self) -> NodoDialogo:
-        return datos()[1]
+    def duracion(self) -> float:
+        return datos()[0]["duracion"]
 
     @property
-    def limite(self) -> float:
-        return datos()[0]["segundos_por_turno"] * self.contexto.ritmo
-
-    @property
-    def nodo_actual(self) -> NodoDialogo | None:
-        return self.raiz.seguir(self.camino)
-
-    @property
-    def historia(self) -> list[tuple[str, str, str]]:
-        """(hablante, mensaje, lo que respondio el jugador) de los turnos ya jugados."""
-        nodo, filas = self.raiz, []
-        for i in self.camino:
-            filas.append((nodo.hablante, nodo.texto, nodo.opciones[i].texto))
-            nodo = nodo.opciones[i].hijo
-        return filas
+    def caida(self) -> float:
+        """Velocidad de caida: mas lenta con tiempo extendido, mas rapida si el lugar esta en crisis."""
+        return datos()[0]["caida"] / self.contexto.ritmo
 
     def update(self, dt: float) -> None:
         if self.terminado:
             return
         self.t += dt
-        if self.t >= self.limite:   # nadie respondio: cuenta como ignorar y ademas pesa en el bienestar
-            self._responder(next(i for i, o in enumerate(self.nodo_actual.opciones) if o.tipo == "ignorar"), "tarde")
+        self._proximo -= dt
+        if self._proximo <= 0 and self.t < self.duracion - 1.5:
+            d = datos()[0]
+            tipo = APOYO if self.rng.random() < d["prob_apoyo"] else ATAQUE
+            self.mensajes.append([self.rng.randrange(CARRILES), 0.0, tipo, self.rng.choice(textos()[tipo])])
+            self._proximo = d["intervalo"] * self.contexto.ritmo
+        quedan = []
+        for m in self.mensajes:
+            antes = m[1]
+            m[1] += self.caida * dt
+            if antes < FILA_SOFI <= m[1] and m[0] == self.carril:   # llega a la fila de Sofi en su carril
+                if m[2] == APOYO:
+                    self.apoyos += 1
+                    self.calma = min(CALMA_LLENA, self.calma + 1)
+                else:
+                    self.golpes += 1
+                continue
+            if m[1] < 1.05:
+                quedan.append(m)
+        self.mensajes = quedan
 
     def accion(self, nombre: str) -> None:
-        nodo = self.nodo_actual
-        if nodo is not None and nombre in TECLAS and int(nombre) <= len(nodo.opciones):
-            i = int(nombre) - 1
-            self._responder(i, nodo.opciones[i].tipo)
-
-    def _responder(self, i: int, tipo: str) -> None:
-        self.camino.append(i)
-        self.tipos.append(tipo)
-        self.t = 0.0
+        if self.terminado:
+            return
+        if nombre == "izq":
+            self.carril = max(0, self.carril - 1)
+        elif nombre == "der":
+            self.carril = min(CARRILES - 1, self.carril + 1)
+        elif nombre == "espacio" and self.calma >= CALMA_LLENA:   # la calma borra los ataques en pantalla
+            ataques = [m for m in self.mensajes if m[2] == ATAQUE]
+            self.borrados += len(ataques)
+            self.mensajes = [m for m in self.mensajes if m[2] != ATAQUE]
+            self.calma = 0
 
     @property
     def terminado(self) -> bool:
-        return self.nodo_actual is None
+        return self.t >= self.duracion
 
     def resultado(self) -> ResultadoMinijuego:
-        efectos = datos()[0]["efectos"]
-        total: dict[str, int] = {}
-        for tipo in self.tipos:
-            for clave in ([tipo] if tipo != "tarde" else ["ignorar", "tarde"]):
-                for k, v in efectos[clave].items():
-                    total[k] = total.get(k, 0) + v
-        credibilidad = total.pop("credibilidad", 0)
-        calma, lena = self.tipos.count("desescalar"), self.tipos.count("amplificar")
-        if calma == len(self.tipos):
-            texto = "Desescalaste todo el chat: Sofi tuvo apoyo y el ataque perdio fuerza."
-        elif lena > calma:
-            texto = "Le echaste lena al chat: el ataque crecio y Sofi quedo mas sola."
+        bien = self.apoyos + self.borrados // 2
+        impacto = Impact(coexistence=bien - 2 * self.golpes, digital_wellbeing=self.apoyos - 2 * self.golpes,
+                         conflicts=self.golpes // 2, score=bien - self.golpes)
+        credibilidad = max(-6, min(6, (bien - 2 * self.golpes) // 2))
+        if self.golpes == 0:
+            texto = f"Ningun ataque llego a Sofi y atrapaste {self.apoyos} mensajes de apoyo."
+        elif self.golpes > bien:
+            texto = f"{self.golpes} ataques llegaron a Sofi: el acoso le gano al apoyo."
         else:
-            texto = f"Calmaste {calma} de {len(self.tipos)} momentos del chat."
-        return ResultadoMinijuego(Impact(**total), credibilidad, texto)
+            texto = f"Atrapaste {self.apoyos} apoyos y borraste {self.borrados} ataques; {self.golpes} llegaron a Sofi."
+        return ResultadoMinijuego(impacto, credibilidad, texto)
 
     def estado(self) -> dict:
-        return {"camino": self.camino, "tipos": self.tipos, "t": self.t}
+        s = self.rng.getstate()
+        return {"carril": self.carril, "mensajes": self.mensajes, "t": self.t, "proximo": self._proximo,
+                "golpes": self.golpes, "apoyos": self.apoyos, "borrados": self.borrados, "calma": self.calma,
+                "rng": [s[0], list(s[1]), s[2]]}
 
     def restaurar(self, estado: dict) -> None:
-        self.camino, self.tipos, self.t = list(estado["camino"]), list(estado["tipos"]), float(estado["t"])
+        self.carril, self.mensajes = int(estado["carril"]), [list(m) for m in estado["mensajes"]]
+        self.t, self._proximo = float(estado["t"]), float(estado["proximo"])
+        self.golpes, self.apoyos, self.borrados = int(estado["golpes"]), int(estado["apoyos"]), int(estado["borrados"])
+        self.calma = int(estado["calma"])
+        self.rng.setstate((estado["rng"][0], tuple(estado["rng"][1]), estado["rng"][2]))

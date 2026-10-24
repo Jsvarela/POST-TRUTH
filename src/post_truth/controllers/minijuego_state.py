@@ -5,7 +5,8 @@ from post_truth.controllers.base_state import BaseState
 from post_truth.views.hud import DatosHud
 from post_truth.views.minijuego_view import dibujar_minijuego
 
-TECLAS = {pygame.K_1: "1", pygame.K_2: "2", pygame.K_3: "3", pygame.K_4: "4"}
+TECLAS = {pygame.K_1: "1", pygame.K_2: "2", pygame.K_3: "3", pygame.K_4: "4", pygame.K_SPACE: "espacio",
+          pygame.K_LEFT: "izq", pygame.K_a: "izq", pygame.K_RIGHT: "der", pygame.K_d: "der"}
 
 
 class MinijuegoState(BaseState):

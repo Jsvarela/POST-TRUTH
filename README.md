@@ -23,14 +23,15 @@ python src/main.py
 
 - Seleccion: cada jugador (1 a 4) elige un rol distinto y su personaje; 1 agrega otro jugador y Enter inicia la partida cuando todos tienen rol
 - WASD o flechas: caminar libre por la ciudad (8 direcciones)
-- E: dentro de un lugar (en cualquier punto de su zona), ver la noticia o buscar evidencia
+- E: entrar al lugar donde estas (la evidencia aparece sola); adentro, 1-3 o clic: ver la noticia, jugar el minijuego o volver a la calle
 - F3: superposicion de depuracion (zonas, colisiones y fronteras del grafo de la ciudad)
 - F1 (en cualquier pantalla): modo sustentacion con el arbol de decisiones, el grafo social, el grafo de la ciudad y el arbol de dialogo en crudo (BFS, DFS y Dijkstra); el juego queda en pausa
 - Menu: flechas y Enter o clic; O abre las opciones (tema, volumen y tiempo extendido)
 - G: mostrar la guia hacia la noticia
-- 1-3: elegir que hacer en un lugar con varias opciones (noticia, evidencia o minijuego)
+- Chat bajo presion (Colegio): flechas o A/D mueven a Sofi para atrapar el apoyo y esquivar los ataques; Espacio usa la calma
+- Mitin (Plaza): revienta los globos de rumor con 1 dato, 2 pregunta o 3 calma segun su forma
 - P (en un minijuego): pausa
-- T: abrir o cerrar el telefono Civitas (la red en vivo; el mundo corre al 25%). Dentro: 1-4 herramientas, flechas o clic para elegir ciudadano, Tab o clic para cambiar de pestana
+- T: abrir o cerrar el telefono Civitas (la red en vivo; el mundo corre al 25%). Frena el rumor: mueve el escudo (WASD, flechas o raton) para atajar las bolitas rojas y Espacio lanza el desmentido en onda; Tab cambia de pestana
 - Pestana Publicar del telefono: flechas o clic para armar el post (formato segun el rol, titular, imagen, fuente y tono) y Enter para publicarlo
 - H: usar la habilidad de tu rol (Periodista: verificar a distancia; Influencer: desmentido viral; Candidato: comunicado; Ciudadano: convivencia vecinal)
 - Y: menu de aliados (los roles que no elegiste); 1-3 les pide ayuda

@@ -1,17 +1,10 @@
 {
- "periodo": 2.4,
- "ventana": [
-  0.4,
-  0.65
- ],
- "ciclos": 2,
- "por_mitin": 4,
  "animo_inicial": 50,
  "efectos": {
-  "acierto": 14,
-  "destiempo": 5,
+  "acierto": 8,
   "sin_pruebas": 2,
-  "fallo": -14
+  "fallo": -8,
+  "llega": -12
  },
  "interrupciones": [
   {
@@ -22,7 +15,8 @@
     "Mejor hablemos de otra cosa"
    ],
    "correcto": 0,
-   "requiere_evidencia": true
+   "requiere_evidencia": true,
+   "tipo": "dato"
   },
   {
    "grito": "Dicen que compraron los votos del barrio!",
@@ -32,7 +26,8 @@
     "Aqui nadie compra votos, punto"
    ],
    "correcto": 1,
-   "requiere_evidencia": false
+   "requiere_evidencia": false,
+   "tipo": "pregunta"
   },
   {
    "grito": "La foto del parque lleno de basura es de hoy!",
@@ -42,7 +37,8 @@
     "La foto es de 2019: aqui esta la original"
    ],
    "correcto": 2,
-   "requiere_evidencia": true
+   "requiere_evidencia": true,
+   "tipo": "dato"
   },
   {
    "grito": "Ustedes solo vienen en elecciones!",
@@ -52,7 +48,8 @@
     "Silencio, por favor"
    ],
    "correcto": 1,
-   "requiere_evidencia": false
+   "requiere_evidencia": false,
+   "tipo": "calma"
   },
   {
    "grito": "En Civitas dicen que cancelan la eleccion!",
@@ -62,7 +59,11 @@
     "Eso es culpa de los otros"
    ],
    "correcto": 0,
-   "requiere_evidencia": true
+   "requiere_evidencia": true,
+   "tipo": "dato"
   }
- ]
+ ],
+ "duracion": 26,
+ "intervalo": 1.6,
+ "subida": 0.17
 }
