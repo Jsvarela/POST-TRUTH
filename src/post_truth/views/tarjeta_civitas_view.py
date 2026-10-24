@@ -23,6 +23,7 @@ class EstadoTarjeta:
     evento: NewsEvent
     investigacion: Investigacion
     hover: ZonaTarjeta | None = None
+    ocultas: bool = False   # las senales sin descubrir no se marcan (se buscan con la lupa)
 
 
 def _layout(rect: pygame.Rect) -> dict[ZonaTarjeta, pygame.Rect]:
@@ -140,7 +141,7 @@ def _tooltip(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, tarjeta: py
 
 
 def dibujar_tarjeta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: pygame.Rect, evento: NewsEvent,
-                    investigacion: Investigacion, hover: ZonaTarjeta | None = None) -> None:
+                    investigacion: Investigacion, hover: ZonaTarjeta | None = None, ocultas: bool = False) -> None:
     zonas = _layout(rect)
     pygame.draw.rect(pantalla, tema.fondo, rect, border_radius=px(12))
     pygame.draw.rect(pantalla, tema.borde, rect, width=px(2), border_radius=px(12))
@@ -192,6 +193,8 @@ def dibujar_tarjeta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect
     for i, pista in enumerate(evento.clues):
         zr = zonas[pista.zona]
         descubierta = investigacion.esta_descubierta(pista.id)
+        if ocultas and not descubierta:
+            continue
         if hover is pista.zona:
             pygame.draw.rect(pantalla, tema.acento, zr.inflate(px(4), px(4)), width=px(2), border_radius=px(8))
         elif descubierta:

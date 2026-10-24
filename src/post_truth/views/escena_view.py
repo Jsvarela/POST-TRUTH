@@ -35,7 +35,7 @@ RECT_PANEL = pygame.Rect(px(330), px(68), px(664), px(328))
 RECT_ESCENA = pygame.Rect(0, px(57), ANCHO, px(404) - px(57))
 RECT_TARJETA = pygame.Rect(RECT_PANEL.x + px(12), RECT_PANEL.y + px(8), px(346), px(312))
 RECT_MAPA = pygame.Rect(RECT_PANEL.right - px(10) - px(290), RECT_PANEL.y + px(8), px(290), px(312))
-AYUDA_INTERIOR = "Investigar: clic en la publicacion o A S D F G   |   Decidir: 1-4   |   ESC: volver a la calle"
+AYUDA_INTERIOR = "Investigar: I (lupa y testigos)   |   Decidir: 1-4   |   ESC: volver a la calle"
 AYUDA = "Investigar: clic en la publicacion o A S D F G   |   Viajar: clic en el mapa o Q W E R T   |   Decidir: 1-4"
 RECT_TEXTO_PANEL = pygame.Rect(RECT_PANEL.x + px(18), RECT_PANEL.y + px(52), px(340), px(256))
 ALFA_PANEL = 205
@@ -212,7 +212,8 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
         panel.draw(pantalla, fuentes, tema)
         area = RECT_TEXTO_PANEL if mapa is not None or presentes is not None else panel.interior
         if tarjeta is not None:
-            dibujar_tarjeta(pantalla, fuentes, tema, RECT_TARJETA, tarjeta.evento, tarjeta.investigacion, tarjeta.hover)
+            dibujar_tarjeta(pantalla, fuentes, tema, RECT_TARJETA, tarjeta.evento, tarjeta.investigacion, tarjeta.hover,
+                            tarjeta.ocultas)
         elif impacto is None:
             dibujar_texto_ajustado(pantalla, fuentes.normal, texto_panel, tema.texto, area)
         else:

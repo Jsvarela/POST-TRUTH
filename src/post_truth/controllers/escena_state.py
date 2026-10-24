@@ -30,6 +30,7 @@ TECLAS_VIAJAR = {pygame.K_q: "Q", pygame.K_w: "W", pygame.K_e: "E", pygame.K_r: 
 
 
 RECT_BOTON_CENTRAL = pygame.Rect((ANCHO - px(300)) // 2, Y_BOTONES, px(300), ALTO_BOTONES)
+RECT_INVESTIGAR = pygame.Rect(px(190), px(64), px(132), px(36))   # junto a "Estas en", lejos del reloj
 
 
 def _rects_botones(n: int) -> list[pygame.Rect]:
@@ -68,6 +69,8 @@ class EscenaState(BaseState):
         self._reaccion: tuple[int, frozenset[str]] | None = None   # signo del impacto y a quienes les llego
         self._t_reaccion = 0.0
         self.anuncio: Anuncio | None = None   # se acabo el tiempo, cambio de credibilidad...
+        self._volviendo = False               # vuelve de la ventana de investigacion: la misma noticia sigue
+        self.boton_investigar = Boton(RECT_INVESTIGAR, "Investigar (I)", self._abrir_investigacion, atajo=pygame.K_i)
 
     @property
     def sesion(self) -> PartidaSesion:
@@ -140,7 +143,18 @@ class EscenaState(BaseState):
             return PROPAGACION
         return s.fase
 
+    def _abrir_investigacion(self) -> None:
+        self._volviendo = True
+        self.app.estados.cambiar("investigacion", fundido=True)
+
     def al_entrar(self) -> None:
+        if self._volviendo:
+            self._volviendo = False
+            if self.sesion.pendiente is not None:   # el reloj vencio investigando
+                self._mostrar_decision(self.sesion.pendiente)
+            else:
+                self._preparar_turno()
+            return
         self.interior = self.app.partida is not None
         if self.interior:
             self._sesion = self.app.partida
@@ -330,7 +344,10 @@ class EscenaState(BaseState):
             self.dialogo.completar()
         if self.fase == DECIDIENDO:
             self._manejar_mapa(event)
-            self._manejar_investigacion(event)
+            if not self.interior:   # en el juego se investiga con la lupa (I); el flujo clasico conserva el clic
+                self._manejar_investigacion(event)
+            if self.boton_investigar.handle_event(event):
+                return
         for boton in list(self.botones):
             if boton.handle_event(event):
                 break
@@ -389,12 +406,14 @@ class EscenaState(BaseState):
                        self.animacion if self.fase == PROPAGACION else None, self.zona,
                        self._nombre_zona(self.zona) if self.zona else "",
                        self._estado_mapa() if en_mapa else None,
-                       EstadoTarjeta(self.arbol.event, self.investigacion, self._hover)
+                       EstadoTarjeta(self.arbol.event, self.investigacion, self._hover, self.interior)
                        if self.fase == DECIDIENDO else None, AYUDA_INTERIOR if self.interior else AYUDA,
                        self._reloj() if self.fase == DECIDIENDO else None,
                        self._presentes() if self.interior and self.fase in (DECIDIENDO, CONSECUENCIA) else None,
                        (self._reaccion[0], self._t_reaccion) if self._reaccion and self.fase == CONSECUENCIA else None,
                        self.sesion.jugador_actual.credibilidad)
+        if self.fase == DECIDIENDO:
+            self.boton_investigar.draw(pantalla, self.app.fuentes.normal, self.app.temas.actual)
         if self.anuncio is not None:
             dibujar_anuncio(pantalla, self.app.fuentes, self.app.temas.actual, self.anuncio)
 

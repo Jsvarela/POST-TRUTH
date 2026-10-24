@@ -4,6 +4,7 @@ import pygame
 from post_truth.config import FLUJO, ANCHO, ALTO, FPS, TITULO, px
 from post_truth.controllers.escena_state import EscenaState
 from post_truth.controllers.intro_state import IntroState
+from post_truth.controllers.investigacion_state import InvestigacionState
 from post_truth.controllers.menu_state import MenuState
 from post_truth.controllers.minijuego_state import MinijuegoState
 from post_truth.controllers.mundo_state import MundoState
@@ -44,6 +45,7 @@ class App:
         self.estados.registrar("minijuego", MinijuegoState(self))
         self.estados.registrar("resultado", ResultadoState(self))
         self.estados.registrar("telefono", TelefonoState(self))
+        self.estados.registrar("investigacion", InvestigacionState(self))
         self.estados.cambiar("menu")
 
     def run(self) -> None:
