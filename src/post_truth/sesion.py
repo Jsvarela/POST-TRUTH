@@ -14,8 +14,10 @@ from post_truth.models import credibilidad as cred
 from post_truth.models import eleccion
 from post_truth.models import minijuego as mj
 from post_truth.models import posts
+from post_truth.models import testigos as tg
 from post_truth.models.personaje import Personaje
 from post_truth.models.pistas import Evidencia, Investigacion, Pista
+from post_truth.structures.arbol_dialogo import NodoDialogo
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import Ciudadano, GrafoSocial
 from post_truth.structures.propagacion_vivo import ACTIVO, COMPARTIO, INMUNE, PropagacionEnVivo, ResultadoAccion
@@ -39,6 +41,8 @@ FACTOR_TIEMPO_EXTENDIDO = 1.5         # accesibilidad: dias y relojes mas largos
 RITMO_TELEFONO = 0.25                 # con el telefono abierto el mundo corre al 25%
 IMPACTO_EN_VIVO = 0.5                 # el rumor de cada crisis pesa la mitad: sin defender, la ciudad empeora sin hundirse
 VIRAL_EN_VIVO = 0.35                  # fraccion de la red que cree el rumor para avisar que se volvio viral
+CONCLUSION = {"buena": (2, 4), "a_ciegas": (1, 1), "error": (-4, -3), "no_concluyente": (0, 0)}   # (cred, puntos)
+VEREDICTOS = ("falsa", "verdadera", "no_concluyente")
 HERRAMIENTAS = {"verificador": "Verificador", "limitar": "Limitar cuenta", "desmentido": "Desmentido",
                 "alertar": "Alertar prensa"}
 
@@ -110,6 +114,16 @@ class ResultadoInvestigar:
     motivo: str = ""
     estado: str = ""
     pista: Pista | None = None
+
+
+@dataclass(frozen=True)
+class ResultadoConclusion:
+    ok: bool
+    motivo: str = ""
+    como: str = ""             # buena | a_ciegas | error | no_concluyente
+    calidad: int = 0
+    credibilidad: int = 0
+    puntos: int = 0
 
 
 @dataclass(frozen=True)
@@ -294,6 +308,49 @@ class PartidaSesion:
             return ResultadoInvestigar(False, motivo)
         r = j.investigacion.investigar(pista.id if isinstance(pista, Pista) else pista)
         return ResultadoInvestigar(True, "", r.estado, r.pista)
+
+    # --- ventana de investigacion: testigos y conclusion (R6) -----------------------------------------
+    def testigos(self) -> list[tg.Testigo]:
+        j = self.jugador_actual
+        return tg.testigos(self.arbol.event.event_id, j.zona, self.presentes, j.investigacion.evidencias)
+
+    def puede_hablar(self, t: tg.Testigo) -> bool:
+        """A los de otra zona hay que ir a verlos primero (al llegar se revela su evidencia)."""
+        return t.evidencia is None or self.jugador_actual.investigacion.esta_descubierta(t.evidencia.id)
+
+    def interrogatorio(self, t: tg.Testigo) -> NodoDialogo:
+        evidencias = self.jugador_actual.investigacion.evidencias
+        lugar = evidencias[0].lugar if evidencias else "alcaldia"
+        return tg.arbol(t, es_falsa(self.arbol.event.truth_level), lugar)
+
+    def anotar_testimonio(self, jugador: str, t: tg.Testigo) -> None:
+        """El testigo ya conto su version: queda en la investigacion (cuenta si es fiable)."""
+        j, motivo = self._turno_de(jugador)
+        if not motivo:
+            j.investigacion.testimonios[t.id] = t.fiabilidad
+
+    def concluir(self, jugador: str, veredicto: str) -> ResultadoConclusion:
+        """Se evalua con la verdad de la noticia y la calidad de lo reunido. Una vez por noticia."""
+        j, motivo = self._turno_de(jugador)
+        if motivo:
+            return ResultadoConclusion(False, motivo)
+        if veredicto not in VEREDICTOS:
+            return ResultadoConclusion(False, "veredicto_desconocido")
+        inv = j.investigacion
+        if inv.conclusion is not None:
+            return ResultadoConclusion(False, "ya_concluyo")
+        falsa = es_falsa(self.arbol.event.truth_level)
+        calidad = inv.calidad(falsa)
+        inv.acierto = None if veredicto == "no_concluyente" else (veredicto == "falsa") == falsa
+        inv.conclusion, inv.calidad_conclusion = veredicto, calidad
+        como = inv.como_concluyo
+        delta, puntos = CONCLUSION[como]
+        j.credibilidad = cred.acotar(j.credibilidad + delta)
+        j.puntos += puntos
+        self.ciudad.apply(Impact(score=puntos))
+        j.historial.append({"evento": f"conclusion:{self.arbol.event.event_id}", "accion": "concluir",
+                            "falsa": falsa, "respaldo": 0, "credibilidad": delta})
+        return ResultadoConclusion(True, "", como, calidad, delta, puntos)
 
     def viajar(self, jugador: str, zona: str) -> ResultadoViaje:
         """Ir a cualquier zona por el camino mas corto."""

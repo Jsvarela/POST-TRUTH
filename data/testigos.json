@@ -1,0 +1,37 @@
+{
+  "preguntas": {
+    "version": "Que paso con lo que dice la publicacion?",
+    "fuente": "Lo viste tu mismo?",
+    "confirma": "Alguien mas lo puede confirmar?"
+  },
+  "cerrar": "Gracias, eso es todo.",
+  "saludo": {
+    "veraz": "Hola. Si quieres te cuento lo que se, sin adornos.",
+    "exagera": "Ay, por fin alguien pregunta! Esto es gravisimo!",
+    "contradice": "Eh... si, algo escuche. Que quieres saber?",
+    "zona": "Hola. Vi que andas preguntando por la publicacion."
+  },
+  "respuestas": {
+    "veraz": {
+      "version_falsa": "No es cierto. Estuve pendiente y nada de eso ha pasado; quien lo publico no muestra pruebas.",
+      "version_verdadera": "Es cierto, paso tal cual lo cuenta la publicacion.",
+      "fuente": "Si, estaba ahi. Y lo que digo se puede comprobar con los documentos.",
+      "confirma": "Pregunta en {lugar}: alla te lo confirman con datos."
+    },
+    "exagera": {
+      "version": "Claro que es verdad! Y es todavia peor de lo que dicen, mucho peor!",
+      "fuente": "Bueno, yo no lo vi... pero todo el mundo lo comenta, asi que es cierto.",
+      "confirma": "Todos! Pregunta a cualquiera, media ciudad lo sabe."
+    },
+    "contradice": {
+      "version": "Si, si, eso paso. Bueno, eso creo.",
+      "fuente": "En realidad no estaba ahi. A lo mejor me confundi con otra cosa.",
+      "confirma": "No se, mejor no me metas en esto. Yo no dije nada."
+    },
+    "zona": {
+      "version": "{hallazgo}",
+      "fuente": "Lo se de primera mano: {titulo}.",
+      "confirma": "Si dudas, revisa la publicacion con calma: las senales no mienten."
+    }
+  }
+}

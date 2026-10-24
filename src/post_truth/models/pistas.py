@@ -143,12 +143,19 @@ class ResultadoInvestigacion:
     pista: Pista
 
 
+CALIDAD_BUENA = 2   # hallazgos que apuntan a la verdad para que una conclusion cuente como bien respaldada
+
+
 @dataclass
 class Investigacion:
-    """Estado de la revision de UNA publicacion: pistas y evidencias descubiertas."""
+    """Estado de la revision de UNA publicacion: pistas y evidencias descubiertas, testimonios y la conclusion."""
     pistas: tuple[Pista, ...]
     descubiertas: list[str] = field(default_factory=list)
     evidencias: tuple[Evidencia, ...] = ()
+    testimonios: dict[str, str] = field(default_factory=dict)   # testigo -> fiabilidad (ya conto su version)
+    conclusion: str | None = None      # falsa | verdadera | no_concluyente
+    acierto: bool | None = None        # None: sin concluir o no concluyente
+    calidad_conclusion: int = 0
 
     def __post_init__(self) -> None:
         validar_pistas(self.pistas)
@@ -201,15 +208,39 @@ class Investigacion:
         return e
 
     def respaldo(self, accion: str) -> int:
-        """Que tan respaldada esta una accion con lo descubierto."""
+        """Que tan respaldada esta una accion con lo descubierto. La conclusion de la ventana de investigacion
+        manda: equivocarse la deja sin respaldo; acertar la sube (mas si la evidencia era buena), y para reportar
+        solo cuenta si se concluyo que es falsa."""
         def apoya(h: Hallazgo) -> bool:
             return h.senal is Senal.FALSA if accion == "reportar" else h.senal is not Senal.NEUTRA
         hallazgos = self.pistas_descubiertas()
         if any(isinstance(h, Evidencia) and apoya(h) for h in hallazgos):
-            return 2
-        if any(isinstance(h, Pista) and apoya(h) for h in hallazgos):
-            return 1
-        return 0
+            base = 2
+        elif any(isinstance(h, Pista) and apoya(h) for h in hallazgos):
+            base = 1
+        else:
+            base = 0
+        if self.acierto is False:
+            return 0
+        if self.acierto and (accion != "reportar" or self.conclusion == "falsa"):
+            return max(base, 2 if self.calidad_conclusion >= CALIDAD_BUENA else 1)
+        return base
+
+    @property
+    def como_concluyo(self) -> str:
+        """'' sin concluir; si no: buena | a_ciegas | error | no_concluyente."""
+        if self.conclusion is None or self.conclusion == "no_concluyente":
+            return self.conclusion or ""
+        if not self.acierto:
+            return "error"
+        return "buena" if self.calidad_conclusion >= CALIDAD_BUENA else "a_ciegas"
+
+    def calidad(self, es_falsa: bool) -> int:
+        """Cuanto de lo reunido apunta a la verdad: senales y evidencias que coinciden, y testigos fiables
+        (los de otras zonas ya cuentan como evidencia)."""
+        verdad = Senal.FALSA if es_falsa else Senal.VERDADERA
+        return (sum(h.senal is verdad for h in self.pistas_descubiertas())
+                + sum(f == "veraz" for f in self.testimonios.values()))
 
     def investigar(self, id: str) -> ResultadoInvestigacion:
         """Revisa una pista."""
@@ -230,9 +261,12 @@ class Investigacion:
         return "incierta"
 
     def to_dict(self) -> dict:
-        return {"descubiertas": list(self.descubiertas)}
+        return {"descubiertas": list(self.descubiertas), "testimonios": dict(self.testimonios),
+                "conclusion": self.conclusion, "acierto": self.acierto, "calidad_conclusion": self.calidad_conclusion}
 
     @classmethod
     def from_dict(cls, datos: dict, pistas: Iterable[Pista], evidencias: Iterable[Evidencia] = ()) -> "Investigacion":
         """Las pistas y evidencias vienen de la noticia."""
-        return cls(tuple(pistas), list(datos.get("descubiertas", [])), tuple(evidencias))
+        return cls(tuple(pistas), list(datos.get("descubiertas", [])), tuple(evidencias),
+                   dict(datos.get("testimonios", {})), datos.get("conclusion"), datos.get("acierto"),
+                   int(datos.get("calidad_conclusion", 0)))
