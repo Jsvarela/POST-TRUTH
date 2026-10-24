@@ -215,7 +215,7 @@ class Modal:
         if event.type == pygame.KEYDOWN:
             if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_KP_ENTER):
                 self.elegido = 0
-            elif pygame.K_1 <= event.key < pygame.K_1 + len(self.botones):
+            elif len(self.botones) > 1 and pygame.K_1 <= event.key < pygame.K_1 + len(self.botones):   # con uno: Enter
                 self.elegido = event.key - pygame.K_1
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             self.elegido = next((i for i, r in enumerate(self._rects) if r.collidepoint(event.pos)), None)

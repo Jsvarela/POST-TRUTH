@@ -14,14 +14,15 @@ from post_truth.structures.propagacion_vivo import (COMPARTIO, ENFRIAMIENTO, ENT
 from post_truth.views.anuncio_view import _icono
 from post_truth.views.componentes import Fuentes, ajustar_texto
 from post_truth.views.grafo_view import _equis
-from post_truth.views.theme import Tema
+from post_truth.views.theme import Tema, mezclar
 
 PESTANAS = ("Red", "Notificaciones", "Publicar")
 HERRAMIENTAS = tuple(NOMBRES)   # en el orden de las teclas 1-4
 RADIO = px(11)
 SUBIDA = 0.25   # segundos que tarda el telefono en subir
+PULSO = 0.8     # segundos que dura el anillo de un ciudadano al que le acaba de llegar la noticia
 
-TELEFONO = pygame.Rect(ANCHO // 2 - px(235), px(42), px(470), px(590))
+TELEFONO = pygame.Rect(ANCHO // 2 - px(235), px(30), px(470), px(596))
 CERRAR = pygame.Rect(TELEFONO.right - px(46), TELEFONO.y + px(12), px(30), px(30))
 AREA_RED = pygame.Rect(TELEFONO.x + px(24), TELEFONO.y + px(126), TELEFONO.w - px(48), px(236))
 
@@ -81,6 +82,8 @@ class VistaTelefono:
     alerta: float                       # segundos que quedan del destello de "se volvio viral"
     t: float
     publicar: VistaPublicar | None = None
+    pulsos: dict[str, float] | None = None   # ciudadano -> segundos desde que le llego algo (anillo que crece)
+    hora: float = 0.0                         # fraccion del dia (la hora de la barra de estado)
 
 
 def dibujar_telefono(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) -> None:
@@ -101,20 +104,41 @@ def dibujar_telefono(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: 
 
 
 def _marco(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) -> None:
+    # carcasa del celular: cuerpo, pantalla con borde interior, muesca y barra de inicio
+    carcasa = TELEFONO.inflate(px(14), px(14))
+    pygame.draw.rect(sup, mezclar(tema.fondo, tema.borde, 0.35), carcasa, border_radius=px(38))
     pygame.draw.rect(sup, tema.panel, TELEFONO, border_radius=px(28))
     destello = v.alerta > 0 and math.sin(v.t * 12) > 0   # se volvio viral: el borde parpadea
-    pygame.draw.rect(sup, tema.malo if destello else tema.borde, TELEFONO, px(6 if destello else 4),
+    pygame.draw.rect(sup, tema.malo if destello else tema.borde, TELEFONO, px(6 if destello else 3),
                      border_radius=px(28))
-    sup.blit(fuentes.grande.render("Civitas", True, tema.acento), (TELEFONO.x + px(22), TELEFONO.y + px(10)))
-    if v.reloj is not None:
+    muesca = pygame.Rect(0, 0, px(110), px(16))
+    muesca.midtop = (TELEFONO.centerx, carcasa.y + px(2))
+    pygame.draw.rect(sup, mezclar(tema.fondo, tema.borde, 0.35), muesca, border_radius=px(8))
+    pygame.draw.rect(sup, tema.texto_off, (TELEFONO.centerx - px(50), TELEFONO.bottom + px(1), px(100), px(4)),
+                     border_radius=px(2))
+    horas = 6 + v.hora * 16   # el dia va de 6:00 a 22:00
+    estado = fuentes.chica.render(f"{int(horas):02d}:{int(horas % 1 * 60):02d}", True, tema.texto)
+    sup.blit(estado, (muesca.right + px(14), TELEFONO.y + px(1)))
+    bateria = pygame.Rect(muesca.right + px(24) + estado.get_width(), TELEFONO.y + px(5), px(24), px(11))
+    pygame.draw.rect(sup, tema.texto, bateria, 1, border_radius=px(2))
+    pygame.draw.rect(sup, tema.bueno, bateria.inflate(-px(4), -px(4)).move(0, 0), border_radius=px(1))
+    sup.blit(fuentes.grande.render("Civitas", True, tema.acento), (TELEFONO.x + px(22), TELEFONO.y + px(14)))
+    x = CERRAR.x - px(10)
+    if v.reloj is not None:   # crisis: cuenta regresiva grande en un anillo que se vacia
         restante, total = v.reloj
-        color = tema.malo if restante < total * 0.35 else tema.texto
-        texto = f"Crisis: {math.ceil(restante)} s"
-    else:
-        color, texto = tema.texto, ""
-    texto += ("   " if texto else "") + ("Tiempo x0.25 (extendido)" if v.extendido else "Tiempo x0.25")
-    img = fuentes.chica.render(texto, True, color)
-    sup.blit(img, img.get_rect(midright=(CERRAR.x - px(10), CERRAR.centery)))
+        color = tema.malo if restante < total * 0.35 else tema.acento
+        centro = (x - px(20), CERRAR.centery + px(6))
+        anillo = pygame.Rect(0, 0, px(40), px(40))
+        anillo.center = centro
+        pygame.draw.circle(sup, tema.fondo, centro, px(20))
+        fraccion = max(0.0, min(1.0, restante / total)) if total else 0.0
+        if fraccion > 0:
+            pygame.draw.arc(sup, color, anillo, math.pi / 2, math.pi / 2 + 2 * math.pi * fraccion, px(4))
+        num = fuentes.grande.render(str(math.ceil(restante)), True, tema.texto)
+        sup.blit(num, num.get_rect(center=centro))
+        x -= px(48)
+    img = fuentes.chica.render("x0.25 (ext.)" if v.extendido else "x0.25", True, tema.texto_off)
+    sup.blit(img, img.get_rect(midright=(x, CERRAR.centery + px(6))))
     pygame.draw.rect(sup, tema.boton, CERRAR, border_radius=px(8))
     _equis(sup, tema.boton_texto, CERRAR.center, px(6))
     for i, nombre in enumerate(PESTANAS):
@@ -160,6 +184,11 @@ def _red(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) ->
     for c in v.grafo.vertices():
         estado = p.estado[c.id] if p is not None else SIN_ENTERARSE
         activo = p is not None and (c.id in p.rumor or c.id in p.desmentido)
+        edad = (v.pulsos or {}).get(c.id)
+        if edad is not None and edad < PULSO:   # le acaba de llegar: un anillo que crece y se apaga
+            color = tema.bueno if estado == INMUNE else tema.malo
+            pygame.draw.circle(sup, (*color, round(220 * (1 - edad / PULSO))), pos[c.id],
+                               RADIO + round(px(26) * edad / PULSO), px(3))
         _nodo(sup, tema, pos[c.id], estado, activo, v.t)
         if p is not None and c.id in p.limitadas:
             _equis(sup, tema.acento, (pos[c.id][0] + RADIO, pos[c.id][1] - RADIO), px(4))

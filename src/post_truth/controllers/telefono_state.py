@@ -9,6 +9,7 @@ from post_truth.sesion import FIN, FIN_DIA, HERRAMIENTAS, RITMO_TELEFONO
 from post_truth.views.hud import DatosHud
 from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
+from post_truth.views.componentes import Modal
 from post_truth.views.roles_view import dibujar_habilidad, dibujar_menu_aliados
 from post_truth.views.telefono_view import (CERRAR, HERRAMIENTAS as ORDEN, PESTANAS, RECT_PUBLICAR, VistaPublicar,
                                             VistaTelefono, ciudadano_en, dibujar_telefono, rect_fila,
@@ -26,21 +27,24 @@ class TelefonoState(BaseState):
         s = self.app.partida
         self.pestana, self.t, self.alerta = 0, 0.0, 0.0
         self.toast: Anuncio | None = None
-        self.anuncio: Anuncio | None = None
+        self.modal: Modal | None = None
+        self.pulsos: dict[str, float] = {}
+        self._previo: dict[str, str] = dict(s.en_vivo.estado) if s.en_vivo is not None else {}
         self.seleccionado = s.en_vivo.autor if s.en_vivo is not None else self._orden()[0]
         self.fila = 0
         self.menu_aliados = False
         self.eleccion = getattr(self, "eleccion", None) or {p: 0 for p in posts.PIEZAS}   # se recuerda lo armado
         if s.novedad == "crisis":   # la crisis abre el telefono sola, con su reloj
             s.novedad = ""
-            self.anuncio = Anuncio("Crisis viral!", f"Un rumor corre por la red y se esta regando en "
-                                   f"{s.zona_noticia.capitalize()}. Tienes {round(s.tiempo_restante or 0)} s.",
-                                   "crisis", duracion=3.0)
+            self.modal = Modal("Crisis viral!", f"\"{s.arbol.event.title}\" se esta regando en "
+                               f"{s.zona_noticia.capitalize()}. Tienes {round(s.tiempo_restante or 0)} s: frenala "
+                               "desde la red o ve al lugar.", ("Defender la red",), "crisis")
+            self.modal.cuenta = (s.tiempo_restante or 0.0, s.tiempo_viral_total)
 
     @property
     def en_pausa(self) -> bool:
-        """El anuncio de la crisis detiene todo mientras se lee."""
-        return self.anuncio is not None and self.anuncio.tipo == "crisis"
+        """El modal de la crisis detiene todo mientras se lee."""
+        return self.modal is not None
 
     def _orden(self) -> list[str]:
         """Ciudadanos de izquierda a derecha: las flechas los recorren en el orden en que se ven."""
@@ -84,10 +88,9 @@ class TelefonoState(BaseState):
         self.seleccionado = orden[(orden.index(self.seleccionado) + paso) % len(orden)]
 
     def handle_event(self, event: pygame.event.Event) -> None:
-        if self.en_pausa:
-            if (event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_e)) \
-                    or (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1):
-                self.anuncio.cerrar()
+        if self.modal is not None:
+            if self.modal.handle_event(event) is not None:
+                self.modal = None
             return
         if event.type == pygame.KEYDOWN:
             era, self.menu_aliados, aviso = roles_teclas.tecla(self.app.partida, self.menu_aliados, event.key)
@@ -151,15 +154,21 @@ class TelefonoState(BaseState):
             self.seleccionado = id
 
     def update(self, dt: float) -> None:
-        for nombre in ("anuncio", "toast"):
-            a = getattr(self, nombre)
-            if a is not None:
-                a.avanzar(dt)
-                if a.terminado:
-                    setattr(self, nombre, None)
+        if self.toast is not None:
+            self.toast.avanzar(dt)
+            if self.toast.terminado:
+                self.toast = None
         self.t += dt   # el telefono sube aunque la crisis tenga todo en pausa
-        if self.en_pausa:
+        if self.modal is not None:
+            self.modal.update(dt)
             return
+        self.pulsos = {id: e + dt for id, e in self.pulsos.items() if e + dt < 1.0}
+        v = self.app.partida.en_vivo
+        if v is not None:   # a quien le acaba de llegar algo: pulso
+            for id, estado in v.estado.items():
+                if estado != self._previo.get(id, estado):
+                    self.pulsos[id] = 0.0
+            self._previo = dict(v.estado)
         self.alerta = max(0.0, self.alerta - dt)
         s = self.app.partida
         vencida = s.transcurrir(dt * RITMO_TELEFONO)
@@ -185,10 +194,10 @@ class TelefonoState(BaseState):
                                  s.enfriamiento_post, reglas.reglas["enfriamiento"], s.post is not None)
         return VistaTelefono(s.grafo, s.en_vivo, self.pestana, self.seleccionado, s.notificaciones, s.leidas,
                              (s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
-                             s.campana.factor > 1, self.alerta, self.t, publicar)
+                             s.campana.factor > 1, self.alerta, self.t, publicar, self.pulsos, s.campana.fraccion)
 
     def datos_hud(self) -> DatosHud | None:
-        return self.app.estados.estado("mundo").datos_hud()
+        return None   # el telefono tapa el centro: lleva su propia barra de estado y la cuenta de la crisis
 
     def draw(self, pantalla: pygame.Surface) -> None:
         tema = self.app.temas.actual
@@ -197,6 +206,7 @@ class TelefonoState(BaseState):
         dibujar_habilidad(pantalla, self.app.fuentes, tema, RECT_HABILIDAD, roles_teclas.habilidad(self.app.partida))
         if self.menu_aliados:
             dibujar_menu_aliados(pantalla, self.app.fuentes, tema, roles_teclas.filas_aliados(self.app.partida))
-        for a in (self.toast, self.anuncio):
-            if a is not None:
-                dibujar_anuncio(pantalla, self.app.fuentes, tema, a)
+        if self.toast is not None:
+            dibujar_anuncio(pantalla, self.app.fuentes, tema, self.toast)
+        if self.modal is not None:
+            self.modal.draw(pantalla, self.app.fuentes, tema)
