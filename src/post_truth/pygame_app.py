@@ -13,6 +13,7 @@ from post_truth.controllers.resultado_state import ResultadoState
 from post_truth.controllers.resumen_state import ResumenState
 from post_truth.controllers.seleccion_state import SeleccionState
 from post_truth.controllers.state_manager import StateManager
+from post_truth.controllers.sustentacion import Sustentacion
 from post_truth.controllers.telefono_state import TelefonoState
 from post_truth.models.personaje import Personaje
 from post_truth.views.componentes import Fuentes
@@ -41,6 +42,7 @@ class App:
         self.volumen = 0.7              # de 0 a 1 (Opciones del menu)
         self.estados = StateManager(lambda: self.temas.actual.fondo)
         self.estados.capa = CapaRetro(self.fuentes, self.temas)
+        self.estados.sustentacion = Sustentacion(self)
         self.estados.registrar("menu", MenuState(self))
         self.estados.registrar("intro", IntroState(self))
         self.estados.registrar("seleccion", SeleccionState(self))

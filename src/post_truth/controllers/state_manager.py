@@ -17,6 +17,7 @@ class StateManager:
         self._t = 0.0
         self._destino = ""
         self.capa = None   # capa global encima de todo (HUD compacto y textos flotantes)
+        self.sustentacion = None   # modo sustentacion (F1): tapa todo y pausa la pantalla de abajo
 
     def registrar(self, nombre: str, estado: BaseState) -> None:
         self._estados[nombre] = estado
@@ -50,10 +51,19 @@ class StateManager:
         return 0.0
 
     def handle_event(self, event: pygame.event.Event) -> None:
+        s = self.sustentacion
+        if s is not None and (s.activo or (event.type == pygame.KEYDOWN and event.key == pygame.K_F1)):
+            if s.activo:
+                s.handle_event(event)
+            else:
+                s.alternar()
+            return
         if self._actual and not self.en_fundido:
             self._actual.handle_event(event)
 
     def update(self, dt: float) -> None:
+        if self.sustentacion is not None and self.sustentacion.activo:
+            return
         if self._fase == "salida":
             self._t += dt
             if self._t >= DURACION_FUNDIDO:
@@ -80,3 +90,5 @@ class StateManager:
             velo = pygame.Surface(pantalla.get_size(), pygame.SRCALPHA)
             velo.fill((*self._color_fundido(), round(255 * opacidad)))
             pantalla.blit(velo, (0, 0))
+        if self.sustentacion is not None and self.sustentacion.activo:
+            self.sustentacion.draw(pantalla)

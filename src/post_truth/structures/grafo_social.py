@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import heapq
+from collections import deque
 import json
 import random
 from dataclasses import dataclass, field
@@ -180,6 +181,19 @@ class GrafoSocial:
 
     def aristas(self) -> list[Arista]:
         return [a for vecinos in self._ady.values() for a in vecinos.values()]
+
+    def niveles(self, origen: str) -> dict[str, int]:
+        """BFS desde `origen`: en que ola llegaria la noticia a cada ciudadano (sin azar). O(V+E)."""
+        self._exigir(origen)
+        nivel = {origen: 0}
+        cola = deque([origen])
+        while cola:
+            u = cola.popleft()
+            for v in self._ady[u]:
+                if v not in nivel:
+                    nivel[v] = nivel[u] + 1
+                    cola.append(v)
+        return nivel
 
     def debilitar_salientes(self, id: str, factor: float) -> list[tuple[str, str]]:
         """Multiplica por `factor` el peso de las aristas salientes."""

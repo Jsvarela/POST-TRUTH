@@ -25,6 +25,8 @@ python src/main.py
 - WASD o flechas: caminar libre por la ciudad (8 direcciones)
 - E: dentro de un lugar (en cualquier punto de su zona), ver la noticia o buscar evidencia
 - F3: superposicion de depuracion (zonas, colisiones y fronteras del grafo de la ciudad)
+- F1 (en cualquier pantalla): modo sustentacion con el arbol de decisiones, el grafo social, el grafo de la ciudad y el arbol de dialogo en crudo (BFS, DFS y Dijkstra); el juego queda en pausa
+- Menu: flechas y Enter o clic; O abre las opciones (tema, volumen y tiempo extendido)
 - G: mostrar la guia hacia la noticia
 - 1-3: elegir que hacer en un lugar con varias opciones (noticia, evidencia o minijuego)
 - P (en un minijuego): pausa
