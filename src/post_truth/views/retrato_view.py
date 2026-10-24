@@ -43,7 +43,7 @@ def dibujar_retrato(pantalla: pygame.Surface, aspecto: AspectoRetrato, tema: Tem
     pygame.draw.circle(pantalla, piel, p(50, 48), round(21 * s))
 
     if aspecto.peinado == "rizado":
-        for cx, cy, rad in ((34, 32, 9), (44, 25, 10), (56, 25, 10), (66, 32, 9), (30, 44, 7), (70, 44, 7)):
+        for cx, cy, rad in ((34, 32, 9), (44, 25, 10), (56, 25, 10), (66, 32, 9), (30, 44, 7), (70, 44, 7)):   # geometria: no es un color
             pygame.draw.circle(pantalla, pelo, p(cx, cy), round(rad * s))
     else:
         pygame.draw.ellipse(pantalla, pelo, r(28, 24, 44, 24))

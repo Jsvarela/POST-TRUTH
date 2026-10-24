@@ -9,13 +9,14 @@ DURACION_FUNDIDO = 0.2
 
 
 class StateManager:
-    def __init__(self, color_fundido: Callable[[], tuple[int, int, int]] = lambda: (0, 0, 0)) -> None:
+    def __init__(self, color_fundido: Callable[[], tuple[int, int, int]] = lambda: (0, 0, 0)) -> None:   # App pasa el del tema: no es un color
         self._estados: dict[str, BaseState] = {}
         self._actual: BaseState | None = None
         self._color_fundido = color_fundido
         self._fase: str | None = None
         self._t = 0.0
         self._destino = ""
+        self.capa = None   # capa global encima de todo (HUD compacto y textos flotantes)
 
     def registrar(self, nombre: str, estado: BaseState) -> None:
         self._estados[nombre] = estado
@@ -66,10 +67,14 @@ class StateManager:
                 self._fase = None
         if self._actual:
             self._actual.update(dt)
+        if self.capa is not None:
+            self.capa.update(dt, self._actual)
 
     def draw(self, pantalla: pygame.Surface) -> None:
         if self._actual:
             self._actual.draw(pantalla)
+            if self.capa is not None:
+                self.capa.draw(pantalla, self._actual)
         opacidad = self.opacidad_fundido
         if opacidad > 0:
             velo = pygame.Surface(pantalla.get_size(), pygame.SRCALPHA)

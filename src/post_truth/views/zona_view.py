@@ -63,7 +63,7 @@ def _parque(p: pygame.Surface, t: Tema, r: pygame.Rect, h: int) -> None:
         x = r.x + round(x0 * r.width)
         tronco = round(24 * u * escala)
         pygame.draw.rect(p, t.edificio, (x - 5, h - tronco, 10, tronco))
-        for dx, dy, rad in ((0, 0, 18), (-14, 8, 14), (14, 8, 14)):
+        for dx, dy, rad in ((0, 0, 18), (-14, 8, 14), (14, 8, 14)):   # geometria: no es un color
             pygame.draw.circle(p, t.verde, (x + round(dx * escala), h - tronco - round(dy * escala)),
                                round(rad * u * escala * 0.9))
     bx = r.x + round(0.44 * r.width)

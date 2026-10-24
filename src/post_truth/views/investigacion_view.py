@@ -106,7 +106,7 @@ def _publicacion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: Vist
     lente = pygame.Surface((2 * v.radio, 2 * v.radio), pygame.SRCALPHA)
     lente.blit(pygame.transform.smoothscale(capa.subsurface(origen), lente.get_size()), (0, 0))
     mascara = pygame.Surface(lente.get_size(), pygame.SRCALPHA)
-    pygame.draw.circle(mascara, (255, 255, 255, 255), (v.radio, v.radio), v.radio)
+    pygame.draw.circle(mascara, (255, 255, 255, 255), (v.radio, v.radio), v.radio)   # mascara: no es un color
     lente.blit(mascara, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
     pantalla.blit(lente, lente.get_rect(center=v.lupa))
     pygame.draw.circle(pantalla, tema.texto, v.lupa, v.radio, px(4))

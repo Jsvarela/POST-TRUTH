@@ -1,11 +1,14 @@
-"""Componentes de interfaz reutilizables: Fuentes, Boton, Panel y CajaDialogo."""
+"""Componentes de interfaz reutilizables (todos con colores del tema y medidas de los tokens): Fuentes, Boton,
+Panel, Tarjeta, BarraAnimada, Modal y CajaDialogo. El aviso flotante es `anuncio_view.Anuncio` y el texto
+flotante de impacto vive en `efectos.py`."""
+import math
 from dataclasses import dataclass
 from typing import Callable
 
 import pygame
 
 from post_truth.config import px
-from post_truth.views.theme import Tema
+from post_truth.views.theme import TOKENS, Tema, esp, mezclar
 
 
 @dataclass
@@ -15,12 +18,12 @@ class Fuentes:
     normal: pygame.font.Font
     grande: pygame.font.Font
     titulo: pygame.font.Font
+    enorme: pygame.font.Font = None   # cuenta regresiva y titulos de portada
 
     @classmethod
     def crear(cls) -> "Fuentes":
-        def f(tam: int, negrita: bool = False) -> pygame.font.Font:
-            return pygame.font.SysFont("arial", tam, bold=negrita)
-        return cls(f(px(17)), f(px(22)), f(px(30), True), f(px(44), True))
+        return cls(**{nombre: pygame.font.SysFont("arial", px(tam), bold=negrita)
+                      for nombre, tam, negrita in TOKENS.fuentes})
 
 
 def ajustar_texto(texto: str, fuente: pygame.font.Font, ancho: int) -> list[str]:
@@ -51,7 +54,7 @@ def dibujar_texto_ajustado(pantalla: pygame.Surface, fuente: pygame.font.Font, t
 
 
 class Boton:
-    """Boton con hover y clic."""
+    """Boton con estados normal, encima (hover o foco de teclado), presionado y deshabilitado."""
 
     def __init__(self, rect: pygame.Rect, texto: str, al_hacer_clic: Callable[[], None],
                  atajo: int | None = None) -> None:
@@ -61,7 +64,12 @@ class Boton:
         self.atajo = atajo
         self.hover = False
         self.habilitado = True
+        self.foco = False          # elegido con el teclado (se ve igual que el hover)
         self._presionado = False
+
+    @property
+    def presionado(self) -> bool:
+        return self._presionado and self.hover
 
     def handle_event(self, event: pygame.event.Event) -> bool:
         """Devuelve True si el evento disparo el boton."""
@@ -83,22 +91,30 @@ class Boton:
         return False
 
     def draw(self, pantalla: pygame.Surface, fuente: pygame.font.Font, tema: Tema) -> None:
+        radio = px(TOKENS.radio_m)
+        rect = self.rect
         if not self.habilitado:
-            pygame.draw.rect(pantalla, tema.boton_off, self.rect, border_radius=px(10))
-            pygame.draw.rect(pantalla, tema.texto_off, self.rect, width=1, border_radius=px(10))
+            pygame.draw.rect(pantalla, tema.boton_off, rect, border_radius=radio)
+            pygame.draw.rect(pantalla, tema.texto_off, rect, width=1, border_radius=radio)
             color_texto = tema.texto_off
         else:
-            relleno = tema.boton_hover if self.hover else tema.boton
-            borde = tema.acento if self.hover else tema.borde
-            pygame.draw.rect(pantalla, relleno, self.rect, border_radius=px(10))
-            pygame.draw.rect(pantalla, borde, self.rect, width=px(3 if self.hover else 2), border_radius=px(10))
+            encima = self.hover or self.foco
+            if self.presionado:   # se hunde: sin sombra y un poco mas abajo
+                rect = rect.move(0, px(2))
+            else:
+                pygame.draw.rect(pantalla, mezclar(tema.fondo, tema.boton, 0.4), rect.move(0, px(3)), border_radius=radio)
+            relleno = mezclar(tema.boton_hover, tema.fondo, 0.25) if self.presionado else (
+                tema.boton_hover if encima else tema.boton)
+            pygame.draw.rect(pantalla, relleno, rect, border_radius=radio)
+            pygame.draw.rect(pantalla, tema.acento if encima else tema.borde, rect, width=px(3 if encima else 2),
+                             border_radius=radio)
             color_texto = tema.boton_texto
         img = fuente.render(self.texto, True, color_texto)
-        maximo = self.rect.width - px(16)
+        maximo = rect.width - px(16)
         if img.get_width() > maximo:
             alto = max(1, img.get_height() * maximo // img.get_width())
             img = pygame.transform.smoothscale(img, (maximo, alto))
-        pantalla.blit(img, img.get_rect(center=self.rect.center))
+        pantalla.blit(img, img.get_rect(center=rect.center))
 
 
 class Panel:
@@ -117,16 +133,135 @@ class Panel:
                            self.rect.width - px(36), self.rect.height - margen_sup - px(16))
 
     def draw(self, pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema) -> None:
-        if self.alfa >= 255:
-            pygame.draw.rect(pantalla, tema.panel, self.rect, border_radius=px(14))
-        else:
-            velo = pygame.Surface(self.rect.size, pygame.SRCALPHA)
-            pygame.draw.rect(velo, (*tema.panel, self.alfa), velo.get_rect(), border_radius=px(14))
-            pantalla.blit(velo, self.rect.topleft)
-        pygame.draw.rect(pantalla, tema.borde, self.rect, width=px(2), border_radius=px(14))
+        panel(pantalla, tema, self.rect, self.alfa)
         if self.titulo:
             img = fuentes.grande.render(self.titulo, True, tema.acento)
             pantalla.blit(img, (self.rect.x + px(18), self.rect.y + px(12)))
+
+
+def panel(pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect, alfa: int = 255, borde=None) -> None:
+    """El fondo de todo lo que flota: sombra, relleno del tema (con transparencia sobre el mapa) y borde."""
+    radio = px(TOKENS.radio_l)
+    capa = pygame.Surface((rect.w, rect.h + px(4)), pygame.SRCALPHA)
+    pygame.draw.rect(capa, (*tema.fondo, TOKENS.alfa_sombra), (0, px(4), rect.w, rect.h), border_radius=radio)
+    pygame.draw.rect(capa, (*tema.panel, alfa), (0, 0, rect.w, rect.h), border_radius=radio)
+    pantalla.blit(capa, rect.topleft)
+    pygame.draw.rect(pantalla, borde or tema.borde, rect, width=px(2), border_radius=radio)
+
+
+class Tarjeta:
+    """Panel con icono, titulo y cuerpo: un hallazgo, una notificacion, un cambio de la ciudad."""
+
+    def __init__(self, rect: pygame.Rect, titulo: str, texto: str = "", tipo: str = "info") -> None:
+        self.rect, self.titulo, self.texto, self.tipo = rect, titulo, texto, tipo
+
+    def draw(self, pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema) -> None:
+        from post_truth.views.anuncio_view import _icono
+        panel(pantalla, tema, self.rect, TOKENS.alfa_panel)
+        r = min(px(16), self.rect.h // 3)
+        _icono(pantalla, tema, self.tipo, (self.rect.x + esp(3) + r, self.rect.y + esp(3) + r), r, 0)
+        x = self.rect.x + esp(4) + 2 * r + esp(2)
+        pantalla.blit(fuentes.normal.render(self.titulo, True, tema.texto), (x, self.rect.y + esp(2)))
+        y = self.rect.y + esp(2) + fuentes.normal.get_linesize()
+        for linea in ajustar_texto(self.texto, fuentes.chica, self.rect.right - x - esp(3)):
+            if y + fuentes.chica.get_linesize() > self.rect.bottom - esp(1):
+                break
+            pantalla.blit(fuentes.chica.render(linea, True, tema.texto_off), (x, y))
+            y += fuentes.chica.get_linesize()
+
+
+class BarraAnimada:
+    """Barra 0-100 que se llena interpolando hacia su valor con dt (amortiguacion exponencial): el mismo
+    resultado a 30 y a 60 FPS, y nunca bloquea el bucle."""
+    RAPIDEZ = 6.0
+
+    def __init__(self, valor: float = 0.0) -> None:
+        self.objetivo = self.actual = float(valor)
+
+    def fijar(self, valor: float) -> None:
+        self.objetivo = float(valor)
+
+    def update(self, dt: float) -> None:
+        self.actual += (self.objetivo - self.actual) * (1 - math.exp(-self.RAPIDEZ * max(0.0, dt)))
+
+    def draw(self, pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect, color) -> None:
+        radio = rect.h // 2
+        pygame.draw.rect(pantalla, tema.fondo, rect, border_radius=radio)
+        lleno = round(rect.w * max(0.0, min(100.0, self.actual)) / 100)
+        if lleno:
+            pygame.draw.rect(pantalla, color, (rect.x, rect.y, lleno, rect.h), border_radius=radio)
+        if abs(self.objetivo - self.actual) > 0.5:   # mientras se mueve, una marca en el valor al que va
+            x = rect.x + round(rect.w * max(0.0, min(100.0, self.objetivo)) / 100)
+            pygame.draw.line(pantalla, tema.texto, (x, rect.y - px(2)), (x, rect.bottom + px(1)), px(2))
+
+
+class Modal:
+    """Ventana al frente sobre un velo: titulo, texto y botones (1-9 o clic; Enter = el primero).
+    `cuenta` = (restante, total) dibuja una cuenta regresiva grande en un anillo que se vacia."""
+
+    def __init__(self, titulo: str, texto: str = "", botones: tuple[str, ...] = ("Aceptar",), tipo: str = "info",
+                 ancho: int = 620) -> None:
+        self.titulo, self.texto, self.botones, self.tipo = titulo, texto, botones, tipo
+        self.ancho = ancho
+        self.t = 0.0
+        self.elegido: int | None = None
+        self.cuenta: tuple[float, float] | None = None
+        self._rects: list[pygame.Rect] = []
+
+    def update(self, dt: float) -> None:
+        self.t += dt
+
+    def handle_event(self, event: pygame.event.Event) -> int | None:
+        if event.type == pygame.KEYDOWN:
+            if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_KP_ENTER):
+                self.elegido = 0
+            elif pygame.K_1 <= event.key < pygame.K_1 + len(self.botones):
+                self.elegido = event.key - pygame.K_1
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            self.elegido = next((i for i, r in enumerate(self._rects) if r.collidepoint(event.pos)), None)
+        return self.elegido
+
+    def draw(self, pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema) -> None:
+        from post_truth.views.anuncio_view import _color, _icono, _rebote
+        entrada = min(1.0, self.t / TOKENS.dur_media)
+        velo = pygame.Surface(pantalla.get_size(), pygame.SRCALPHA)
+        velo.fill((*tema.fondo, round(TOKENS.alfa_velo * entrada)))
+        pantalla.blit(velo, (0, 0))
+        w = px(self.ancho)
+        lineas = ajustar_texto(self.texto, fuentes.normal, w - px(150))
+        alto = px(150) + len(lineas) * fuentes.normal.get_linesize() + (px(150) if self.cuenta else 0)
+        caja = pygame.Rect(0, 0, w, alto)
+        caja.center = (pantalla.get_width() // 2, pantalla.get_height() // 2 - round(px(30) * (1 - _rebote(entrada))))
+        color = _color(tema, self.tipo)
+        panel(pantalla, tema, caja, 255, borde=color)
+        _icono(pantalla, tema, self.tipo, (caja.x + px(56), caja.y + px(60)), px(32), self.t)
+        x = caja.x + px(110)
+        pantalla.blit(fuentes.titulo.render(self.titulo, True, color), (x, caja.y + esp(4)))
+        y = caja.y + esp(4) + fuentes.titulo.get_linesize()
+        for linea in lineas:
+            pantalla.blit(fuentes.normal.render(linea, True, tema.texto), (x, y))
+            y += fuentes.normal.get_linesize()
+        if self.cuenta is not None:
+            restante, total = self.cuenta
+            centro, radio = (caja.centerx, y + px(70)), px(60)
+            pygame.draw.circle(pantalla, tema.fondo, centro, radio)
+            arco = pygame.Rect(0, 0, 2 * radio, 2 * radio)
+            arco.center = centro
+            fraccion = max(0.0, min(1.0, restante / total)) if total else 0.0
+            if fraccion > 0:
+                pygame.draw.arc(pantalla, tema.malo if fraccion < 0.35 else color, arco, math.pi / 2,
+                                math.pi / 2 + 2 * math.pi * fraccion, px(10))
+            num = fuentes.enorme.render(str(math.ceil(restante)), True, tema.texto)
+            pantalla.blit(num, num.get_rect(center=centro))
+            y += px(150)
+        ancho_boton = (w - px(40) - esp(2) * (len(self.botones) - 1)) // len(self.botones)
+        self._rects = []
+        for i, texto in enumerate(self.botones):
+            r = pygame.Rect(caja.x + px(20) + i * (ancho_boton + esp(2)), caja.bottom - px(64), ancho_boton, px(46))
+            b = Boton(r, f"{i + 1}. {texto}" if len(self.botones) > 1 else f"{texto} (Enter)", lambda: None)
+            b.foco = i == 0
+            b.draw(pantalla, fuentes.normal, tema)
+            self._rects.append(r)
 
 
 class CajaDialogo:

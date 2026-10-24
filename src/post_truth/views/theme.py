@@ -50,6 +50,38 @@ TEMAS = {
 }
 
 
+def mezclar(a: Color, b: Color, f: float) -> Color:
+    """Tono intermedio entre dos colores del tema (asi los matices tambien salen del tema)."""
+    return tuple(round(x + (y - x) * f) for x, y in zip(a, b))
+
+
+@dataclass(frozen=True)
+class Tokens:
+    """Medidas del sistema visual, iguales en los tres temas (en pixeles de diseno: se escalan con px())."""
+    espacio: tuple[int, ...] = (4, 8, 12, 16, 24, 32)   # xs, s, m, l, xl, xxl
+    radio_s: int = 6
+    radio_m: int = 10
+    radio_l: int = 16
+    fuentes: tuple[tuple[str, int, bool], ...] = (("chica", 17, False), ("normal", 22, False),
+                                                  ("grande", 30, True), ("titulo", 44, True),
+                                                  ("enorme", 72, True))
+    alfa_panel: int = 232     # paneles que flotan sobre el mapa
+    alfa_velo: int = 150      # velo detras de un modal
+    alfa_sombra: int = 90
+    dur_rapida: float = 0.15  # segundos
+    dur_media: float = 0.3
+    dur_lenta: float = 0.6
+
+
+TOKENS = Tokens()
+
+
+def esp(nivel: int) -> int:
+    """Espaciado del sistema: 0 = xs ... 5 = xxl, ya escalado."""
+    from post_truth.config import px
+    return px(TOKENS.espacio[nivel])
+
+
 class GestorTemas:
     """Mantiene el tema activo."""
 

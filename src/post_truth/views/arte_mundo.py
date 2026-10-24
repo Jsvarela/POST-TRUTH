@@ -4,22 +4,17 @@ import pygame
 from post_truth.config import px
 from post_truth.models.personaje import Personaje
 from post_truth.views.personaje_view import dibujar_personaje_mundo
-from post_truth.views.theme import Tema
+from post_truth.views.theme import Tema, mezclar
 
 Punto = tuple[int, int]
-
-
-def _mezclar(a: tuple[int, int, int], b: tuple[int, int, int], f: float) -> tuple[int, int, int]:
-    """Tono intermedio entre dos colores del tema."""
-    return tuple(round(x + (y - x) * f) for x, y in zip(a, b))
 
 
 class ArteFormas:
     def arbusto(self, pantalla: pygame.Surface, tema: Tema, pos: Punto, tam: int, flores: bool) -> None:
         x, y = pos
-        pygame.draw.ellipse(pantalla, _mezclar(tema.suelo, tema.fondo, 0.5), (x - tam, y - tam // 4, tam * 2, tam // 2))
+        pygame.draw.ellipse(pantalla, mezclar(tema.suelo, tema.fondo, 0.5), (x - tam, y - tam // 4, tam * 2, tam // 2))
         for dx, r in ((-tam // 2, tam * 2 // 3), (tam // 2, tam * 2 // 3), (0, tam)):
-            pygame.draw.circle(pantalla, _mezclar(tema.verde, tema.fondo, 0.2), (x + dx, y - r // 2), r)
+            pygame.draw.circle(pantalla, mezclar(tema.verde, tema.fondo, 0.2), (x + dx, y - r // 2), r)
         if flores:
             for dx, dy in ((-tam // 2, -tam // 2), (tam // 3, -tam), (tam // 2, -tam // 3)):
                 pygame.draw.circle(pantalla, tema.detalle, (x + dx, y + dy), max(2, tam // 5))
@@ -27,11 +22,11 @@ class ArteFormas:
     def arbol(self, pantalla: pygame.Surface, tema: Tema, base: Punto, tam: int, balanceo: float) -> None:
         """`balanceo` mueve la copa con el viento."""
         x, y = base
-        pygame.draw.ellipse(pantalla, _mezclar(tema.suelo, tema.fondo, 0.55), (x - tam, y - tam // 4, tam * 2, tam // 2))
-        pygame.draw.rect(pantalla, _mezclar(tema.edificio, tema.fondo, 0.35), (x - tam // 6, y - tam, tam // 3, tam),
+        pygame.draw.ellipse(pantalla, mezclar(tema.suelo, tema.fondo, 0.55), (x - tam, y - tam // 4, tam * 2, tam // 2))
+        pygame.draw.rect(pantalla, mezclar(tema.edificio, tema.fondo, 0.35), (x - tam // 6, y - tam, tam // 3, tam),
                          border_radius=max(1, tam // 10))
         cx, cy = x + round(balanceo * tam * 0.12), y - tam - tam // 3
-        oscuro, claro = _mezclar(tema.verde, tema.fondo, 0.3), _mezclar(tema.verde, tema.texto, 0.2)
+        oscuro, claro = mezclar(tema.verde, tema.fondo, 0.3), mezclar(tema.verde, tema.texto, 0.2)
         for dx, dy, r, color in ((-tam // 3, tam // 6, tam * 2 // 3, oscuro), (tam // 3, tam // 6, tam * 2 // 3, oscuro),
                                  (0, -tam // 5, tam * 3 // 4, tema.verde), (-tam // 6, -tam // 3, tam // 3, claro)):
             pygame.draw.circle(pantalla, color, (cx + dx, cy + dy), r)
@@ -49,7 +44,7 @@ class ArteFormas:
 
     def banca(self, pantalla: pygame.Surface, tema: Tema, pos: Punto, tam: int) -> None:
         x, y = pos
-        madera = _mezclar(tema.edificio, tema.detalle, 0.25)
+        madera = mezclar(tema.edificio, tema.detalle, 0.25)
         for dx in (-tam // 2 + 2, tam // 2 - 4):
             pygame.draw.line(pantalla, tema.borde, (x + dx, y), (x + dx, y + tam // 3), max(1, tam // 10))
         pygame.draw.rect(pantalla, madera, (x - tam // 2, y - tam // 6, tam, tam // 4), border_radius=max(1, tam // 10))
