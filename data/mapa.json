@@ -1,6 +1,7 @@
 {
-  "tamano": [2560, 1600],
-  "imagenes": {"mapa": "assets/mapa/mapa.png", "zonas": "assets/mapa/zonas.png", "colisiones": "assets/mapa/colisiones.png"},
+  "tamano": [2560, 1800],
+  "imagenes": {"mapa": "assets/mapa/mapa.png", "zonas": "assets/mapa/zonas.png", "colisiones": "assets/mapa/colisiones.png",
+               "noche": "assets/mapa/mapa_noche.png"},
   "velocidad": 330,
   "pies": [24, 14],
   "aparicion": [1280, 900],
@@ -11,14 +12,18 @@
     "alcaldia": {"nombre": "Alcaldia", "color": "#0000ff", "rect": [1680, 100, 760, 640], "centro": [2060, 520],
                  "edificio": [2100, 140, 300, 200]},
     "plaza":    {"nombre": "Plaza",    "color": "#00ff00", "rect": [1020, 480, 520, 600], "centro": [1280, 900],
-                 "edificio": [1180, 520, 200, 110]},
-    "barrio":   {"nombre": "Barrio",   "color": "#ffff00", "rect": [120, 940, 760, 560],  "centro": [500, 1180],
+                 "edificio": [1040, 500, 120, 90]},
+    "barrio":   {"nombre": "Barrio",   "color": "#ffff00", "rect": [120, 940, 760, 760],  "centro": [500, 1180],
                  "edificio": [160, 1260, 300, 200]},
-    "parque":   {"nombre": "Parque",   "color": "#ff00ff", "rect": [1680, 940, 760, 560], "centro": [2060, 1180],
-                 "edificio": [2100, 1260, 300, 200]}
+    "parque":   {"nombre": "Parque",   "color": "#ff00ff", "rect": [1680, 940, 760, 760], "centro": [2060, 1180],
+                 "edificio": [2100, 1260, 300, 200]},
+    "auditorio": {"nombre": "Auditorio", "color": "#00ffff", "rect": [1000, 100, 560, 300], "centro": [1280, 320],
+                  "edificio": [1180, 120, 200, 110]},
+    "registraduria": {"nombre": "Registraduria", "color": "#ff8000", "rect": [1000, 1500, 560, 260],
+                      "centro": [1280, 1570], "edificio": [1180, 1640, 200, 100]}
   },
   "obstaculos": [
-    {"tipo": "fuente", "centro": [1280, 740], "radio": 60},
+    {"tipo": "fuente", "centro": [1280, 1010], "radio": 50},
     {"tipo": "estanque", "centro": [2260, 1120], "radio": 90}
   ],
   "fronteras": [
@@ -27,6 +32,10 @@
     {"desde": "colegio", "hasta": "plaza",   "calle": [880, 600, 140, 120], "barrera": [938, 600, 24, 120], "paso": [950, 660]},
     {"desde": "plaza",   "hasta": "alcaldia","calle": [1540, 600, 140, 120], "barrera": [1598, 600, 24, 120], "paso": [1610, 660]},
     {"desde": "barrio",  "hasta": "plaza",   "calle": [880, 950, 140, 120], "barrera": [938, 950, 24, 120], "paso": [950, 1010]},
-    {"desde": "parque",  "hasta": "plaza",   "calle": [1540, 950, 140, 120], "barrera": [1598, 950, 24, 120], "paso": [1610, 1010]}
+    {"desde": "parque",  "hasta": "plaza",   "calle": [1540, 950, 140, 120], "barrera": [1598, 950, 24, 120], "paso": [1610, 1010]},
+    {"desde": "auditorio", "hasta": "plaza", "calle": [1220, 400, 120, 80], "barrera": [1220, 428, 120, 24], "paso": [1280, 440]},
+    {"desde": "auditorio", "hasta": "colegio", "calle": [880, 200, 120, 120], "barrera": [928, 200, 24, 120], "paso": [940, 260]},
+    {"desde": "registraduria", "hasta": "barrio", "calle": [880, 1540, 120, 120], "barrera": [928, 1540, 24, 120], "paso": [940, 1600]},
+    {"desde": "registraduria", "hasta": "parque", "calle": [1560, 1540, 120, 120], "barrera": [1608, 1540, 24, 120], "paso": [1620, 1600]}
   ]
 }

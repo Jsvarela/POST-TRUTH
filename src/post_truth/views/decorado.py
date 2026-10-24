@@ -64,5 +64,5 @@ def generar(mapa: MapaAbierto, semilla: int = SEMILLA) -> Decorado:
         for lado in (-1, 1):
             p = (f.paso[0] + lado * w / 3, y - 18) if horizontal else (x - 18, f.paso[1] + lado * h / 3)
             faroles.append((*p, rng.uniform(0, 2 * math.pi)))
-    bancas = [(z.centro[0] + dx, z.centro[1] + 70) for z in mapa.zonas.values() for dx in (-90, 90)]
+    bancas = [(z.centro[0] + dx, z.centro[1]) for z in mapa.zonas.values() for dx in (-110, 110)]   # a los lados
     return Decorado((), tuple(arboles), tuple(arbustos), tuple(faroles), tuple(bancas))

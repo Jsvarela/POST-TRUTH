@@ -35,6 +35,7 @@ class ZonaMapa:
     color: tuple[int, int, int]
     centro: Punto
     edificio: tuple[int, int, int, int]
+    rect: tuple[int, int, int, int]          # su region (para pintar encima obras, crisis o aislamiento)
 
 
 @dataclass(frozen=True)
@@ -59,8 +60,8 @@ class MapaAbierto:
         self.tamano: tuple[int, int] = tuple(datos["tamano"])
         if zonas.get_size() != self.tamano or colisiones.get_size() != self.tamano:
             raise ValueError("Las capas del mapa deben tener el tamano de data/mapa.json")
-        self.zonas = {id: ZonaMapa(id, z["nombre"], _color(z["color"]), tuple(z["centro"]), tuple(z["edificio"]))
-                      for id, z in datos["zonas"].items()}
+        self.zonas = {id: ZonaMapa(id, z["nombre"], _color(z["color"]), tuple(z["centro"]), tuple(z["edificio"]),
+                               tuple(z["rect"])) for id, z in datos["zonas"].items()}
         self._por_color = {z.color: z.id for z in self.zonas.values()}
         self.fronteras = [Frontera(f["desde"], f["hasta"], tuple(f["calle"]), tuple(f["barrera"]), tuple(f["paso"]))
                           for f in datos["fronteras"]]
@@ -109,8 +110,10 @@ class MapaAbierto:
         return any(r.colliderect(f.barrera) for f in self.barreras_activas())
 
     def sincronizar(self, grafo: GrafoCiudad) -> None:
-        """Las fronteras abiertas son las aristas que el grafo tiene: las demas levantan su barrera."""
-        self.cerradas = {f.clave for f in self.fronteras if grafo.distancia(f.desde, f.hasta) is None}
+        """Las fronteras abiertas son las aristas que el grafo tiene: las demas levantan su barrera (tambien las de
+        una zona que aun no es vertice: esta en obras)."""
+        self.cerradas = {f.clave for f in self.fronteras
+                         if f.desde not in grafo or f.hasta not in grafo or grafo.distancia(f.desde, f.hasta) is None}
 
     # --- movimiento -----------------------------------------------------------------------------
     def mover(self, dir_x: float, dir_y: float, dt: float, llegar: Callable[[str], None] | None = None) -> None:
