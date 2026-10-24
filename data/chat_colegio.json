@@ -1,0 +1,287 @@
+{
+ "grupo": "Chat del 8B - Colegio Nova",
+ "segundos_por_turno": 9,
+ "efectos": {
+  "desescalar": {
+   "coexistence": 2,
+   "digital_wellbeing": 2,
+   "score": 1,
+   "credibilidad": 2
+  },
+  "ignorar": {
+   "digital_wellbeing": -1,
+   "credibilidad": 0
+  },
+  "amplificar": {
+   "coexistence": -3,
+   "digital_wellbeing": -3,
+   "conflicts": 1,
+   "score": -1,
+   "credibilidad": -3
+  },
+  "tarde": {
+   "digital_wellbeing": -1
+  }
+ },
+ "arbol": {
+  "hablante": "anonimo_77",
+  "texto": "Miren la foto que le edite a Sofi jajaja, compartanla.",
+  "opciones": [
+   {
+    "texto": "Eso no da risa. Borrala, Sofi no merece eso.",
+    "tipo": "desescalar",
+    "sigue": {
+     "hablante": "anonimo_77",
+     "texto": "Uy, el defensor. Fue un chiste, no seas aburrido.",
+     "opciones": [
+      {
+       "texto": "Un chiste es si todos se rien. Le escribo a Sofi para ver como esta.",
+       "tipo": "desescalar",
+       "sigue": {
+        "hablante": "Sofi",
+        "texto": "Gracias... me siento fatal, todos la estan viendo.",
+        "opciones": [
+         {
+          "texto": "No estas sola. Reportemos la foto y hablemos con la orientadora.",
+          "tipo": "desescalar",
+          "sigue": null
+         },
+         {
+          "texto": "Ya pasara, no le pares bolas.",
+          "tipo": "ignorar",
+          "sigue": null
+         },
+         {
+          "texto": "Pues no debiste dejarte tomar esa foto.",
+          "tipo": "amplificar",
+          "sigue": null
+         }
+        ]
+       }
+      },
+      {
+       "texto": "(Dejas el chat en silencio)",
+       "tipo": "ignorar",
+       "sigue": {
+        "hablante": "Mateo",
+        "texto": "Alguien mas va a decir algo o todos callados?",
+        "opciones": [
+         {
+          "texto": "Yo apoyo a Sofi. Pidamos que la borren.",
+          "tipo": "desescalar",
+          "sigue": null
+         },
+         {
+          "texto": "(Sigues sin escribir)",
+          "tipo": "ignorar",
+          "sigue": null
+         },
+         {
+          "texto": "Callese Mateo, no sea sapo.",
+          "tipo": "amplificar",
+          "sigue": null
+         }
+        ]
+       }
+      },
+      {
+       "texto": "Bueno, igual si esta fea la foto jaja.",
+       "tipo": "amplificar",
+       "sigue": {
+        "hablante": "anonimo_77",
+        "texto": "Ves? Hasta tu te ries. Mandala a todo el colegio.",
+        "opciones": [
+         {
+          "texto": "Me equivoque, no la mandes. Borremosla.",
+          "tipo": "desescalar",
+          "sigue": null
+         },
+         {
+          "texto": "(Sales del grupo)",
+          "tipo": "ignorar",
+          "sigue": null
+         },
+         {
+          "texto": "Ya la mande al grupo de 9.",
+          "tipo": "amplificar",
+          "sigue": null
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "texto": "(No respondes y sigues leyendo)",
+    "tipo": "ignorar",
+    "sigue": {
+     "hablante": "Laura",
+     "texto": "Nadie dice nada? A Sofi le va a dar algo.",
+     "opciones": [
+      {
+       "texto": "Tienes razon. Esto hay que pararlo, le aviso a un profe.",
+       "tipo": "desescalar",
+       "sigue": {
+        "hablante": "Profe Diana",
+        "texto": "Gracias por avisar. Que podemos hacer entre todos?",
+        "opciones": [
+         {
+          "texto": "Pedir que borren la foto y apoyar a Sofi en el salon.",
+          "tipo": "desescalar",
+          "sigue": null
+         },
+         {
+          "texto": "No se, yo solo queria avisar.",
+          "tipo": "ignorar",
+          "sigue": null
+         },
+         {
+          "texto": "Castigue a todo el grupo, todos son iguales.",
+          "tipo": "amplificar",
+          "sigue": null
+         }
+        ]
+       }
+      },
+      {
+       "texto": "No es mi problema.",
+       "tipo": "ignorar",
+       "sigue": {
+        "hablante": "anonimo_77",
+        "texto": "Ya van 40 vistas jajaja.",
+        "opciones": [
+         {
+          "texto": "Voy a reportar la cuenta. Esto es ciberacoso.",
+          "tipo": "desescalar",
+          "sigue": null
+         },
+         {
+          "texto": "(Silencias el grupo)",
+          "tipo": "ignorar",
+          "sigue": null
+         },
+         {
+          "texto": "Subela a historias para que llegue a mas.",
+          "tipo": "amplificar",
+          "sigue": null
+         }
+        ]
+       }
+      },
+      {
+       "texto": "Que exagerada, es una foto.",
+       "tipo": "amplificar",
+       "sigue": {
+        "hablante": "Laura",
+        "texto": "Exagerada? Ella esta llorando en el bano.",
+        "opciones": [
+         {
+          "texto": "Tienes razon, lo siento. Que hacemos?",
+          "tipo": "desescalar",
+          "sigue": null
+         },
+         {
+          "texto": "(No contestas)",
+          "tipo": "ignorar",
+          "sigue": null
+         },
+         {
+          "texto": "Pues que no sea tan sensible.",
+          "tipo": "amplificar",
+          "sigue": null
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "texto": "jajaja reenvialo al otro grupo.",
+    "tipo": "amplificar",
+    "sigue": {
+     "hablante": "anonimo_77",
+     "texto": "Eso! Ya esta en el grupo de 9. Que alguien la suba a Civitas.",
+     "opciones": [
+      {
+       "texto": "Espera, se nos fue la mano. Borremosla de los dos grupos.",
+       "tipo": "desescalar",
+       "sigue": {
+        "hablante": "anonimo_77",
+        "texto": "Ush, ahora si te dio miedo? Ya es tarde.",
+        "opciones": [
+         {
+          "texto": "No es tarde. Le pido perdon a Sofi y la ayudo a reportarla.",
+          "tipo": "desescalar",
+          "sigue": null
+         },
+         {
+          "texto": "(Cierras el chat)",
+          "tipo": "ignorar",
+          "sigue": null
+         },
+         {
+          "texto": "Tienes razon, ya que importa.",
+          "tipo": "amplificar",
+          "sigue": null
+         }
+        ]
+       }
+      },
+      {
+       "texto": "(Dejas de escribir)",
+       "tipo": "ignorar",
+       "sigue": {
+        "hablante": "Sofi",
+        "texto": "Por que la mandaste al otro grupo? Pense que eras mi amigo.",
+        "opciones": [
+         {
+          "texto": "Perdon, fue un error. Te ayudo a que la borren.",
+          "tipo": "desescalar",
+          "sigue": null
+         },
+         {
+          "texto": "(Lees y no respondes)",
+          "tipo": "ignorar",
+          "sigue": null
+         },
+         {
+          "texto": "Relajate, era un chiste.",
+          "tipo": "amplificar",
+          "sigue": null
+         }
+        ]
+       }
+      },
+      {
+       "texto": "Yo la subo, que se haga viral.",
+       "tipo": "amplificar",
+       "sigue": {
+        "hablante": "Coordinacion",
+        "texto": "La foto ya circula en Civitas. Quien la subio?",
+        "opciones": [
+         {
+          "texto": "Fui yo. Me equivoque y quiero ayudar a repararlo.",
+          "tipo": "desescalar",
+          "sigue": null
+         },
+         {
+          "texto": "(No dices nada)",
+          "tipo": "ignorar",
+          "sigue": null
+         },
+         {
+          "texto": "Fue anonimo_77, yo no tuve nada que ver.",
+          "tipo": "amplificar",
+          "sigue": null
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

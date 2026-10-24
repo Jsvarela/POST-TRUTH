@@ -28,3 +28,5 @@ if FLUJO not in ("mundo", "escena"):
 RUTA_MINIJUEGOS = Path(__file__).resolve().parents[2] / "data" / "minijuegos.json"
 RUTA_MUNDO = Path(__file__).resolve().parents[2] / "data" / "mundo.json"
 RUTA_POSTS = Path(__file__).resolve().parents[2] / "data" / "posts.json"
+RUTA_CHAT = Path(__file__).resolve().parents[2] / "data" / "chat_colegio.json"
+RUTA_MITIN = Path(__file__).resolve().parents[2] / "data" / "mitin.json"

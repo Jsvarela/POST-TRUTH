@@ -21,7 +21,8 @@ class ContextoMinijuego:
     rol: str
     credibilidad: int
     dia: int
-    extendido: bool = False   # accesibilidad: mas tiempo
+    extendido: bool = False   # accesibilidad: mas tiempo (y sin ritmo en el mitin)
+    evidencias: int = 0       # evidencia que el jugador ya reunio (el mitin la usa)
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -32,14 +33,17 @@ class ResultadoMinijuego:
     impacto: Impact
     credibilidad: int
     texto: str
+    rumor: bool = False       # el resultado deja un rumor corriendo en la red
 
     def to_dict(self) -> dict:
-        return {"impacto": asdict(self.impacto), "credibilidad": self.credibilidad, "texto": self.texto}
+        return {"impacto": asdict(self.impacto), "credibilidad": self.credibilidad, "texto": self.texto,
+                "rumor": self.rumor}
 
 
 class Minijuego(ABC):
     id = ""
     nombre = ""
+    ayuda = ""   # que hacer y con que teclas: se muestra en pantalla
 
     def __init__(self, contexto: ContextoMinijuego) -> None:
         self.contexto = contexto
@@ -115,6 +119,7 @@ class Ensayo(Minijuego):
     """Tres mensajes del chat del lugar: responder con calma (1) o reaccionar sin pensar (2) antes del tiempo."""
     id = "ensayo"
     nombre = "Ensayo"
+    ayuda = "Responde cada mensaje con 1 (con calma) o 2 (sin pensar) antes de que se acabe el tiempo."
 
     def __init__(self, contexto: ContextoMinijuego) -> None:
         super().__init__(contexto)
@@ -161,3 +166,6 @@ class Ensayo(Minijuego):
 
     def restaurar(self, estado: dict) -> None:
         self.mensajes, self.respuestas, self.t = list(estado["mensajes"]), list(estado["respuestas"]), float(estado["t"])
+
+
+from post_truth.models import chat, mitin  # noqa: E402,F401  (al importarse registran sus minijuegos)

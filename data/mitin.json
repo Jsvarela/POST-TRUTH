@@ -1,0 +1,68 @@
+{
+ "periodo": 2.4,
+ "ventana": [
+  0.4,
+  0.65
+ ],
+ "ciclos": 2,
+ "por_mitin": 4,
+ "animo_inicial": 50,
+ "efectos": {
+  "acierto": 14,
+  "destiempo": 5,
+  "sin_pruebas": 2,
+  "fallo": -14
+ },
+ "interrupciones": [
+  {
+   "grito": "Ese candidato va a cerrar el hospital!",
+   "argumentos": [
+    "El plan de salud publicado amplia el hospital",
+    "Usted es un mentiroso",
+    "Mejor hablemos de otra cosa"
+   ],
+   "correcto": 0,
+   "requiere_evidencia": true
+  },
+  {
+   "grito": "Dicen que compraron los votos del barrio!",
+   "argumentos": [
+    "Eso lo dice usted",
+    "Si tiene pruebas, llevelas a la Registraduria",
+    "Aqui nadie compra votos, punto"
+   ],
+   "correcto": 1,
+   "requiere_evidencia": false
+  },
+  {
+   "grito": "La foto del parque lleno de basura es de hoy!",
+   "argumentos": [
+    "Que asco, si es verdad",
+    "Eso no importa",
+    "La foto es de 2019: aqui esta la original"
+   ],
+   "correcto": 2,
+   "requiere_evidencia": true
+  },
+  {
+   "grito": "Ustedes solo vienen en elecciones!",
+   "argumentos": [
+    "Vayase si no le gusta",
+    "Tiene razon en algo: le dejo mi contacto para seguir",
+    "Silencio, por favor"
+   ],
+   "correcto": 1,
+   "requiere_evidencia": false
+  },
+  {
+   "grito": "En Civitas dicen que cancelan la eleccion!",
+   "argumentos": [
+    "La Registraduria confirmo la fecha: aqui el comunicado",
+    "Puede ser, quien sabe",
+    "Eso es culpa de los otros"
+   ],
+   "correcto": 0,
+   "requiere_evidencia": true
+  }
+ ]
+}

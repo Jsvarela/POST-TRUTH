@@ -440,8 +440,9 @@ class PartidaSesion:
         if id is None:
             return None
         j = self.jugador_actual
+        evidencias = len(j.investigacion.descubiertas) + sum(1 for h in j.historial if h.get("respaldo", 0) >= 1)
         contexto = mj.ContextoMinijuego(zona, j.id, j.rol.value, j.credibilidad, self.campana.dia,
-                                        self.campana.factor > 1)
+                                        self.campana.factor > 1, evidencias)
         self.minijuego = mj.crear(id, contexto)
         return self.minijuego
 
@@ -459,6 +460,10 @@ class PartidaSesion:
                             "falsa": False, "respaldo": 0, "credibilidad": r.credibilidad})
         self.campana.minijuegos_hoy.append(m.contexto.lugar)
         self.minijuego = None
+        if r.rumor and self.en_vivo is None:
+            self.iniciar_en_vivo()
+            self.notificar("malo", "Arranca un rumor", f"Lo que quedo sin aclarar en {m.contexto.lugar.capitalize()} "
+                                                       "ya corre por la red.")
         return r
 
     # --- propagacion en vivo -------------------------------------------------------------------
