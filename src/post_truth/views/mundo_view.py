@@ -7,7 +7,7 @@ import pygame
 from post_truth.config import ALTO, ANCHO, ESCALA, px
 from post_truth.models import Role
 from post_truth.models.animacion import AnimacionPersonaje
-from post_truth.models.mundo import MundoCiudad
+from post_truth.mapa_abierto import MapaAbierto
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.views.arte_mundo import ARTE_FORMAS, ArteFormas
 from post_truth.views.decorado import Decorado
@@ -16,7 +16,7 @@ from post_truth.views.escena_view import RECT_HUD, _dibujar_hud, dibujar_reloj
 from post_truth.views.mapa_view import _rombo
 from post_truth.views.theme import TEMAS, Tema
 
-AYUDA = "WASD: caminar   |   E: entrar o buscar   |   G: guia   |   H: habilidad   |   Y: aliados   |   ESC: menu"
+AYUDA = "WASD: caminar   |   E: entrar o buscar   |   G: guia   |   H: habilidad   |   Y: aliados   |   F3   |   ESC: menu"
 ALTO_PERSONAJE = 3.2
 PAJAROS = ((260, 70, 0.0), (300, 70, 0.6), (1100, -55, 9.0))
 RECT_MINIMAPA = pygame.Rect(ANCHO - px(16) - px(220), RECT_HUD.bottom + px(12), px(220), px(138))
@@ -29,7 +29,10 @@ class EstadoMundo:
     evidencias: frozenset | set = frozenset()
     accion: tuple[str, str] | None = None
     indicadores: list = ()
-    guia: tuple[str, ...] = ()
+    guia: tuple[str, ...] = ()                 # zonas de la ruta de la guia (Dijkstra)
+    guia_puntos: tuple = ()                    # sus puntos de paso por cada frontera
+    crisis: bool = False                       # la noticia activa es una crisis: senal sobre su lugar
+    depuracion: bool = False                   # F3
     aviso: str = ""
     personaje: Personaje = Personaje(Role.CITIZEN, Genero.MUJER)
     centro_camara: tuple[float, float] | None = None
@@ -61,7 +64,7 @@ class Camara:
                        self.centro[1] + (objetivo[1] - self.centro[1]) * f)
 
 
-def camara(mundo: MundoCiudad, ancho: int = ANCHO, alto: int = ALTO,
+def camara(mundo: MapaAbierto, ancho: int = ANCHO, alto: int = ALTO,
            centro: tuple[float, float] | None = None) -> tuple[float, float]:
     """Esquina superior izquierda de lo que se ve: centrada en `centro` y sin salirse del mundo."""
     vista_w, vista_h = ancho / ESCALA, alto / ESCALA
@@ -116,29 +119,73 @@ def _dibujar_dia(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, dia: in
         pygame.draw.circle(pantalla, tema.detalle, astro, px(7))
 
 
-def _vista(mundo: MundoCiudad, cam: tuple[float, float], pantalla: pygame.Surface, margen: float = 90):
+def _vista(mundo: MapaAbierto, cam: tuple[float, float], pantalla: pygame.Surface, margen: float = 90):
     """Funcion que dice si un punto del mundo cae en pantalla."""
     ancho, alto = pantalla.get_size()
     x0, y0, x1, y1 = cam[0] - margen, cam[1] - margen, cam[0] + ancho / ESCALA + margen, cam[1] + alto / ESCALA + margen
     return lambda x, y: x0 <= x <= x1 and y0 <= y <= y1
 
 
-def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo: MundoCiudad,
+_CACHE: dict[str, pygame.Surface] = {}
+
+
+def _capa(ruta, alfa: bool = False) -> pygame.Surface:
+    """Una capa del mapa ya escalada a la pantalla: se carga y se escala una sola vez."""
+    clave = f"{ruta}:{alfa}:{ESCALA}"
+    if clave not in _CACHE:
+        img = pygame.image.load(str(ruta))
+        img = img.convert_alpha() if alfa else img.convert()
+        _CACHE[clave] = pygame.transform.smoothscale(img, (px(img.get_width()), px(img.get_height())))
+    return _CACHE[clave]
+
+
+def _depuracion(pantalla: pygame.Surface, fuentes: Fuentes, mundo: MapaAbierto, cam: tuple[float, float]) -> None:
+    """F3: zonas en color, colisiones en rojo, fronteras (verde abierta / roja cerrada) y aristas del grafo."""
+    area = pygame.Rect(px(cam[0]), px(cam[1]), *pantalla.get_size())
+    clave = f"depuracion:{ESCALA}"
+    if clave not in _CACHE:
+        zonas = _capa(mundo.imagenes["zonas"]).copy()
+        zonas.set_alpha(80)
+        colis = mundo.mascara.to_surface(setcolor=(255, 0, 0, 110), unsetcolor=(0, 0, 0, 0))
+        _CACHE[clave] = zonas
+        _CACHE[clave + ":colis"] = pygame.transform.scale(colis, (px(mundo.tamano[0]), px(mundo.tamano[1])))
+    pantalla.blit(_CACHE[clave], (0, 0), area)
+    pantalla.blit(_CACHE[clave + ":colis"], (0, 0), area)
+    for f in mundo.fronteras:
+        color = (220, 40, 40) if f.clave in mundo.cerradas else (40, 220, 90)
+        x, y, w, h = f.calle
+        pygame.draw.rect(pantalla, color, (*a_pantalla((x, y), cam), px(w), px(h)), px(3))
+        for z in (f.desde, f.hasta):
+            pygame.draw.line(pantalla, color, a_pantalla(mundo.zonas[z].centro, cam), a_pantalla(f.paso, cam), px(3))
+    for z in mundo.zonas.values():
+        pygame.draw.circle(pantalla, (255, 255, 255), a_pantalla(z.centro, cam), px(8))
+    pygame.draw.rect(pantalla, (255, 255, 0), [*a_pantalla(mundo.rect_pies(mundo.jugador).topleft, cam),
+                                               px(mundo.pies[0]), px(mundo.pies[1])], 1)
+    img = fuentes.chica.render(f"F3 depuracion | zona: {mundo.zona_en(mundo.jugador)} | "
+                               f"pos: {round(mundo.jugador[0])}, {round(mundo.jugador[1])}", True, (255, 255, 0))
+    pantalla.blit(img, (px(16), pantalla.get_height() - px(150)))
+
+
+def _barrera(pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect) -> None:
+    """Valla de obra con franjas: la arista que el grafo cerro, hecha objeto."""
+    pygame.draw.rect(pantalla, tema.fondo, rect.inflate(px(4), px(4)), border_radius=px(4))
+    pygame.draw.rect(pantalla, tema.detalle, rect, border_radius=px(4))
+    paso = px(16)
+    horizontal = rect.w >= rect.h
+    for k in range(0, (rect.w if horizontal else rect.h), paso * 2):
+        franja = (pygame.Rect(rect.x + k, rect.y, paso, rect.h) if horizontal
+                  else pygame.Rect(rect.x, rect.y + k, rect.w, paso)).clip(rect)
+        pygame.draw.rect(pantalla, tema.malo, franja)
+
+
+def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo: MapaAbierto,
                   estado: EstadoMundo | None = None, arte: ArteFormas = ARTE_FORMAS) -> None:
     estado = estado or EstadoMundo()
     cam = camara(mundo, *pantalla.get_size(), estado.centro_camara)
-    arte.suelo(pantalla, tema)
+    pantalla.fill(tema.suelo)
+    pantalla.blit(_capa(mundo.imagenes["mapa"]), (0, 0), pygame.Rect(px(cam[0]), px(cam[1]), *pantalla.get_size()))
     deco = estado.decorado
     visible = _vista(mundo, cam, pantalla)
-    if deco is not None:
-        for x, y, variante in deco.cesped:
-            if visible(x, y):
-                arte.cesped(pantalla, tema, a_pantalla((x, y), cam), px(7), variante)
-    for c in mundo.calles:
-        arte.calle(pantalla, tema, a_pantalla(mundo.plazas[c.desde].pos, cam), a_pantalla(mundo.plazas[c.hasta].pos, cam),
-                   px(c.ancho))
-    for p in mundo.plazas.values():
-        arte.plaza(pantalla, tema, a_pantalla(p.pos, cam), px(p.radio))
     if deco is not None:
         for x, y in deco.bancas:
             if visible(x, y):
@@ -151,25 +198,32 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
             if visible(x, y):
                 arte.farol(pantalla, tema, a_pantalla((x, y), cam), px(48),
                            luz * (0.5 + 0.5 * math.sin(estado.t * 1.5 + fase)))
-    if estado.guia:
-        _guia(pantalla, tema, mundo, cam, estado.guia)
+    for f in mundo.barreras_activas():
+        x, y, w, h = f.barrera
+        _barrera(pantalla, tema, pygame.Rect(*a_pantalla((x, y), cam), px(w), px(h)))
+    if estado.guia_puntos:
+        _guia(pantalla, tema, cam, (mundo.jugador, *estado.guia_puntos))
     resaltada = estado.accion[0] if estado.accion else None
-    for e in mundo.edificios:
-        x, y, w, h = e.rect
+    for z in mundo.zonas.values():
+        x, y, w, h = z.edificio
         rect = pygame.Rect(*a_pantalla((x, y), cam), px(w), px(h))
         if not rect.colliderect(pantalla.get_rect()):
             continue
-        arte.edificio(pantalla, tema, fuentes, e.zona, e.zona.capitalize(), rect, e.zona == resaltada, estado.t)
-        if e.zona == estado.noticia:
+        if z.id == resaltada:
+            pygame.draw.rect(pantalla, tema.acento, rect.inflate(px(10), px(10)), px(5), border_radius=px(14))
+        if z.id == estado.noticia:
+            if estado.crisis:   # senal de crisis: anillo que late alrededor del lugar
+                radio = px(60) + round(px(14) * (0.5 + 0.5 * math.sin(estado.t * 6)))
+                pygame.draw.circle(pantalla, tema.malo, a_pantalla(z.centro, cam), radio, px(6))
             _globo_noticia(pantalla, tema, fuentes, (rect.centerx, rect.top - px(8)))
-        elif e.zona in estado.evidencias:
+        elif z.id in estado.evidencias:
             _marca_evidencia(pantalla, tema, fuentes, (rect.centerx, rect.top - px(26)))
     if deco is not None:
         for x, y, tam, fase in deco.arboles:
             if visible(x, y):
                 arte.arbol(pantalla, tema, a_pantalla((x, y), cam), px(34 * tam), math.sin(estado.t * 1.3 + fase))
     x, y = mundo.jugador
-    arte.personaje(pantalla, tema, a_pantalla((x, y + mundo.radio_jugador), cam), px(ALTO_PERSONAJE * mundo.radio_jugador),
+    arte.personaje(pantalla, tema, a_pantalla((x, y + mundo.pies[1] / 2), cam), px(ALTO_PERSONAJE * 14),
                    estado.personaje, estado.animacion.nombre, estado.animacion.cuadro)
     if deco is not None:
         ancho = mundo.tamano[0] + 400
@@ -180,6 +234,8 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
                 arte.pajaro(pantalla, tema, a_pantalla((bx, by), cam), px(9), math.sin(estado.t * 9 + i * 1.7))
     if estado.dia:
         _velo_del_dia(pantalla, tema, estado.fraccion_dia)
+    if estado.depuracion:
+        _depuracion(pantalla, fuentes, mundo, cam)
     if estado.indicadores:
         _dibujar_hud(pantalla, fuentes, tema, list(estado.indicadores), estado.credibilidad)
     _minimapa(pantalla, tema, mundo, estado)
@@ -212,21 +268,20 @@ def _marca_evidencia(pantalla: pygame.Surface, tema: Tema, fuentes: Fuentes, cen
     pantalla.blit(img, img.get_rect(center=centro))
 
 
-def _guia(pantalla: pygame.Surface, tema: Tema, mundo: MundoCiudad, cam: tuple[float, float],
-          ruta: tuple[str, ...]) -> None:
-    """Ruta tenue por el centro de las calles: puntos espaciados, no una linea solida."""
+def _guia(pantalla: pygame.Surface, tema: Tema, cam: tuple[float, float], puntos: tuple) -> None:
+    """Ruta tenue por los puntos de paso de cada frontera: puntos espaciados, no una linea solida."""
     capa = pygame.Surface(pantalla.get_size(), pygame.SRCALPHA)
     color = (*tema.acento, 150)
-    for a, b in zip(ruta, ruta[1:]):
-        (x1, y1), (x2, y2) = a_pantalla(mundo.plazas[a].pos, cam), a_pantalla(mundo.plazas[b].pos, cam)
+    for a, b in zip(puntos, puntos[1:]):
+        (x1, y1), (x2, y2) = a_pantalla(a, cam), a_pantalla(b, cam)
         largo = max(1, round(((x2 - x1) ** 2 + (y2 - y1) ** 2) ** 0.5 / px(26)))
         for i in range(largo + 1):
             pygame.draw.circle(capa, color, (x1 + (x2 - x1) * i // largo, y1 + (y2 - y1) * i // largo), px(6))
     pantalla.blit(capa, (0, 0))
 
 
-def _minimapa(pantalla: pygame.Surface, tema: Tema, mundo: MundoCiudad, estado: EstadoMundo) -> None:
-    """Toda la ciudad en pequeno: calles, plazas, la noticia, la evidencia y el jugador."""
+def _minimapa(pantalla: pygame.Surface, tema: Tema, mundo: MapaAbierto, estado: EstadoMundo) -> None:
+    """Toda la ciudad en pequeno: zonas, fronteras abiertas, la noticia, la evidencia y el jugador."""
     r = RECT_MINIMAPA
     pygame.draw.rect(pantalla, tema.panel, r, border_radius=px(10))
     pygame.draw.rect(pantalla, tema.borde, r, px(2), border_radius=px(10))
@@ -235,18 +290,20 @@ def _minimapa(pantalla: pygame.Surface, tema: Tema, mundo: MundoCiudad, estado: 
 
     def m(p: tuple[float, float]) -> tuple[int, int]:
         return interior.x + round(p[0] / ancho * interior.w), interior.y + round(p[1] / alto * interior.h)
-    for c in mundo.calles:
-        pygame.draw.line(pantalla, tema.borde, m(mundo.plazas[c.desde].pos), m(mundo.plazas[c.hasta].pos), px(3))
-    for p in mundo.plazas.values():
-        pygame.draw.circle(pantalla, tema.borde, m(p.pos), px(5))
-    if estado.noticia in mundo.plazas:
+    for f in mundo.fronteras:
+        if f.clave not in mundo.cerradas:
+            pygame.draw.lines(pantalla, tema.borde, False,
+                              [m(mundo.zonas[f.desde].centro), m(f.paso), m(mundo.zonas[f.hasta].centro)], px(3))
+    for z in mundo.zonas.values():
+        pygame.draw.circle(pantalla, tema.borde, m(z.centro), px(5))
+    if estado.noticia in mundo.zonas:
         caja = pygame.Rect(0, 0, px(12), px(12))
-        caja.center = m(mundo.plazas[estado.noticia].pos)
+        caja.center = m(mundo.zonas[estado.noticia].centro)
         pygame.draw.rect(pantalla, tema.texto, caja.inflate(px(4), px(4)))
         pygame.draw.rect(pantalla, tema.malo, caja)
     for z in estado.evidencias:
-        if z in mundo.plazas:
-            _rombo(pantalla, tema.detalle, m(mundo.plazas[z].pos), px(6), True)
+        if z in mundo.zonas:
+            _rombo(pantalla, tema.detalle, m(mundo.zonas[z].centro), px(6), True)
     pygame.draw.circle(pantalla, tema.texto, m(mundo.jugador), px(6))
     pygame.draw.circle(pantalla, tema.acento, m(mundo.jugador), px(4))
 

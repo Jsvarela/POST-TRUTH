@@ -4,14 +4,14 @@ import random
 
 import pygame
 
-from post_truth.config import px, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, RUTA_MINIJUEGOS, RUTA_MUNDO
+from post_truth.config import px, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, RUTA_MAPA, RUTA_MINIJUEGOS
 from post_truth.controllers import roles_teclas
 from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import load_trees
 from post_truth.models import Role
 from post_truth.models import minijuego as mj
+from post_truth.mapa_abierto import MapaAbierto
 from post_truth.models.animacion import AnimacionPersonaje
-from post_truth.models.mundo import MundoCiudad
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.sesion import FIN, FIN_DIA, PartidaSesion
 from post_truth.structures.grafo_ciudad import GrafoCiudad
@@ -33,27 +33,18 @@ RECT_TELEFONO = pygame.Rect(RECT_MINIMAPA.right - px(160), RECT_MINIMAPA.bottom 
 RECT_HABILIDAD = pygame.Rect(RECT_MINIMAPA.right - px(220), RECT_TELEFONO.bottom + px(8), px(220), px(48))
 
 
-def mapa_de_tiempos(mapa: GrafoCiudad, mundo: MundoCiudad) -> GrafoCiudad:
-    """El mismo grafo de la ciudad, pero cada arista pesa lo que se tarda caminandola en el mundo."""
-    datos = mapa.to_dict()
-    tiempos = {frozenset((c.desde, c.hasta)): mundo.tiempo_calle(c) for c in mundo.calles}
-    for c in datos["conexiones"]:
-        c["distancia"] = max(1, round(100 * tiempos[frozenset((c["origen"], c["destino"]))]))
-    return GrafoCiudad.from_dict(datos)
-
-
 class MundoState(BaseState):
     def __init__(self, app) -> None:
         super().__init__(app)
         self.rng = random.Random()
-        self.mundo = MundoCiudad.cargar(RUTA_MUNDO)
+        self.mundo = MapaAbierto.cargar(RUTA_MAPA)
         self.presionadas: set[int] = set()
         self.aviso, self._t_aviso = "", 0.0
         self.guia = False
         self.animacion = AnimacionPersonaje()
         self.camara = Camara(self.mundo.jugador)
         self.decorado = generar_decorado(self.mundo)
-        self.mapa_guia = mapa_de_tiempos(GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.mundo)
+        self.depuracion = False     # F3: zonas, colisiones y aristas
         self.t = 0.0
         self._dia = -1   # dia de campana que ya se preparo en el mundo
         self.anuncio: Anuncio | None = None   # grande, en el centro (el nuevo dia)
@@ -82,14 +73,15 @@ class MundoState(BaseState):
             self._dia = -1
         if self.sesion.campana.dia != self._dia:   # amanece: de vuelta en la Plaza
             self._dia = self.sesion.campana.dia
-            self.mundo = MundoCiudad.cargar(RUTA_MUNDO)
-            self.sesion.llegar(self.jugador_id, self.mundo.ultima_plaza)
+            self.mundo.ir_a(self.sesion.mapa.zona_inicial)
+            self._situar()
             self.guia = False
             self.animacion = AnimacionPersonaje()
             c = self.sesion.campana
             texto = ("Empieza la campana: frena los rumores antes de la eleccion." if c.dia == 0
                      else "Amanece en Ciudad Nova. Nuevas noticias circulan por la red.")
             self.anuncio = Anuncio(f"Dia {c.dia + 1} de {len(c.dias)}", texto, "dia", duracion=2.4)
+        self.mundo.sincronizar(self.sesion.mapa)   # el grafo manda: aristas que faltan = barreras
         self.camara.saltar(self.mundo.jugador)
         self.presionadas.clear()
         self.aviso, self._t_aviso = "", 0.0
@@ -101,8 +93,12 @@ class MundoState(BaseState):
         if titulo:
             self.toast = Anuncio(titulo, texto, tipo, grande=False, duracion=DURACION_AVISO)
 
-    def _llegar(self, zona: str) -> None:
-        self.sesion.llegar(self.jugador_id, zona)
+    def _situar(self) -> None:
+        self.sesion.situar(self.jugador_id, self.mundo.jugador, self.zona_aqui())
+
+    def zona_aqui(self) -> str | None:
+        """La zona que pisa el jugador: E funciona en cualquier punto dentro de ella."""
+        return self.mundo.zona_en(self.mundo.jugador)
 
     def opciones(self, zona: str) -> list[str]:
         """Lo que se puede hacer en `zona`: "entrar" (la noticia), "evidencia" y/o "minijuego"."""
@@ -118,7 +114,7 @@ class MundoState(BaseState):
 
     def accion_disponible(self) -> tuple[str, str] | None:
         """(zona, "entrar" | "evidencia" | "minijuego" | "elegir") de lo que hace E aqui, o None."""
-        zona = self.mundo.zona_al_alcance()
+        zona = self.zona_aqui()
         ops = self.opciones(zona) if zona is not None else []
         if not ops:
             return None
@@ -137,7 +133,7 @@ class MundoState(BaseState):
             return
         accion = self.accion_disponible()
         if accion is None:
-            zona = self.mundo.zona_al_alcance()
+            zona = self.zona_aqui()
             if zona is not None:
                 self._avisar(f"{zona.capitalize()}: aqui no hay nada de esta noticia.", "Nada por aqui")
             return
@@ -176,13 +172,15 @@ class MundoState(BaseState):
                 self.app.partida = None
                 self.app.estados.cambiar("menu")
             elif self.menu and pygame.K_1 <= event.key < pygame.K_1 + len(self.menu):
-                self._hacer(self.mundo.zona_al_alcance(), self.menu[event.key - pygame.K_1])
+                self._hacer(self.zona_aqui(), self.menu[event.key - pygame.K_1])
             elif event.key in DIRECCIONES:
                 self.presionadas.add(event.key)
             elif event.key == pygame.K_e:
                 self._usar()
             elif event.key == pygame.K_g:
                 self.guia = not self.guia
+            elif event.key == pygame.K_F3:
+                self.depuracion = not self.depuracion
             elif event.key == pygame.K_t:
                 self.presionadas.clear()
                 self.app.estados.cambiar("telefono")
@@ -199,8 +197,12 @@ class MundoState(BaseState):
         self.alerta = max(0.0, self.alerta - dt)
         dx = sum(DIRECCIONES[k][0] for k in self.presionadas)
         dy = sum(DIRECCIONES[k][1] for k in self.presionadas)
-        antes = self.mundo.jugador
-        self.mundo.mover(dx, dy, dt, self._llegar)
+        antes, zona_antes = self.mundo.jugador, self.zona_aqui()
+        self.mundo.mover(dx, dy, dt)
+        zona = self.zona_aqui()
+        if zona is not None and zona != zona_antes:
+            self._avisar(f"Entraste a {self.mundo.zonas[zona].nombre}.")
+        self._situar()
         if self.menu and self.accion_disponible() is None:   # se alejo del lugar
             self.menu = []
         self.animacion.actualizar(dx, dy, math.dist(antes, self.mundo.jugador), dt)
@@ -230,18 +232,20 @@ class MundoState(BaseState):
 
     def estado_vista(self) -> EstadoMundo:
         s = self.sesion
-        ruta = self.mapa_guia.ruta(self.mundo.ultima_plaza, s.zona_noticia) if self.guia else None
+        zonas, puntos = (self.mundo.ruta_puntos(s.mapa, self.mundo.ultima_zona, s.zona_noticia) if self.guia
+                         else ((), []))
         inv = s.jugador_actual.investigacion
         return EstadoMundo(
             noticia=s.zona_noticia, evidencias=inv.lugares_pendientes() - {s.zona_noticia},
             accion=self.accion_disponible(),
-            indicadores=s.ciudad.as_display_rows(), guia=ruta.zonas if ruta else (), aviso=self.aviso,
+            indicadores=s.ciudad.as_display_rows(), guia=zonas, guia_puntos=tuple(puntos), aviso=self.aviso,
+            crisis=s.campana.crisis_lanzada and s.indice in s.campana.crisis, depuracion=self.depuracion,
             personaje=self.personaje, animacion=self.animacion, centro_camara=self.camara.centro,
             decorado=self.decorado, t=self.t,
             reloj=(s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
             dia=(s.campana.dia + 1, len(s.campana.dias)), fraccion_dia=s.campana.fraccion,
             credibilidad=s.jugador_actual.credibilidad,
-            menu=tuple(self.etiqueta(o, self.mundo.zona_al_alcance()) for o in self.menu),
+            menu=tuple(self.etiqueta(o, self.zona_aqui()) for o in self.menu),
             texto_accion=self.etiqueta(accion[1], accion[0]) if (accion := self.accion_disponible())
             and accion[1] != "elegir" else "")
 

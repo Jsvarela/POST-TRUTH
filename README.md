@@ -22,8 +22,9 @@ python src/main.py
 ## Controles
 
 - Seleccion: cada jugador (1 a 4) elige un rol distinto y su personaje; 1 agrega otro jugador y Enter inicia la partida cuando todos tienen rol
-- WASD o flechas: caminar por la ciudad
-- E: entrar a un lugar / buscar evidencia
+- WASD o flechas: caminar libre por la ciudad (8 direcciones)
+- E: dentro de un lugar (en cualquier punto de su zona), ver la noticia o buscar evidencia
+- F3: superposicion de depuracion (zonas, colisiones y fronteras del grafo de la ciudad)
 - G: mostrar la guia hacia la noticia
 - 1-3: elegir que hacer en un lugar con varias opciones (noticia, evidencia o minijuego)
 - P (en un minijuego): pausa
@@ -42,7 +43,8 @@ python src/main.py
 - `src/post_truth/decision_tree.py`: arbol n-ario de decisiones
 - `src/post_truth/structures/`: grafo social, grafo de la ciudad y propagacion
 - `src/post_truth/models/`, `views/`, `controllers/`: logica, dibujo y estados del juego
-- `data/`: publicaciones, grafos, mundo e introduccion en JSON
+- `data/`: publicaciones, grafos, mapa e introduccion en JSON
+- `assets/mapa/`: el mapa por capas (mapa.png se ve; zonas.png y colisiones.png son mascaras invisibles)
 
 ## Desarrollo con asistente de IA
 

@@ -1,12 +1,8 @@
-"""Proveedor de arte del mundo caminable: todo dibujado con formas y colores del tema."""
-import math
-
+"""Proveedor de arte de la capa dinamica del mundo (lo que se mueve sobre mapa.png): formas y colores del tema."""
 import pygame
 
 from post_truth.config import px
 from post_truth.models.personaje import Personaje
-from post_truth.views.componentes import Fuentes
-from post_truth.views.mapa_view import _icono_zona
 from post_truth.views.personaje_view import dibujar_personaje_mundo
 from post_truth.views.theme import Tema
 
@@ -19,45 +15,6 @@ def _mezclar(a: tuple[int, int, int], b: tuple[int, int, int], f: float) -> tupl
 
 
 class ArteFormas:
-    def suelo(self, pantalla: pygame.Surface, tema: Tema) -> None:
-        pantalla.fill(tema.suelo)
-
-    def calle(self, pantalla: pygame.Surface, tema: Tema, a: Punto, b: Punto, ancho: int) -> None:
-        for color, grosor in ((tema.borde, ancho + px(6)), (tema.panel, ancho)):
-            pygame.draw.line(pantalla, color, a, b, grosor)
-            for extremo in (a, b):
-                pygame.draw.circle(pantalla, color, extremo, grosor // 2)
-
-    def plaza(self, pantalla: pygame.Surface, tema: Tema, centro: Punto, radio: int) -> None:
-        pygame.draw.circle(pantalla, tema.borde, centro, radio + px(3))
-        pygame.draw.circle(pantalla, tema.panel, centro, radio)
-        pygame.draw.circle(pantalla, tema.borde, centro, max(1, radio * 2 // 3), px(2))
-
-    def edificio(self, pantalla: pygame.Surface, tema: Tema, fuentes: Fuentes, zona: str, nombre: str,
-                 rect: pygame.Rect, resaltado: bool, t: float = 0.0) -> None:
-        pygame.draw.rect(pantalla, tema.edificio, rect, border_radius=px(10))
-        techo = pygame.Rect(rect.x, rect.y, rect.w, rect.h // 7)
-        pygame.draw.rect(pantalla, _mezclar(tema.edificio, tema.fondo, 0.45), techo,
-                         border_top_left_radius=px(10), border_top_right_radius=px(10))
-        tam = max(3, rect.w // 11)
-        for i, (fx, fy) in enumerate(((0.1, 0.3), (0.1, 0.55), (0.78, 0.3), (0.78, 0.55))):
-            luz = (i * 7 + int(t / 2.5 + i * 0.37) + len(zona)) % 3 != 0
-            ventana = pygame.Rect(rect.x + round(rect.w * fx), rect.y + round(rect.h * fy), tam, round(tam * 1.3))
-            pygame.draw.rect(pantalla, tema.detalle if luz else _mezclar(tema.edificio, tema.fondo, 0.6), ventana,
-                             border_radius=px(2))
-        pygame.draw.rect(pantalla, tema.acento if resaltado else tema.borde, rect, px(5) if resaltado else px(2),
-                         border_radius=px(10))
-        _icono_zona(pantalla, tema, zona, (rect.centerx, rect.centery - px(10)), min(rect.w, rect.h) * 3 // 10,
-                    nombre, fuentes.normal)
-        img = fuentes.chica.render(nombre, True, tema.texto)
-        pantalla.blit(img, img.get_rect(midbottom=(rect.centerx, rect.bottom - px(6))))
-
-    def cesped(self, pantalla: pygame.Surface, tema: Tema, pos: Punto, tam: int, variante: int) -> None:
-        color = _mezclar(tema.suelo, tema.verde, 0.35 + 0.15 * variante)
-        x, y = pos
-        for dx, alto in ((-tam // 2, tam), (0, tam + tam // 3), (tam // 2, tam)):
-            pygame.draw.line(pantalla, color, (x + dx, y), (x + dx + dx // 2, y - alto), max(1, tam // 4))
-
     def arbusto(self, pantalla: pygame.Surface, tema: Tema, pos: Punto, tam: int, flores: bool) -> None:
         x, y = pos
         pygame.draw.ellipse(pantalla, _mezclar(tema.suelo, tema.fondo, 0.5), (x - tam, y - tam // 4, tam * 2, tam // 2))
