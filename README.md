@@ -28,6 +28,8 @@ python src/main.py
 - P (en un minijuego): pausa
 - T: abrir o cerrar el telefono Civitas (la red en vivo; el mundo corre al 25%). Dentro: 1-4 herramientas, flechas o clic para elegir ciudadano, Tab o clic para cambiar de pestana
 - Pestana Publicar del telefono: flechas o clic para armar el post (formato segun el rol, titular, imagen, fuente y tono) y Enter para publicarlo
+- H: usar la habilidad de tu rol (Periodista: verificar a distancia; Influencer: desmentido viral; Candidato: comunicado; Ciudadano: convivencia vecinal)
+- Y: menu de aliados (los roles que no elegiste); 1-3 les pide ayuda
 - 1-4: decidir sobre una publicacion
 - I (en la noticia): ventana de investigacion. Publicacion: mueve la lupa (raton o flechas) y mantenla sobre algo raro para revelarlo. Testigos: flechas o clic para elegir, Enter para hablar, 1-4 para preguntar. Conclusion: F falsa, V verdadera, N no concluyente
 - I (en el menu): ver la introduccion
