@@ -1,11 +1,14 @@
 """Telefono Civitas (T en la calle): defender la red del rumor en vivo. Mientras esta abierto el mundo corre al 25%."""
 import pygame
 
+from post_truth.controllers import roles_teclas
 from post_truth.controllers.base_state import BaseState
+from post_truth.controllers.mundo_state import RECT_HABILIDAD
 from post_truth.models import posts
 from post_truth.sesion import FIN, FIN_DIA, HERRAMIENTAS, RITMO_TELEFONO
 from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
+from post_truth.views.roles_view import dibujar_habilidad, dibujar_menu_aliados
 from post_truth.views.telefono_view import (CERRAR, HERRAMIENTAS as ORDEN, PESTANAS, RECT_PUBLICAR, VistaPublicar,
                                             VistaTelefono, ciudadano_en, dibujar_telefono, rect_fila,
                                             rect_herramienta, rect_pestana)
@@ -25,6 +28,7 @@ class TelefonoState(BaseState):
         self.anuncio: Anuncio | None = None
         self.seleccionado = s.en_vivo.autor if s.en_vivo is not None else self._orden()[0]
         self.fila = 0
+        self.menu_aliados = False
         self.eleccion = getattr(self, "eleccion", None) or {p: 0 for p in posts.PIEZAS}   # se recuerda lo armado
         if s.novedad == "crisis":   # la crisis abre el telefono sola, con su reloj
             s.novedad = ""
@@ -85,6 +89,11 @@ class TelefonoState(BaseState):
                 self.anuncio.cerrar()
             return
         if event.type == pygame.KEYDOWN:
+            era, self.menu_aliados, aviso = roles_teclas.tecla(self.app.partida, self.menu_aliados, event.key)
+            if aviso is not None:
+                self._avisar(*aviso)
+            if era:
+                return
             if event.key in (pygame.K_t, pygame.K_ESCAPE):
                 self._cerrar()
             elif event.key == pygame.K_TAB:
@@ -181,6 +190,9 @@ class TelefonoState(BaseState):
         tema = self.app.temas.actual
         self.app.estados.estado("mundo").draw(pantalla)   # la calle detras, quieta
         dibujar_telefono(pantalla, self.app.fuentes, tema, self.vista())
+        dibujar_habilidad(pantalla, self.app.fuentes, tema, RECT_HABILIDAD, roles_teclas.habilidad(self.app.partida))
+        if self.menu_aliados:
+            dibujar_menu_aliados(pantalla, self.app.fuentes, tema, roles_teclas.filas_aliados(self.app.partida))
         for a in (self.toast, self.anuncio):
             if a is not None:
                 dibujar_anuncio(pantalla, self.app.fuentes, tema, a)

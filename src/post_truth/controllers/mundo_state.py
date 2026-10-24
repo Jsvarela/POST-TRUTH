@@ -5,6 +5,7 @@ import random
 import pygame
 
 from post_truth.config import px, RUTA_EVENTOS, RUTA_GRAFO_CIUDAD, RUTA_GRAFO_SOCIAL, RUTA_MINIJUEGOS, RUTA_MUNDO
+from post_truth.controllers import roles_teclas
 from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import load_trees
 from post_truth.models import Role
@@ -19,6 +20,7 @@ from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.decorado import generar as generar_decorado
 from post_truth.views.mundo_view import RECT_MINIMAPA, Camara, EstadoMundo, dibujar_mundo
+from post_truth.views.roles_view import dibujar_habilidad, dibujar_menu_aliados
 from post_truth.views.telefono_view import dibujar_icono
 
 DIRECCIONES = {
@@ -28,6 +30,7 @@ DIRECCIONES = {
 DURACION_AVISO = 4.0
 ALERTA_VIRAL = 3.0   # segundos que late el icono del telefono cuando algo se vuelve viral
 RECT_TELEFONO = pygame.Rect(RECT_MINIMAPA.right - px(160), RECT_MINIMAPA.bottom + px(10), px(160), px(40))
+RECT_HABILIDAD = pygame.Rect(RECT_MINIMAPA.right - px(220), RECT_TELEFONO.bottom + px(8), px(220), px(48))
 
 
 def mapa_de_tiempos(mapa: GrafoCiudad, mundo: MundoCiudad) -> GrafoCiudad:
@@ -56,6 +59,7 @@ class MundoState(BaseState):
         self.anuncio: Anuncio | None = None   # grande, en el centro (el nuevo dia)
         self.toast: Anuncio | None = None     # corto, arriba
         self.alerta = 0.0
+        self.menu_aliados = False   # Y: pedir ayuda a los aliados
 
     @property
     def personaje(self) -> Personaje:
@@ -161,6 +165,11 @@ class MundoState(BaseState):
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
+            era, self.menu_aliados, aviso = roles_teclas.tecla(self.sesion, self.menu_aliados, event.key)
+            if aviso is not None:
+                self._avisar(aviso[1], aviso[0], aviso[2])
+            if era:
+                return
             if event.key == pygame.K_ESCAPE and self.menu:
                 self.menu = []
             elif event.key == pygame.K_ESCAPE:
@@ -240,6 +249,9 @@ class MundoState(BaseState):
         tema = self.app.temas.actual
         dibujar_mundo(pantalla, self.app.fuentes, tema, self.mundo, self.estado_vista())
         dibujar_icono(pantalla, self.app.fuentes, tema, RECT_TELEFONO, self.sesion.sin_leer, self.alerta, self.t)
+        dibujar_habilidad(pantalla, self.app.fuentes, tema, RECT_HABILIDAD, roles_teclas.habilidad(self.sesion))
+        if self.menu_aliados:
+            dibujar_menu_aliados(pantalla, self.app.fuentes, tema, roles_teclas.filas_aliados(self.sesion))
         if self.app.estados.actual is not self:   # detras del telefono: sin anuncios encima
             return
         for a in (self.toast, self.anuncio):

@@ -62,6 +62,7 @@ class VistaInvestigacion:
     conclusion: str           # "" o como resulto
     reloj: tuple[float, float] | None
     t: float
+    radio: int = RADIO_LUPA   # el Periodista la tiene mas grande
 
 
 def dibujar_investigacion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaInvestigacion) -> None:
@@ -98,21 +99,21 @@ def _publicacion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: Vist
     dibujar_tarjeta(capa, fuentes, tema, RECT_TARJETA, v.evento, v.investigacion, ocultas=True)
     pantalla.blit(capa, RECT_TARJETA, RECT_TARJETA)
     # lupa: el pedazo de la tarjeta bajo ella, ampliado y recortado en circulo
-    lado = round(2 * RADIO_LUPA / ZOOM)
+    lado = round(2 * v.radio / ZOOM)
     origen = pygame.Rect(0, 0, lado, lado)
     origen.center = v.lupa
     origen.clamp_ip(capa.get_rect())
-    lente = pygame.Surface((2 * RADIO_LUPA, 2 * RADIO_LUPA), pygame.SRCALPHA)
+    lente = pygame.Surface((2 * v.radio, 2 * v.radio), pygame.SRCALPHA)
     lente.blit(pygame.transform.smoothscale(capa.subsurface(origen), lente.get_size()), (0, 0))
     mascara = pygame.Surface(lente.get_size(), pygame.SRCALPHA)
-    pygame.draw.circle(mascara, (255, 255, 255, 255), (RADIO_LUPA, RADIO_LUPA), RADIO_LUPA)
+    pygame.draw.circle(mascara, (255, 255, 255, 255), (v.radio, v.radio), v.radio)
     lente.blit(mascara, (0, 0), special_flags=pygame.BLEND_RGBA_MIN)
     pantalla.blit(lente, lente.get_rect(center=v.lupa))
-    pygame.draw.circle(pantalla, tema.texto, v.lupa, RADIO_LUPA, px(4))
-    mango = (v.lupa[0] + round(RADIO_LUPA * 0.7), v.lupa[1] + round(RADIO_LUPA * 0.7))
+    pygame.draw.circle(pantalla, tema.texto, v.lupa, v.radio, px(4))
+    mango = (v.lupa[0] + round(v.radio * 0.7), v.lupa[1] + round(v.radio * 0.7))
     pygame.draw.line(pantalla, tema.texto, mango, (mango[0] + px(30), mango[1] + px(30)), px(8))
     if v.mantenido > 0:   # cuanto falta para revelar
-        caja = pygame.Rect(0, 0, 2 * RADIO_LUPA + px(14), 2 * RADIO_LUPA + px(14))
+        caja = pygame.Rect(0, 0, 2 * v.radio + px(14), 2 * v.radio + px(14))
         caja.center = v.lupa
         pygame.draw.arc(pantalla, tema.acento, caja, math.pi / 2, math.pi / 2 + 2 * math.pi * v.mantenido, px(5))
 

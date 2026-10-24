@@ -16,7 +16,7 @@ from post_truth.views.escena_view import RECT_HUD, _dibujar_hud, dibujar_reloj
 from post_truth.views.mapa_view import _rombo
 from post_truth.views.theme import TEMAS, Tema
 
-AYUDA = "Caminar: WASD o flechas   |   E: entrar o buscar   |   G: guia   |   ESC: menu"
+AYUDA = "WASD: caminar   |   E: entrar o buscar   |   G: guia   |   H: habilidad   |   Y: aliados   |   ESC: menu"
 ALTO_PERSONAJE = 3.2
 PAJAROS = ((260, 70, 0.0), (300, 70, 0.6), (1100, -55, 9.0))
 RECT_MINIMAPA = pygame.Rect(ANCHO - px(16) - px(220), RECT_HUD.bottom + px(12), px(220), px(138))

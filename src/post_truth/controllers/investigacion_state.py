@@ -3,15 +3,15 @@ El reloj de la publicacion sigue corriendo mientras se investiga."""
 import pygame
 
 from post_truth.config import px
+from post_truth.models import roles
 from post_truth.controllers.base_state import BaseState
 from post_truth.sesion import FIN_DIA, PartidaSesion
 from post_truth.structures.arbol_dialogo import NodoDialogo
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
-from post_truth.views.investigacion_view import (PESTANAS, RECT_TARJETA, VEREDICTOS, VistaInvestigacion,
+from post_truth.views.investigacion_view import (PESTANAS, RADIO_LUPA, RECT_TARJETA, VEREDICTOS, VistaInvestigacion,
                                                  dibujar_investigacion, rect_opcion, rect_pestana, rect_testigo,
                                                  rect_veredicto, zonas_con_senal)
 
-MANTENER = 1.0          # segundos con la lupa encima para revelar una senal
 VELOCIDAD_LUPA = px(420)
 FLECHAS = {pygame.K_LEFT: (-1, 0), pygame.K_RIGHT: (1, 0), pygame.K_UP: (0, -1), pygame.K_DOWN: (0, 1)}
 TECLAS_VEREDICTO = {pygame.K_f: "falsa", pygame.K_v: "verdadera", pygame.K_n: "no_concluyente"}
@@ -57,7 +57,7 @@ class InvestigacionState(BaseState):
         if zona is not self.bajo_lupa:
             self.bajo_lupa, self.mantenido = zona, 0.0
         self.mantenido += dt
-        if self.mantenido >= MANTENER:
+        if self.mantenido >= roles.mantener_lupa(self.sesion.jugador_actual.rol):
             self.sesion.investigar(self.jugador, pista)
             tipo = {"falsa": "malo", "verdadera": "bueno"}.get(pista.senal.value, "info")
             self.toast = Anuncio(pista.titulo, pista.hallazgo, tipo, grande=False, duracion=3.5)
@@ -176,11 +176,12 @@ class InvestigacionState(BaseState):
         s = self.sesion
         nodo = self.raiz.seguir(self.camino) if self.raiz is not None else None
         return VistaInvestigacion(
-            s.arbol.event, s.jugador_actual.investigacion, self.pestana, self.lupa, self.mantenido / MANTENER,
+            s.arbol.event, s.jugador_actual.investigacion, self.pestana, self.lupa, self.mantenido / roles.mantener_lupa(s.jugador_actual.rol),
             [(t, s.puede_hablar(t)) for t in s.testigos()], self.elegido, self.charla,
             [o.texto for o in nodo.opciones] if nodo is not None else [],
             self.conclusion,
-            (s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None, self.t)
+            (s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None, self.t,
+            round(RADIO_LUPA * roles.lupa(s.jugador_actual.rol)))
 
     def draw(self, pantalla: pygame.Surface) -> None:
         tema = self.app.temas.actual
