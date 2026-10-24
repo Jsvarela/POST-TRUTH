@@ -237,8 +237,10 @@ class PartidaSesion:
         `decidir_por_tiempo`) y devuelve esa decision pendiente; si no, None. Solo corre mientras se decide."""
         if self.fase != DECIDIENDO or self.pendiente is not None:
             return None
-        if self.campana is not None and self._avanzar_dia(dt):
-            return None
+        if self.campana is not None:
+            ya_estaba = self.campana.crisis_lanzada
+            if self._avanzar_dia(dt) or self.campana.crisis_lanzada != ya_estaba:
+                return None   # se acabo el dia, o la crisis recien aparece: su reloj corre desde el proximo paso
         if not self.reloj_activo or self.tiempo_restante is None:
             return None
         self.tiempo_restante = max(0.0, self.tiempo_restante - dt)
