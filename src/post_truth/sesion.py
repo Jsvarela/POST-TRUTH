@@ -189,6 +189,8 @@ class PartidaSesion:
     def nueva(cls, personajes: Sequence[Personaje], arboles: list[DecisionTree], grafo: GrafoSocial,
               mapa: GrafoCiudad, rng: random.Random) -> "PartidaSesion":
         _validar_cantidad(len(personajes))
+        if len({p.rol for p in personajes}) != len(personajes):
+            raise ValueError("Cada jugador necesita un rol distinto")
         jugadores = []
         for i, personaje in enumerate(personajes):
             id = JUGADOR if i == 0 else f"{JUGADOR}{i + 1}"

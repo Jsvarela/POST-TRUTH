@@ -21,6 +21,7 @@ python src/main.py
 
 ## Controles
 
+- Seleccion: cada jugador (1 a 4) elige un rol distinto y su personaje; 1 agrega otro jugador y Enter inicia la partida cuando todos tienen rol
 - WASD o flechas: caminar por la ciudad
 - E: entrar a un lugar / buscar evidencia
 - G: mostrar la guia hacia la noticia

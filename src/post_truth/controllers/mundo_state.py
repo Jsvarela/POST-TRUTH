@@ -76,7 +76,7 @@ class MundoState(BaseState):
     def al_entrar(self) -> None:
         if self.app.partida is None:
             self.app.partida = PartidaSesion.nueva_campana(
-                [self.personaje], load_trees(RUTA_EVENTOS), GrafoSocial.cargar(RUTA_GRAFO_SOCIAL),
+                getattr(self.app, "personajes", None) or [self.personaje], load_trees(RUTA_EVENTOS), GrafoSocial.cargar(RUTA_GRAFO_SOCIAL),
                 GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.rng, extendido=self.app.tiempo_extendido,
                 minijuegos=mj.cargar_lugares(RUTA_MINIJUEGOS))
             self._dia = -1

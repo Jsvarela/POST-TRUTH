@@ -32,6 +32,7 @@ class App:
         self.corriendo = True
         self.intro_vista = False
         self.personaje: Personaje | None = None
+        self.personajes: list[Personaje] = []   # todos los jugadores, cada uno con un rol distinto
         self.flujo = FLUJO
         self.partida = None
         self.tiempo_extendido = False   # accesibilidad: dias y relojes x1.5 (X en el menu)

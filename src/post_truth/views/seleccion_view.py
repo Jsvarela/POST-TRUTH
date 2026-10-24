@@ -29,3 +29,10 @@ def dibujar_seleccion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, ti
     for boton in botones:
         boton.draw(pantalla, fuentes.normal, tema)
     pantalla.blit(fuentes.chica.render(pie, True, tema.texto), (px(30), pantalla.get_height() - px(30)))
+
+
+def dibujar_etiquetas(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema,
+                      etiquetas: list[tuple[str, tuple[int, int]]]) -> None:
+    for texto, centro in etiquetas:
+        img = fuentes.chica.render(texto, True, tema.acento)
+        pantalla.blit(img, img.get_rect(center=centro))
