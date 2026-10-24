@@ -7,7 +7,7 @@ from post_truth.models.minijuego import Ensayo, Minijuego, ResultadoMinijuego
 from post_truth.models.mitin import ACIERTO, DESTIEMPO, FALLO, Mitin
 from post_truth.models.mitin import datos as datos_mitin
 from post_truth.views.componentes import Fuentes, ajustar_texto
-from post_truth.views.escena_view import _dibujar_consecuencias, _dibujar_hud
+from post_truth.views.escena_view import _dibujar_consecuencias
 from post_truth.views.theme import Tema
 
 
@@ -15,7 +15,6 @@ def dibujar_minijuego(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m:
                       filas: list[tuple[str, int]], credibilidad: int, resultado: ResultadoMinijuego | None,
                       pausado: bool) -> None:
     pantalla.fill(tema.fondo)
-    _dibujar_hud(pantalla, fuentes, tema, filas, credibilidad)
     titulo = fuentes.titulo.render(f"{m.nombre} en {m.contexto.lugar.capitalize()}", True, tema.acento)
     pantalla.blit(titulo, titulo.get_rect(midtop=(ANCHO // 2, px(72))))
     if resultado is not None:

@@ -6,6 +6,7 @@ from post_truth.controllers.base_state import BaseState
 from post_truth.controllers.mundo_state import RECT_HABILIDAD
 from post_truth.models import posts
 from post_truth.sesion import FIN, FIN_DIA, HERRAMIENTAS, RITMO_TELEFONO
+from post_truth.views.hud import DatosHud
 from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.roles_view import dibujar_habilidad, dibujar_menu_aliados
@@ -185,6 +186,9 @@ class TelefonoState(BaseState):
         return VistaTelefono(s.grafo, s.en_vivo, self.pestana, self.seleccionado, s.notificaciones, s.leidas,
                              (s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
                              s.campana.factor > 1, self.alerta, self.t, publicar)
+
+    def datos_hud(self) -> DatosHud | None:
+        return self.app.estados.estado("mundo").datos_hud()
 
     def draw(self, pantalla: pygame.Surface) -> None:
         tema = self.app.temas.actual

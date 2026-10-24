@@ -15,13 +15,6 @@ from post_truth.views.personaje_view import dibujar_personaje, dibujar_personaje
 from post_truth.views.theme import Tema
 from post_truth.views.zona_view import dibujar_fondo_zona
 
-HUD_NOMBRES = {
-    "Informacion verificada": "Info verificada", "Confianza ciudadana": "Confianza",
-    "Convivencia": "Convivencia", "Bienestar digital": "Bienestar",
-    "Desinformacion": "Desinformacion", "Conflictos": "Conflictos",
-}
-NEGATIVOS = {"Desinformacion", "Conflictos"}
-
 ETIQUETAS_IMPACTO = {
     "verified_information": ("Info verificada", False), "trust": ("Confianza", False),
     "coexistence": ("Convivencia", False), "digital_wellbeing": ("Bienestar", False),
@@ -29,7 +22,7 @@ ETIQUETAS_IMPACTO = {
     "score": ("Puntaje", False),
 }
 
-RECT_HUD = pygame.Rect(0, 0, ANCHO, px(56))
+RECT_HUD = pygame.Rect(0, 0, ANCHO, px(56))   # franja del HUD en fila (lo dibuja la capa global)
 RECT_PERSONAJE = pygame.Rect(px(40), px(114), px(260), px(286))
 RECT_PANEL = pygame.Rect(px(330), px(68), px(664), px(328))
 RECT_ESCENA = pygame.Rect(0, px(57), ANCHO, px(404) - px(57))
@@ -39,30 +32,6 @@ AYUDA_INTERIOR = "Investigar: I (lupa y testigos)   |   Decidir: 1-4   |   ESC: 
 AYUDA = "Investigar: clic en la publicacion o A S D F G   |   Viajar: clic en el mapa o Q W E R T   |   Decidir: 1-4"
 RECT_TEXTO_PANEL = pygame.Rect(RECT_PANEL.x + px(18), RECT_PANEL.y + px(52), px(340), px(256))
 ALFA_PANEL = 205
-
-
-def _dibujar_hud(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema,
-                 filas: list[tuple[str, int]], credibilidad: int | None = None) -> None:
-    pygame.draw.rect(pantalla, tema.panel, RECT_HUD)
-    pygame.draw.line(pantalla, tema.borde, RECT_HUD.bottomleft, RECT_HUD.bottomright, px(2))
-    x = px(14)
-    for nombre, valor in filas:
-        if nombre.startswith("Puntaje"):
-            img = fuentes.normal.render(f"Puntaje {valor}", True, tema.texto)
-            pantalla.blit(img, img.get_rect(midright=(RECT_HUD.right - px(16), RECT_HUD.centery)))
-            continue
-        pantalla.blit(fuentes.chica.render(f"{HUD_NOMBRES.get(nombre, nombre)} {valor}", True, tema.texto), (x, px(6)))
-        pygame.draw.rect(pantalla, tema.fondo, (x, px(32), px(126), px(10)), border_radius=px(4))
-        color = tema.malo if nombre in NEGATIVOS else tema.bueno
-        pygame.draw.rect(pantalla, color, (x, px(32), round(px(126) * valor / 100), px(10)), border_radius=px(4))
-        x += px(138)
-    if credibilidad is not None:   # dato del jugador (no de la ciudad): con un escudo, no solo otro color
-        escudo = [(x, px(8)), (x + px(10), px(8)), (x + px(10), px(15)), (x + px(5), px(21)), (x, px(15))]
-        pygame.draw.polygon(pantalla, tema.acento, escudo)
-        pantalla.blit(fuentes.chica.render(f"Credib. {credibilidad}", True, tema.texto), (x + px(14), px(6)))
-        pygame.draw.rect(pantalla, tema.fondo, (x, px(32), px(70), px(10)), border_radius=px(4))
-        pygame.draw.rect(pantalla, tema.acento, (x, px(32), round(px(70) * credibilidad / 100), px(10)),
-                         border_radius=px(4))
 
 
 def _dibujar_consecuencias(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema,
@@ -194,7 +163,6 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
                    reaccion_jugador: tuple[int, float] | None = None, credibilidad: int | None = None) -> None:
     pantalla.fill(tema.fondo)
     dibujar_fondo_zona(pantalla, zona_id, tema, RECT_ESCENA)
-    _dibujar_hud(pantalla, fuentes, tema, filas, credibilidad)
     dx, dy = desplazamiento_reaccion(*reaccion_jugador) if reaccion_jugador else (0, 0)
     dibujar_personaje(pantalla, personaje, tema, RECT_PERSONAJE.move(dx, dy), animo)
     if nombre_zona:

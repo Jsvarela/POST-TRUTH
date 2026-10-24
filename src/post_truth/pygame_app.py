@@ -16,6 +16,7 @@ from post_truth.controllers.state_manager import StateManager
 from post_truth.controllers.telefono_state import TelefonoState
 from post_truth.models.personaje import Personaje
 from post_truth.views.componentes import Fuentes
+from post_truth.views.efectos import CapaRetro
 from post_truth.views.theme import GestorTemas
 
 
@@ -38,6 +39,7 @@ class App:
         self.partida = None
         self.tiempo_extendido = False   # accesibilidad: dias y relojes x1.5 (X en el menu)
         self.estados = StateManager(lambda: self.temas.actual.fondo)
+        self.estados.capa = CapaRetro(self.fuentes, self.temas)
         self.estados.registrar("menu", MenuState(self))
         self.estados.registrar("intro", IntroState(self))
         self.estados.registrar("seleccion", SeleccionState(self))

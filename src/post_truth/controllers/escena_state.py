@@ -13,6 +13,7 @@ from post_truth.models.pistas import Investigacion, Pista
 from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, FIN_DIA, PartidaSesion, ResultadoDecision
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
+from post_truth.views.hud import DatosHud
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.componentes import Boton, CajaDialogo
 from post_truth.views.escena_view import (AYUDA, AYUDA_INTERIOR, RECT_MAPA, RECT_TARJETA, EstadoPresentes,
@@ -416,6 +417,9 @@ class EscenaState(BaseState):
             self.boton_investigar.draw(pantalla, self.app.fuentes.normal, self.app.temas.actual)
         if self.anuncio is not None:
             dibujar_anuncio(pantalla, self.app.fuentes, self.app.temas.actual, self.anuncio)
+
+    def datos_hud(self) -> DatosHud:
+        return DatosHud(self.ciudad.as_display_rows(), self.sesion.jugador_actual.credibilidad, origen=id(self.ciudad))
 
     def _reloj(self) -> tuple[float, float] | None:
         restante = self.sesion.tiempo_restante

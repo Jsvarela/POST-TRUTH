@@ -11,15 +11,16 @@ from post_truth.mapa_abierto import MapaAbierto
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.views.arte_mundo import ARTE_FORMAS, ArteFormas
 from post_truth.views.decorado import Decorado
-from post_truth.views.componentes import Fuentes, ajustar_texto
-from post_truth.views.escena_view import RECT_HUD, _dibujar_hud, dibujar_reloj
+from post_truth.views.componentes import Fuentes, ajustar_texto, panel
+from post_truth.views.escena_view import dibujar_reloj
+from post_truth.views.hud import PLACA
 from post_truth.views.mapa_view import _rombo
-from post_truth.views.theme import TEMAS, Tema
+from post_truth.views.theme import TEMAS, TOKENS, Tema, esp
 
 AYUDA = "WASD: caminar   |   E: entrar o buscar   |   G: guia   |   H: habilidad   |   Y: aliados   |   F3   |   ESC: menu"
 ALTO_PERSONAJE = 3.2
 PAJAROS = ((260, 70, 0.0), (300, 70, 0.6), (1100, -55, 9.0))
-RECT_MINIMAPA = pygame.Rect(ANCHO - px(16) - px(220), RECT_HUD.bottom + px(12), px(220), px(138))
+RECT_MINIMAPA = pygame.Rect(ANCHO - px(16) - px(220), px(16), px(220), px(138))
 
 
 @dataclass
@@ -37,6 +38,7 @@ class EstadoMundo:
     zonas_crisis: frozenset = frozenset()
     aisladas: frozenset = frozenset()
     noche: bool = False                        # variante del mapa (Dia de eleccion)
+    salud: float = 0.0                         # -1 ciudad enferma .. 1 sana: tine el mapa
     aviso: str = ""
     personaje: Personaje = Personaje(Role.CITIZEN, Genero.MUJER)
     centro_camara: tuple[float, float] | None = None
@@ -104,23 +106,13 @@ def _velo_del_dia(pantalla: pygame.Surface, tema: Tema, fraccion: float) -> None
     pantalla.blit(capa, (0, 0))
 
 
-def _dibujar_dia(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, dia: int, total: int, fraccion: float,
-                 topleft: tuple[int, int]) -> None:
-    """Dia de campana y un sol (luego luna) que cruza un arco: la hora sin cifras."""
-    caja = pygame.Rect(*topleft, px(200), px(40))
-    pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(8))
-    pygame.draw.rect(pantalla, tema.borde, caja, px(2), border_radius=px(8))
-    img = fuentes.normal.render(f"Dia {dia} de {total}", True, tema.texto)
-    pantalla.blit(img, img.get_rect(midleft=(caja.x + px(10), caja.centery)))
-    arco = pygame.Rect(caja.right - px(78), caja.y + px(8), px(66), px(52))
-    pygame.draw.arc(pantalla, tema.borde, arco, 0, math.pi, px(2))
-    ang = math.pi * (1 - fraccion)
-    astro = (round(arco.centerx + math.cos(ang) * arco.w / 2), round(arco.centery - math.sin(ang) * arco.h / 2))
-    if _anochecer(fraccion) > 0.5:   # luna: circulo con un mordisco
-        pygame.draw.circle(pantalla, tema.texto, astro, px(7))
-        pygame.draw.circle(pantalla, tema.panel, (astro[0] + px(3), astro[1] - px(2)), px(6))
-    else:
-        pygame.draw.circle(pantalla, tema.detalle, astro, px(7))
+def _tinte_de_salud(pantalla: pygame.Surface, tema: Tema, salud: float) -> None:
+    """La ciudad se ve como esta: gris y fria si empeora, calida si mejora (colores del tema)."""
+    if abs(salud) < 0.05:
+        return
+    capa = pygame.Surface(pantalla.get_size(), pygame.SRCALPHA)
+    capa.fill((*tema.fondo, round(80 * -salud)) if salud < 0 else (*tema.detalle, round(30 * salud)))
+    pantalla.blit(capa, (0, 0))
 
 
 def _vista(mundo: MapaAbierto, cam: tuple[float, float], pantalla: pygame.Surface, margen: float = 90):
@@ -143,30 +135,31 @@ def _capa(ruta, alfa: bool = False) -> pygame.Surface:
     return _CACHE[clave]
 
 
-def _depuracion(pantalla: pygame.Surface, fuentes: Fuentes, mundo: MapaAbierto, cam: tuple[float, float]) -> None:
+def _depuracion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo: MapaAbierto,
+                cam: tuple[float, float]) -> None:
     """F3: zonas en color, colisiones en rojo, fronteras (verde abierta / roja cerrada) y aristas del grafo."""
     area = pygame.Rect(px(cam[0]), px(cam[1]), *pantalla.get_size())
-    clave = f"depuracion:{ESCALA}"
+    clave = f"depuracion:{ESCALA}:{id(tema)}"
     if clave not in _CACHE:
         zonas = _capa(mundo.imagenes["zonas"]).copy()
         zonas.set_alpha(80)
-        colis = mundo.mascara.to_surface(setcolor=(255, 0, 0, 110), unsetcolor=(0, 0, 0, 0))
+        colis = mundo.mascara.to_surface(setcolor=(*tema.malo, 110), unsetcolor=(*tema.fondo, 0))
         _CACHE[clave] = zonas
         _CACHE[clave + ":colis"] = pygame.transform.scale(colis, (px(mundo.tamano[0]), px(mundo.tamano[1])))
     pantalla.blit(_CACHE[clave], (0, 0), area)
     pantalla.blit(_CACHE[clave + ":colis"], (0, 0), area)
     for f in mundo.fronteras:
-        color = (220, 40, 40) if f.clave in mundo.cerradas else (40, 220, 90)
+        color = tema.malo if f.clave in mundo.cerradas else tema.bueno
         x, y, w, h = f.calle
         pygame.draw.rect(pantalla, color, (*a_pantalla((x, y), cam), px(w), px(h)), px(3))
         for z in (f.desde, f.hasta):
             pygame.draw.line(pantalla, color, a_pantalla(mundo.zonas[z].centro, cam), a_pantalla(f.paso, cam), px(3))
     for z in mundo.zonas.values():
-        pygame.draw.circle(pantalla, (255, 255, 255), a_pantalla(z.centro, cam), px(8))
-    pygame.draw.rect(pantalla, (255, 255, 0), [*a_pantalla(mundo.rect_pies(mundo.jugador).topleft, cam),
+        pygame.draw.circle(pantalla, tema.texto, a_pantalla(z.centro, cam), px(8))
+    pygame.draw.rect(pantalla, tema.detalle, [*a_pantalla(mundo.rect_pies(mundo.jugador).topleft, cam),
                                                px(mundo.pies[0]), px(mundo.pies[1])], 1)
     img = fuentes.chica.render(f"F3 depuracion | zona: {mundo.zona_en(mundo.jugador)} | "
-                               f"pos: {round(mundo.jugador[0])}, {round(mundo.jugador[1])}", True, (255, 255, 0))
+                               f"pos: {round(mundo.jugador[0])}, {round(mundo.jugador[1])}", True, tema.detalle)
     pantalla.blit(img, (px(16), pantalla.get_height() - px(150)))
 
 
@@ -274,17 +267,12 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
                 arte.pajaro(pantalla, tema, a_pantalla((bx, by), cam), px(9), math.sin(estado.t * 9 + i * 1.7))
     if estado.dia:
         _velo_del_dia(pantalla, tema, estado.fraccion_dia)
+    _tinte_de_salud(pantalla, tema, estado.salud)
     if estado.depuracion:
-        _depuracion(pantalla, fuentes, mundo, cam)
-    if estado.indicadores:
-        _dibujar_hud(pantalla, fuentes, tema, list(estado.indicadores), estado.credibilidad)
-    _minimapa(pantalla, tema, mundo, estado)
-    y = RECT_HUD.bottom + px(12)
-    if estado.dia:
-        _dibujar_dia(pantalla, fuentes, tema, *estado.dia, estado.fraccion_dia, (px(16), y))
-        y += px(48)
+        _depuracion(pantalla, fuentes, tema, mundo, cam)
+    _minimapa(pantalla, tema, mundo, estado)   # la placa de indicadores la pone la capa global (views/efectos.py)
     if estado.reloj is not None:
-        dibujar_reloj(pantalla, fuentes, tema, *estado.reloj, (px(16), y))
+        dibujar_reloj(pantalla, fuentes, tema, *estado.reloj, (PLACA.x, PLACA.bottom + px(10)))
     _franja(pantalla, fuentes, tema, _mensaje(estado))
 
 
@@ -366,17 +354,23 @@ def _mensaje(estado: EstadoMundo) -> str:
 
 
 def _franja(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mensaje: str) -> None:
-    """Franja inferior: el mensaje del momento y los controles."""
+    """Abajo: el mensaje del momento en una pildora flotante y la ayuda de teclas en una linea pequena."""
     ancho, alto = pantalla.get_size()
-    lineas = ajustar_texto(mensaje, fuentes.normal, ancho - px(70)) if mensaje else []
-    alto_caja = px(30) + max(1, len(lineas)) * fuentes.normal.get_linesize() + fuentes.chica.get_linesize()
-    caja = pygame.Rect(px(16), alto - alto_caja - px(14), ancho - px(32), alto_caja)
-    pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(12))
-    pygame.draw.rect(pantalla, tema.borde, caja, px(2), border_radius=px(12))
-    y = caja.y + px(10)
-    for linea in lineas:
-        img = fuentes.normal.render(linea, True, tema.acento)
-        pantalla.blit(img, (caja.x + px(18), y))
-        y += fuentes.normal.get_linesize()
     ayuda = fuentes.chica.render(AYUDA, True, tema.texto)
-    pantalla.blit(ayuda, ayuda.get_rect(bottomright=(caja.right - px(18), caja.bottom - px(8))))
+    fondo = pygame.Rect(0, alto - ayuda.get_height() - esp(2), ancho, ayuda.get_height() + esp(2))
+    capa = pygame.Surface(fondo.size, pygame.SRCALPHA)
+    capa.fill((*tema.panel, TOKENS.alfa_panel))
+    pantalla.blit(capa, fondo)
+    pantalla.blit(ayuda, ayuda.get_rect(center=fondo.center))
+    if not mensaje:
+        return
+    lineas = ajustar_texto(mensaje, fuentes.normal, ancho - px(240))[:2]
+    w = max(fuentes.normal.size(l)[0] for l in lineas) + esp(5) * 2
+    caja = pygame.Rect(0, 0, w, len(lineas) * fuentes.normal.get_linesize() + esp(3) * 2)
+    caja.midbottom = (ancho // 2, fondo.y - esp(2))
+    panel(pantalla, tema, caja, TOKENS.alfa_panel, borde=tema.acento)
+    y = caja.y + esp(3)
+    for linea in lineas:
+        img = fuentes.normal.render(linea, True, tema.texto)
+        pantalla.blit(img, img.get_rect(midtop=(caja.centerx, y)))
+        y += fuentes.normal.get_linesize()

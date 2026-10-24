@@ -4,7 +4,7 @@ import pygame
 from post_truth.config import ANCHO, px
 from post_truth.models import Impact
 from post_truth.views.componentes import Fuentes
-from post_truth.views.escena_view import _dibujar_consecuencias, _dibujar_hud
+from post_truth.views.escena_view import _dibujar_consecuencias
 from post_truth.views.theme import Tema
 
 
@@ -13,7 +13,6 @@ def dibujar_resumen(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, dia:
                     credibilidad: int, cambio_credibilidad: int) -> None:
     """`decisiones`: (titulo, accion, cambio de credibilidad que dejo)."""
     pantalla.fill(tema.fondo)
-    _dibujar_hud(pantalla, fuentes, tema, filas, credibilidad)
     titulo = fuentes.titulo.render(f"Fin del dia {dia} de {total}", True, tema.acento)
     pantalla.blit(titulo, titulo.get_rect(midtop=(ANCHO // 2, px(80))))
     izq = pygame.Rect(px(60), px(150), px(400), px(360))

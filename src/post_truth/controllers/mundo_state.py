@@ -16,6 +16,7 @@ from post_truth.models.personaje import Genero, Personaje
 from post_truth.sesion import FIN, FIN_DIA, PartidaSesion
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
+from post_truth.views.hud import DatosHud
 from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.decorado import generar as generar_decorado
@@ -31,6 +32,13 @@ DURACION_AVISO = 4.0
 ALERTA_VIRAL = 3.0   # segundos que late el icono del telefono cuando algo se vuelve viral
 RECT_TELEFONO = pygame.Rect(RECT_MINIMAPA.right - px(160), RECT_MINIMAPA.bottom + px(10), px(160), px(40))
 RECT_HABILIDAD = pygame.Rect(RECT_MINIMAPA.right - px(220), RECT_TELEFONO.bottom + px(8), px(220), px(48))
+
+
+def salud(c) -> float:
+    """-1..1: lo bueno de la ciudad contra lo malo; 0 es la ciudad al empezar."""
+    bueno = (c.verified_information + c.trust + c.coexistence + c.digital_wellbeing) / 4
+    malo = (c.misinformation + c.conflicts) / 2
+    return max(-1.0, min(1.0, (bueno - malo - 28.5) / 40))
 
 
 class MundoState(BaseState):
@@ -247,6 +255,7 @@ class MundoState(BaseState):
             crisis=s.campana.crisis_lanzada and s.indice in s.campana.crisis, depuracion=self.depuracion,
             abiertas=frozenset(z.id for z in s.mapa.zonas()), zonas_crisis=frozenset(s.zonas_crisis),
             aisladas=frozenset(s.aisladas), noche=bool(s.fase_actual and s.fase_actual.variante == "noche"),
+            salud=salud(s.ciudad),
             personaje=self.personaje, animacion=self.animacion, centro_camara=self.camara.centro,
             decorado=self.decorado, t=self.t,
             reloj=(s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
@@ -255,6 +264,15 @@ class MundoState(BaseState):
             menu=tuple(self.etiqueta(o, self.zona_aqui()) for o in self.menu),
             texto_accion=self.etiqueta(accion[1], accion[0]) if (accion := self.accion_disponible())
             and accion[1] != "elegir" else "")
+
+    def datos_hud(self) -> DatosHud | None:
+        s = self.sesion
+        if s is None:
+            return None
+        f = s.fase_actual
+        return DatosHud(s.ciudad.as_display_rows(), s.jugador_actual.credibilidad, "placa",
+                        (s.campana.dia + 1, len(s.campana.dias)), f.nombre if f else "", s.campana.fraccion,
+                        id(s.ciudad))
 
     def draw(self, pantalla: pygame.Surface) -> None:
         tema = self.app.temas.actual

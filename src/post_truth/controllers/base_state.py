@@ -10,6 +10,10 @@ class BaseState(ABC):
     def al_entrar(self) -> None:
         """Se llama cada vez que este estado pasa a ser el activo."""
 
+    def datos_hud(self):
+        """El HUD compacto que esta pantalla quiere (views/hud.DatosHud) o None: lo dibuja la capa global."""
+        return None
+
     @abstractmethod
     def handle_event(self, event: pygame.event.Event) -> None: ...
 

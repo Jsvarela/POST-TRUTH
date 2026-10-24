@@ -2,6 +2,7 @@
 import pygame
 
 from post_truth.controllers.base_state import BaseState
+from post_truth.views.hud import DatosHud
 from post_truth.views.minijuego_view import dibujar_minijuego
 
 TECLAS = {pygame.K_1: "1", pygame.K_2: "2", pygame.K_3: "3", pygame.K_4: "4"}
@@ -31,6 +32,11 @@ class MinijuegoState(BaseState):
         self.app.partida.transcurrir(dt)   # jugar cuesta tiempo del dia (la pausa lo detiene todo)
         if self.minijuego.terminado:
             self.resultado = self.app.partida.terminar_minijuego()
+
+    def datos_hud(self) -> DatosHud:
+        s = self.app.partida
+        return DatosHud(s.ciudad.as_display_rows(), s.jugador(self.minijuego.contexto.jugador).credibilidad,
+                        origen=id(s.ciudad))
 
     def draw(self, pantalla: pygame.Surface) -> None:
         s = self.app.partida

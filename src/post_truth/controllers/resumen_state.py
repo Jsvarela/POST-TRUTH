@@ -4,6 +4,7 @@ import pygame
 from post_truth.controllers.base_state import BaseState
 from post_truth.game_state import CityState
 from post_truth.models import Impact
+from post_truth.views.hud import DatosHud
 from post_truth.views.resumen_view import dibujar_resumen
 
 
@@ -23,6 +24,10 @@ class ResumenState(BaseState):
         antes = CityState.from_dict(self.app.partida.campana.ciudad_al_amanecer).to_dict()
         ahora = self.app.partida.ciudad.to_dict()
         return Impact(**{k: ahora[k] - antes[k] for k in ahora})
+
+    def datos_hud(self) -> DatosHud:
+        s = self.app.partida
+        return DatosHud(s.ciudad.as_display_rows(), s.jugadores[0].credibilidad, origen=id(s.ciudad))
 
     def draw(self, pantalla: pygame.Surface) -> None:
         s = self.app.partida
