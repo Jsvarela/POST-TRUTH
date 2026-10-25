@@ -603,14 +603,14 @@ class PartidaSesion:
                            "El rumor se apago" if v.es_falsa else "La noticia se apago",
                            f"Al final lo creyeron {creen} de {total} personas.")
 
-    def publicar(self, post: posts.Post) -> tuple[bool, str, posts.Evaluacion | None]:
+    def publicar(self, post: posts.Post, jugador: str | None = None) -> tuple[bool, str, posts.Evaluacion | None]:
         """El jugador publica: si la red esta en calma su post arranca una propagacion en vivo; si ya corre una
         noticia, uno que dice lo mismo se suma a ella y uno veraz que la contradice sale como desmentido."""
         if self.enfriamiento_post > 0:
             return False, "enfriando", None
         if self.post is not None:
             return False, "en_curso", None
-        j = self.jugador_actual
+        j = self.jugador(jugador) if jugador is not None else self.jugador_actual   # multijugador: quien lo manda
         reglas = posts.reglas()
         ev = reglas.evaluar(post, j.rol.name)
         v = self.en_vivo

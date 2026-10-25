@@ -9,15 +9,13 @@ from post_truth.config import ANCHO, px
 from post_truth.models.posts import Evaluacion
 from post_truth.structures.grafo_social import GrafoSocial
 from post_truth.structures.propagacion_vivo import (COMPARTIO, ENFRIAMIENTO, ENTERADO, INMUNE, SIN_ENTERARSE,
-                                                    PropagacionEnVivo)
+                                                    RADIO_ESCUDO, RADIO_ONDA, PropagacionEnVivo)
 from post_truth.views.anuncio_view import _icono
 from post_truth.views.componentes import Fuentes, ajustar_texto
 from post_truth.views.grafo_view import _equis
 from post_truth.views.theme import Tema, mezclar
 
 PESTANAS = ("Red", "Notificaciones", "Publicar")
-RADIO_ESCUDO = 0.11   # fraccion del alto del area de la red
-RADIO_ONDA = 0.36
 ONDA = 0.6            # segundos que dura la animacion de la onda
 RADIO = px(11)
 SUBIDA = 0.25   # segundos que tarda el telefono en subir

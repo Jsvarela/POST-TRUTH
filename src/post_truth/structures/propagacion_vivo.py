@@ -35,6 +35,8 @@ ENFRIAMIENTO = {"verificador": 8.0, "limitar": 10.0, "desmentido": 15.0, "alerta
 FACTOR_LIMITAR = 0.4    # primera vez: sus aristas salientes conservan el 40%; segunda vez: se eliminan
 ACELERA_PERIODISTAS, DURACION_ALERTA = 2.0, 10.0
 CRISIS_ZONA = 1.3       # R9: en una zona en crisis el rumor pasa con mas fuerza
+RADIO_ESCUDO, RADIO_ONDA = 0.11, 0.36   # en fracciones del alto del area de la red (pantalla y servidor)
+ASPECTO_RED = 422 / 236                 # ancho/alto del area de la red en el telefono
 
 
 @dataclass(frozen=True)
