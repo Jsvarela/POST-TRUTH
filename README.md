@@ -45,11 +45,25 @@ python src/main.py
 
 Cuatro dias, uno por fase (data/fases.json): Inicio de campana, Debates (abre el Auditorio), Semana final y Dia de eleccion (abre la Registraduria, de noche). Si los conflictos o la desinformacion suben, una protesta cierra una calle; si una zona queda sin camino a la Alcaldia, a sus vecinos no les llegan los desmentidos. Las zonas con mucha desinformacion entran en crisis.
 
+## Multijugador (servidor)
+
+```
+python -m post_truth.red.servidor --puerto 5050      # desde src/
+```
+
+El servidor guarda la unica `PartidaSesion` y es la autoridad: simula el dia, el rumor en vivo, las fases y el grafo de la ciudad. Acepta de 2 a 4 clientes; los roles sin jugador los siguen controlando aliados. El cliente con pantalla llega en R12.
+
+Protocolo: mensajes JSON (UTF-8) sobre TCP, cada uno precedido por 4 bytes big-endian con su largo (maximo 64 KB). Todo mensaje lleva `tipo`.
+- Cliente -> servidor: `unirse` (nombre o token para reconectar), `elegir_rol`, `iniciar` (solo el anfitrion), `posicion` (unas 10 por segundo), `decidir`, `continuar`, `investigar`, `concluir`, `testimonio`, `escudo`, `onda`, `publicar`, `habilidad`, `ayuda`, `minijuego`, `salir`.
+- Servidor -> cliente: `bienvenida` (token), `sala`, `inicio` (la sesion completa), `estado` (foto unas 10 veces por segundo), `corregir` (posicion rechazada: muro, salto imposible o frontera cerrada), `error` (con `motivo`), `fin` (ganador y puntos).
+- Si un jugador se cae, su rol pasa a un aliado; si era su turno, tras una espera se decide Ignorar por el. Al volver con su token recupera su rol.
+
 ## Estructura
 
 - `src/post_truth/decision_tree.py`: arbol n-ario de decisiones
 - `src/post_truth/structures/`: grafo social, grafo de la ciudad y propagacion
 - `src/post_truth/models/`, `views/`, `controllers/`: logica, dibujo y estados del juego
+- `src/post_truth/red/`: protocolo, servidor y cliente del multijugador
 - `data/`: publicaciones, grafos, mapa e introduccion en JSON
 - `assets/mapa/`: el mapa por capas (mapa.png se ve; zonas.png y colisiones.png son mascaras invisibles)
 
