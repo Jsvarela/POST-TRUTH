@@ -148,13 +148,13 @@ class SesionEnRed(PartidaSesion):
         nueva = PartidaSesion.from_dict(datos)
         pendiente, minijuego, turno = self.pendiente, self.minijuego, self.de_turno.id
         dia_antes = self.campana.dia if self.campana is not None else None   # amanece: vale la del servidor
-        leidas, novedad = self.leidas, self.novedad
+        leidas, novedad, charla = self.leidas, self.novedad, self.charla
         yo = self.jugador(self.yo)
         donde = yo.posicion, yo.en_zona, yo.zona   # el movimiento propio es local; el servidor corrige con `corregir`
         vars(self.ciudad).update(vars(nueva.ciudad))   # misma ciudad: el HUD anima el cambio, no lo toma por otra
         nueva.ciudad = self.ciudad
         vars(self).update(vars(nueva))
-        self.leidas, self.novedad = min(leidas, len(self.notificaciones)), novedad
+        self.leidas, self.novedad, self.charla = min(leidas, len(self.notificaciones)), novedad, charla   # la charla es local
         if self.campana is None or self.campana.dia == dia_antes:
             yo = self.jugador(self.yo)
             yo.posicion, yo.en_zona, yo.zona = donde
@@ -200,6 +200,8 @@ class SesionEnRed(PartidaSesion):
             if self.reloj_activo and self.tiempo_restante is not None:
                 self.tiempo_restante = max(0.0, self.tiempo_restante - dt)
             self.avanzar_rumor(dt)
+            if self.calle is not None:   # los transeuntes caminan igual que en el servidor (sin regar: eso es de el)
+                self.calle.actualizar(dt, self.mapa)
             self.enfriamiento_post = max(0.0, self.enfriamiento_post - dt)
             for k in self.enfriamientos:
                 self.enfriamientos[k] = max(0.0, self.enfriamientos[k] - dt)
@@ -297,6 +299,12 @@ class SesionEnRed(PartidaSesion):
         r = self._predecir(lambda: super(SesionEnRed, self).pedir_ayuda(rol))
         if r.ok:
             self._enviar("ayuda", rol=rol.name)
+        return r
+
+    def cerrar_encuentro(self, jugador: str, id: str, como: str) -> str:
+        r = super().cerrar_encuentro(self.yo, id, como)
+        if r:
+            self._enviar("encuentro", id=id, como=como)
         return r
 
     def onda(self, centro: tuple[float, float]) -> ResultadoAccion:

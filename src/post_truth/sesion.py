@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import math
 import random
 from dataclasses import asdict, dataclass, field, replace
 from typing import Sequence
@@ -17,8 +18,10 @@ from post_truth.models import minijuego as mj
 from post_truth.models import posts
 from post_truth.models import roles
 from post_truth.models import testigos as tg
+from post_truth.models import transeuntes as tr
+from post_truth.models.persuasion import Persuasion
 from post_truth.models.personaje import Personaje
-from post_truth.models.pistas import Evidencia, Investigacion, Pista
+from post_truth.models.pistas import Evidencia, Investigacion, Pista, TipoEvidencia
 from post_truth.structures.arbol_dialogo import NodoDialogo
 from post_truth.structures.grafo_ciudad import GrafoCiudad, Zona
 from post_truth.structures.grafo_social import Ciudadano, GrafoSocial, TipoRelacion
@@ -198,6 +201,8 @@ class PartidaSesion:
         self.anunciar_fase = False                  # empezo una fase: la pantalla de transicion la anuncia
         self.apoyo = {c: eleccion.APOYO_INICIAL for c in eleccion.CANDIDATOS}   # para la eleccion del alcalde
         self.por_rumores = {c: 0.0 for c in eleccion.CANDIDATOS}               # parte movida por publicaciones falsas
+        self.calle: tr.Calle | None = None          # transeuntes del mapa abierto (R13; solo en campana)
+        self.charla: dict | None = None             # persuasion en curso con un transeunte: {jugador, id, t, p}
 
     @classmethod
     def nueva(cls, personajes: Sequence[Personaje], arboles: list[DecisionTree], grafo: GrafoSocial,
@@ -234,6 +239,8 @@ class PartidaSesion:
         sesion = cls.nueva(personajes, elegidas, grafo, mapa, rng)
         sesion.campana = campana
         sesion.minijuegos = dict(minijuegos or {})
+        semilla = int(hashlib.md5(":".join(a.event.event_id for a in elegidas).encode()).hexdigest()[:8], 16)
+        sesion.calle = tr.Calle.crear(grafo.vertices(), mapa, semilla, {j.id for j in sesion.jugadores})   # no toca el rng
         sesion._amanecer()
         return sesion
 
@@ -288,6 +295,7 @@ class PartidaSesion:
             if self._avanzar_dia(dt) or self.campana.crisis_lanzada != ya_estaba:
                 return None   # se acabo el dia, o la crisis recien aparece: su reloj corre desde el proximo paso
             self._actualizar_ciudad()
+            self._avanzar_calle(dt)
             self._avanzar_en_vivo(dt / self.campana.factor)   # tiempo extendido: el rumor tambien va mas lento
             self.enfriamiento_post = max(0.0, self.enfriamiento_post - dt)
             for k in self.enfriamientos:
@@ -496,6 +504,8 @@ class PartidaSesion:
         for j in self.jugadores:
             j.investigacion = Investigacion(evento.clues, evidencias=evento.evidences)
             j.investigacion.revelar_evidencia(j.zona)
+        if self.calle is not None:   # los testigos de esta noticia que viven en otra zona salen a caminar
+            self.calle.poner_testigos([e for e in evento.evidences if e.tipo is TipoEvidencia.TESTIGO], self.mapa)
 
     def _mover_apoyo(self, r: ResultadoDecision) -> None:
         evento = self.arbol.event
@@ -529,9 +539,10 @@ class PartidaSesion:
         if id is None:
             return None
         j = self.jugador_actual
-        evidencias = len(j.investigacion.descubiertas) + sum(1 for h in j.historial if h.get("respaldo", 0) >= 1)
+        evidencias = self._evidencias(j)
         contexto = mj.ContextoMinijuego(zona, j.id, j.rol.value, j.credibilidad, self.campana.dia,
-                                        self.campana.factor > 1, evidencias, zona in self.zonas_crisis)
+                                        self.campana.factor > 1, evidencias, zona in self.zonas_crisis,
+                                        j.investigacion.municion())
         self.minijuego = mj.crear(id, contexto)
         return self.minijuego
 
@@ -554,6 +565,84 @@ class PartidaSesion:
             self.notificar("malo", "Arranca un rumor", f"Lo que quedo sin aclarar en {m.contexto.lugar.capitalize()} "
                                                        "ya corre por la red.")
         return r
+
+    @staticmethod
+    def _evidencias(j: Jugador) -> int:
+        """Lo reunido que sirve para argumentar: lo de esta noticia y lo bien respaldado antes."""
+        return len(j.investigacion.descubiertas) + sum(1 for h in j.historial if h.get("respaldo", 0) >= 1)
+
+    # --- encuentros en la calle (R13) ------------------------------------------------------------
+    def _avanzar_calle(self, dt: float) -> None:
+        """Los transeuntes caminan; un rumor que nadie freno se riega (una vez por dia) en la zona a la que llega."""
+        if self.calle is None:
+            return
+        for t in self.calle.actualizar(dt, self.mapa):
+            if t.rumor is not None and not t.regado:
+                t.regado = True
+                self.desinfo_zona[t.zona] = self.desinfo_zona.get(t.zona, 0) + 1
+
+    def transeunte_cerca(self, jugador: str) -> tr.Transeunte | None:
+        """Con quien puede hablar ahora: un rumor, o un testigo que todavia no le conto lo suyo."""
+        j = self.jugador(jugador)
+        if self.calle is None or j.posicion is None:
+            return None
+        return self.calle.cerca(j.posicion, lambda t: t.testigo is None
+                                or not j.investigacion.esta_descubierta(t.testigo))
+
+    def hablar(self, jugador: str, id: str, dt: float) -> str:
+        """E sigue apretada junto a un transeunte: avanza la charla. Devuelve como termino ("" si sigue)."""
+        t = self.calle.buscar(id) if self.calle is not None else None
+        if t is None or not t.interesa:
+            self.soltar(jugador)
+            return ""
+        j = self.jugador(jugador)
+        if j.posicion is None or math.dist(j.posicion, t.pos) > tr.datos()["radio"]:   # se alejo: hay que seguirle el paso
+            return self.soltar(jugador)
+        c = self.charla
+        if c is None or (c["jugador"], c["id"]) != (jugador, id):
+            self.soltar(jugador)
+            c = self.charla = {"jugador": jugador, "id": id, "t": 0.0,
+                               "p": None if t.testigo else Persuasion(self._evidencias(j), j.credibilidad)}
+        c["t"] += dt
+        if t.testigo is not None:
+            return self.cerrar_encuentro(jugador, id, "testigo") if c["t"] >= tr.datos()["escuchar"] else ""
+        return self.cerrar_encuentro(jugador, id, "convencido") if c["p"].avanzar(dt) else ""
+
+    def soltar(self, jugador: str) -> str:
+        """Solto E o se alejo: si el argumento era debil, el transeunte se enoja."""
+        c = self.charla
+        if c is None or c["jugador"] != jugador:
+            return ""
+        self.charla = None
+        if c["p"] is not None and c["p"].soltar():
+            return self.cerrar_encuentro(jugador, c["id"], "enojado")
+        return ""
+
+    def cerrar_encuentro(self, jugador: str, id: str, como: str) -> str:
+        """Aplica como termino ("testigo", "convencido" o "enojado"); "" si no correspondia (el servidor lo valida)."""
+        t = self.calle.buscar(id) if self.calle is not None else None
+        j = self.jugador(jugador)
+        if t is None or not t.interesa:
+            return ""
+        if self.charla is not None and self.charla["id"] == id:
+            self.charla = None
+        if como == "testigo" and t.testigo is not None and t.testigo in {e.id for e in j.investigacion.evidencias}:
+            if not j.investigacion.esta_descubierta(t.testigo):
+                j.investigacion.descubiertas.append(t.testigo)
+                e = j.investigacion.hallazgo(t.testigo)
+                self.notificar("bueno", f"Testigo: {t.nombre}", e.hallazgo)
+        elif como == "convencido" and t.rumor is not None:
+            t.rumor = None
+            j.credibilidad = cred.acotar(j.credibilidad + 1)
+            self.desinfo_zona[t.zona] = max(0, self.desinfo_zona.get(t.zona, 0) - 1)
+            if self.en_vivo is not None and t.id in self.en_vivo.estado:   # tampoco lo pasa en la red
+                self.en_vivo.estado[t.id] = INMUNE
+        elif como == "enojado" and t.rumor is not None:
+            t.enojado = tr.datos()["enfado"]
+            self.ciudad.apply(Impact(conflicts=1))
+        else:
+            return ""
+        return como
 
     # --- propagacion en vivo -------------------------------------------------------------------
     def iniciar_en_vivo(self, autor: str | None = None, es_falsa: bool = True) -> PropagacionEnVivo:
@@ -781,6 +870,8 @@ class PartidaSesion:
         c.cola = list(c.dias[c.dia][1:])
         c.ciudad_al_amanecer = self.ciudad.to_dict()
         self._en_pausa.clear()
+        if self.calle is not None:
+            self.calle.amanecer()
         self._entrar_fase()
         self.abrir_evento(c.dias[c.dia][0])
 
@@ -988,6 +1079,8 @@ class PartidaSesion:
             "anunciar_fase": self.anunciar_fase,
             "en_pausa": {str(k): v for k, v in self._en_pausa.items()},
             "grafo": self.grafo.to_dict(),
+            "calle": None if self.calle is None else self.calle.to_dict(),
+            "charla": None if self.charla is None else {**self.charla, "p": self.charla["p"] and self.charla["p"].to_dict()},
             "rng": [estado_rng[0], list(estado_rng[1]), estado_rng[2]],
         }
 
@@ -1038,6 +1131,10 @@ class PartidaSesion:
         if datos.get("campana") is not None:
             sesion.campana = Campana.from_dict(datos["campana"])
             sesion._en_pausa = {int(k): v for k, v in datos.get("en_pausa", {}).items()}
+        if datos.get("calle") is not None:
+            sesion.calle = tr.Calle.from_dict(datos["calle"])
+        c = datos.get("charla")
+        sesion.charla = None if c is None else {**c, "p": c["p"] and Persuasion.from_dict(c["p"])}
         reloj = datos.get("reloj", {})
         sesion.tiempo_restante, sesion.reloj_activo = reloj.get("restante"), bool(reloj.get("activo", False))
         p = datos.get("pendiente")

@@ -25,6 +25,7 @@ from post_truth.mapa_abierto import MapaAbierto
 from post_truth.models import Role
 from post_truth.models import minijuego as mj
 from post_truth.models import posts, roles
+from post_truth.models import transeuntes as tr
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.red.protocolo import Lector, MensajeInvalido, empaquetar
 from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, FIN_DIA, MAX_JUGADORES, PartidaSesion
@@ -415,6 +416,18 @@ class Servidor:
         s.minijuego = juego
         r = s.terminar_minijuego()
         self._evento(f"{self._nombre(jid)} jugo {juego.nombre}", jid, "bueno" if r.impacto.score >= 0 else "malo")
+
+    def _m_encuentro(self, con: Conexion, m: dict) -> None:
+        """Termino una charla con un transeunte (se juega en el cliente). Se valida que este cerca de el."""
+        s, jid = self.sesion, self._jugador(con)
+        t = s.calle.buscar(str(m["id"])) if s.calle is not None else None
+        cerca = t is not None and math.dist(self.posiciones[jid]["pos"], t.pos) <= 3 * tr.datos()["radio"]   # holgura: lag
+        como = s.cerrar_encuentro(jid, t.id, str(m["como"])) if cerca else ""
+        if not como:
+            raise Rechazo("encuentro_invalido")
+        texto = {"testigo": f"escucho a {t.nombre}", "convencido": f"convencio a {t.nombre}",
+                 "enojado": f"hizo enojar a {t.nombre}"}[como]
+        self._evento(f"{self._nombre(jid)} {texto}", jid, "malo" if como == "enojado" else "bueno")
 
     def _m_salir(self, con: Conexion, m: dict) -> None:
         self._escribir(con.sock)

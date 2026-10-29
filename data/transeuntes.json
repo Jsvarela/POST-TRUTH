@@ -1,0 +1,16 @@
+{
+ "cantidad": 4,
+ "velocidad": 120,
+ "radio": 90,
+ "espera": 2.5,
+ "enfado": 12,
+ "escuchar": 1.5,
+ "rumores": [
+  "Dicen que en la Registraduria ya tienen los votos contados",
+  "Me llego que el parque lo van a vender a una empresa",
+  "Que la candidata tiene una cuenta falsa en Civitas",
+  "Que el agua del barrio esta contaminada, pasalo",
+  "Que manana no hay transporte para ir a votar",
+  "Que en el colegio estan grabando a los estudiantes"
+ ]
+}
