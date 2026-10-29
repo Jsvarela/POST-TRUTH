@@ -10,6 +10,7 @@ from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import load_trees
 from post_truth.models import Role
 from post_truth.models import minijuego as mj
+from post_truth.models import guia
 from post_truth.models import transeuntes as tr
 from post_truth.mapa_abierto import MapaAbierto
 from post_truth.models.animacion import AnimacionPersonaje
@@ -31,6 +32,7 @@ DIRECCIONES = {
 }
 DURACION_AVISO = 4.0
 ALERTA_VIRAL = 3.0   # segundos que late el icono del telefono cuando algo se vuelve viral
+PASOS = 0.35         # segundos entre paso y paso
 RECT_TELEFONO = pygame.Rect(RECT_MINIMAPA.right - px(160), RECT_MINIMAPA.bottom + px(10), px(160), px(40))
 RECT_HABILIDAD = pygame.Rect(RECT_MINIMAPA.right - px(220), RECT_TELEFONO.bottom + px(8), px(220), px(48))
 
@@ -63,6 +65,7 @@ class MundoState(BaseState):
         self.otros: dict[str, tuple[tuple[float, float], AnimacionPersonaje]] = {}   # multijugador: los demas
         self.calle: dict[str, tuple[tuple[float, float], AnimacionPersonaje]] = {}   # transeuntes
         self.charlando: str | None = None   # transeunte con quien se habla mientras E sigue apretada
+        self._t_pasos = 0.0
 
     @property
     def personaje(self) -> Personaje:
@@ -181,6 +184,7 @@ class MundoState(BaseState):
             self._avisar(f"Entraste a {self.mundo.zonas[zona].nombre}.")
         self._situar()
         self.animacion.actualizar(dx, dy, math.dist(antes, self.mundo.jugador), dt)
+        self._pasos(math.dist(antes, self.mundo.jugador), dt)
         self._calle(dt)
         self.camara.seguir(self.mundo.jugador, dt)
         self.t += dt
@@ -209,6 +213,22 @@ class MundoState(BaseState):
         self._t_aviso = max(0.0, self._t_aviso - dt)
         if self._t_aviso == 0:
             self.aviso = ""
+        self._guiar()
+
+    def _guiar(self) -> None:
+        """Mensajes guia de la primera vez, de a uno y sin tapar otro aviso (models/guia.py)."""
+        if self.toast is not None or self.app.estados.actual is not self:
+            return
+        s = self.sesion
+        cerca = s.transeunte_cerca(self.jugador_id)
+        claves = ["inicio", "zona" if self.zona_aqui() else "", "protesta" if s.protestas else "",
+                  ("testigo" if cerca.testigo else "transeunte") if cerca is not None else "",
+                  "credibilidad" if s.jugador_actual.credibilidad < 40 else ""]
+        for clave in filter(None, claves):
+            m = guia.mensaje(clave, self.app.guias_vistas, self.app.guias)
+            if m is not None:
+                self.toast = Anuncio(m[0], m[1], "info", grande=False, duracion=DURACION_AVISO + 1)
+                return
 
     def _calle(self, dt: float) -> None:
         """Anima a los transeuntes y avanza la charla mientras E siga apretada."""
@@ -226,7 +246,19 @@ class MundoState(BaseState):
                 self.charlando = None
                 self._fin_charla(r or "lejos")
 
+    def _pasos(self, movido: float, dt: float) -> None:
+        """Un paso cada PASOS segundos mientras se camina (aviso visual: la animacion de caminar)."""
+        if movido <= 0:
+            self._t_pasos = 0.0
+            return
+        self._t_pasos -= dt
+        if self._t_pasos <= 0:
+            sonido.tocar("pasos")
+            self._t_pasos = PASOS
+
     def _fin_charla(self, como: str) -> None:
+        if como in ("convencido", "testigo", "enojado"):
+            sonido.tocar("error" if como == "enojado" else "acierto")
         if como == "convencido":
             self._avisar("Ya no va a regar ese rumor.", "Lo convenciste", "bueno")
         elif como == "testigo":

@@ -1,5 +1,5 @@
 """Controlador del menu principal: botones con teclado o raton, opciones (tema, volumen, tiempo extendido) y los
-atajos de siempre (Enter jugar, R multijugador, I intro, M mundo, T tema, X tiempo extendido, ESC salir)."""
+atajos de siempre (Enter jugar, R multijugador, A ayuda, I intro, M mundo, T tema, X tiempo extendido, ESC salir)."""
 import pygame
 
 from post_truth.controllers.base_state import BaseState
@@ -13,8 +13,8 @@ NOMBRES_TEMA = {"normal": "Normal", "alto_contraste": "Alto contraste", "daltoni
 class MenuState(BaseState):
     def __init__(self, app) -> None:
         super().__init__(app)
-        acciones = [("Jugar", self._jugar), ("Multijugador", self._multijugador), ("Introduccion", self._intro),
-                    ("Opciones", self._opciones), ("Salir", self._salir)]
+        acciones = [("Jugar", self._jugar), ("Multijugador", self._multijugador), ("Ayuda", self._ayuda),
+                    ("Introduccion", self._intro), ("Opciones", self._opciones), ("Salir", self._salir)]
         self.botones = [Boton(rect_boton(i), texto, accion) for i, (texto, accion) in enumerate(acciones)]
         self.al_entrar()
 
@@ -24,6 +24,9 @@ class MenuState(BaseState):
     # --- acciones ------------------------------------------------------------------------------------
     def _jugar(self) -> None:
         self.app.estados.cambiar("seleccion" if self.app.intro_vista else "intro")
+
+    def _ayuda(self) -> None:
+        self.app.estados.ayuda.abrir("objetivo")
 
     def _multijugador(self) -> None:
         self.app.estados.cambiar("conectar")
@@ -42,6 +45,9 @@ class MenuState(BaseState):
         return [("Tema", NOMBRES_TEMA.get(app.temas.nombre, app.temas.nombre)),
                 ("Volumen", f"{round(app.volumen * 100)}%"),
                 ("Tiempo extendido", "Si" if app.tiempo_extendido else "No"),
+                ("Volumen de los pasos", f"{round(sonido.PASOS[0] * 100)}%"),
+                ("Silencio", "Si" if sonido.SILENCIO[0] else "No"),
+                ("Mensajes guia", "Si" if app.guias else "No"),
                 ("Cerrar", "")]
 
     def _cambiar_opcion(self, paso: int) -> None:
@@ -56,6 +62,14 @@ class MenuState(BaseState):
             sonido.VOLUMEN[0] = app.volumen
         elif self.fila == 2:
             app.tiempo_extendido = not app.tiempo_extendido
+        elif self.fila == 3:
+            sonido.PASOS[0] = max(0.0, min(1.0, round(sonido.PASOS[0] + 0.1 * paso, 1)))
+        elif self.fila == 4:
+            sonido.SILENCIO[0] = not sonido.SILENCIO[0]
+        elif self.fila == 5:
+            app.guias = not app.guias
+        if self.fila in (1, 3):   # se escucha como queda
+            sonido.tocar("acierto" if self.fila == 1 else "pasos")
 
     # --- eventos -------------------------------------------------------------------------------------
     def handle_event(self, event: pygame.event.Event) -> None:
@@ -64,7 +78,7 @@ class MenuState(BaseState):
             return
         if event.type == pygame.KEYDOWN:
             atajos = {pygame.K_i: self._intro, pygame.K_m: self._mundo, pygame.K_o: self._opciones,
-                      pygame.K_r: self._multijugador, pygame.K_ESCAPE: self._salir}
+                      pygame.K_r: self._multijugador, pygame.K_a: self._ayuda, pygame.K_ESCAPE: self._salir}
             if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_KP_ENTER):
                 self.botones[self.foco].al_hacer_clic()
             elif event.key in (pygame.K_UP, pygame.K_w, pygame.K_DOWN, pygame.K_s):
@@ -89,18 +103,20 @@ class MenuState(BaseState):
 
     def _evento_opciones(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE or (event.key in (pygame.K_RETURN, pygame.K_SPACE) and self.fila == 3):
+            ultima = len(self.opciones()) - 1
+            if event.key == pygame.K_ESCAPE or (event.key in (pygame.K_RETURN, pygame.K_SPACE) and self.fila == ultima):
                 self.en_opciones = False
             elif event.key in (pygame.K_UP, pygame.K_w, pygame.K_DOWN, pygame.K_s):
                 paso = 1 if event.key in (pygame.K_DOWN, pygame.K_s) else -1
-                self.fila = (self.fila + paso) % 4
+                self.fila = (self.fila + paso) % (ultima + 1)
             elif event.key in (pygame.K_LEFT, pygame.K_a, pygame.K_RIGHT, pygame.K_d, pygame.K_RETURN, pygame.K_SPACE):
                 self._cambiar_opcion(-1 if event.key in (pygame.K_LEFT, pygame.K_a) else 1)
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            for i in range(4):
+            ultima = len(self.opciones()) - 1
+            for i in range(ultima + 1):
                 if rect_opcion(i).collidepoint(event.pos):
                     self.fila = i
-                    if i == 3:
+                    if i == ultima:
                         self.en_opciones = False
                     else:
                         self._cambiar_opcion(1)

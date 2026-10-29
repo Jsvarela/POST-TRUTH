@@ -1,0 +1,101 @@
+{
+ "secciones": [
+  {"id": "objetivo", "titulo": "Objetivo", "texto": [
+   "Ciudad Nova elige alcalde en {dias} dias. En la red Civitas circulan noticias ciertas, opiniones y rumores falsos.",
+   "Tu trabajo es llegar al dia de la eleccion con la ciudad lo mas sana posible: poca desinformacion y pocos conflictos, mucha confianza y convivencia.",
+   "Aqui no hay preguntas de examen: aprendes por lo que pasa cuando decides. Verificar antes de compartir, reportar lo danino y no amplificar rumores cambia la ciudad y la eleccion."]},
+  {"id": "dia", "titulo": "Como es un dia", "texto": [
+   "Cada dia dura unos {duracion_dia} segundos de reloj y trae {por_dia} noticias y una crisis viral.",
+   "La noticia activa se marca con un globo (!) sobre su lugar. Ve hasta alli, entra con E y decide.",
+   "La crisis aparece de repente, abre el telefono y trae reloj: tienes {tiempo_viral} s para decidir. Si se acaba, cuenta como Ignorar y la publicacion sigue circulando.",
+   "Al terminar el dia ves un resumen de lo que cambio y de tu credibilidad. Lo que quedo sin decidir cuenta como Ignorar."]},
+  {"id": "controles", "titulo": "Controles del mundo", "texto": [
+   "- WASD o flechas: caminar libre por la ciudad (8 direcciones).",
+   "- E: entrar al lugar donde estas. Junto a un transeunte, mantener E para hablarle.",
+   "- G: guia hasta la noticia (el camino mas corto).",
+   "- T: telefono Civitas.   H: habilidad de tu rol.   Y: pedir ayuda a los aliados (1-3).",
+   "- F1: modo sustentacion (estructuras en crudo).   F2: esta ayuda.   F3: depuracion del mapa.",
+   "- P: pausa en los minijuegos.   ESC: volver o salir.",
+   "- En la noticia: 1-4 decidir, I abrir la investigacion."]},
+  {"id": "mapa", "titulo": "Mapa y fases", "texto": [
+   "La ciudad son zonas unidas por calles. Por dentro es un grafo: cada zona es un vertice y cada calle entre zonas, una arista.",
+   "Si los conflictos o la desinformacion suben mucho, una protesta cierra una calle: aparece una valla y hay que buscar otro camino.",
+   "Si una zona se queda sin camino a la Alcaldia, queda aislada y no le llegan los desmentidos.",
+   "Las zonas con mucha desinformacion entran en crisis (franjas en el mapa): alli los rumores corren mas rapido y los minijuegos dan menos tiempo.",
+   "La campana tiene fases: Inicio de campana, Debates (abre el Auditorio), Semana final y Dia de eleccion (abre la Registraduria, de noche)."]},
+  {"id": "noticias", "titulo": "Noticias e investigacion", "texto": [
+   "Cada noticia se resuelve con Compartir, Verificar, Ignorar o Reportar (1-4). Cada decision tiene sus consecuencias en la ciudad y en tu credibilidad.",
+   "Verificar o reportar sin pruebas sirve poco: antes, investiga.",
+   "- Evidencia de lugares: al entrar a un lugar aparece sola la evidencia que haya alli. Los lugares pendientes se marcan en el mapa.",
+   "- I abre la investigacion: la lupa (raton o flechas) revela una pista si la mantienes un segundo sobre algo raro.",
+   "- Testigos: preguntales (1-4). Unos dicen la verdad, otros exageran o se contradicen.",
+   "- Concluye si es falsa (F), verdadera (V) o no concluyente (N). Acertar respalda tu decision; equivocarte la deja sin respaldo."]},
+  {"id": "telefono", "titulo": "Telefono Civitas", "texto": [
+   "T lo abre y lo cierra (tambien ESC). Mientras esta abierto el mundo va al {ritmo_telefono}% y el rumor al {ritmo_rumor}%.",
+   "Pestanas (Tab): Red (la red social en vivo), Notificaciones (lo que paso en la ciudad) y Publicar (crear posts).",
+   "Un rumor se vuelve viral cuando lo cree el {viral}% de la red: suena una alerta, sale un aviso y el icono del telefono late."]},
+  {"id": "red", "titulo": "Defensa de la red", "texto": [
+   "En la pestana Red el rumor viaja de persona en persona como bolitas rojas por las conexiones.",
+   "- Escudo: muevelo con WASD, flechas o raton. Si una bolita pasa por el, la atajas.",
+   "- Espacio (o clic): desmentido en onda alrededor del escudo; vuelve a estar listo en {onda} s.",
+   "Las personas se ven por forma: circulo vacio no sabe, circulo lleno lo cree, triangulo lo comparte, cuadrado ya es inmune.",
+   "Cuando el rumor se apaga, lo que dejo entra a la ciudad: cuanto menos lo crean, mejor."]},
+  {"id": "posts", "titulo": "Crear posts", "texto": [
+   "En la pestana Publicar armas tu post con piezas: formato (segun tu rol), titular, imagen, fuente y tono. Flechas o clic para cambiarlas, Enter para publicar.",
+   "Antes de publicar ves su veracidad, su alcance y su riesgo.",
+   "Sin fuente, con tono agresivo o falso cuesta credibilidad; veraz y verificable la sube. Un post veraz contra un rumor sale como desmentido.",
+   "Puedes publicar uno cada {enfriamiento_post} s."]},
+  {"id": "minijuegos", "titulo": "Minijuegos", "texto": [
+   "Cada lugar tiene un minijuego por dia. Jugar cuesta tiempo del dia; P pausa.",
+   "- Colegio, chat: los mensajes caen por 3 carriles. Atrapa el apoyo (circulo) y esquiva los ataques (triangulo) con A/D o flechas. Con 3 apoyos, Espacio borra los ataques.",
+   "- Plaza, mitin: los rumores suben como globos. Revientalos con su respuesta: 1 dato (cuadrado, necesita evidencia), 2 pregunta (circulo), 3 calma (triangulo).",
+   "- Alcaldia, rueda de prensa: gira el foco (A/D) hacia quien pregunta y responde con la prueba que pide: 1 pista, 2 evidencia, 3 testimonio. A una trampa (X), Espacio: no se afirma sin pruebas. Lo que investigaste es tu municion.",
+   "- Barrio, de boca en boca: corre (WASD) hasta quien cree el chisme y manten E cerca. Con evidencia o credibilidad convences mas rapido; si sueltas un argumento debil, se enoja."]},
+  {"id": "calle", "titulo": "Encuentros en la calle", "texto": [
+   "Por la ciudad caminan ciudadanos de zona en zona, por el camino mas corto y sin cruzar calles cerradas.",
+   "- Con rumor (triangulo sobre la cabeza): manten E y siguele el paso para convencerlo. Si nadie lo frena, suma desinformacion donde llega.",
+   "- Testigo de la noticia (circulo): manten E a su lado para escuchar lo que vio. Cuenta como evidencia.",
+   "- Enojado (cuadrado): un rato no quiere hablar.",
+   "Para esquivarlos, sigue de largo."]},
+  {"id": "roles", "titulo": "Roles y aliados", "texto": [
+   "Cada rol tiene una habilidad (H) que se recarga:",
+   "{habilidades}",
+   "Ademas, sin apretar nada: el Periodista revela con la lupa mas rapido y mas lejos, el Influencer da mas fuerza a sus desmentidos y al Ciudadano reportar le cuesta menos credibilidad.",
+   "Los roles que nadie eligio los juega la computadora como aliados. Y abre su menu y 1-3 les pide ayuda (se recargan en {enfriamiento_aliado} s). Cuando un rumor se vuelve viral, reaccionan solos una vez por dia."]},
+  {"id": "credibilidad", "titulo": "Credibilidad", "texto": [
+   "Tu credibilidad va de 0 a 100 y empieza en 50. La ves en el HUD con un escudo.",
+   "Sube al verificar con pruebas, acertar en la investigacion, convencer con argumentos y publicar cosas veraces.",
+   "Baja al compartir algo falso (mas si reincides), reportar sin pruebas, afirmar sin pruebas en la rueda de prensa o dejar vencer el reloj.",
+   "Con mas credibilidad lo que compartes llega mas lejos, tus desmentidos pesan mas, convences mas rapido y tus decisiones mueven mas la eleccion."]},
+  {"id": "indicadores", "titulo": "Indicadores", "texto": [
+   "La ciudad tiene 6 indicadores de 0 a 100 (barras del HUD; los cambios salen flotando, como +8 Confianza):",
+   "- Informacion verificada, Confianza ciudadana, Convivencia y Bienestar digital: conviene que suban.",
+   "- Desinformacion y Conflictos: conviene que bajen. Si suben mucho llegan las protestas y las zonas en crisis.",
+   "Ademas hay un puntaje de la ciudad y uno por jugador. El mapa se tine segun la salud de la ciudad."]},
+  {"id": "ganar", "titulo": "Como ganar", "texto": [
+   "Al final de la campana se elige al alcalde. Los votos salen de dos cosas:",
+   "- Lo que se decidio: compartir un rumor falso sobre un candidato le quita apoyo injustamente; verificarlo o reportarlo lo protege.",
+   "- Como quedo la ciudad: cada candidato gana con una ciudad distinta (menos conflictos, mas convivencia, mas bienestar o mas informacion verificada y confianza).",
+   "La pantalla final cuenta los votos, dice si un rumor falso cambio al ganador y muestra el puntaje de la ciudad y de cada jugador.",
+   "Ganas cuando la ciudad termina sana y ningun rumor decidio la eleccion."]},
+  {"id": "multijugador", "titulo": "Multijugador", "texto": [
+   "De 2 a 4 jugadores en red local. Un equipo abre el servidor; cada jugador elige Multijugador en el menu (R) y escribe la IP y el puerto.",
+   "En la sala cada uno elige un rol distinto; el primero en entrar inicia. Los roles libres son aliados.",
+   "Todos ven la misma ciudad, la misma red y las mismas calles cerradas. La noticia la decide el jugador de turno; los demas pueden caminar, jugar minijuegos y defender la red."]},
+  {"id": "accesibilidad", "titulo": "Accesibilidad", "texto": [
+   "En Opciones del menu (O):",
+   "- Tema: normal, alto contraste o daltonismo. Ademas del color, todo se distingue por forma.",
+   "- Tiempo extendido (tambien X en el menu): dias, relojes y minijuegos {factor} veces mas largos; en la rueda nunca preguntan dos a la vez.",
+   "- Volumen general, volumen de los pasos y silencio. Cada sonido tiene su aviso en pantalla.",
+   "- Mensajes guia: pistas cortas la primera vez que pasa algo.",
+   "P pausa los minijuegos. Todo se juega con teclado y casi todo tambien con raton."]},
+  {"id": "sustentacion", "titulo": "Modo sustentacion", "texto": [
+   "F1 en cualquier pantalla muestra las estructuras de datos en crudo y pausa el juego:",
+   "- Arbol de decisiones de la noticia actual (DFS y niveles de BFS).",
+   "- Grafo social con sus pesos y las olas de BFS.",
+   "- Grafo de la ciudad con Dijkstra, el BFS de aislamiento y las calles cerradas.",
+   "- Arbol de dialogo del chat con su mejor camino.",
+   "1-4 o Tab cambian de pestana; F1 o ESC vuelven al juego."]},
+  {"id": "leyenda", "titulo": "Leyenda de formas", "texto": []}
+ ]
+}

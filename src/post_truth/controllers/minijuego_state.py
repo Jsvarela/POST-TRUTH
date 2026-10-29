@@ -2,6 +2,9 @@
 import pygame
 
 from post_truth.controllers.base_state import BaseState
+from post_truth.models import guia
+from post_truth.views import sonido
+from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.hud import DatosHud
 from post_truth.views.minijuego_view import dibujar_minijuego
 
@@ -15,6 +18,8 @@ class MinijuegoState(BaseState):
         self.minijuego = self.app.partida.minijuego   # lo creo el mundo con sesion.iniciar_minijuego
         self.resultado = None
         self.pausado = False
+        m = guia.mensaje(f"minijuego:{self.minijuego.id}", self.app.guias_vistas, self.app.guias)
+        self.toast = None if m is None else Anuncio(m[0], m[1], "info", grande=False, duracion=5.0)
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYUP and event.key in TECLAS and self.resultado is None:
@@ -29,14 +34,26 @@ class MinijuegoState(BaseState):
             self.pausado = not self.pausado   # accesibilidad: el reloj del minijuego se detiene
         elif not self.pausado and event.key in TECLAS:
             self.minijuego.accion(TECLAS[event.key])
+            self._sonar()
 
     def update(self, dt: float) -> None:
+        if self.toast is not None:
+            self.toast.avanzar(dt)
+            self.toast = None if self.toast.terminado else self.toast
         if self.resultado is not None or self.pausado:
             return
         self.minijuego.update(dt)
         self.app.partida.transcurrir(dt)   # jugar cuesta tiempo del dia (la pausa lo detiene todo)
+        self._sonar()
         if self.minijuego.terminado:
             self.resultado = self.app.partida.terminar_minijuego()
+            sonido.tocar("acierto" if self.resultado.credibilidad >= 0 else "error")
+
+    def _sonar(self) -> None:
+        """Lo que acerto o fallo el jugador desde el ultimo cuadro (cada uno tiene ademas su aviso en pantalla)."""
+        for eco in self.minijuego.ecos:
+            sonido.tocar(eco)
+        self.minijuego.ecos.clear()
 
     def datos_hud(self) -> DatosHud:
         s = self.app.partida
@@ -47,3 +64,5 @@ class MinijuegoState(BaseState):
         s = self.app.partida
         dibujar_minijuego(pantalla, self.app.fuentes, self.app.temas.actual, self.minijuego, s.ciudad.as_display_rows(),
                           s.jugador(self.minijuego.contexto.jugador).credibilidad, self.resultado, self.pausado)
+        if self.toast is not None:
+            dibujar_anuncio(pantalla, self.app.fuentes, self.app.temas.actual, self.toast)

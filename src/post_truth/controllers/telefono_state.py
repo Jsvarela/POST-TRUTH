@@ -5,7 +5,7 @@ import pygame
 from post_truth.controllers import roles_teclas
 from post_truth.controllers.base_state import BaseState
 from post_truth.controllers.mundo_state import RECT_HABILIDAD
-from post_truth.models import posts
+from post_truth.models import guia, posts
 from post_truth.sesion import FIN, FIN_DIA, RITMO_RUMOR_TELEFONO, RITMO_TELEFONO
 from post_truth.views.hud import DatosHud
 from post_truth.views import sonido
@@ -40,6 +40,9 @@ class TelefonoState(BaseState):
         self.fila = 0
         self.menu_aliados = False
         self.eleccion = getattr(self, "eleccion", None) or {p: 0 for p in posts.PIEZAS}   # se recuerda lo armado
+        m = guia.mensaje("telefono", self.app.guias_vistas, self.app.guias)
+        if m is not None:
+            self._avisar(m[0], m[1], "info")
         if s.novedad == "crisis":   # la crisis abre el telefono sola, con su reloj
             s.novedad = ""
             self.modal = Modal("Crisis viral!", f"\"{s.arbol.event.title}\" se esta regando en "
@@ -171,6 +174,7 @@ class TelefonoState(BaseState):
         self.atajo = max(0.0, self.atajo - dt)
         if self.app.partida.escudo(self.escudo, self.radio):
             self.atajo = 0.35   # destello del escudo: lo atajaste
+            sonido.tocar("acierto")
         if v is not None:   # a quien le acaba de llegar algo: pulso
             for id, estado in v.estado.items():
                 if estado != self._previo.get(id, estado):

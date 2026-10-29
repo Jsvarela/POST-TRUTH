@@ -10,14 +10,14 @@ from post_truth.views.theme import TOKENS, Tema, esp
 
 
 def rect_boton(i: int) -> pygame.Rect:
-    return pygame.Rect(ANCHO // 2 - px(170), px(300) + i * px(66), px(340), px(54))
+    return pygame.Rect(ANCHO // 2 - px(170), px(262) + i * px(58), px(340), px(50))
 
 
-RECT_OPCIONES = pygame.Rect(ANCHO // 2 - px(260), px(190), px(520), px(330))
+RECT_OPCIONES = pygame.Rect(ANCHO // 2 - px(260), px(110), px(520), px(480))
 
 
 def rect_opcion(i: int) -> pygame.Rect:
-    return pygame.Rect(RECT_OPCIONES.x + esp(4), RECT_OPCIONES.y + px(70) + i * px(52), RECT_OPCIONES.w - 2 * esp(4),
+    return pygame.Rect(RECT_OPCIONES.x + esp(4), RECT_OPCIONES.y + px(64) + i * px(54), RECT_OPCIONES.w - 2 * esp(4),
                        px(44))
 
 
@@ -38,7 +38,7 @@ def dibujar_menu(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, botones
     for i, b in enumerate(botones):   # entran uno tras otro
         if t >= 0.08 * i:
             b.draw(pantalla, fuentes.normal, tema)
-    ayuda = fuentes.chica.render("Flechas y Enter, o clic   |   atajos: I intro, M mundo, T tema, X tiempo, O opciones",
+    ayuda = fuentes.chica.render("Flechas y Enter, o clic   |   atajos: A ayuda, R multijugador, I intro, T tema, X tiempo, O opciones",
                                  True, tema.texto)
     pantalla.blit(ayuda, ayuda.get_rect(midbottom=(ANCHO // 2, ALTO - esp(4))))
     if opciones is not None:
