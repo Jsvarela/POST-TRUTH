@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from post_truth.models.dominio import Impact
@@ -24,6 +24,7 @@ class ContextoMinijuego:
     extendido: bool = False   # accesibilidad: mas tiempo (y sin ritmo en el mitin)
     evidencias: int = 0       # evidencia que el jugador ya reunio (el mitin la usa)
     crisis: bool = False      # el lugar esta en crisis (R9): menos tiempo
+    municion: dict = field(default_factory=dict)   # pruebas reunidas por tipo: pista, evidencia, testimonio (rueda)
 
     @property
     def ritmo(self) -> float:
@@ -174,4 +175,4 @@ class Ensayo(Minijuego):
         self.mensajes, self.respuestas, self.t = list(estado["mensajes"]), list(estado["respuestas"]), float(estado["t"])
 
 
-from post_truth.models import chat, mitin  # noqa: E402,F401  (al importarse registran sus minijuegos)
+from post_truth.models import boca_en_boca, chat, mitin, rueda_prensa  # noqa: E402,F401  (al importarse registran sus minijuegos)

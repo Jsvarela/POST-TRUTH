@@ -6,7 +6,8 @@ from post_truth.views.hud import DatosHud
 from post_truth.views.minijuego_view import dibujar_minijuego
 
 TECLAS = {pygame.K_1: "1", pygame.K_2: "2", pygame.K_3: "3", pygame.K_4: "4", pygame.K_SPACE: "espacio",
-          pygame.K_LEFT: "izq", pygame.K_a: "izq", pygame.K_RIGHT: "der", pygame.K_d: "der"}
+          pygame.K_LEFT: "izq", pygame.K_a: "izq", pygame.K_RIGHT: "der", pygame.K_d: "der",
+          pygame.K_UP: "arriba", pygame.K_w: "arriba", pygame.K_DOWN: "abajo", pygame.K_s: "abajo", pygame.K_e: "hablar"}
 
 
 class MinijuegoState(BaseState):
@@ -16,6 +17,9 @@ class MinijuegoState(BaseState):
         self.pausado = False
 
     def handle_event(self, event: pygame.event.Event) -> None:
+        if event.type == pygame.KEYUP and event.key in TECLAS and self.resultado is None:
+            self.minijuego.accion("-" + TECLAS[event.key])   # soltar: los que se mantienen (moverse, E, girar)
+            return
         if event.type != pygame.KEYDOWN:
             return
         if self.resultado is not None:

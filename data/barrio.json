@@ -1,0 +1,22 @@
+{
+ "duracion": 45,
+ "salto": 4.0,
+ "brote": 8.0,
+ "radio": 0.12,
+ "velocidad": 0.9,
+ "casas": [
+  {"nombre": "Dona Rosa", "pos": [0.12, 0.25]},
+  {"nombre": "Don Hector", "pos": [0.42, 0.18]},
+  {"nombre": "Camila", "pos": [0.78, 0.22]},
+  {"nombre": "Los Perez", "pos": [0.2, 0.75]},
+  {"nombre": "Martin", "pos": [0.55, 0.62]},
+  {"nombre": "La tienda", "pos": [0.86, 0.78]}
+ ],
+ "conexiones": [[0, 1], [1, 2], [0, 3], [1, 4], [2, 5], [3, 4], [4, 5]],
+ "rumores": [
+  "Dicen que van a cerrar el colegio del barrio",
+  "Que el agua de la llave esta contaminada",
+  "Que el candidato compro los votos de la cuadra",
+  "Que manana no hay transporte para ir a votar"
+ ]
+}

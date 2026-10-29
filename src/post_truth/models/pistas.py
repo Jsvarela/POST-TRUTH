@@ -207,6 +207,15 @@ class Investigacion:
         self.descubiertas.append(e.id)
         return e
 
+    def municion(self) -> dict[str, int]:
+        """Lo reunido, por tipo de prueba (la rueda de prensa lo gasta): pistas de la tarjeta, evidencias de los
+        lugares (documentos y grabaciones) y testimonios (testigos de una zona o fiables en el interrogatorio)."""
+        hallazgos = self.pistas_descubiertas()
+        testigos = sum(isinstance(h, Evidencia) and h.tipo is TipoEvidencia.TESTIGO for h in hallazgos)
+        return {"pista": sum(isinstance(h, Pista) for h in hallazgos),
+                "evidencia": sum(isinstance(h, Evidencia) and h.tipo is not TipoEvidencia.TESTIGO for h in hallazgos),
+                "testimonio": testigos + sum(f == "veraz" for f in self.testimonios.values())}
+
     def respaldo(self, accion: str) -> int:
         """Que tan respaldada esta una accion con lo descubierto. La conclusion de la ventana de investigacion
         manda: equivocarse la deja sin respaldo; acertar la sube (mas si la evidencia era buena), y para reportar

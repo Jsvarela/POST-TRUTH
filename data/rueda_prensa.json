@@ -1,0 +1,41 @@
+{
+ "duracion": 40,
+ "intervalo": 3.0,
+ "tiempo_pregunta": 6.0,
+ "doble_desde": 14,
+ "giro": 1.8,
+ "tolerancia": 0.22,
+ "credito_inicial": 50,
+ "efectos": {
+  "acierto": 9,
+  "trampa_bien": 9,
+  "honesto": -4,
+  "sin_municion": -6,
+  "equivocada": -7,
+  "afirmo": -12,
+  "evade": -6,
+  "al_aire": -2
+ },
+ "preguntas": {
+  "pista": [
+   "Que detalle de la publicacion le parece sospechoso?",
+   "Reviso la fecha o el autor de lo que circula?",
+   "En que se fijo para dudar de esa imagen?"
+  ],
+  "evidencia": [
+   "Tiene un documento que respalde lo que dice?",
+   "Donde paso exactamente? Hay registro?",
+   "Puede mostrar la grabacion completa?"
+  ],
+  "testimonio": [
+   "Quien lo vio? Hablo con algun testigo?",
+   "Algun vecino confirma su version?",
+   "Hay alguien que estuviera ahi?"
+  ],
+  "trampa": [
+   "Es verdad que su rival esta detras de todo?",
+   "Confirma que la eleccion se va a cancelar?",
+   "Diga si o no: le pagaron para callarse?"
+  ]
+ }
+}

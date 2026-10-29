@@ -1,0 +1,268 @@
+{
+ "umbral_credibilidad": 60,
+ "velocidad": {
+  "evidencia": 0.9,
+  "credibilidad": 0.6,
+  "nada": 0.35
+ },
+ "arbol": {
+  "hablante": "vecino",
+  "texto": "Oiga, ya supo lo que dicen?",
+  "opciones": [
+   {
+    "texto": "Mire lo que encontre: aqui esta la fuente original.",
+    "tipo": "evidencia",
+    "requiere": "evidencia",
+    "sigue": {
+     "hablante": "vecino",
+     "texto": "A ver, muestreme eso...",
+     "opciones": [
+      {
+       "texto": "Esta foto es de otro ano: compare la fecha.",
+       "tipo": "evidencia",
+       "requiere": "evidencia",
+       "sigue": {
+        "hablante": "vecino",
+        "texto": "Bueno, la prueba se ve seria. Pero mi prima lo vio en Civitas.",
+        "opciones": [
+         {
+          "texto": "Y el comunicado oficial dice lo contrario: aqui esta.",
+          "tipo": "evidencia",
+          "requiere": "evidencia"
+         },
+         {
+          "texto": "Antes de reenviarlo, preguntemos juntos en la Alcaldia.",
+          "tipo": "credibilidad",
+          "requiere": "credibilidad"
+         },
+         {
+          "texto": "Si no hay fuente, mejor no lo pasemos.",
+          "tipo": "nada"
+         }
+        ]
+       }
+      },
+      {
+       "texto": "Le he avisado antes de otros rumores y tenia razon.",
+       "tipo": "credibilidad",
+       "requiere": "credibilidad",
+       "sigue": {
+        "hablante": "vecino",
+        "texto": "Puede ser... pero todo el mundo lo esta diciendo.",
+        "opciones": [
+         {
+          "texto": "Y el comunicado oficial dice lo contrario: aqui esta.",
+          "tipo": "evidencia",
+          "requiere": "evidencia"
+         },
+         {
+          "texto": "Antes de reenviarlo, preguntemos juntos en la Alcaldia.",
+          "tipo": "credibilidad",
+          "requiere": "credibilidad"
+         },
+         {
+          "texto": "Si no hay fuente, mejor no lo pasemos.",
+          "tipo": "nada"
+         }
+        ]
+       }
+      },
+      {
+       "texto": "Pregunte quien lo publico primero.",
+       "tipo": "nada",
+       "sigue": {
+        "hablante": "vecino",
+        "texto": "No me convence. Por que me iba a mentir el grupo?",
+        "opciones": [
+         {
+          "texto": "Y el comunicado oficial dice lo contrario: aqui esta.",
+          "tipo": "evidencia",
+          "requiere": "evidencia"
+         },
+         {
+          "texto": "Antes de reenviarlo, preguntemos juntos en la Alcaldia.",
+          "tipo": "credibilidad",
+          "requiere": "credibilidad"
+         },
+         {
+          "texto": "Si no hay fuente, mejor no lo pasemos.",
+          "tipo": "nada"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "texto": "Usted me conoce: yo reviso antes de repetir algo.",
+    "tipo": "credibilidad",
+    "requiere": "credibilidad",
+    "sigue": {
+     "hablante": "vecino",
+     "texto": "Usted siempre averigua antes de hablar, eso es cierto.",
+     "opciones": [
+      {
+       "texto": "Esta foto es de otro ano: compare la fecha.",
+       "tipo": "evidencia",
+       "requiere": "evidencia",
+       "sigue": {
+        "hablante": "vecino",
+        "texto": "Bueno, la prueba se ve seria. Pero mi prima lo vio en Civitas.",
+        "opciones": [
+         {
+          "texto": "Y el comunicado oficial dice lo contrario: aqui esta.",
+          "tipo": "evidencia",
+          "requiere": "evidencia"
+         },
+         {
+          "texto": "Antes de reenviarlo, preguntemos juntos en la Alcaldia.",
+          "tipo": "credibilidad",
+          "requiere": "credibilidad"
+         },
+         {
+          "texto": "Si no hay fuente, mejor no lo pasemos.",
+          "tipo": "nada"
+         }
+        ]
+       }
+      },
+      {
+       "texto": "Le he avisado antes de otros rumores y tenia razon.",
+       "tipo": "credibilidad",
+       "requiere": "credibilidad",
+       "sigue": {
+        "hablante": "vecino",
+        "texto": "Puede ser... pero todo el mundo lo esta diciendo.",
+        "opciones": [
+         {
+          "texto": "Y el comunicado oficial dice lo contrario: aqui esta.",
+          "tipo": "evidencia",
+          "requiere": "evidencia"
+         },
+         {
+          "texto": "Antes de reenviarlo, preguntemos juntos en la Alcaldia.",
+          "tipo": "credibilidad",
+          "requiere": "credibilidad"
+         },
+         {
+          "texto": "Si no hay fuente, mejor no lo pasemos.",
+          "tipo": "nada"
+         }
+        ]
+       }
+      },
+      {
+       "texto": "Pregunte quien lo publico primero.",
+       "tipo": "nada",
+       "sigue": {
+        "hablante": "vecino",
+        "texto": "No me convence. Por que me iba a mentir el grupo?",
+        "opciones": [
+         {
+          "texto": "Y el comunicado oficial dice lo contrario: aqui esta.",
+          "tipo": "evidencia",
+          "requiere": "evidencia"
+         },
+         {
+          "texto": "Antes de reenviarlo, preguntemos juntos en la Alcaldia.",
+          "tipo": "credibilidad",
+          "requiere": "credibilidad"
+         },
+         {
+          "texto": "Si no hay fuente, mejor no lo pasemos.",
+          "tipo": "nada"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "texto": "Yo no creeria eso tan rapido.",
+    "tipo": "nada",
+    "sigue": {
+     "hablante": "vecino",
+     "texto": "Y usted como sabe? Yo lo lei clarito.",
+     "opciones": [
+      {
+       "texto": "Esta foto es de otro ano: compare la fecha.",
+       "tipo": "evidencia",
+       "requiere": "evidencia",
+       "sigue": {
+        "hablante": "vecino",
+        "texto": "Bueno, la prueba se ve seria. Pero mi prima lo vio en Civitas.",
+        "opciones": [
+         {
+          "texto": "Y el comunicado oficial dice lo contrario: aqui esta.",
+          "tipo": "evidencia",
+          "requiere": "evidencia"
+         },
+         {
+          "texto": "Antes de reenviarlo, preguntemos juntos en la Alcaldia.",
+          "tipo": "credibilidad",
+          "requiere": "credibilidad"
+         },
+         {
+          "texto": "Si no hay fuente, mejor no lo pasemos.",
+          "tipo": "nada"
+         }
+        ]
+       }
+      },
+      {
+       "texto": "Le he avisado antes de otros rumores y tenia razon.",
+       "tipo": "credibilidad",
+       "requiere": "credibilidad",
+       "sigue": {
+        "hablante": "vecino",
+        "texto": "Puede ser... pero todo el mundo lo esta diciendo.",
+        "opciones": [
+         {
+          "texto": "Y el comunicado oficial dice lo contrario: aqui esta.",
+          "tipo": "evidencia",
+          "requiere": "evidencia"
+         },
+         {
+          "texto": "Antes de reenviarlo, preguntemos juntos en la Alcaldia.",
+          "tipo": "credibilidad",
+          "requiere": "credibilidad"
+         },
+         {
+          "texto": "Si no hay fuente, mejor no lo pasemos.",
+          "tipo": "nada"
+         }
+        ]
+       }
+      },
+      {
+       "texto": "Pregunte quien lo publico primero.",
+       "tipo": "nada",
+       "sigue": {
+        "hablante": "vecino",
+        "texto": "No me convence. Por que me iba a mentir el grupo?",
+        "opciones": [
+         {
+          "texto": "Y el comunicado oficial dice lo contrario: aqui esta.",
+          "tipo": "evidencia",
+          "requiere": "evidencia"
+         },
+         {
+          "texto": "Antes de reenviarlo, preguntemos juntos en la Alcaldia.",
+          "tipo": "credibilidad",
+          "requiere": "credibilidad"
+         },
+         {
+          "texto": "Si no hay fuente, mejor no lo pasemos.",
+          "tipo": "nada"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}
