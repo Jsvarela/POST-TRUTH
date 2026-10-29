@@ -16,6 +16,7 @@ class Opcion:
     texto: str
     tipo: str                         # p. ej. desescalar | ignorar | amplificar, o lo que use cada dialogo
     hijo: NodoDialogo | None = None   # None: la conversacion termina aqui
+    requiere: str = ""                # "" siempre se puede; si no, lo que hace falta (evidencia, credibilidad...)
 
 
 @dataclass
@@ -30,11 +31,12 @@ class NodoDialogo:
 
     @classmethod
     def from_dict(cls, d: dict) -> "NodoDialogo":
-        """El JSON ya viene anidado como arbol: {"hablante", "texto", "opciones": [{"texto", "tipo", "sigue"}]}."""
+        """El JSON ya viene anidado como arbol: {"hablante", "texto", "opciones": [{"texto", "tipo", "sigue",
+        "requiere"}]} ("requiere" es opcional)."""
         if not d.get("texto", "").strip():
             raise ValueError("Nodo de dialogo sin texto")
-        opciones = [Opcion(o["texto"], o["tipo"], cls.from_dict(o["sigue"]) if o.get("sigue") else None)
-                    for o in d.get("opciones", [])]
+        opciones = [Opcion(o["texto"], o["tipo"], cls.from_dict(o["sigue"]) if o.get("sigue") else None,
+                           o.get("requiere", "")) for o in d.get("opciones", [])]
         return cls(d.get("hablante", ""), d["texto"], opciones)
 
     def seguir(self, camino: list[int]) -> NodoDialogo | None:
