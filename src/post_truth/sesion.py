@@ -22,7 +22,8 @@ from post_truth.models.pistas import Evidencia, Investigacion, Pista
 from post_truth.structures.arbol_dialogo import NodoDialogo
 from post_truth.structures.grafo_ciudad import GrafoCiudad, Zona
 from post_truth.structures.grafo_social import Ciudadano, GrafoSocial, TipoRelacion
-from post_truth.structures.propagacion_vivo import ACTIVO, COMPARTIO, INMUNE, PropagacionEnVivo, ResultadoAccion
+from post_truth.structures.propagacion_vivo import (ACTIVO, ASPECTO_RED, COMPARTIO, INMUNE, RADIO_ONDA, PropagacionEnVivo,
+                                                     ResultadoAccion)
 from post_truth.structures.propagacion import (REPORTAR, REPORTE_INFUNDADO, VERIFICAR, SimulacionDecision, es_falsa,
                                                fuerza_reportar, fuerza_verificar, mensaje_respaldo, reporte_rechazado,
                                                simular_decision)
@@ -602,6 +603,16 @@ class PartidaSesion:
             self.notificar("malo" if self.en_vivo_viral and v.es_falsa else "bueno",
                            "El rumor se apago" if v.es_falsa else "La noticia se apago",
                            f"Al final lo creyeron {creen} de {total} personas.")
+
+    def onda(self, centro: tuple[float, float]) -> ResultadoAccion:
+        """Desmentido en onda del telefono sobre el rumor en vivo (centro en coordenadas 0-1 de la red)."""
+        if self.en_vivo is None:
+            return ResultadoAccion(False, "sin_rumor")
+        return self.en_vivo.onda(centro, RADIO_ONDA, ASPECTO_RED)
+
+    def escudo(self, centro: tuple[float, float], radio: float) -> bool:
+        """El escudo del telefono ataja los rumores que viajan por donde esta. True si atajo alguno."""
+        return self.en_vivo is not None and self.en_vivo.interceptar(centro, radio, ASPECTO_RED)
 
     def publicar(self, post: posts.Post, jugador: str | None = None) -> tuple[bool, str, posts.Evaluacion | None]:
         """El jugador publica: si la red esta en calma su post arranca una propagacion en vivo; si ya corre una
