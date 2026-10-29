@@ -20,6 +20,7 @@ from typing import Callable
 
 import pygame
 
+from post_truth.structures import rutas
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 
 RAIZ = Path(__file__).resolve().parents[2]
@@ -65,6 +66,8 @@ class MapaAbierto:
         self._por_color = {z.color: z.id for z in self.zonas.values()}
         self.fronteras = [Frontera(f["desde"], f["hasta"], tuple(f["calle"]), tuple(f["barrera"]), tuple(f["paso"]))
                           for f in datos["fronteras"]]
+        self.geometria = rutas.Geometria({id: z.centro for id, z in self.zonas.items()},
+                                         {f.clave: f.paso for f in self.fronteras})
         self.velocidad = float(datos["velocidad"])
         self.pies = tuple(datos["pies"])
         self.aparicion: Punto = tuple(datos["aparicion"])
@@ -147,22 +150,9 @@ class MapaAbierto:
         return next((f for f in self.fronteras if f.clave == frozenset((a, b))), None)
 
     def grafo_de_distancias(self, grafo: GrafoCiudad) -> GrafoCiudad:
-        """Copia del grafo (solo sus aristas abiertas) donde cada arista pesa lo que se camina: centro de una zona,
-        punto de paso de la frontera y centro de la otra. Dijkstra da el minimo SEGUN EL PESO que se le pase."""
-        datos = grafo.to_dict()
-        for c in datos["conexiones"]:
-            f = self.frontera(c["origen"], c["destino"])
-            if f is not None:
-                a, b = self.zonas[f.desde].centro, self.zonas[f.hasta].centro
-                c["distancia"] = max(1, round((math.dist(a, f.paso) + math.dist(f.paso, b)) / 100))
-        return GrafoCiudad.from_dict(datos)
+        """Pesos = lo que se camina (structures/rutas.py explica el algoritmo)."""
+        return rutas.grafo_de_distancias(grafo, self.geometria)
 
     def ruta_puntos(self, grafo: GrafoCiudad, desde: str, hasta: str) -> tuple[tuple[str, ...], list[Punto]]:
         """(zonas de la ruta, puntos de paso): Dijkstra sobre las zonas y luego la geometria de cada frontera."""
-        ruta = self.grafo_de_distancias(grafo).ruta(desde, hasta)
-        if ruta is None:
-            return (), []
-        puntos: list[Punto] = []
-        for a, b in zip(ruta.zonas, ruta.zonas[1:]):   # cruzar cada frontera y pasar por el centro de la zona
-            puntos += [self.frontera(a, b).paso, self.zonas[b].centro]
-        return ruta.zonas, puntos or [self.zonas[hasta].centro]
+        return rutas.ruta_puntos(grafo, self.geometria, desde, hasta)
