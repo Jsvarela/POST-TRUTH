@@ -1,5 +1,5 @@
 """Controlador del menu principal: botones con teclado o raton, opciones (tema, volumen, tiempo extendido) y los
-atajos de siempre (Enter jugar, I intro, M mundo, T tema, X tiempo extendido, ESC salir)."""
+atajos de siempre (Enter jugar, R multijugador, I intro, M mundo, T tema, X tiempo extendido, ESC salir)."""
 import pygame
 
 from post_truth.controllers.base_state import BaseState
@@ -13,8 +13,8 @@ NOMBRES_TEMA = {"normal": "Normal", "alto_contraste": "Alto contraste", "daltoni
 class MenuState(BaseState):
     def __init__(self, app) -> None:
         super().__init__(app)
-        acciones = [("Jugar", self._jugar), ("Introduccion", self._intro), ("Opciones", self._opciones),
-                    ("Salir", self._salir)]
+        acciones = [("Jugar", self._jugar), ("Multijugador", self._multijugador), ("Introduccion", self._intro),
+                    ("Opciones", self._opciones), ("Salir", self._salir)]
         self.botones = [Boton(rect_boton(i), texto, accion) for i, (texto, accion) in enumerate(acciones)]
         self.al_entrar()
 
@@ -24,6 +24,9 @@ class MenuState(BaseState):
     # --- acciones ------------------------------------------------------------------------------------
     def _jugar(self) -> None:
         self.app.estados.cambiar("seleccion" if self.app.intro_vista else "intro")
+
+    def _multijugador(self) -> None:
+        self.app.estados.cambiar("conectar")
 
     def _intro(self) -> None:
         self.app.estados.cambiar("intro")
@@ -61,7 +64,7 @@ class MenuState(BaseState):
             return
         if event.type == pygame.KEYDOWN:
             atajos = {pygame.K_i: self._intro, pygame.K_m: self._mundo, pygame.K_o: self._opciones,
-                      pygame.K_ESCAPE: self._salir}
+                      pygame.K_r: self._multijugador, pygame.K_ESCAPE: self._salir}
             if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_KP_ENTER):
                 self.botones[self.foco].al_hacer_clic()
             elif event.key in (pygame.K_UP, pygame.K_w, pygame.K_DOWN, pygame.K_s):

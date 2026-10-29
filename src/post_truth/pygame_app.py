@@ -10,6 +10,7 @@ from post_truth.controllers.lugar_state import LugarState
 from post_truth.controllers.menu_state import MenuState
 from post_truth.controllers.minijuego_state import MinijuegoState
 from post_truth.controllers.mundo_state import MundoState
+from post_truth.controllers.red_state import ConectarState, SalaState
 from post_truth.controllers.resultado_state import ResultadoState
 from post_truth.controllers.resumen_state import ResumenState
 from post_truth.controllers.seleccion_state import SeleccionState
@@ -39,6 +40,7 @@ class App:
         self.personajes: list[Personaje] = []   # todos los jugadores, cada uno con un rol distinto
         self.flujo = FLUJO
         self.partida = None
+        self.red = None                 # ConexionRed mientras se esta en la sala (multijugador)
         self.tiempo_extendido = False   # accesibilidad: dias y relojes x1.5 (X en el menu)
         self.volumen = 0.7              # de 0 a 1 (Opciones del menu)
         self.estados = StateManager(lambda: self.temas.actual.fondo)
@@ -56,6 +58,8 @@ class App:
         self.estados.registrar("investigacion", InvestigacionState(self))
         self.estados.registrar("fase", FaseState(self))
         self.estados.registrar("lugar", LugarState(self))
+        self.estados.registrar("conectar", ConectarState(self))
+        self.estados.registrar("sala", SalaState(self))
         self.estados.cambiar("menu")
 
     def run(self) -> None:
@@ -65,7 +69,25 @@ class App:
                 if event.type == pygame.QUIT:
                     self.corriendo = False
                 self.estados.handle_event(event)
+            self.atender_red(dt)
             self.estados.update(dt)
             self.estados.draw(self.pantalla)
             pygame.display.flip()
         pygame.quit()
+
+    def atender_red(self, dt: float) -> None:
+        """Multijugador: la sesion espejo lee la cola de la red (sin esperar). Si se cae la conexion, a conectar."""
+        s = self.partida
+        if not getattr(s, "en_red", False):
+            return
+        s.tick(dt)
+        if s.conexion.cerrada and s.fin is None:
+            self.salir_de_red(f"Se perdio la conexion: {s.conexion.motivo}")
+
+    def salir_de_red(self, aviso: str | None = None) -> None:
+        if getattr(self.partida, "en_red", False):
+            self.partida.conexion.cerrar()
+        self.partida, self.red = None, None
+        if aviso:
+            self.estados.estado("conectar").aviso = (aviso, "malo")
+            self.estados.cambiar("conectar")
