@@ -26,7 +26,8 @@ python src/main.py
 - E: entrar al lugar donde estas (la evidencia aparece sola); adentro, 1-3 o clic: ver la noticia, jugar el minijuego o volver a la calle
 - F3: superposicion de depuracion (zonas, colisiones y fronteras del grafo de la ciudad)
 - F1 (en cualquier pantalla): modo sustentacion con el arbol de decisiones, el grafo social, el grafo de la ciudad y el arbol de dialogo en crudo (BFS, DFS y Dijkstra); el juego queda en pausa
-- Menu: flechas y Enter o clic; O abre las opciones (tema, volumen y tiempo extendido); R multijugador
+- Menu: flechas y Enter o clic; O abre las opciones (tema, volumen, volumen de los pasos, silencio, tiempo extendido y mensajes guia); R multijugador; A ayuda
+- F2 (en cualquier pantalla): ayuda completa, abierta en la seccion de donde estas; el juego queda en pausa
 - G: mostrar la guia hacia la noticia
 - Chat bajo presion (Colegio): flechas o A/D mueven a Sofi para atrapar el apoyo y esquivar los ataques; Espacio usa la calma
 - Mitin (Plaza): revienta los globos de rumor con 1 dato, 2 pregunta o 3 calma segun su forma
@@ -43,6 +44,10 @@ python src/main.py
 - I (en el menu): ver la introduccion
 - X (en el menu): tiempo extendido (dias y relojes mas largos)
 - ESC: saltar la introduccion
+
+## Inclusividad
+
+Temas de alto contraste y daltonismo, formas que no dependen del color, tiempo extendido, pausa, avisos visuales de cada sonido, volumen y silencio, ayuda y mensajes guia. Que dificultad atiende cada una: [docs/inclusividad.md](docs/inclusividad.md).
 
 ## Fases de la campana
 
