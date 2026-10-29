@@ -117,6 +117,7 @@ class RuedaPrensa(Minijuego):
             self._marcar("acierto")
 
     def _marcar(self, como: str) -> None:
+        self.ecos.append("acierto" if datos()["efectos"][como] > 0 else "error")
         self.resultados.append(como)
         self.credito = max(0.0, min(100.0, self.credito + datos()["efectos"][como]))
 

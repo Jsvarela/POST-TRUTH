@@ -3,12 +3,14 @@ import pygame
 
 from post_truth.controllers.base_state import BaseState
 from post_truth.models import fases
+from post_truth.views import sonido
 from post_truth.views.fase_view import dibujar_fase
 
 
 class FaseState(BaseState):
     def al_entrar(self) -> None:
         self.t = 0.0
+        sonido.tocar("fase")   # aviso visual: esta misma pantalla
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_SPACE):

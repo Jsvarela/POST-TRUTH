@@ -100,6 +100,7 @@ class BocaEnBoca(Minijuego):
             casa, p = self.charla
             if p.soltar() and self.casas[casa] == CREE:
                 self.casas[casa] = ENOJADA
+                self.ecos.append("error")
             self.charla = None
         if cerca is None:
             return
@@ -107,6 +108,7 @@ class BocaEnBoca(Minijuego):
             self.charla = (cerca, Persuasion(self.contexto.evidencias, self.contexto.credibilidad))
         if self.charla[1].avanzar(dt):
             self.casas[cerca] = CONVENCIDA
+            self.ecos.append("acierto")
             self.charla = None
 
     def accion(self, nombre: str) -> None:

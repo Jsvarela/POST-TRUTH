@@ -54,6 +54,7 @@ class Minijuego(ABC):
 
     def __init__(self, contexto: ContextoMinijuego) -> None:
         self.contexto = contexto
+        self.ecos: list[str] = []   # "acierto" / "error" desde el ultimo cuadro: la pantalla los hace sonar (no se guarda)
 
     @abstractmethod
     def update(self, dt: float) -> None: ...

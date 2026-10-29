@@ -77,6 +77,7 @@ class Mitin(Minijuego):
         self._marcar(SIN_PRUEBAS if tipo == "dato" and self.contexto.evidencias == 0 else ACIERTO)
 
     def _marcar(self, como: str) -> None:
+        self.ecos.append("acierto" if como in (ACIERTO, SIN_PRUEBAS) else "error")
         self.resultados.append(como)
         self.animo = max(0.0, min(100.0, self.animo + datos()["efectos"][como]))
 

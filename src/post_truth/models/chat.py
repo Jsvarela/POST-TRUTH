@@ -85,9 +85,11 @@ class Chat(Minijuego):
             if antes < FILA_SOFI <= m[1] and m[0] == self.carril:   # llega a la fila de Sofi en su carril
                 if m[2] == APOYO:
                     self.apoyos += 1
+                    self.ecos.append("acierto")
                     self.calma = min(CALMA_LLENA, self.calma + 1)
                 else:
                     self.golpes += 1
+                    self.ecos.append("error")
                 continue
             if m[1] < 1.05:
                 quedan.append(m)

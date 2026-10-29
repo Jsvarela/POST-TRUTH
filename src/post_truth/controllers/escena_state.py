@@ -13,6 +13,7 @@ from post_truth.models.pistas import Investigacion, Pista
 from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, FIN_DIA, PartidaSesion, ResultadoDecision
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
+from post_truth.views import sonido
 from post_truth.views.hud import DatosHud
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.componentes import Boton, CajaDialogo
@@ -291,6 +292,8 @@ class EscenaState(BaseState):
         self.sesion.aplicar()
         self.impacto = r.impacto
         self.animo = _signo(r.impacto)
+        if self.animo:   # aviso visual: la reaccion de los presentes y las consecuencias
+            sonido.tocar("acierto" if self.animo > 0 else "error")
         olas = r.simulacion.resultado.olas[1:] if r.simulacion is not None else ()
         self._reaccion = (self.animo, frozenset(id for ola in olas for id in ola))   # quienes la recibieron
         historial = self.sesion.jugador(r.jugador).historial
