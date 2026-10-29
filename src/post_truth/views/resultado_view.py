@@ -46,7 +46,7 @@ def dibujar_resultado(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, r:
         dibujar_retrato(pantalla, c.aspecto, tema, retrato)
         alto = round(px(160) * r.votos[c.id] / max(r.votos.values()) * progreso)   # la mas alta llena la columna
         barra = pygame.Rect(x - px(30), base - alto, px(60), alto)
-        pygame.draw.rect(pantalla, tema.acento if gano else tema.borde, barra, border_radius=px(4))
+        pygame.draw.rect(pantalla, tema.acento if gano else tema.borde, barra)
         if gano and progreso >= 1:   # ademas del color, una corona: no depende solo del color
             y = retrato.top - px(2)
             pygame.draw.polygon(pantalla, tema.detalle, [(x - px(18), y), (x - px(18), y - px(16)), (x - px(9), y - px(8)),

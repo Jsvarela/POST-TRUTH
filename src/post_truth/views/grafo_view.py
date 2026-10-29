@@ -87,8 +87,8 @@ class AnimacionPropagacion:
     def draw(self, pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: pygame.Rect) -> None:
         r = self.resultado
         color_noticia = tema.malo if r.es_falsa else tema.bueno
-        pygame.draw.rect(pantalla, tema.panel, rect, border_radius=px(14))
-        pygame.draw.rect(pantalla, tema.borde, rect, width=px(2), border_radius=px(14))
+        pygame.draw.rect(pantalla, tema.panel, rect)
+        pygame.draw.rect(pantalla, tema.borde, rect, width=px(2))
         area = pygame.Rect(rect.x + px(40), rect.y + px(58), rect.width - px(80), rect.height - px(140))
         pos = {c.id: (area.x + c.pos[0] * area.width, area.y + c.pos[1] * area.height)
                for c in self.grafo.vertices()}

@@ -81,8 +81,8 @@ def _avatar(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, avatar: Avat
         pygame.draw.ellipse(pantalla, tema.panel, (rect.x + px(9), rect.centery + px(3), rect.width - px(18), rect.height // 2))
     else:
         color = tema.rol[avatar.color]
-        pygame.draw.rect(pantalla, color, rect, border_radius=px(10))
-        pygame.draw.rect(pantalla, tema.borde, rect, width=px(2), border_radius=px(10))
+        pygame.draw.rect(pantalla, color, rect)
+        pygame.draw.rect(pantalla, tema.borde, rect, width=px(2))
         inicial = fuentes.grande.render(nombre.strip("@")[0].upper(), True, tema.fondo)
         pantalla.blit(inicial, inicial.get_rect(center=rect.center))
 
@@ -96,7 +96,7 @@ def _corazon(pantalla: pygame.Surface, color: tuple[int, int, int], centro: tupl
 
 def _globo(pantalla: pygame.Surface, color: tuple[int, int, int], centro: tuple[int, int]) -> None:
     x, y = centro
-    pygame.draw.rect(pantalla, color, (x - px(9), y - px(7), px(18), px(12)), border_radius=px(4))
+    pygame.draw.rect(pantalla, color, (x - px(9), y - px(7), px(18), px(12)))
     pygame.draw.polygon(pantalla, color, [(x - px(4), y + px(4)), (x + px(1), y + px(4)), (x - px(5), y + px(10))])
 
 
@@ -131,8 +131,8 @@ def _tooltip(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, tarjeta: py
     if caja.bottom > tarjeta.bottom:
         caja.midbottom = (zona.centerx, zona.top - px(6))
     caja.clamp_ip(tarjeta)
-    pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(8))
-    pygame.draw.rect(pantalla, tema.acento, caja, width=px(2), border_radius=px(8))
+    pygame.draw.rect(pantalla, tema.panel, caja)
+    pygame.draw.rect(pantalla, tema.acento, caja, width=px(2))
     y = caja.y + px(8)
     for i, linea in enumerate(lineas):
         color = tema.acento if i == 0 and descubierta else tema.texto
@@ -143,8 +143,8 @@ def _tooltip(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, tarjeta: py
 def dibujar_tarjeta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: pygame.Rect, evento: NewsEvent,
                     investigacion: Investigacion, hover: ZonaTarjeta | None = None, ocultas: bool = False) -> None:
     zonas = _layout(rect)
-    pygame.draw.rect(pantalla, tema.fondo, rect, border_radius=px(12))
-    pygame.draw.rect(pantalla, tema.borde, rect, width=px(2), border_radius=px(12))
+    pygame.draw.rect(pantalla, tema.fondo, rect)
+    pygame.draw.rect(pantalla, tema.borde, rect, width=px(2))
 
     autor = evento.author
     if autor is not None:
@@ -181,7 +181,7 @@ def dibujar_tarjeta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect
             pantalla.blit(fuentes.chica.render(evento.image.pie, True, tema.texto), (banda.x + px(6), banda.y + px(3)))
         etiqueta = fuentes.chica.render("FOTO", True, tema.fondo)
         marca = etiqueta.get_rect(topleft=(r.x + px(6), r.y + px(6))).inflate(px(10), px(4))
-        pygame.draw.rect(pantalla, tema.detalle, marca, border_radius=px(6))
+        pygame.draw.rect(pantalla, tema.detalle, marca)
         pantalla.blit(etiqueta, etiqueta.get_rect(center=marca.center))
 
     r = zonas[ZonaTarjeta.ESTADISTICAS]
@@ -196,9 +196,9 @@ def dibujar_tarjeta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect
         if ocultas and not descubierta:
             continue
         if hover is pista.zona:
-            pygame.draw.rect(pantalla, tema.acento, zr.inflate(px(4), px(4)), width=px(2), border_radius=px(8))
+            pygame.draw.rect(pantalla, tema.acento, zr.inflate(px(4), px(4)), width=px(2))
         elif descubierta:
-            pygame.draw.rect(pantalla, tema.borde, zr.inflate(px(2), px(2)), width=1, border_radius=px(8))
+            pygame.draw.rect(pantalla, tema.borde, zr.inflate(px(2), px(2)), width=1)
         _insignia(pantalla, fuentes, tema, _centro_insignia(pista.zona, zr), pista, descubierta, TECLAS_PISTA[i])
     if hover is not None:
         pista = next((p for p in evento.clues if p.zona is hover), None)

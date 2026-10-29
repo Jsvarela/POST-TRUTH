@@ -226,12 +226,17 @@ class BarraAnimada:
     def update(self, dt: float) -> None:
         self.actual += (self.objetivo - self.actual) * (1 - math.exp(-self.RAPIDEZ * max(0.0, dt)))
 
+    SEGMENTO = 6   # ancho (de diseno) de cada bloque de la barra
+
     def draw(self, pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect, color) -> None:
-        radio = rect.h // 2
-        pygame.draw.rect(pantalla, tema.fondo, rect, border_radius=radio)
-        lleno = round(rect.w * max(0.0, min(100.0, self.actual)) / 100)
-        if lleno:
-            pygame.draw.rect(pantalla, color, (rect.x, rect.y, lleno, rect.h), border_radius=radio)
+        """Barra recta y segmentada: bloques del color con una separacion de un pixel."""
+        p, seg = px(2), px(self.SEGMENTO)
+        pygame.draw.rect(pantalla, mezclar(tema.fondo, NEGRO, 0.3), rect)
+        fin = rect.x + round(rect.w * max(0.0, min(100.0, self.actual)) / 100)
+        x = rect.x
+        while x < fin:
+            pygame.draw.rect(pantalla, color, (x, rect.y, min(seg, fin - x), rect.h))
+            x += seg + p
         if abs(self.objetivo - self.actual) > 0.5:   # mientras se mueve, una marca en el valor al que va
             x = rect.x + round(rect.w * max(0.0, min(100.0, self.objetivo)) / 100)
             pygame.draw.line(pantalla, tema.texto, (x, rect.y - px(2)), (x, rect.bottom + px(1)), px(2))

@@ -76,9 +76,9 @@ def dibujar_anuncio(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, a: A
     color = _color(tema, a.tipo)
     w, h = (px(660), px(210)) if a.grande else (px(560), px(74))
     panel = pygame.Surface((w, h), pygame.SRCALPHA)
-    pygame.draw.rect(panel, (*tema.panel, 245), panel.get_rect(), border_radius=px(18))
+    pygame.draw.rect(panel, (*tema.panel, 245), panel.get_rect())
     latido = 0.5 + 0.5 * math.sin(a.t * 8) if a.tipo == "crisis" else 1.0
-    pygame.draw.rect(panel, color, panel.get_rect(), px(4) + round(px(3) * latido), border_radius=px(18))
+    pygame.draw.rect(panel, color, panel.get_rect(), px(4) + round(px(3) * latido))
     r = px(40) if a.grande else px(20)
     _icono(panel, tema, a.tipo, (px(24) + r, h // 2), r, a.t)
     x = px(40) + 2 * r
@@ -100,7 +100,7 @@ def dibujar_anuncio(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, a: A
         velo.fill((*tema.fondo, round(120 * alfa / 255)))
         pantalla.blit(velo, (0, 0))
         escala = max(0.05, _rebote(entrada)) * (1 - 0.15 * salida)
-        panel = pygame.transform.smoothscale(panel, (max(1, round(w * escala)), max(1, round(h * escala))))
+        panel = pygame.transform.scale(panel, (max(1, round(w * escala)), max(1, round(h * escala))))   # sin suavizar: pixel
         dx = round(math.sin(a.t * 60) * px(8) * max(0.0, 1 - a.t / 0.5)) if a.tipo == "crisis" else 0   # sacudida
         rect = panel.get_rect(center=(ancho_p // 2 + dx, alto_p // 2 - round(px(30) * salida)))
     else:

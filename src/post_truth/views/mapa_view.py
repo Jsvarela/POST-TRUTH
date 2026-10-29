@@ -126,7 +126,7 @@ def _tecla(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, letra: str, d
     """Teclita con la letra de atajo, alineada a la derecha."""
     img = fuentes.chica.render(letra, True, tema.fondo)
     caja = img.get_rect(midright=(derecha, y)).inflate(px(14), px(6))
-    pygame.draw.rect(pantalla, tema.texto, caja, border_radius=px(6))
+    pygame.draw.rect(pantalla, tema.texto, caja)
     pantalla.blit(img, img.get_rect(center=caja.center))
 
 
@@ -134,7 +134,7 @@ def _franja_de_ayuda(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rec
                      estado: EstadoMapa) -> None:
     """Zona fija bajo el mapa."""
     franja = pygame.Rect(rect.x + px(10), rect.bottom - ALTO_FRANJA - px(8), rect.width - px(20), ALTO_FRANJA)
-    pygame.draw.rect(pantalla, tema.panel, franja, border_radius=px(10))
+    pygame.draw.rect(pantalla, tema.panel, franja)
     f = fuentes.chica
     paso = f.get_linesize() + px(2)
     x0, y = franja.x + px(14), franja.y + px(6)
@@ -162,8 +162,8 @@ def _franja_de_ayuda(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rec
 
 def dibujar_mapa(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: pygame.Rect,
                  estado: EstadoMapa) -> None:
-    pygame.draw.rect(pantalla, tema.fondo, rect, border_radius=px(12))
-    pygame.draw.rect(pantalla, tema.borde, rect, width=px(2), border_radius=px(12))
+    pygame.draw.rect(pantalla, tema.fondo, rect)
+    pygame.draw.rect(pantalla, tema.borde, rect, width=px(2))
     radio = _radio(rect)
     pos = _posiciones(estado, rect)
     tramos_ruta = {frozenset(par) for par in zip(estado.ruta, estado.ruta[1:])}

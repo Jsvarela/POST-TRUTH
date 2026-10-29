@@ -26,14 +26,13 @@ def dibujar_retrato(pantalla: pygame.Surface, aspecto: AspectoRetrato, tema: Tem
     pelo = tema.cabello[aspecto.cabello]
     campana = tema.rol[aspecto.color]
     ancho_linea = max(2, round(2 * s))
-    radio = round(10 * s)
 
-    pygame.draw.rect(pantalla, campana, marco, border_radius=radio)
+    pygame.draw.rect(pantalla, campana, marco)
     clip_previo = pantalla.get_clip()
     pantalla.set_clip(marco)
 
     if aspecto.peinado == "largo":
-        pygame.draw.rect(pantalla, pelo, r(25, 28, 50, 64), border_radius=round(18 * s))
+        pygame.draw.rect(pantalla, pelo, r(25, 28, 50, 64))
     elif aspecto.peinado == "recogido":
         pygame.draw.circle(pantalla, pelo, p(50, 17), round(10 * s))
 
@@ -69,8 +68,8 @@ def dibujar_retrato(pantalla: pygame.Surface, aspecto: AspectoRetrato, tema: Tem
             pygame.draw.circle(pantalla, tema.texto, p(ex, 50), round(7.5 * s), ancho_linea)
         pygame.draw.line(pantalla, tema.texto, p(49, 50), p(51, 50), ancho_linea)
     elif aspecto.accesorio == "bufanda":
-        pygame.draw.rect(pantalla, tema.acento, r(32, 82, 36, 11), border_radius=round(5 * s))
-        pygame.draw.rect(pantalla, tema.acento, r(56, 88, 10, 26), border_radius=round(4 * s))
+        pygame.draw.rect(pantalla, tema.acento, r(32, 82, 36, 11))
+        pygame.draw.rect(pantalla, tema.acento, r(56, 88, 10, 26))
 
     pantalla.set_clip(clip_previo)
-    pygame.draw.rect(pantalla, tema.borde, marco, width=max(2, round(3 * s)), border_radius=radio)
+    pygame.draw.rect(pantalla, tema.borde, marco, width=max(2, round(3 * s)))

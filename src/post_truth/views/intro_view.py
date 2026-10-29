@@ -73,7 +73,7 @@ def _horizonte(lienzo: pygame.Surface, tema: Tema, t: float, ventanas_encendidas
     if ventanas_encendidas:
         for _, x, y, orden in _VENTANAS:
             if t * 24 > orden:
-                pygame.draw.rect(lienzo, tema.detalle, (x, y, px(9), px(13)), border_radius=px(2))
+                pygame.draw.rect(lienzo, tema.detalle, (x, y, px(9), px(13)))
     pygame.draw.rect(lienzo, tema.suelo, (0, Y_SUELO, ANCHO, ALTO_ARTE - Y_SUELO))
 
 
@@ -81,9 +81,9 @@ def _lamina_ciudad(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro: 
                    lamina: Lamina, t: float) -> None:
     _horizonte(lienzo, tema, t)
     ancho_titulo, alto_titulo = px(620), px(88)
-    titulo = pygame.transform.smoothscale(fuentes.titulo.render(lamina.titulo.upper(), True, tema.texto),
+    titulo = pygame.transform.scale(fuentes.titulo.render(lamina.titulo.upper(), True, tema.texto),   # sin suavizar
                                           (ancho_titulo, alto_titulo))
-    sombra = pygame.transform.smoothscale(fuentes.titulo.render(lamina.titulo.upper(), True, tema.fondo),
+    sombra = pygame.transform.scale(fuentes.titulo.render(lamina.titulo.upper(), True, tema.fondo),
                                           (ancho_titulo, alto_titulo))
     a = _aparicion(t, 0.7, 1.0)
     for superficie in (titulo, sombra):
@@ -105,13 +105,13 @@ def _lamina_zonas(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro: I
     mapa = pygame.Rect(px(36), px(30), px(520), px(420))
     dibujar_mapa(lienzo, fuentes, tema, mapa, EstadoMapa(ciudad, actual=zona.id, mostrar_ayuda=False))
     tarjeta = pygame.Rect(px(590), px(30), px(400), px(420))
-    pygame.draw.rect(lienzo, tema.panel, tarjeta, border_radius=px(14))
+    pygame.draw.rect(lienzo, tema.panel, tarjeta)
     foto = pygame.Rect(tarjeta.x + px(12), tarjeta.y + px(12), tarjeta.width - px(24), px(190))
     sub = pygame.Surface(foto.size)
     dibujar_fondo_zona(sub, zona.id, tema, sub.get_rect())
     lienzo.blit(sub, foto)
     pygame.draw.rect(lienzo, tema.borde, foto, width=px(2))
-    pygame.draw.rect(lienzo, tema.borde, tarjeta, width=px(2), border_radius=px(14))
+    pygame.draw.rect(lienzo, tema.borde, tarjeta, width=px(2))
     nombre = ciudad.zona(zona.id).nombre
     lienzo.blit(fuentes.grande.render(nombre, True, tema.acento), (tarjeta.x + px(18), foto.bottom + px(14)))
     dibujar_texto_ajustado(lienzo, fuentes.normal, zona.descripcion, tema.texto,
@@ -141,8 +141,8 @@ def _lamina_civitas(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro:
         signo = fuentes.chica.render("?", True, tema.borde)
         lienzo.blit(signo, signo.get_rect(center=(round(x), round(y))))
     telefono = pygame.Rect((ANCHO - px(400)) // 2, px(6), px(400), px(456))
-    pygame.draw.rect(lienzo, tema.panel, telefono, border_radius=px(22))
-    pygame.draw.rect(lienzo, tema.borde, telefono, width=px(3), border_radius=px(22))
+    pygame.draw.rect(lienzo, tema.panel, telefono)
+    pygame.draw.rect(lienzo, tema.borde, telefono, width=px(3))
     lienzo.blit(fuentes.grande.render("Civitas", True, tema.acento), (telefono.x + px(20), telefono.y + px(12)))
     for i, post in enumerate(intro.publicaciones):
         a = _aparicion(t, 0.9 + i * 1.1, 0.5)
@@ -154,9 +154,9 @@ def _lamina_civitas(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro:
         interior = capa.get_rect()
         es_rumor = post.tipo == "rumor"
         color = tema.malo if es_rumor else tema.bueno
-        pygame.draw.rect(capa, (*tema.fondo, 255), interior, border_radius=px(10))
+        pygame.draw.rect(capa, (*tema.fondo, 255), interior)
         grosor = px(3) if es_rumor and int(t * 3) % 2 == 0 else px(2)
-        pygame.draw.rect(capa, (*color, 255), interior, width=grosor, border_radius=px(10))
+        pygame.draw.rect(capa, (*color, 255), interior, width=grosor)
         pygame.draw.circle(capa, tema.rol[i % 4], (px(30), px(28)), px(18))
         inicial = fuentes.normal.render(post.autor.strip("@")[0].upper(), True, tema.fondo)
         capa.blit(inicial, inicial.get_rect(center=(px(30), px(28))))
@@ -177,8 +177,8 @@ def _tarjeta_candidato(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, c: 
                        a: float) -> None:
     capa = pygame.Surface(rect.size, pygame.SRCALPHA)
     interior = capa.get_rect()
-    pygame.draw.rect(capa, (*tema.panel, 255), interior, border_radius=px(16))
-    pygame.draw.rect(capa, (*tema.borde, 255), interior, width=px(2), border_radius=px(16))
+    pygame.draw.rect(capa, (*tema.panel, 255), interior)
+    pygame.draw.rect(capa, (*tema.borde, 255), interior, width=px(2))
     dibujar_retrato(capa, c.aspecto, tema, pygame.Rect(interior.centerx - px(95), px(14), px(190), px(228)))
     nombre = fuentes.grande.render(c.nombre, True, tema.texto)
     capa.blit(nombre, nombre.get_rect(midtop=(interior.centerx, px(250))))
@@ -215,8 +215,8 @@ def _lamina_cierre(lienzo: pygame.Surface, fuentes: Fuentes, tema: Tema, intro: 
             continue
         x = x0 + i * (ancho_carta + hueco)
         capa = pygame.Surface((ancho_carta, alto_carta), pygame.SRCALPHA)
-        pygame.draw.rect(capa, (*tema.panel, 240), capa.get_rect(), border_radius=px(16))
-        pygame.draw.rect(capa, (*tema.borde, 255), capa.get_rect(), width=px(2), border_radius=px(16))
+        pygame.draw.rect(capa, (*tema.panel, 240), capa.get_rect())
+        pygame.draw.rect(capa, (*tema.borde, 255), capa.get_rect(), width=px(2))
         dibujar_personaje(capa, Personaje(rol, Genero.MUJER if i % 2 else Genero.HOMBRE, 0), tema,
                           pygame.Rect(px(28), px(8), px(180), px(236)), animo=1 if a >= 1 else 0)
         nombre = fuentes.normal.render(rol.value, True, tema.acento)

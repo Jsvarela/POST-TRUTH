@@ -79,8 +79,8 @@ def desplazamiento_reaccion(signo: int, t: float) -> tuple[int, int]:
 
 def dibujar_presentes(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: pygame.Rect,
                       estado: EstadoPresentes) -> None:
-    pygame.draw.rect(pantalla, tema.fondo, rect, border_radius=px(12))
-    pygame.draw.rect(pantalla, tema.borde, rect, width=px(2), border_radius=px(12))
+    pygame.draw.rect(pantalla, tema.fondo, rect)
+    pygame.draw.rect(pantalla, tema.borde, rect, width=px(2))
     titulo = fuentes.normal.render("En el lugar", True, tema.texto)
     pantalla.blit(titulo, (rect.x + px(14), rect.y + px(10)))
     n = len(estado.personas)
@@ -98,8 +98,8 @@ def dibujar_presentes(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, re
             if le_llego:   # la publicacion le llego por Civitas: un celular junto a la persona
                 tel = pygame.Rect(0, 0, px(12), px(20))
                 tel.midleft = (x + px(26), pies[1] - px(70))
-                pygame.draw.rect(pantalla, tema.texto, tel, border_radius=px(3))
-                pygame.draw.rect(pantalla, tema.acento, tel.inflate(-px(4), -px(6)), border_radius=px(2))
+                pygame.draw.rect(pantalla, tema.texto, tel)
+                pygame.draw.rect(pantalla, tema.acento, tel.inflate(-px(4), -px(6)))
 
 
 def _globo_reaccion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, centro: tuple[int, int], signo: int) -> None:
@@ -116,8 +116,8 @@ def _globo_reaccion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, cent
     else:
         caja = pygame.Rect(0, 0, px(28), px(18))
         caja.center = centro
-        pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(8))
-        pygame.draw.rect(pantalla, tema.borde, caja, width=px(1), border_radius=px(8))
+        pygame.draw.rect(pantalla, tema.panel, caja)
+        pygame.draw.rect(pantalla, tema.borde, caja, width=px(1))
         for k in (-1, 0, 1):
             pygame.draw.circle(pantalla, tema.texto, (x + k * px(7), y), px(2))
 
@@ -135,8 +135,8 @@ def dibujar_reloj(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, restan
     caja = pygame.Rect(*topleft, px(200), px(32))   # cabe sobre la cabeza del personaje
     if restante <= PULSO_RELOJ and int(restante * 4) % 2 == 0:
         caja = caja.inflate(px(6), px(2))
-    pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(8))
-    pygame.draw.rect(pantalla, color, caja, px(3) if urgente else px(2), border_radius=px(8))
+    pygame.draw.rect(pantalla, tema.panel, caja)
+    pygame.draw.rect(pantalla, color, caja, px(3) if urgente else px(2))
     centro, r = (caja.x + px(17), caja.y + px(14)), px(8)           # reloj: circulo con dos agujas
     pygame.draw.circle(pantalla, color, centro, r, px(2))
     ang = -math.pi / 2 + 2 * math.pi * (1 - restante / total)
@@ -147,11 +147,11 @@ def dibujar_reloj(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, restan
     img = fuentes.normal.render(texto, True, tema.texto)
     pantalla.blit(img, img.get_rect(midleft=(caja.x + px(32), centro[1])))
     barra = pygame.Rect(caja.x + px(8), caja.bottom - px(6), caja.w - px(16), px(3))
-    pygame.draw.rect(pantalla, tema.fondo, barra, border_radius=px(3))
+    pygame.draw.rect(pantalla, tema.fondo, barra)
     lleno = barra.copy()
     lleno.w = round(barra.w * max(0.0, min(1.0, restante / total)))
     if lleno.w:
-        pygame.draw.rect(pantalla, color, lleno, border_radius=px(3))
+        pygame.draw.rect(pantalla, color, lleno)
 
 
 def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, personaje: Personaje,
@@ -168,8 +168,8 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
     if nombre_zona:
         etiqueta = fuentes.normal.render(f"Estas en: {nombre_zona}", True, tema.texto)
         marco = etiqueta.get_rect(topleft=(px(16), RECT_ESCENA.y + px(12))).inflate(px(20), px(10))
-        pygame.draw.rect(pantalla, tema.panel, marco, border_radius=px(8))
-        pygame.draw.rect(pantalla, tema.acento, marco, width=px(2), border_radius=px(8))
+        pygame.draw.rect(pantalla, tema.panel, marco)
+        pygame.draw.rect(pantalla, tema.acento, marco, width=px(2))
         pantalla.blit(etiqueta, etiqueta.get_rect(center=marco.center))
     if reloj is not None:
         dibujar_reloj(pantalla, fuentes, tema, *reloj, (px(16), RECT_ESCENA.y + px(56)))

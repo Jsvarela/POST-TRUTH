@@ -93,22 +93,20 @@ def dibujar_telefono(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: 
 def _marco(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) -> None:
     # carcasa del celular: cuerpo, pantalla con borde interior, muesca y barra de inicio
     carcasa = TELEFONO.inflate(px(14), px(14))
-    pygame.draw.rect(sup, mezclar(tema.fondo, tema.borde, 0.35), carcasa, border_radius=px(38))
-    pygame.draw.rect(sup, tema.panel, TELEFONO, border_radius=px(28))
+    pygame.draw.rect(sup, mezclar(tema.fondo, tema.borde, 0.35), carcasa)
+    pygame.draw.rect(sup, tema.panel, TELEFONO)
     destello = v.alerta > 0 and math.sin(v.t * 12) > 0   # se volvio viral: el borde parpadea
-    pygame.draw.rect(sup, tema.malo if destello else tema.borde, TELEFONO, px(6 if destello else 3),
-                     border_radius=px(28))
+    pygame.draw.rect(sup, tema.malo if destello else tema.borde, TELEFONO, px(6 if destello else 3))
     muesca = pygame.Rect(0, 0, px(110), px(16))
     muesca.midtop = (TELEFONO.centerx, carcasa.y + px(2))
-    pygame.draw.rect(sup, mezclar(tema.fondo, tema.borde, 0.35), muesca, border_radius=px(8))
-    pygame.draw.rect(sup, tema.texto_off, (TELEFONO.centerx - px(50), TELEFONO.bottom + px(1), px(100), px(4)),
-                     border_radius=px(2))
+    pygame.draw.rect(sup, mezclar(tema.fondo, tema.borde, 0.35), muesca)
+    pygame.draw.rect(sup, tema.texto_off, (TELEFONO.centerx - px(50), TELEFONO.bottom + px(1), px(100), px(4)))
     horas = 6 + v.hora * 16   # el dia va de 6:00 a 22:00
     estado = fuentes.chica.render(f"{int(horas):02d}:{int(horas % 1 * 60):02d}", True, tema.texto)
     sup.blit(estado, (muesca.right + px(14), TELEFONO.y + px(1)))
     bateria = pygame.Rect(muesca.right + px(24) + estado.get_width(), TELEFONO.y + px(5), px(24), px(11))
-    pygame.draw.rect(sup, tema.texto, bateria, 1, border_radius=px(2))
-    pygame.draw.rect(sup, tema.bueno, bateria.inflate(-px(4), -px(4)).move(0, 0), border_radius=px(1))
+    pygame.draw.rect(sup, tema.texto, bateria, 1)
+    pygame.draw.rect(sup, tema.bueno, bateria.inflate(-px(4), -px(4)).move(0, 0))
     sup.blit(fuentes.grande.render("Civitas", True, tema.acento), (TELEFONO.x + px(22), TELEFONO.y + px(14)))
     x = CERRAR.x - px(10)
     if v.reloj is not None:   # crisis: cuenta regresiva grande en un anillo que se vacia
@@ -126,13 +124,13 @@ def _marco(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) 
         x -= px(48)
     img = fuentes.chica.render("x0.25 (ext.)" if v.extendido else "x0.25", True, tema.texto_off)
     sup.blit(img, img.get_rect(midright=(x, CERRAR.centery + px(6))))
-    pygame.draw.rect(sup, tema.boton, CERRAR, border_radius=px(8))
+    pygame.draw.rect(sup, tema.boton, CERRAR)
     _equis(sup, tema.boton_texto, CERRAR.center, px(6))
     for i, nombre in enumerate(PESTANAS):
         r = rect_pestana(i)
         activa = i == v.pestana
-        pygame.draw.rect(sup, tema.boton if activa else tema.fondo, r, border_radius=px(8))
-        pygame.draw.rect(sup, tema.acento if activa else tema.borde, r, px(2), border_radius=px(8))
+        pygame.draw.rect(sup, tema.boton if activa else tema.fondo, r)
+        pygame.draw.rect(sup, tema.acento if activa else tema.borde, r, px(2))
         sin_leer = len(v.notificaciones) - v.leidas
         etiqueta = f"{nombre} ({sin_leer})" if i == 1 and sin_leer > 0 else nombre
         img = fuentes.chica.render(etiqueta, True, tema.boton_texto if activa else tema.texto)
@@ -181,16 +179,16 @@ def _red(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) ->
     pygame.draw.line(sup, tema.acento, (escudo[0], escudo[1] - px(6)), (escudo[0], escudo[1] + px(6)), px(2))
     _leyenda(sup, fuentes, tema)
     caja = pygame.Rect(TELEFONO.x + px(18), TELEFONO.y + px(404), TELEFONO.w - px(36), px(120))
-    pygame.draw.rect(sup, tema.fondo, caja, border_radius=px(12))
-    pygame.draw.rect(sup, tema.borde, caja, px(2), border_radius=px(12))
+    pygame.draw.rect(sup, tema.fondo, caja)
+    pygame.draw.rect(sup, tema.borde, caja, px(2))
     for k, linea in enumerate(("Mueve el escudo y ataja las bolitas rojas antes de que lleguen.",
                                "Espacio: desmentido en onda (vuelve inmunes a los que toca).")):
         sup.blit(fuentes.chica.render(linea, True, tema.texto), (caja.x + px(14), caja.y + px(10) + k * px(22)))
     falta = p.enfriando["onda"] if p is not None else 0.0
     barra = pygame.Rect(caja.x + px(14), caja.y + px(66), caja.w - px(28), px(14))
-    pygame.draw.rect(sup, tema.panel, barra, border_radius=px(7))
+    pygame.draw.rect(sup, tema.panel, barra)
     lleno = 1 - falta / ENFRIAMIENTO["onda"] if p is not None else 0
-    pygame.draw.rect(sup, tema.bueno, (barra.x, barra.y, round(barra.w * lleno), barra.h), border_radius=px(7))
+    pygame.draw.rect(sup, tema.bueno, (barra.x, barra.y, round(barra.w * lleno), barra.h))
     estado = ("Sin rumor" if p is None else "Desmentido listo (Espacio)" if falta == 0
               else f"Recargando {math.ceil(falta)} s")
     sup.blit(fuentes.chica.render(estado, True, tema.bueno if p is not None and falta == 0 else tema.texto_off),
@@ -233,7 +231,7 @@ def _nodo(sup: pygame.Surface, tema: Tema, centro: tuple[int, int], estado: str,
     elif estado == COMPARTIO:
         pygame.draw.polygon(sup, tema.malo, [(x, y - r - px(2)), (x + r + px(1), y + r), (x - r - px(1), y + r)])
     else:
-        pygame.draw.rect(sup, tema.bueno, pygame.Rect(x - r, y - r, 2 * r, 2 * r), border_radius=px(3))
+        pygame.draw.rect(sup, tema.bueno, pygame.Rect(x - r, y - r, 2 * r, 2 * r))
 
 
 def _leyenda(sup: pygame.Surface, fuentes: Fuentes, tema: Tema) -> None:
@@ -257,8 +255,8 @@ def _notificaciones(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaT
         if caja.bottom > TELEFONO.bottom - px(34):
             break
         nueva = i >= v.leidas
-        pygame.draw.rect(sup, tema.fondo, caja, border_radius=px(10))
-        pygame.draw.rect(sup, tema.acento if nueva else tema.borde, caja, px(2), border_radius=px(10))
+        pygame.draw.rect(sup, tema.fondo, caja)
+        pygame.draw.rect(sup, tema.acento if nueva else tema.borde, caja, px(2))
         _icono(sup, tema, n["tipo"], (caja.x + px(26), caja.centery), px(14), 0)
         sup.blit(fuentes.normal.render(n["titulo"], True, tema.texto), (caja.x + px(50), caja.y + px(6)))
         linea = ajustar_texto(n["texto"], fuentes.chica, caja.w - px(62))[0]
@@ -273,8 +271,8 @@ def _publicar(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, p: VistaPublica
     for i, (pieza, opcion) in enumerate(p.filas):
         r = rect_fila(i)
         activa = i == p.fila
-        pygame.draw.rect(sup, tema.boton if activa else tema.fondo, r, border_radius=px(8))
-        pygame.draw.rect(sup, tema.acento if activa else tema.borde, r, px(2), border_radius=px(8))
+        pygame.draw.rect(sup, tema.boton if activa else tema.fondo, r)
+        pygame.draw.rect(sup, tema.acento if activa else tema.borde, r, px(2))
         color = tema.boton_texto if activa else tema.texto
         sup.blit(fuentes.chica.render(ETIQUETAS[pieza], True, color), (r.x + px(10), r.y + px(10)))
         texto = fuentes.chica.render(f"<  {opcion}  >", True, color)
@@ -286,8 +284,8 @@ def _publicar(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, p: VistaPublica
                                  ("Riesgo de conflicto", e.riesgo, tema.malo)):
         sup.blit(fuentes.chica.render(f"{nombre} {valor}", True, tema.texto), (TELEFONO.x + px(22), y))
         barra = pygame.Rect(TELEFONO.x + px(220), y + px(4), TELEFONO.w - px(242), px(12))
-        pygame.draw.rect(sup, tema.fondo, barra, border_radius=px(6))
-        pygame.draw.rect(sup, color, (barra.x, barra.y, round(barra.w * valor / 100), barra.h), border_radius=px(6))
+        pygame.draw.rect(sup, tema.fondo, barra)
+        pygame.draw.rect(sup, color, (barra.x, barra.y, round(barra.w * valor / 100), barra.h))
         y += px(26)
     color = tema.bueno if e.convivencia > 0 else tema.malo if e.convivencia < 0 else tema.texto
     sup.blit(fuentes.chica.render(f"Convivencia {e.convivencia:+}", True, color), (TELEFONO.x + px(22), y))
@@ -296,12 +294,11 @@ def _publicar(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, p: VistaPublica
         aviso = "Puede volverse viral, pero luego te costara credibilidad."
         sup.blit(fuentes.chica.render(aviso, True, tema.malo), (TELEFONO.x + px(22), y))
     lista = p.enfriamiento == 0 and not p.en_curso
-    pygame.draw.rect(sup, tema.boton if lista else tema.boton_off, RECT_PUBLICAR, border_radius=px(10))
+    pygame.draw.rect(sup, tema.boton if lista else tema.boton_off, RECT_PUBLICAR)
     if p.enfriamiento > 0:
         lleno = RECT_PUBLICAR.w * (1 - p.enfriamiento / p.enfriamiento_total)
-        pygame.draw.rect(sup, tema.boton, (RECT_PUBLICAR.x, RECT_PUBLICAR.y, round(lleno), RECT_PUBLICAR.h),
-                         border_radius=px(10))
-    pygame.draw.rect(sup, tema.acento if lista else tema.texto_off, RECT_PUBLICAR, px(2), border_radius=px(10))
+        pygame.draw.rect(sup, tema.boton, (RECT_PUBLICAR.x, RECT_PUBLICAR.y, round(lleno), RECT_PUBLICAR.h))
+    pygame.draw.rect(sup, tema.acento if lista else tema.texto_off, RECT_PUBLICAR, px(2))
     texto = ("Publicar (Enter)" if lista else "Tu post sigue circulando" if p.en_curso
              else f"Podras publicar en {math.ceil(p.enfriamiento)} s")
     img = fuentes.normal.render(texto, True, tema.boton_texto if lista else tema.texto_off)
@@ -320,11 +317,11 @@ def dibujar_icono(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: 
                   alerta: float, t: float) -> None:
     """Telefono en el HUD del mundo: con globo de no leidas y un latido cuando algo se vuelve viral."""
     late = alerta > 0 and math.sin(t * 12) > 0
-    pygame.draw.rect(pantalla, tema.panel, rect, border_radius=px(10))
-    pygame.draw.rect(pantalla, tema.malo if late else tema.borde, rect, px(4 if late else 2), border_radius=px(10))
+    pygame.draw.rect(pantalla, tema.panel, rect)
+    pygame.draw.rect(pantalla, tema.malo if late else tema.borde, rect, px(4 if late else 2))
     cuerpo = pygame.Rect(0, 0, px(18), px(28))
     cuerpo.center = (rect.x + px(22), rect.centery)
-    pygame.draw.rect(pantalla, tema.texto, cuerpo, px(2), border_radius=px(4))
+    pygame.draw.rect(pantalla, tema.texto, cuerpo, px(2))
     pygame.draw.circle(pantalla, tema.texto, (cuerpo.centerx, cuerpo.bottom - px(5)), px(2))
     img = fuentes.chica.render("T: telefono", True, tema.texto)
     pantalla.blit(img, img.get_rect(midleft=(cuerpo.right + px(8), rect.centery)))

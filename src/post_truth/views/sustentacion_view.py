@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 import pygame
 
 from post_truth.config import ALTO, ANCHO, px
-from post_truth.views.componentes import Fuentes, ajustar_texto, panel
+from post_truth.views.componentes import Fuentes, ajustar_texto, panel, recortar
 from post_truth.views.theme import TOKENS, Tema, esp
 
 PESTANAS = ("Arbol de decisiones", "Grafo social", "Grafo de la ciudad", "Arbol de dialogo")
@@ -47,8 +47,8 @@ def dibujar_sustentacion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema,
     for i, nombre in enumerate(PESTANAS):
         r = rect_pestana(i)
         activa = i == pestana
-        pygame.draw.rect(pantalla, tema.boton if activa else tema.panel, r, border_radius=px(TOKENS.radio_m))
-        pygame.draw.rect(pantalla, tema.acento if activa else tema.borde, r, px(2), border_radius=px(TOKENS.radio_m))
+        pygame.draw.rect(pantalla, tema.boton if activa else tema.panel, r)
+        pygame.draw.rect(pantalla, tema.acento if activa else tema.borde, r, px(2))
         img = fuentes.chica.render(f"{i + 1}. {nombre}", True, tema.boton_texto if activa else tema.texto)
         pantalla.blit(img, img.get_rect(center=r.center))
     panel(pantalla, tema, AREA, 255)
@@ -106,12 +106,10 @@ def _arbol(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, area: pygame.
     for n in nodos:
         caja = pygame.Rect(0, 0, ancho_nivel[pos[n.id][1]] - px(2), alto)
         caja.center = p[n.id]
-        pygame.draw.rect(pantalla, tema.boton if n.resaltado else tema.panel, caja, border_radius=px(6))
-        pygame.draw.rect(pantalla, tema.acento if n.resaltado else tema.borde, caja, px(2), border_radius=px(6))
+        pygame.draw.rect(pantalla, tema.boton if n.resaltado else tema.panel, caja)
+        pygame.draw.rect(pantalla, tema.acento if n.resaltado else tema.borde, caja, px(2))
         for i, (texto, color) in enumerate(((n.texto[:22], tema.texto), (n.marca, tema.acento))):
-            img = fuentes.chica.render(texto, True, color)
-            if img.get_width() > caja.w - px(4):   # se encoge para caber en su columna
-                img = pygame.transform.smoothscale(img, (caja.w - px(4), img.get_height()))
+            img = fuentes.chica.render(recortar(texto, fuentes.chica, caja.w - px(4)), True, color)   # cabe en su columna
             pantalla.blit(img, img.get_rect(midtop=(caja.centerx, caja.y + px(2) + i * fuentes.chica.get_linesize())))
 
 

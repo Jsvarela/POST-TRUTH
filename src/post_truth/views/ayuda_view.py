@@ -53,8 +53,7 @@ def _forma(pantalla: pygame.Surface, forma: str, color, c: tuple[int, int], r: i
     if forma.startswith("circulo"):
         pygame.draw.circle(pantalla, color, c, r, px(3) if forma.endswith("vacio") else 0)
     elif forma.startswith("cuadrado"):
-        pygame.draw.rect(pantalla, color, (x - r, y - r, 2 * r, 2 * r), px(3) if forma.endswith("vacio") else 0,
-                         border_radius=px(3))
+        pygame.draw.rect(pantalla, color, (x - r, y - r, 2 * r, 2 * r), px(3) if forma.endswith("vacio") else 0)
     elif forma == "triangulo":
         pygame.draw.polygon(pantalla, color, [(x, y - r), (x + r, y + r), (x - r, y + r)])
     else:

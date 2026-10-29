@@ -196,14 +196,14 @@ def _estados_de_zona(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mun
         pantalla.blit(capa, rect)
         img = fuentes.normal.render(texto, True, tema.texto)
         caja = img.get_rect(center=a_pantalla(z.centro, cam)).inflate(px(16), px(8))
-        pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(8))
+        pygame.draw.rect(pantalla, tema.panel, caja)
         pantalla.blit(img, img.get_rect(center=caja.center))
 
 
 def _barrera(pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect) -> None:
     """Valla de obra con franjas: la arista que el grafo cerro, hecha objeto."""
-    pygame.draw.rect(pantalla, tema.fondo, rect.inflate(px(4), px(4)), border_radius=px(4))
-    pygame.draw.rect(pantalla, tema.detalle, rect, border_radius=px(4))
+    pygame.draw.rect(pantalla, tema.fondo, rect.inflate(px(4), px(4)))
+    pygame.draw.rect(pantalla, tema.detalle, rect)
     paso = px(16)
     horizontal = rect.w >= rect.h
     for k in range(0, (rect.w if horizontal else rect.h), paso * 2):
@@ -246,7 +246,7 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
         if not rect.colliderect(pantalla.get_rect()):
             continue
         if z.id == resaltada:
-            pygame.draw.rect(pantalla, tema.acento, rect.inflate(px(10), px(10)), px(5), border_radius=px(14))
+            pygame.draw.rect(pantalla, tema.acento, rect.inflate(px(10), px(10)), px(5))
         if z.id == estado.noticia:
             if estado.crisis:   # senal de crisis: anillo que late alrededor del lugar
                 radio = px(60) + round(px(14) * (0.5 + 0.5 * math.sin(estado.t * 6)))
@@ -307,7 +307,7 @@ def _marca_transeunte(pantalla: pygame.Surface, tema: Tema, marca: str, c: tuple
         pygame.draw.circle(pantalla, tema.bueno, c, r)
         pygame.draw.circle(pantalla, tema.fondo, c, r // 3)
     else:
-        pygame.draw.rect(pantalla, tema.detalle, (x - r, y - r, 2 * r, 2 * r), border_radius=px(3))
+        pygame.draw.rect(pantalla, tema.detalle, (x - r, y - r, 2 * r, 2 * r))
 
 
 def _etiqueta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, texto: str, punta: tuple[int, int],
@@ -315,8 +315,8 @@ def _etiqueta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, texto: str
     """Nombre de otro jugador sobre su cabeza (apagado si se desconecto)."""
     img = fuentes.chica.render(texto, True, tema.texto if activo else tema.texto_off)
     rect = img.get_rect(midbottom=punta).inflate(esp(2), px(4))
-    pygame.draw.rect(pantalla, tema.panel, rect, border_radius=px(TOKENS.radio_m))
-    pygame.draw.rect(pantalla, tema.acento if activo else tema.borde, rect, width=px(2), border_radius=px(TOKENS.radio_m))
+    pygame.draw.rect(pantalla, tema.panel, rect)
+    pygame.draw.rect(pantalla, tema.acento if activo else tema.borde, rect, width=px(2))
     pantalla.blit(img, img.get_rect(center=rect.center))
 
 
@@ -326,8 +326,8 @@ def _globo_noticia(pantalla: pygame.Surface, tema: Tema, fuentes: Fuentes, punta
     caja = pygame.Rect(0, 0, px(46), px(40))
     caja.midbottom = (x, y - px(12))
     pygame.draw.polygon(pantalla, tema.texto, [(x - px(9), caja.bottom - px(2)), (x + px(9), caja.bottom - px(2)), (x, y)])
-    pygame.draw.rect(pantalla, tema.texto, caja.inflate(px(6), px(6)), border_radius=px(12))
-    pygame.draw.rect(pantalla, tema.malo, caja, border_radius=px(10))
+    pygame.draw.rect(pantalla, tema.texto, caja.inflate(px(6), px(6)))
+    pygame.draw.rect(pantalla, tema.malo, caja)
     img = fuentes.titulo.render("!", True, tema.texto)
     pantalla.blit(img, img.get_rect(center=caja.center))
 
@@ -355,8 +355,8 @@ def _guia(pantalla: pygame.Surface, tema: Tema, cam: tuple[float, float], puntos
 def _minimapa(pantalla: pygame.Surface, tema: Tema, mundo: MapaAbierto, estado: EstadoMundo) -> None:
     """Toda la ciudad en pequeno: zonas, fronteras abiertas, la noticia, la evidencia y el jugador."""
     r = RECT_MINIMAPA
-    pygame.draw.rect(pantalla, tema.panel, r, border_radius=px(10))
-    pygame.draw.rect(pantalla, tema.borde, r, px(2), border_radius=px(10))
+    pygame.draw.rect(pantalla, tema.panel, r)
+    pygame.draw.rect(pantalla, tema.borde, r, px(2))
     interior = r.inflate(-px(20), -px(20))
     ancho, alto = mundo.tamano
 

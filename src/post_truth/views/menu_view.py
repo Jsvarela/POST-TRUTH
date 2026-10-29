@@ -32,7 +32,7 @@ def dibujar_menu(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, botones
     pantalla.blit(titulo, titulo.get_rect(center=centro))
     ancho_linea = round(titulo.get_width() * entrada * (0.9 + 0.1 * math.sin(t * 2)))
     pygame.draw.rect(pantalla, tema.acento, (ANCHO // 2 - ancho_linea // 2, centro[1] + titulo.get_height() // 2,
-                                             ancho_linea, px(6)), border_radius=px(3))
+                                             ancho_linea, px(6)))
     sub = fuentes.normal.render("Alcalde Digital  -  Ciudad Nova elige alcalde en 4 dias", True, tema.acento)
     pantalla.blit(sub, sub.get_rect(center=(ANCHO // 2, centro[1] + titulo.get_height() // 2 + px(36))))
     for i, b in enumerate(botones):   # entran uno tras otro

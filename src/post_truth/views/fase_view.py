@@ -15,7 +15,7 @@ def dibujar_fase(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, numero:
     entrada = min(1.0, t / 0.4)
     escala = max(0.05, _rebote(entrada))
     titulo = fuentes.titulo.render(f"Fase {numero} de {total}: {fase.nombre}", True, tema.acento)
-    titulo = pygame.transform.smoothscale(titulo, (max(1, round(titulo.get_width() * escala)),
+    titulo = pygame.transform.scale(titulo, (max(1, round(titulo.get_width() * escala)),   # sin suavizar: pixel
                                                    max(1, round(titulo.get_height() * escala))))
     pantalla.blit(titulo, titulo.get_rect(midtop=(ANCHO // 2, px(70))))
     y = px(150)

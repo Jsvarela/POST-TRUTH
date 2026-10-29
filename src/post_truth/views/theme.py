@@ -68,9 +68,9 @@ def mezclar(a: Color, b: Color, f: float) -> Color:
 class Tokens:
     """Medidas del sistema visual, iguales en los tres temas (en pixeles de diseno: se escalan con px())."""
     espacio: tuple[int, ...] = (4, 8, 12, 16, 24, 32)   # xs, s, m, l, xl, xxl
-    radio_s: int = 6
-    radio_m: int = 10
-    radio_l: int = 16
+    radio_s: int = 0   # pixel art: sin esquinas redondeadas (los marcos recortan un pixel, ver componentes.marco_pixel)
+    radio_m: int = 0
+    radio_l: int = 0
     # (nombre, tamano, archivo en assets/fuentes). Pixelify Sans es ~33% mas ancha que Arial: va mas chica para
     # que los textos de siempre quepan; Jersey 10 es angosta: va un poco mas grande.
     fuentes: tuple[tuple[str, int, str], ...] = (("chica", 13, "PixelifySans.ttf"), ("normal", 17, "PixelifySans.ttf"),

@@ -46,7 +46,7 @@ def icono(pantalla: pygame.Surface, tema: Tema, nombre: str, centro: tuple[int, 
     elif nombre == "Convivencia":              # dos personas
         for dx in (-r // 2, r // 2):
             pygame.draw.circle(pantalla, c, (x + dx, y - r // 2), r // 3 + 1)
-            pygame.draw.rect(pantalla, c, (x + dx - r // 3, y - r // 8, 2 * r // 3, r), border_radius=r // 3)
+            pygame.draw.rect(pantalla, c, (x + dx - r // 3, y - r // 8, 2 * r // 3, r))
     elif nombre == "Bienestar digital":        # sol
         for k in range(8):
             a = k * math.pi / 4

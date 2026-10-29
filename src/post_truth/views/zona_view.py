@@ -23,7 +23,7 @@ def _ventanas(pantalla: pygame.Surface, tema: Tema, x: int, y: int, filas: int, 
               paso: int, lado: int) -> None:
     for f in range(filas):
         for c in range(columnas):
-            pygame.draw.rect(pantalla, tema.detalle, (x + c * paso, y + f * paso, lado, lado), border_radius=2)
+            pygame.draw.rect(pantalla, tema.detalle, (x + c * paso, y + f * paso, lado, lado))
 
 
 def _colegio(p: pygame.Surface, t: Tema, r: pygame.Rect, h: int) -> None:

@@ -9,7 +9,7 @@ from post_truth.models import rueda_prensa as rp
 from post_truth.models.chat import CALMA_LLENA, CARRILES, FILA_SOFI, Chat
 from post_truth.models.minijuego import Ensayo, Minijuego, ResultadoMinijuego
 from post_truth.models.mitin import COLUMNAS, Mitin
-from post_truth.views.componentes import Fuentes, ajustar_texto, panel
+from post_truth.views.componentes import Fuentes, ajustar_texto, panel, recortar
 from post_truth.views.escena_view import _dibujar_consecuencias
 from post_truth.views.theme import Tema
 
@@ -46,8 +46,8 @@ def dibujar_minijuego(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m:
 
 def _dibujar_resultado(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, r: ResultadoMinijuego) -> None:
     caja = pygame.Rect(px(212), px(140), px(600), px(380))
-    pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(12))
-    pygame.draw.rect(pantalla, tema.borde, caja, px(2), border_radius=px(12))
+    pygame.draw.rect(pantalla, tema.panel, caja)
+    pygame.draw.rect(pantalla, tema.borde, caja, px(2))
     pantalla.blit(fuentes.normal.render(r.texto, True, tema.texto), (caja.x + px(20), caja.y + px(16)))
     _dibujar_consecuencias(pantalla, fuentes, tema, pygame.Rect(caja.x + px(20), caja.y + px(60), caja.w, caja.h), r.impacto)
     color = tema.bueno if r.credibilidad > 0 else tema.malo if r.credibilidad < 0 else tema.texto
@@ -61,41 +61,38 @@ def _dibujar_ensayo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: E
         return
     texto, (calma, impulso) = actual
     globo = pygame.Rect(px(140), px(170), px(744), px(100))
-    pygame.draw.rect(pantalla, tema.panel, globo, border_radius=px(16))
-    pygame.draw.rect(pantalla, tema.borde, globo, px(2), border_radius=px(16))
+    pygame.draw.rect(pantalla, tema.panel, globo)
+    pygame.draw.rect(pantalla, tema.borde, globo, px(2))
     y = globo.y + px(16)
     for linea in ajustar_texto(texto, fuentes.normal, globo.w - px(40)):
         pantalla.blit(fuentes.normal.render(linea, True, tema.texto), (globo.x + px(20), y))
         y += fuentes.normal.get_linesize()
     for i, opcion in enumerate((calma, impulso)):
         boton = pygame.Rect(px(140) + i * px(384), px(310), px(360), px(80))
-        pygame.draw.rect(pantalla, tema.boton, boton, border_radius=px(12))
-        pygame.draw.rect(pantalla, tema.borde, boton, px(2), border_radius=px(12))
+        pygame.draw.rect(pantalla, tema.boton, boton)
+        pygame.draw.rect(pantalla, tema.borde, boton, px(2))
         img = fuentes.normal.render(f"{i + 1}. {opcion}", True, tema.boton_texto)
         pantalla.blit(img, img.get_rect(center=boton.center))
     barra = pygame.Rect(px(140), px(420), px(744), px(10))
-    pygame.draw.rect(pantalla, tema.panel, barra, border_radius=px(5))
+    pygame.draw.rect(pantalla, tema.panel, barra)
     resto = max(0.0, 1 - m.t / m.limite)
     color = tema.malo if resto < 0.35 else tema.acento
-    pygame.draw.rect(pantalla, color, (barra.x, barra.y, round(barra.w * resto), barra.h), border_radius=px(5))
+    pygame.draw.rect(pantalla, color, (barra.x, barra.y, round(barra.w * resto), barra.h))
     progreso = fuentes.chica.render(f"Mensaje {len(m.respuestas) + 1} de {len(m.mensajes)}", True, tema.texto)
     pantalla.blit(progreso, (barra.x, barra.bottom + px(8)))
 
 
 def _barra_tiempo(pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect, resto: float) -> None:
-    pygame.draw.rect(pantalla, tema.panel, rect, border_radius=rect.h // 2)
+    pygame.draw.rect(pantalla, tema.panel, rect)
     color = tema.malo if resto < 0.35 else tema.acento
-    pygame.draw.rect(pantalla, color, (rect.x, rect.y, round(rect.w * resto), rect.h), border_radius=rect.h // 2)
+    pygame.draw.rect(pantalla, color, (rect.x, rect.y, round(rect.w * resto), rect.h))
 
 
 AREA = pygame.Rect(px(212), px(196), px(600), px(364))   # donde ocurre la accion
 
 
 def _texto_corto(fuentes: Fuentes, texto: str, ancho: int, color) -> pygame.Surface:
-    img = fuentes.chica.render(texto if len(texto) <= 34 else texto[:33] + "...", True, color)
-    if img.get_width() > ancho:
-        img = pygame.transform.smoothscale(img, (ancho, img.get_height()))
-    return img
+    return fuentes.chica.render(recortar(texto, fuentes.chica, ancho), True, color)   # sin escalar: letra pixel
 
 
 def _dibujar_chat(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Chat) -> None:
@@ -110,8 +107,8 @@ def _dibujar_chat(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Cha
         caja = pygame.Rect(0, 0, ancho - px(16), px(46))
         caja.center = (cx, cy)
         apoyo = tipo == "apoyo"
-        pygame.draw.rect(pantalla, tema.panel, caja, border_radius=px(10))
-        pygame.draw.rect(pantalla, tema.bueno if apoyo else tema.malo, caja, px(3), border_radius=px(10))
+        pygame.draw.rect(pantalla, tema.panel, caja)
+        pygame.draw.rect(pantalla, tema.bueno if apoyo else tema.malo, caja, px(3))
         icono = (caja.x + px(16), caja.centery)
         if apoyo:   # circulo = apoyo; triangulo = ataque (forma, no solo color)
             pygame.draw.circle(pantalla, tema.bueno, icono, px(8))
@@ -122,7 +119,7 @@ def _dibujar_chat(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Cha
                       (caja.x + px(28), caja.centery - fuentes.chica.get_height() // 2))
     sofi = pygame.Rect(0, 0, ancho - px(40), px(34))
     sofi.center = (AREA.x + m.carril * ancho + ancho // 2, AREA.y + round(FILA_SOFI * AREA.h))
-    pygame.draw.rect(pantalla, tema.acento, sofi, border_radius=px(17))
+    pygame.draw.rect(pantalla, tema.acento, sofi)
     img = fuentes.normal.render("Sofi", True, tema.boton_texto)
     pantalla.blit(img, img.get_rect(center=sofi.center))
     _contador(pantalla, fuentes, tema, f"Apoyos {m.apoyos}   Ataques que llegaron {m.golpes}   Borrados {m.borrados}")
@@ -135,7 +132,7 @@ def _forma_globo(pantalla: pygame.Surface, tema: Tema, tipo: str, centro: tuple[
     x, y = centro
     color = {"dato": tema.acento, "pregunta": tema.detalle, "calma": tema.bueno}[tipo]
     if tipo == "dato":
-        pygame.draw.rect(pantalla, color, (x - r, y - r, 2 * r, 2 * r), border_radius=px(4))
+        pygame.draw.rect(pantalla, color, (x - r, y - r, 2 * r, 2 * r))
     elif tipo == "pregunta":
         pygame.draw.circle(pantalla, color, centro, r)
     else:
@@ -147,7 +144,7 @@ def _dibujar_mitin(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Mi
     """Escenario arriba, multitud abajo; los rumores suben como globos."""
     panel(pantalla, tema, AREA, 255)
     escenario = pygame.Rect(AREA.x + px(10), AREA.y + px(8), AREA.w - px(20), px(26))
-    pygame.draw.rect(pantalla, tema.boton, escenario, border_radius=px(8))
+    pygame.draw.rect(pantalla, tema.boton, escenario)
     img = fuentes.chica.render("Escenario: que no lleguen aqui", True, tema.boton_texto)
     pantalla.blit(img, img.get_rect(center=escenario.center))
     animadas = round(16 * m.animo / 100)
@@ -156,7 +153,7 @@ def _dibujar_mitin(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Mi
         if k < animadas:
             pygame.draw.circle(pantalla, tema.bueno, (cx, cy), px(9))
         else:
-            pygame.draw.rect(pantalla, tema.malo, (cx - px(8), cy - px(8), px(16), px(16)), border_radius=px(3))
+            pygame.draw.rect(pantalla, tema.malo, (cx - px(8), cy - px(8), px(16), px(16)))
     ancho = AREA.w // COLUMNAS
     alto_util = AREA.h - px(80)
     for columna, altura, tipo, grito in m.globos:
@@ -185,9 +182,9 @@ def _contador(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, texto: str
 
 def _medidor(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, nombre: str, lleno: float) -> None:
     barra = pygame.Rect(AREA.right + px(20), AREA.y + px(40), px(22), AREA.h - px(80))
-    pygame.draw.rect(pantalla, tema.panel, barra, border_radius=px(11))
+    pygame.draw.rect(pantalla, tema.panel, barra)
     alto = round(barra.h * lleno)
-    pygame.draw.rect(pantalla, tema.bueno, (barra.x, barra.bottom - alto, barra.w, alto), border_radius=px(11))
+    pygame.draw.rect(pantalla, tema.bueno, (barra.x, barra.bottom - alto, barra.w, alto))
     img = fuentes.chica.render("Lista!" if lleno >= 1 else nombre.split(" ")[0], True,
                                tema.bueno if lleno >= 1 else tema.texto)
     pantalla.blit(img, img.get_rect(midtop=(barra.centerx, barra.bottom + px(4))))
@@ -200,7 +197,7 @@ def _icono_prueba(pantalla: pygame.Surface, tema: Tema, tipo: str, centro: tuple
     if tipo == "pista":
         pygame.draw.polygon(pantalla, color, [(x, y - r), (x + r, y + r), (x - r, y + r)])
     elif tipo == "evidencia":
-        pygame.draw.rect(pantalla, color, (x - r, y - r, 2 * r, 2 * r), border_radius=px(3))
+        pygame.draw.rect(pantalla, color, (x - r, y - r, 2 * r, 2 * r))
     elif tipo == "testimonio":
         pygame.draw.circle(pantalla, color, centro, r)
     else:
@@ -245,7 +242,7 @@ def _dibujar_rueda(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: rp
     pantalla.blit(img, img.get_rect(center=atril))
     if apuntada is not None:                                                         # lo que pregunta el apuntado
         caja = pygame.Rect(AREA.x + px(16), AREA.y + px(10), AREA.w - px(32), px(32))
-        pygame.draw.rect(pantalla, tema.fondo, caja, border_radius=px(8))
+        pygame.draw.rect(pantalla, tema.fondo, caja)
         img = _texto_corto(fuentes, apuntada[2], caja.w - px(20), tema.texto)
         pantalla.blit(img, img.get_rect(center=caja.center))
     leyenda = pygame.Rect(AREA.x, AREA.bottom + px(22), AREA.w, px(24))
@@ -270,9 +267,8 @@ def _en_area(pos) -> tuple[int, int]:
 
 
 def _cabe(fuentes: Fuentes, texto: str, ancho: int, color) -> pygame.Surface:
-    """El texto completo; si no cabe, se angosta un poco (no se corta)."""
-    img = fuentes.chica.render(texto, True, color)
-    return pygame.transform.smoothscale(img, (ancho, img.get_height())) if img.get_width() > ancho else img
+    """El texto completo si cabe; si no, recortado con "..." (escalar la letra pixel la deja borrosa)."""
+    return fuentes.chica.render(recortar(texto, fuentes.chica, ancho), True, color)
 
 
 def _casa(pantalla: pygame.Surface, tema: Tema, estado: str, c: tuple[int, int]) -> None:
@@ -280,13 +276,13 @@ def _casa(pantalla: pygame.Surface, tema: Tema, estado: str, c: tuple[int, int])
     x, y = c
     r = px(18)
     if estado == bb.SIN:
-        pygame.draw.rect(pantalla, tema.texto_off, (x - r, y - r, 2 * r, 2 * r), px(3), border_radius=px(4))
+        pygame.draw.rect(pantalla, tema.texto_off, (x - r, y - r, 2 * r, 2 * r), px(3))
     elif estado == bb.CREE:
         pygame.draw.polygon(pantalla, tema.malo, [(x, y - r), (x + r, y + r), (x - r, y + r)])
     elif estado == bb.CONVENCIDA:
         pygame.draw.circle(pantalla, tema.bueno, c, r)
     else:
-        pygame.draw.rect(pantalla, tema.malo, (x - r, y - r, 2 * r, 2 * r), border_radius=px(4))
+        pygame.draw.rect(pantalla, tema.malo, (x - r, y - r, 2 * r, 2 * r))
         pygame.draw.line(pantalla, tema.fondo, (x - r // 2, y - r // 2), (x + r // 2, y + r // 2), px(4))
         pygame.draw.line(pantalla, tema.fondo, (x - r // 2, y + r // 2), (x + r // 2, y - r // 2), px(4))
 
@@ -317,7 +313,7 @@ def _dibujar_boca(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: bb.
         casa, pers = m.charla
         c = centros[casa]
         caja = pygame.Rect(AREA.x + px(16), AREA.bottom - px(84), AREA.w - px(32), px(74))
-        pygame.draw.rect(pantalla, tema.fondo, caja, border_radius=px(10))
+        pygame.draw.rect(pantalla, tema.fondo, caja)
         pygame.draw.circle(pantalla, tema.acento, c, px(26), px(3))   # con quien hablas
         nodo, opcion = pers.nodo, pers.opcion
         if nodo is not None and opcion is not None:
@@ -329,9 +325,8 @@ def _dibujar_boca(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: bb.
                           (caja.x + px(10), caja.y + px(28)))
             barra = pygame.Rect(caja.x + px(10), caja.bottom - px(16), caja.w - px(20), px(8))
             lleno = (len(pers.camino) + pers.progreso) / 3   # 3 etapas: la profundidad del arbol
-            pygame.draw.rect(pantalla, tema.panel, barra, border_radius=barra.h // 2)
-            pygame.draw.rect(pantalla, tema.bueno, (barra.x, barra.y, round(barra.w * lleno), barra.h),
-                             border_radius=barra.h // 2)
+            pygame.draw.rect(pantalla, tema.panel, barra)
+            pygame.draw.rect(pantalla, tema.bueno, (barra.x, barra.y, round(barra.w * lleno), barra.h))
     _contador(pantalla, fuentes, tema, f"\"{m.rumor}\"   |   Convencidos {m.contar(bb.CONVENCIDA)}   Lo creen "
                                        f"{m.contar(bb.CREE)}   Enojados {m.contar(bb.ENOJADA)}")
     _barra_tiempo(pantalla, tema, pygame.Rect(AREA.x, AREA.bottom + px(8), AREA.w, px(8)),

@@ -10,7 +10,7 @@ from post_truth.models.dominio import NewsEvent
 from post_truth.models.pistas import Investigacion, Senal, ZonaTarjeta
 from post_truth.models.testigos import Testigo
 from post_truth.views.anuncio_view import _icono
-from post_truth.views.componentes import Fuentes, ajustar_texto
+from post_truth.views.componentes import Fuentes, ajustar_texto, recortar
 from post_truth.views.tarjeta_civitas_view import _layout, dibujar_tarjeta
 from post_truth.views.theme import Tema
 
@@ -77,8 +77,8 @@ def dibujar_investigacion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema
     for i, nombre in enumerate(PESTANAS):
         r = rect_pestana(i)
         activa = i == v.pestana
-        pygame.draw.rect(pantalla, tema.boton if activa else tema.panel, r, border_radius=px(8))
-        pygame.draw.rect(pantalla, tema.acento if activa else tema.borde, r, px(2), border_radius=px(8))
+        pygame.draw.rect(pantalla, tema.boton if activa else tema.panel, r)
+        pygame.draw.rect(pantalla, tema.acento if activa else tema.borde, r, px(2))
         img = fuentes.chica.render(nombre, True, tema.boton_texto if activa else tema.texto)
         pantalla.blit(img, img.get_rect(center=r.center))
     if v.pestana == 0:
@@ -129,8 +129,8 @@ def _fila_hallazgo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, y: in
 
 
 def _reunido(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaInvestigacion) -> None:
-    pygame.draw.rect(pantalla, tema.panel, RECT_REUNIDO, border_radius=px(12))
-    pygame.draw.rect(pantalla, tema.borde, RECT_REUNIDO, px(2), border_radius=px(12))
+    pygame.draw.rect(pantalla, tema.panel, RECT_REUNIDO)
+    pygame.draw.rect(pantalla, tema.borde, RECT_REUNIDO, px(2))
     pantalla.blit(fuentes.normal.render("Lo que encontraste", True, tema.acento), (RECT_REUNIDO.x + px(14), RECT_REUNIDO.y + px(8)))
     y = RECT_REUNIDO.y + px(42)
     inv = v.investigacion
@@ -150,20 +150,20 @@ def _reunido(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaInv
 
 
 def _testigos(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaInvestigacion) -> None:
-    pygame.draw.rect(pantalla, tema.panel, RECT_LISTA, border_radius=px(12))
+    pygame.draw.rect(pantalla, tema.panel, RECT_LISTA)
     pantalla.blit(fuentes.normal.render("Testigos", True, tema.acento), (RECT_LISTA.x + px(14), RECT_LISTA.y + px(8)))
     for i, (t, disponible) in enumerate(v.testigos):
         r = rect_testigo(i)
         elegido = i == v.elegido
-        pygame.draw.rect(pantalla, tema.boton if elegido else tema.fondo, r, border_radius=px(8))
-        pygame.draw.rect(pantalla, tema.acento if elegido else tema.borde, r, px(2), border_radius=px(8))
+        pygame.draw.rect(pantalla, tema.boton if elegido else tema.fondo, r)
+        pygame.draw.rect(pantalla, tema.acento if elegido else tema.borde, r, px(2))
         color = tema.boton_texto if elegido else (tema.texto if disponible else tema.texto_off)
         pantalla.blit(fuentes.chica.render(t.nombre, True, color), (r.x + px(10), r.y + px(6)))
         donde = ("Aqui" if t.evidencia is None else f"En {t.lugar.capitalize()}") + ("" if disponible else " (ve alla)")
         if t.id in v.investigacion.testimonios:
             donde += "  - ya hablaron"
         pantalla.blit(fuentes.chica.render(donde, True, color), (r.x + px(10), r.y + px(30)))
-    pygame.draw.rect(pantalla, tema.panel, RECT_CHARLA, border_radius=px(12))
+    pygame.draw.rect(pantalla, tema.panel, RECT_CHARLA)
     y = RECT_CHARLA.y + px(12)
     limite = rect_opcion(4 - len(v.opciones)).y - px(8) if v.opciones else RECT_CHARLA.bottom - px(12)
     filas = []
@@ -185,7 +185,7 @@ def _testigos(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaIn
                       (RECT_CHARLA.x + px(14), RECT_CHARLA.y + px(12)))
     for i, texto in enumerate(v.opciones):
         r = rect_opcion(4 - len(v.opciones) + i)
-        pygame.draw.rect(pantalla, tema.boton, r, border_radius=px(8))
+        pygame.draw.rect(pantalla, tema.boton, r)
         img = fuentes.chica.render(f"{i + 1}. {texto}", True, tema.boton_texto)
         pantalla.blit(img, img.get_rect(midleft=(r.x + px(10), r.centery)))
 
@@ -200,9 +200,7 @@ def _conclusion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: Vista
         return
     for i, (_, texto) in enumerate(VEREDICTOS):
         r = rect_veredicto(i)
-        pygame.draw.rect(pantalla, tema.boton, r, border_radius=px(8))
-        pygame.draw.rect(pantalla, tema.borde, r, px(2), border_radius=px(8))
-        img = fuentes.chica.render(texto, True, tema.boton_texto)
-        if img.get_width() > r.w - px(8):
-            img = pygame.transform.smoothscale(img, (r.w - px(8), img.get_height() * (r.w - px(8)) // img.get_width()))
+        pygame.draw.rect(pantalla, tema.boton, r)
+        pygame.draw.rect(pantalla, tema.borde, r, px(2))
+        img = fuentes.chica.render(recortar(texto, fuentes.chica, r.w - px(8)), True, tema.boton_texto)
         pantalla.blit(img, img.get_rect(center=r.center))

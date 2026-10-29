@@ -18,8 +18,8 @@ def dibujar_resumen(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, dia:
     izq = pygame.Rect(px(60), px(150), px(400), px(360))
     der = pygame.Rect(px(500), px(150), px(470), px(360))
     for rect, nombre in ((izq, "Asi cambio la ciudad"), (der, "Lo que paso hoy")):
-        pygame.draw.rect(pantalla, tema.panel, rect, border_radius=px(12))
-        pygame.draw.rect(pantalla, tema.borde, rect, px(2), border_radius=px(12))
+        pygame.draw.rect(pantalla, tema.panel, rect)
+        pygame.draw.rect(pantalla, tema.borde, rect, px(2))
         pantalla.blit(fuentes.normal.render(nombre, True, tema.texto), (rect.x + px(16), rect.y + px(12)))
     area = izq.inflate(-px(32), -px(60)).move(0, px(16))
     if any(vars(cambio).values()):

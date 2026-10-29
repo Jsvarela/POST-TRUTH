@@ -49,9 +49,8 @@ def dibujar_conectar(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, cam
         r = rect_campo(i)
         pantalla.blit(fuentes.chica.render(etiqueta, True, tema.texto_off), (r.x, r.y - fuentes.chica.get_linesize()))
         activo = i == foco
-        pygame.draw.rect(pantalla, tema.fondo, r, border_radius=px(TOKENS.radio_m))
-        pygame.draw.rect(pantalla, tema.acento if activo else tema.borde, r, width=px(3 if activo else 2),
-                         border_radius=px(TOKENS.radio_m))
+        pygame.draw.rect(pantalla, tema.fondo, r)
+        pygame.draw.rect(pantalla, tema.acento if activo else tema.borde, r, width=px(3 if activo else 2))
         cursor = "|" if activo and math.sin(t * 6) > 0 else ""
         img = fuentes.normal.render(valor + cursor, True, tema.texto)
         pantalla.blit(img, img.get_rect(midleft=(r.x + esp(3), r.centery)))
