@@ -91,6 +91,18 @@ def _barra_tiempo(pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect, resto
 AREA = pygame.Rect(px(212), px(196), px(600), px(364))   # donde ocurre la accion
 
 
+def _dos_lineas(pantalla: pygame.Surface, fuentes: Fuentes, texto: str, ancho: int, color, x: int, centro_y: int) -> None:
+    """Hasta dos lineas centradas en `centro_y`; si sobra, la segunda termina en "..." (letra pixel sin escalar)."""
+    lineas = ajustar_texto(texto, fuentes.chica, ancho)
+    if len(lineas) > 2:
+        lineas = [lineas[0], recortar(" ".join(lineas[1:]), fuentes.chica, ancho)]
+    alto = fuentes.chica.get_linesize()
+    y = centro_y - alto * len(lineas) // 2
+    for linea in lineas:
+        pantalla.blit(fuentes.chica.render(linea, True, color), (x, y))
+        y += alto
+
+
 def _texto_corto(fuentes: Fuentes, texto: str, ancho: int, color) -> pygame.Surface:
     return fuentes.chica.render(recortar(texto, fuentes.chica, ancho), True, color)   # sin escalar: letra pixel
 
@@ -115,8 +127,7 @@ def _dibujar_chat(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Cha
         else:
             pygame.draw.polygon(pantalla, tema.malo, [(icono[0], icono[1] - px(9)), (icono[0] + px(9), icono[1] + px(7)),
                                                       (icono[0] - px(9), icono[1] + px(7))])
-        pantalla.blit(_texto_corto(fuentes, texto, caja.w - px(34), tema.texto),
-                      (caja.x + px(28), caja.centery - fuentes.chica.get_height() // 2))
+        _dos_lineas(pantalla, fuentes, texto, caja.w - px(34), tema.texto, caja.x + px(28), caja.centery)
     sofi = pygame.Rect(0, 0, ancho - px(40), px(34))
     sofi.center = (AREA.x + m.carril * ancho + ancho // 2, AREA.y + round(FILA_SOFI * AREA.h))
     pygame.draw.rect(pantalla, tema.acento, sofi)
@@ -162,8 +173,8 @@ def _dibujar_mitin(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Mi
         _forma_globo(pantalla, tema, tipo, (cx, cy), px(18))
         num = fuentes.normal.render({"dato": "1", "pregunta": "2", "calma": "3"}[tipo], True, tema.fondo)
         pantalla.blit(num, num.get_rect(center=(cx, cy + (px(4) if tipo == "calma" else 0))))
-        pantalla.blit(_texto_corto(fuentes, grito, ancho - px(6), tema.texto_off),
-                      (cx - (ancho - px(6)) // 2, cy + px(22)))
+        _dos_lineas(pantalla, fuentes, grito, ancho - px(6), tema.texto_off, cx - (ancho - px(6)) // 2,
+                    cy + px(22) + fuentes.chica.get_linesize())
     leyenda = pygame.Rect(AREA.x, AREA.bottom + px(22), AREA.w, px(24))
     for i, (tipo, nombre) in enumerate((("dato", "1 dato"), ("pregunta", "2 pregunta"), ("calma", "3 calma"))):
         x = leyenda.x + i * leyenda.w // 3 + px(20)

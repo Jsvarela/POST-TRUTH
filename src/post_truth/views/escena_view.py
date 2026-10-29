@@ -166,7 +166,7 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
     dx, dy = desplazamiento_reaccion(*reaccion_jugador) if reaccion_jugador else (0, 0)
     dibujar_personaje(pantalla, personaje, tema, RECT_PERSONAJE.move(dx, dy), animo)
     if nombre_zona:
-        etiqueta = fuentes.normal.render(f"Estas en: {nombre_zona}", True, tema.texto)
+        etiqueta = fuentes.chica.render(f"Estas en: {nombre_zona}", True, tema.texto)   # chica: cabe hasta Registraduria
         marco = etiqueta.get_rect(topleft=(px(16), RECT_ESCENA.y + px(12))).inflate(px(20), px(10))
         pygame.draw.rect(pantalla, tema.panel, marco)
         pygame.draw.rect(pantalla, tema.acento, marco, width=px(2))

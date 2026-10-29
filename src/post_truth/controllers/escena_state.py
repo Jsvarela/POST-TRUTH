@@ -32,7 +32,7 @@ TECLAS_VIAJAR = {pygame.K_q: "Q", pygame.K_w: "W", pygame.K_e: "E", pygame.K_r: 
 
 
 RECT_BOTON_CENTRAL = pygame.Rect((ANCHO - px(300)) // 2, Y_BOTONES, px(300), ALTO_BOTONES)
-RECT_INVESTIGAR = pygame.Rect(px(190), px(64), px(132), px(36))   # junto a "Estas en", lejos del reloj
+RECT_INVESTIGAR = pygame.Rect(px(190), px(64), px(134), px(36))   # entre "Estas en" (letra chica) y el panel
 
 
 def _rects_botones(n: int) -> list[pygame.Rect]:
