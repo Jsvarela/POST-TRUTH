@@ -26,7 +26,11 @@ class LugarState(BaseState):
         if not self.tarjetas:
             self.tarjetas.append(("Nada nuevo por aqui", "Aqui no hay nada de la noticia de hoy.", "info"))
         acciones = []
-        if self.zona == s.zona_noticia:
+        if self.zona == s.zona_noticia and getattr(s, "en_red", False) and not s.es_mi_turno:
+            self.tarjetas.insert(0, (f"Turno de {s.nombre(s.de_turno.id)}",
+                                     "Solo quien tiene el turno decide la noticia; tu puedes jugar o defender la red.",
+                                     "info"))
+        elif self.zona == s.zona_noticia:
             acciones.append(("Ver la noticia", self._noticia))
         juego = s.minijuego_en(self.zona)
         if juego is not None:

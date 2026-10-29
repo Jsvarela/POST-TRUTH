@@ -12,7 +12,7 @@ from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.componentes import Modal
 from post_truth.views.roles_view import dibujar_habilidad, dibujar_menu_aliados
-from post_truth.views.telefono_view import (AREA_RED, ASPECTO, CERRAR, ONDA, PESTANAS, RADIO_ESCUDO, RADIO_ONDA,
+from post_truth.views.telefono_view import (AREA_RED, ASPECTO, CERRAR, ONDA, PESTANAS, RADIO_ESCUDO,
                                             RECT_PUBLICAR, VistaPublicar, VistaTelefono, de_pantalla,
                                             dibujar_telefono, rect_fila, rect_pestana)
 
@@ -63,14 +63,11 @@ class TelefonoState(BaseState):
         return RADIO_ESCUDO * (1.4 if self.app.partida.campana.factor > 1 else 1.0)
 
     def lanzar_onda(self) -> None:
-        v = self.app.partida.en_vivo
-        if v is None:
-            self._avisar("Desmentido", MOTIVOS["sin_rumor"], "info")
-            return
-        if v.onda(self.escudo, RADIO_ONDA, ASPECTO).ok:
+        r = self.app.partida.onda(self.escudo)
+        if r.ok:
             self.ondas.append([self.escudo, 0.0])
         else:
-            self._avisar("Desmentido", MOTIVOS["enfriando"], "malo")
+            self._avisar("Desmentido", MOTIVOS.get(r.motivo, "No se pudo."), "info" if r.motivo == "sin_rumor" else "malo")
 
     def _opciones(self, pieza: str) -> list[dict]:
         return posts.reglas().opciones(pieza, self.app.partida.jugador_actual.rol.name)
@@ -172,7 +169,7 @@ class TelefonoState(BaseState):
                            min(1.0, max(0.0, y + dy * VELOCIDAD_ESCUDO * dt)))
         v = self.app.partida.en_vivo
         self.atajo = max(0.0, self.atajo - dt)
-        if v is not None and v.interceptar(self.escudo, self.radio, ASPECTO):
+        if self.app.partida.escudo(self.escudo, self.radio):
             self.atajo = 0.35   # destello del escudo: lo atajaste
         if v is not None:   # a quien le acaba de llegar algo: pulso
             for id, estado in v.estado.items():
@@ -181,6 +178,9 @@ class TelefonoState(BaseState):
             self._previo = dict(v.estado)
         self.alerta = max(0.0, self.alerta - dt)
         s = self.app.partida
+        if getattr(s, "en_red", False) and s.acciones and self.toast is None:   # lo que hacen los demas
+            titulo, texto, tipo = s.acciones.pop(0)
+            self._avisar(titulo, texto, tipo)
         vencida = s.transcurrir(dt * RITMO_TELEFONO)
         s.avanzar_rumor(dt * (RITMO_RUMOR_TELEFONO - RITMO_TELEFONO))   # transcurrir ya lo movio al 25%
         if s.novedad == "viral":

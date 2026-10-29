@@ -25,6 +25,7 @@ class ResultadoState(BaseState):
         if event.key == pygame.K_SPACE or (self.t < DURACION_CONTEO and event.key == pygame.K_RETURN):
             self.t = DURACION_CONTEO   # saltar el conteo (accesibilidad)
         elif event.key in (pygame.K_RETURN, pygame.K_ESCAPE):
+            self.app.salir_de_red()
             self.app.partida = None
             self.app.estados.cambiar("menu")
 
@@ -33,6 +34,8 @@ class ResultadoState(BaseState):
 
     def draw(self, pantalla: pygame.Surface) -> None:
         s = self.app.partida
-        jugadores = [(j.personaje.rol.value, j.puntos, j.credibilidad) for j in s.jugadores]
+        nombre = (lambda j: f"{s.nombre(j.id)} ({j.personaje.rol.value})") if getattr(s, "en_red", False) else (
+            lambda j: j.personaje.rol.value)
+        jugadores = [(nombre(j), j.puntos, j.credibilidad) for j in s.jugadores]
         dibujar_resultado(pantalla, self.app.fuentes, self.app.temas.actual, self.resultado, self.candidatos,
                           s.ciudad.score, min(1.0, self.t / DURACION_CONTEO), jugadores)

@@ -26,7 +26,7 @@ python src/main.py
 - E: entrar al lugar donde estas (la evidencia aparece sola); adentro, 1-3 o clic: ver la noticia, jugar el minijuego o volver a la calle
 - F3: superposicion de depuracion (zonas, colisiones y fronteras del grafo de la ciudad)
 - F1 (en cualquier pantalla): modo sustentacion con el arbol de decisiones, el grafo social, el grafo de la ciudad y el arbol de dialogo en crudo (BFS, DFS y Dijkstra); el juego queda en pausa
-- Menu: flechas y Enter o clic; O abre las opciones (tema, volumen y tiempo extendido)
+- Menu: flechas y Enter o clic; O abre las opciones (tema, volumen y tiempo extendido); R multijugador
 - G: mostrar la guia hacia la noticia
 - Chat bajo presion (Colegio): flechas o A/D mueven a Sofi para atrapar el apoyo y esquivar los ataques; Espacio usa la calma
 - Mitin (Plaza): revienta los globos de rumor con 1 dato, 2 pregunta o 3 calma segun su forma
@@ -45,25 +45,30 @@ python src/main.py
 
 Cuatro dias, uno por fase (data/fases.json): Inicio de campana, Debates (abre el Auditorio), Semana final y Dia de eleccion (abre la Registraduria, de noche). Si los conflictos o la desinformacion suben, una protesta cierra una calle; si una zona queda sin camino a la Alcaldia, a sus vecinos no les llegan los desmentidos. Las zonas con mucha desinformacion entran en crisis.
 
-## Multijugador (servidor)
+## Multijugador
+
+1. Un equipo abre el servidor (desde `src/`):
 
 ```
-python -m post_truth.red.servidor --puerto 5050      # desde src/
+python -m post_truth.red.servidor --puerto 5050
 ```
 
-El servidor guarda la unica `PartidaSesion` y es la autoridad: simula el dia, el rumor en vivo, las fases y el grafo de la ciudad. Acepta de 2 a 4 clientes; los roles sin jugador los siguen controlando aliados. El cliente con pantalla llega en R12.
+2. Cada jugador abre el juego (`python src/main.py`), elige Multijugador en el menu (o R) y escribe su nombre, la IP del servidor y el puerto. En la misma maquina la IP es `127.0.0.1`; en la red local, la IP del equipo del servidor.
+3. En la sala de espera cada uno elige un rol distinto (1-4) y su personaje (G). El primero en entrar es el anfitrion e inicia con Enter cuando hay de 2 a 4 jugadores con rol. Los roles libres los juegan aliados.
 
-Protocolo: mensajes JSON (UTF-8) sobre TCP, cada uno precedido por 4 bytes big-endian con su largo (maximo 64 KB). Todo mensaje lleva `tipo`.
-- Cliente -> servidor: `unirse` (nombre o token para reconectar), `elegir_rol`, `iniciar` (solo el anfitrion), `posicion` (unas 10 por segundo), `decidir`, `continuar`, `investigar`, `concluir`, `testimonio`, `escudo`, `onda`, `publicar`, `habilidad`, `ayuda`, `minijuego`, `salir`.
-- Servidor -> cliente: `bienvenida` (token), `sala`, `inicio` (la sesion completa), `estado` (foto unas 10 veces por segundo), `corregir` (posicion rechazada: muro, salto imposible o frontera cerrada), `error` (con `motivo`), `fin` (ganador y puntos).
-- Si un jugador se cae, su rol pasa a un aliado; si era su turno, tras una espera se decide Ignorar por el. Al volver con su token recupera su rol.
+El servidor guarda la unica `PartidaSesion` y es la autoridad: simula el dia, el rumor en vivo, las fases y el grafo de la ciudad, asi que todos ven la misma red en el telefono y las mismas fronteras en el mapa. Cada cliente tiene una copia (sesion espejo) que el servidor reemplaza unas 10 veces por segundo; las acciones se predicen en local y el servidor las valida. Los demas jugadores se ven en el mapa con su nombre, interpolados entre fotos para que no salten, y lo que hacen sale como aviso. La noticia la decide el jugador de turno; los demas pueden caminar, jugar los minijuegos (se juegan en su equipo y el servidor valida el resultado) y defender la red. El hilo de red no bloquea el juego: lee y escribe en sus propios hilos y entrega los mensajes por una cola.
+
+Protocolo: mensajes JSON (UTF-8) sobre TCP, cada uno precedido por 4 bytes big-endian con su largo (maximo 64 KB). Todo mensaje lleva `tipo`; las acciones llevan ademas un numero `n` creciente.
+- Cliente -> servidor: `unirse` (nombre o token para reconectar), `elegir_rol`, `iniciar` (solo el anfitrion), `posicion` y `escudo` (unas 10 por segundo), `ver` (abrio la noticia: corre su reloj), `evidencia`, `decidir`, `aplicar` (vio la propagacion), `continuar`, `investigar`, `concluir`, `testimonio`, `onda`, `publicar`, `habilidad`, `ayuda`, `minijuego` (su estado al terminar), `salir`.
+- Servidor -> cliente: `bienvenida` (token), `sala` (con cual es el), `inicio` (la sesion completa), `estado` (foto: la sesion completa, posiciones, eventos numerados y `ack`, el ultimo `n` ya procesado de ese cliente; una foto con `ack` menor al ultimo enviado no pisa la prediccion), `corregir` (posicion rechazada: muro, salto imposible o frontera cerrada), `error` (con `motivo`), `fin` (ganador y puntos).
+- Si un jugador se cae, su rol pasa a un aliado; si era su turno, tras una espera se decide Ignorar por el. Al volver con su token recupera su rol. Si el cliente pierde la conexion, vuelve a la pantalla de conectar con el aviso.
 
 ## Estructura
 
 - `src/post_truth/decision_tree.py`: arbol n-ario de decisiones
 - `src/post_truth/structures/`: grafo social, grafo de la ciudad y propagacion
 - `src/post_truth/models/`, `views/`, `controllers/`: logica, dibujo y estados del juego
-- `src/post_truth/red/`: protocolo, servidor y cliente del multijugador
+- `src/post_truth/red/`: protocolo, servidor, conexion del cliente (hilos y colas) y sesion espejo
 - `data/`: publicaciones, grafos, mapa e introduccion en JSON
 - `assets/mapa/`: el mapa por capas (mapa.png se ve; zonas.png y colisiones.png son mascaras invisibles)
 

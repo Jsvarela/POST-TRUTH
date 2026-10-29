@@ -377,6 +377,9 @@ class EscenaState(BaseState):
             if self.anuncio.terminado:
                 self.anuncio = None
         if self.fase == DECIDIENDO:
+            if getattr(self.sesion, "en_red", False):   # multijugador: solo decide quien tiene el turno
+                for b in self.botones:
+                    b.habilitado = self.sesion.es_mi_turno
             vencida = self.sesion.transcurrir(dt)
             if vencida is not None:
                 self._mostrar_decision(vencida)

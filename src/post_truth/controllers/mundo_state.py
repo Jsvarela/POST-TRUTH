@@ -59,6 +59,7 @@ class MundoState(BaseState):
         self.toast: Anuncio | None = None     # corto, arriba
         self.alerta = 0.0
         self.menu_aliados = False   # Y: pedir ayuda a los aliados
+        self.otros: dict[str, tuple[tuple[float, float], AnimacionPersonaje]] = {}   # multijugador: los demas
 
     @property
     def personaje(self) -> Personaje:
@@ -128,6 +129,7 @@ class MundoState(BaseState):
             if era:
                 return
             if event.key == pygame.K_ESCAPE:
+                self.app.salir_de_red()
                 self.app.partida = None
                 self.app.estados.cambiar("menu")
             elif event.key in DIRECCIONES:
@@ -155,6 +157,7 @@ class MundoState(BaseState):
         dx = sum(DIRECCIONES[k][0] for k in self.presionadas)
         dy = sum(DIRECCIONES[k][1] for k in self.presionadas)
         self.mundo.sincronizar(self.sesion.mapa)   # una protesta puede cerrar una frontera a mitad del dia
+        self._red(dt)
         antes, zona_antes = self.mundo.jugador, self.zona_aqui()
         self.mundo.mover(dx, dy, dt)
         zona = self.zona_aqui()
@@ -190,6 +193,31 @@ class MundoState(BaseState):
         if self._t_aviso == 0:
             self.aviso = ""
 
+    def _red(self, dt: float) -> None:
+        """Multijugador: el servidor corrige una posicion invalida, y se anima a los demas entre fotos."""
+        s = self.sesion
+        if not getattr(s, "en_red", False):
+            return
+        if s.correccion is not None:
+            self.mundo.jugador, s.correccion = s.correccion, None
+            self._avisar("Por ahi no se puede pasar.", "No se puede pasar", "malo")
+        if s.acciones and self.toast is None:
+            titulo, texto, tipo = s.acciones.pop(0)   # lo que hicieron los demas (o un rechazo del servidor)
+            self._avisar(texto, titulo, tipo)
+        for jid, pos, direccion, caminando in s.remotos_en():
+            antes, anim = self.otros.get(jid, (pos, AnimacionPersonaje()))
+            anim.direccion = direccion
+            anim.actualizar(0, 0, math.dist(antes, pos) if caminando else 0.0, dt)
+            self.otros[jid] = (pos, anim)
+
+    def vista_otros(self) -> tuple:
+        s = self.sesion
+        if not getattr(s, "en_red", False):
+            return ()
+        return tuple((s.nombre(jid) + ("" if s.conectados.get(jid, True) else " (sin conexion)"),
+                      s.jugador(jid).personaje, pos, anim.nombre, anim.cuadro, s.conectados.get(jid, True))
+                     for jid, (pos, anim) in self.otros.items())
+
     def estado_vista(self) -> EstadoMundo:
         s = self.sesion
         zonas, puntos = (self.mundo.ruta_puntos(s.mapa, self.mundo.ultima_zona, s.zona_noticia) if self.guia
@@ -207,7 +235,7 @@ class MundoState(BaseState):
             decorado=self.decorado, t=self.t,
             reloj=(s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
             dia=(s.campana.dia + 1, len(s.campana.dias)), fraccion_dia=s.campana.fraccion,
-            credibilidad=s.jugador_actual.credibilidad,
+            credibilidad=s.jugador_actual.credibilidad, otros=self.vista_otros(),
             texto_accion=self.etiqueta(accion[1], accion[0]) if (accion := self.accion_disponible())
             and accion[1] != "elegir" else "")
 

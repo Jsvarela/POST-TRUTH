@@ -50,6 +50,7 @@ class EstadoMundo:
     credibilidad: int | None = None
     texto_accion: str = ""                     # que hace E aqui, cuando hay una sola opcion
     animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
+    otros: tuple = ()   # multijugador: (nombre, personaje, posicion, animacion, cuadro, conectado) de los demas
 
 
 class Camara:
@@ -254,8 +255,14 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
         for x, y, tam, fase in deco.arboles:
             if visible(x, y):
                 arte.arbol(pantalla, tema, a_pantalla((x, y), cam), px(34 * tam), math.sin(estado.t * 1.3 + fase))
+    alto = px(ALTO_PERSONAJE * 14)
+    for nombre, personaje, (ox, oy), animacion, cuadro, conectado in estado.otros:   # los demas, debajo del propio
+        if visible(ox, oy):
+            pies = a_pantalla((ox, oy + mundo.pies[1] / 2), cam)
+            arte.personaje(pantalla, tema, pies, alto, personaje, animacion, cuadro)
+            _etiqueta(pantalla, fuentes, tema, nombre, (pies[0], pies[1] - alto - px(4)), conectado)
     x, y = mundo.jugador
-    arte.personaje(pantalla, tema, a_pantalla((x, y + mundo.pies[1] / 2), cam), px(ALTO_PERSONAJE * 14),
+    arte.personaje(pantalla, tema, a_pantalla((x, y + mundo.pies[1] / 2), cam), alto,
                    estado.personaje, estado.animacion.nombre, estado.animacion.cuadro)
     if deco is not None:
         ancho = mundo.tamano[0] + 400
@@ -273,6 +280,16 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
     if estado.reloj is not None:
         dibujar_reloj(pantalla, fuentes, tema, *estado.reloj, (PLACA.x, PLACA.bottom + px(10)))
     _franja(pantalla, fuentes, tema, _mensaje(estado))
+
+
+def _etiqueta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, texto: str, punta: tuple[int, int],
+              activo: bool) -> None:
+    """Nombre de otro jugador sobre su cabeza (apagado si se desconecto)."""
+    img = fuentes.chica.render(texto, True, tema.texto if activo else tema.texto_off)
+    rect = img.get_rect(midbottom=punta).inflate(esp(2), px(4))
+    pygame.draw.rect(pantalla, tema.panel, rect, border_radius=px(TOKENS.radio_m))
+    pygame.draw.rect(pantalla, tema.acento if activo else tema.borde, rect, width=px(2), border_radius=px(TOKENS.radio_m))
+    pantalla.blit(img, img.get_rect(center=rect.center))
 
 
 def _globo_noticia(pantalla: pygame.Surface, tema: Tema, fuentes: Fuentes, punta: tuple[int, int]) -> None:
