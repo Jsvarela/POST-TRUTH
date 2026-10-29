@@ -149,7 +149,8 @@ class SalaState(BaseState):
                 return
         if red.cerrada:
             self.app.red = None
-            self.app.estados.estado("conectar").aviso = (f"Sin conexion: {red.motivo}", "malo")
+            motivo = red.motivo or "se perdio la conexion"
+            self.app.estados.estado("conectar").aviso = (motivo[0].upper() + motivo[1:], "malo")
             self.app.estados.cambiar("conectar")
             return
         self._construir()

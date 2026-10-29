@@ -58,8 +58,14 @@ class ConexionRed:
         try:
             self.sock = socket.create_connection((host, puerto), timeout=espera)
             self.sock.settimeout(None)
+        except ConnectionRefusedError:   # nadie escucha en esa IP y puerto (WinError 10061)
+            self._terminar("No hay un servidor en esa IP y puerto: abre el servidor primero.")
+            return
+        except TimeoutError:             # la IP no contesta: otra red, equipo apagado o firewall
+            self._terminar("El servidor no responde: revisa la IP y que esten en la misma red.")
+            return
         except OSError as e:
-            self._terminar(f"no se pudo conectar: {e}")
+            self._terminar(f"No se pudo conectar: {e}")
             return
         if self.cerrada:   # se cancelo mientras conectaba
             self.sock.close()
