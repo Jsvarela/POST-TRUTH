@@ -71,9 +71,12 @@ class Tokens:
     radio_s: int = 6
     radio_m: int = 10
     radio_l: int = 16
-    fuentes: tuple[tuple[str, int, bool], ...] = (("chica", 17, False), ("normal", 22, False),
-                                                  ("grande", 30, True), ("titulo", 44, True),
-                                                  ("enorme", 72, True))
+    # (nombre, tamano, archivo en assets/fuentes). Pixelify Sans es ~33% mas ancha que Arial: va mas chica para
+    # que los textos de siempre quepan; Jersey 10 es angosta: va un poco mas grande.
+    fuentes: tuple[tuple[str, int, str], ...] = (("chica", 13, "PixelifySans.ttf"), ("normal", 17, "PixelifySans.ttf"),
+                                                 ("grande", 33, "Jersey10-Regular.ttf"),
+                                                 ("titulo", 48, "Jersey10-Regular.ttf"),
+                                                 ("enorme", 80, "Jersey10-Regular.ttf"))
     alfa_panel: int = 232     # paneles que flotan sobre el mapa
     alfa_velo: int = 150      # velo detras de un modal
     alfa_sombra: int = 90

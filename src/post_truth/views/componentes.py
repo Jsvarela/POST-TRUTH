@@ -7,8 +7,8 @@ from typing import Callable
 
 import pygame
 
-from post_truth.config import px
-from post_truth.views.theme import TOKENS, Tema, esp, mezclar
+from post_truth.config import RUTA_FUENTES, px
+from post_truth.views.theme import NEGRO, TOKENS, Tema, esp, mezclar
 
 
 @dataclass
@@ -22,8 +22,15 @@ class Fuentes:
 
     @classmethod
     def crear(cls) -> "Fuentes":
-        return cls(**{nombre: pygame.font.SysFont("arial", px(tam), bold=negrita)
-                      for nombre, tam, negrita in TOKENS.fuentes})
+        return cls(**{nombre: fuente(archivo, tam) for nombre, tam, archivo in TOKENS.fuentes})
+
+
+def fuente(archivo: str, tam: int) -> pygame.font.Font:
+    """La fuente pixel de assets/fuentes; si falta o no se puede leer, Arial del sistema (el juego sigue)."""
+    try:
+        return pygame.font.Font(str(RUTA_FUENTES / archivo), px(tam))
+    except (FileNotFoundError, OSError, pygame.error):
+        return pygame.font.SysFont("arial", px(tam), bold=tam >= 30)
 
 
 def ajustar_texto(texto: str, fuente: pygame.font.Font, ancho: int) -> list[str]:
@@ -139,14 +146,35 @@ class Panel:
             pantalla.blit(img, (self.rect.x + px(18), self.rect.y + px(12)))
 
 
-def panel(pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect, alfa: int = 255, borde=None) -> None:
-    """El fondo de todo lo que flota: sombra, relleno del tema (con transparencia sobre el mapa) y borde."""
-    radio = px(TOKENS.radio_l)
-    capa = pygame.Surface((rect.w, rect.h + px(4)), pygame.SRCALPHA)
-    pygame.draw.rect(capa, (*tema.fondo, TOKENS.alfa_sombra), (0, px(4), rect.w, rect.h), border_radius=radio)
-    pygame.draw.rect(capa, (*tema.panel, alfa), (0, 0, rect.w, rect.h), border_radius=radio)
+def _cortado(sup: pygame.Surface, color, r: pygame.Rect, p: int) -> None:
+    """Rectangulo con las cuatro esquinas recortadas un pixel (de tamano `p`)."""
+    pygame.draw.rect(sup, color, (r.x + p, r.y, r.w - 2 * p, r.h))
+    pygame.draw.rect(sup, color, (r.x, r.y + p, r.w, r.h - 2 * p))
+
+
+def marco_pixel(pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect, relleno=None, alfa: int = 255,
+                borde=None, sombra: bool = True) -> None:
+    """Marco pixel art: esquinas recortadas, contorno oscuro (o `borde`), luz arriba e izquierda, sombra abajo y
+    derecha, y una sombra dura desplazada (sin difuminar). El pixel mide px(2)."""
+    p = px(2)
+    relleno = relleno or tema.panel
+    oscuro = mezclar(tema.fondo, NEGRO, 0.6)
+    capa = pygame.Surface((rect.w + 2 * p, rect.h + 2 * p), pygame.SRCALPHA)
+    if sombra:
+        _cortado(capa, (*oscuro, TOKENS.alfa_sombra), pygame.Rect(2 * p, 2 * p, rect.w, rect.h), p)
+    _cortado(capa, (*(borde or oscuro), 255), pygame.Rect(0, 0, rect.w, rect.h), p)
+    pygame.draw.rect(capa, (*relleno, alfa), (p, p, rect.w - 2 * p, rect.h - 2 * p))
+    luz, sombra_cara = (*mezclar(relleno, tema.texto, 0.22), alfa), (*mezclar(relleno, NEGRO, 0.35), alfa)
+    pygame.draw.rect(capa, luz, (p, p, rect.w - 2 * p, p))                    # arriba
+    pygame.draw.rect(capa, luz, (p, p, p, rect.h - 2 * p))                    # izquierda
+    pygame.draw.rect(capa, sombra_cara, (2 * p, rect.h - 2 * p, rect.w - 3 * p, p))   # abajo
+    pygame.draw.rect(capa, sombra_cara, (rect.w - 2 * p, 2 * p, p, rect.h - 3 * p))   # derecha
     pantalla.blit(capa, rect.topleft)
-    pygame.draw.rect(pantalla, borde or tema.borde, rect, width=px(2), border_radius=radio)
+
+
+def panel(pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect, alfa: int = 255, borde=None) -> None:
+    """El fondo de todo lo que flota (marco pixel, con transparencia sobre el mapa)."""
+    marco_pixel(pantalla, tema, rect, tema.panel, alfa, borde)
 
 
 class Tarjeta:
@@ -293,8 +321,7 @@ class CajaDialogo:
             self._visibles = min(float(len(self.texto)), self._visibles + self.velocidad * dt)
 
     def draw(self, pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema) -> None:
-        pygame.draw.rect(pantalla, tema.panel, self.rect, border_radius=px(14))
-        pygame.draw.rect(pantalla, tema.acento, self.rect, width=px(3), border_radius=px(14))
+        marco_pixel(pantalla, tema, self.rect, borde=tema.acento)
         y = self.rect.y + px(12)
         if self.hablante:
             pantalla.blit(fuentes.normal.render(self.hablante, True, tema.acento), (self.rect.x + px(20), y))

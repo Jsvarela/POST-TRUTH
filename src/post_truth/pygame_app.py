@@ -19,7 +19,7 @@ from post_truth.controllers.state_manager import StateManager
 from post_truth.controllers.sustentacion import Sustentacion
 from post_truth.controllers.telefono_state import TelefonoState
 from post_truth.models.personaje import Personaje
-from post_truth.views.componentes import Fuentes
+from post_truth.views.componentes import Fuentes, fuente
 from post_truth.views.efectos import CapaRetro
 from post_truth.views.theme import GestorTemas
 
@@ -32,7 +32,7 @@ class App:
         pygame.display.set_caption(TITULO)
         self.pantalla = pygame.display.set_mode((ANCHO, ALTO))
         self.reloj = pygame.time.Clock()
-        self.fuente = pygame.font.SysFont("arial", px(24))
+        self.fuente = fuente("PixelifySans.ttf", 20)
         self.fuentes = Fuentes.crear()
         self.temas = GestorTemas()
         self.corriendo = True
