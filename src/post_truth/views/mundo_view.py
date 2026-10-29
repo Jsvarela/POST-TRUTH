@@ -9,7 +9,7 @@ from post_truth.models import Role
 from post_truth.models.animacion import AnimacionPersonaje
 from post_truth.mapa_abierto import MapaAbierto
 from post_truth.models.personaje import Genero, Personaje
-from post_truth.views.arte_mundo import ARTE_FORMAS, ArteFormas
+from post_truth.views.arte_mundo import ARTE_PIXEL, ArteFormas
 from post_truth.views.decorado import Decorado
 from post_truth.views.componentes import Fuentes, ajustar_texto, panel
 from post_truth.views.escena_view import dibujar_reloj
@@ -133,7 +133,8 @@ def _capa(ruta, alfa: bool = False) -> pygame.Surface:
     if clave not in _CACHE:
         img = pygame.image.load(str(ruta))
         img = img.convert_alpha() if alfa else img.convert()
-        _CACHE[clave] = pygame.transform.smoothscale(img, (px(img.get_width()), px(img.get_height())))
+        # pixel art: se amplia sin suavizar para que los pixeles queden nitidos
+        _CACHE[clave] = pygame.transform.scale(img, (px(img.get_width()), px(img.get_height())))
     return _CACHE[clave]
 
 
@@ -212,7 +213,7 @@ def _barrera(pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect) -> None:
 
 
 def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo: MapaAbierto,
-                  estado: EstadoMundo | None = None, arte: ArteFormas = ARTE_FORMAS) -> None:
+                  estado: EstadoMundo | None = None, arte: ArteFormas = ARTE_PIXEL) -> None:
     estado = estado or EstadoMundo()
     cam = camara(mundo, *pantalla.get_size(), estado.centro_camara)
     pantalla.fill(tema.suelo)

@@ -75,6 +75,11 @@ Protocolo: mensajes JSON (UTF-8) sobre TCP, cada uno precedido por 4 bytes big-e
 - Servidor -> cliente: `bienvenida` (token), `sala` (con cual es el), `inicio` (la sesion completa), `estado` (foto: la sesion completa, posiciones, eventos numerados y `ack`, el ultimo `n` ya procesado de ese cliente; una foto con `ack` menor al ultimo enviado no pisa la prediccion), `corregir` (posicion rechazada: muro, salto imposible o frontera cerrada), `error` (con `motivo`), `fin` (ganador y puntos).
 - Si un jugador se cae, su rol pasa a un aliado; si era su turno, tras una espera se decide Ignorar por el. Al volver con su token recupera su rol. Si el cliente pierde la conexion, vuelve a la pantalla de conectar con el aviso.
 
+## Arte y creditos
+
+- Mapa, edificios, personajes y decorado: pixel art original del proyecto, dibujado en codigo. El mapa sale de `tools/generar_arte.py` (lee `data/mapa.json`, `zonas.png` y `colisiones.png`, asi que respeta exactamente donde se camina); para regenerarlo: `python tools/generar_arte.py` (requiere numpy, solo para esta herramienta). Los personajes y el decorado se construyen al vuelo en `src/post_truth/views/pixel_sprites.py` con los colores del tema activo.
+- Fuentes: Pixelify Sans y Jersey 10 (Google Fonts), bajo la SIL Open Font License 1.1; las licencias estan en `assets/fuentes/`.
+
 ## Estructura
 
 - `src/post_truth/decision_tree.py`: arbol n-ario de decisiones

@@ -50,6 +50,15 @@ TEMAS = {
 }
 
 
+# Para oscurecer o aclarar mezclando (pixel_sprites): no son colores de la interfaz por si solos.
+NEGRO, BLANCO, OSCURO_CALIDO, OSCURO_FRIO = (0, 0, 0), (255, 255, 255), (40, 30, 30), (20, 20, 30)
+# Decorado natural del mapa (pixel_sprites): igual en los tres temas, como el mapa PNG.
+PALETA_DECORADO = {"0": (34, 70, 44), "1": (50, 104, 56), "2": (78, 140, 70), "3": (132, 186, 96),   # hojas
+                   "t": (74, 48, 36), "T": (106, 70, 48), "O": (24, 26, 34), "F": (236, 120, 132),
+                   "f": (244, 214, 110), "m": (120, 84, 56), "M": (156, 112, 74), "k": (52, 54, 66),
+                   "K": (84, 88, 104), "y": (255, 226, 150), "Y": (255, 246, 210)}
+
+
 def mezclar(a: Color, b: Color, f: float) -> Color:
     """Tono intermedio entre dos colores del tema (asi los matices tambien salen del tema)."""
     return tuple(round(x + (y - x) * f) for x, y in zip(a, b))

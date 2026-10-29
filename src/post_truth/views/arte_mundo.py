@@ -3,6 +3,7 @@ import pygame
 
 from post_truth.config import px
 from post_truth.models.personaje import Personaje
+from post_truth.views import pixel_sprites
 from post_truth.views.personaje_view import dibujar_personaje_mundo
 from post_truth.views.theme import Tema, mezclar
 
@@ -62,4 +63,48 @@ class ArteFormas:
         dibujar_personaje_mundo(pantalla, personaje, tema, pies, alto, animacion, cuadro)
 
 
+class ArtePixel(ArteFormas):
+    """Mismo contrato que ArteFormas, con los sprites pixel art de views/pixel_sprites.py."""
+
+    @staticmethod
+    def _escala() -> int:
+        return max(1, round(px(2)))   # un pixel de arte = 2 pixeles del mapa, igual que mapa.png
+
+    def arbusto(self, pantalla: pygame.Surface, tema: Tema, pos: Punto, tam: int, flores: bool) -> None:
+        img = pixel_sprites.arbusto(flores, self._escala())
+        pantalla.blit(pixel_sprites.sombra(img.get_width(), img.get_height() // 3), img.get_rect(
+            center=(pos[0], pos[1])).move(0, img.get_height() // 3))
+        pantalla.blit(img, img.get_rect(midbottom=(pos[0], pos[1] + img.get_height() // 3)))
+
+    def arbol(self, pantalla: pygame.Surface, tema: Tema, base: Punto, tam: int, balanceo: float) -> None:
+        e = self._escala()
+        variante = round(tam / max(1, px(1))) % 3
+        mover = 1 if balanceo > 0.7 else -1 if balanceo < -0.7 else 0
+        img = pixel_sprites.arbol(variante, mover, e)
+        ancho = img.get_width() * 3 // 4
+        pantalla.blit(pixel_sprites.sombra(ancho, ancho // 3, 80), (base[0] - ancho // 2, base[1] - ancho // 6))
+        pantalla.blit(img, img.get_rect(midbottom=(base[0], base[1] + 3 * e)))
+
+    def farol(self, pantalla: pygame.Surface, tema: Tema, base: Punto, tam: int, brillo: float) -> None:
+        e = self._escala()
+        img = pixel_sprites.farol(brillo > 0.35, e)
+        rect = img.get_rect(midbottom=(base[0], base[1] + e))
+        if brillo > 0.35:
+            halo = 7 * e + round(brillo * 2 * e)
+            capa = pygame.Surface((halo * 2, halo * 2), pygame.SRCALPHA)
+            pygame.draw.circle(capa, (255, 226, 150, 26 + round(30 * brillo)), (halo, halo), halo)
+            pygame.draw.circle(capa, (255, 236, 180, 30 + round(30 * brillo)), (halo, halo), halo // 2)
+            pantalla.blit(capa, (rect.centerx - halo, rect.y + 3 * e - halo))
+        pantalla.blit(img, rect)
+
+    def banca(self, pantalla: pygame.Surface, tema: Tema, pos: Punto, tam: int) -> None:
+        img = pixel_sprites.banca(self._escala())
+        pantalla.blit(img, img.get_rect(center=pos))
+
+    def personaje(self, pantalla: pygame.Surface, tema: Tema, pies: Punto, alto: int, personaje: Personaje,
+                  animacion: str, cuadro: int) -> None:
+        dibujar_personaje_mundo(pantalla, personaje, tema, pies, alto, animacion, cuadro)
+
+
 ARTE_FORMAS = ArteFormas()
+ARTE_PIXEL = ArtePixel()
