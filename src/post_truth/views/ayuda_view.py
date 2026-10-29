@@ -80,6 +80,7 @@ def dibujar_ayuda(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, seccio
     velo = pygame.Surface(pantalla.get_size(), pygame.SRCALPHA)
     velo.fill((*tema.fondo, TOKENS.alfa_velo))
     pantalla.blit(velo, (0, 0))
+    pygame.draw.rect(pantalla, tema.fondo, (0, 0, ANCHO, RECT_INDICE.y - esp(1)))   # tapa el titulo de abajo
     titulo = fuentes.titulo.render("Ayuda", True, tema.acento)
     pantalla.blit(titulo, titulo.get_rect(midtop=(ANCHO // 2, px(14))))
     panel(pantalla, tema, RECT_INDICE, 255)
