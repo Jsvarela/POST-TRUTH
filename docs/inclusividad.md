@@ -29,8 +29,10 @@ noche sobre el mapa es mas suave en este tema para no oscurecer el contraste (`v
 ## Daltonismo
 
 La paleta sale de la propuesta de Okabe e Ito, pensada para que se distinga con los tipos comunes de daltonismo:
-azul (0, 114, 178) para lo bueno, naranja (230, 159, 0) para lo malo y purpura rojizo (204, 121, 167) para el
-acento, en lugar del par rojo y verde que esas personas confunden.
+azul cielo (86, 180, 233) para lo bueno, naranja (230, 159, 0) para lo malo y purpura rojizo (204, 121, 167) para
+el acento, en lugar del par rojo y verde que esas personas confunden. El fondo es el mismo morado oscuro del tema
+normal y todos los textos y senales cumplen el contraste WCAG (4.5:1 el texto, 3:1 los elementos de interfaz); hay
+una prueba que lo mide en los tres temas.
 
 Ademas, **ningun dato depende solo del color**: todo lo que importa tiene una forma propia. La seccion "Leyenda de
 formas" de la ayuda las dibuja todas:
