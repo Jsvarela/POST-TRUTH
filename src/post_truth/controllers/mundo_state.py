@@ -204,7 +204,8 @@ class MundoState(BaseState):
             self.presionadas.clear()
             self.anuncio = None
             self.app.estados.cambiar("telefono")
-        elif vencida is not None:                           # vencio buscando evidencia: se ve adentro lo que paso
+        elif vencida is not None or (s.pendiente is not None and s.pendiente.jugador == self.jugador_id):
+            # vencio el reloj (aqui o mientras se jugaba un minijuego): se ve adentro lo que paso
             self.presionadas.clear()
             self.app.estados.cambiar("escena", fundido=True)
         elif s.fase in (FIN_DIA, FIN):                    # se acabo el dia en la calle
