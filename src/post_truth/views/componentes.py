@@ -97,31 +97,45 @@ class Boton:
             return True
         return False
 
+    LABIO = 4   # alto (de diseno) del borde oscuro de abajo: la tecla "sobresale"
+
     def draw(self, pantalla: pygame.Surface, fuente: pygame.font.Font, tema: Tema) -> None:
-        radio = px(TOKENS.radio_m)
-        rect = self.rect
+        """Tecla pixel: cara con luz arriba y labio oscuro abajo; presionada se hunde y el labio desaparece."""
+        p, labio = px(2), px(self.LABIO)
+        encima = self.habilitado and (self.hover or self.foco)
+        hundido = self.habilitado and self.presionado
+        oscuro = mezclar(tema.fondo, NEGRO, 0.6)
         if not self.habilitado:
-            pygame.draw.rect(pantalla, tema.boton_off, rect, border_radius=radio)
-            pygame.draw.rect(pantalla, tema.texto_off, rect, width=1, border_radius=radio)
-            color_texto = tema.texto_off
+            cara_color, contorno, color_texto = tema.boton_off, tema.texto_off, tema.texto_off
         else:
-            encima = self.hover or self.foco
-            if self.presionado:   # se hunde: sin sombra y un poco mas abajo
-                rect = rect.move(0, px(2))
-            else:
-                pygame.draw.rect(pantalla, mezclar(tema.fondo, tema.boton, 0.4), rect.move(0, px(3)), border_radius=radio)
-            relleno = mezclar(tema.boton_hover, tema.fondo, 0.25) if self.presionado else (
+            cara_color = mezclar(tema.boton_hover, tema.fondo, 0.25) if hundido else (
                 tema.boton_hover if encima else tema.boton)
-            pygame.draw.rect(pantalla, relleno, rect, border_radius=radio)
-            pygame.draw.rect(pantalla, tema.acento if encima else tema.borde, rect, width=px(3 if encima else 2),
-                             border_radius=radio)
-            color_texto = tema.boton_texto
-        img = fuente.render(self.texto, True, color_texto)
-        maximo = rect.width - px(16)
-        if img.get_width() > maximo:
-            alto = max(1, img.get_height() * maximo // img.get_width())
-            img = pygame.transform.smoothscale(img, (maximo, alto))
-        pantalla.blit(img, img.get_rect(center=rect.center))
+            contorno, color_texto = (tema.acento if encima else oscuro), tema.boton_texto
+        r = self.rect.move(0, labio) if hundido else self.rect
+        alto = self.rect.h - labio if hundido else self.rect.h
+        _cortado(pantalla, contorno, pygame.Rect(r.x, r.y, r.w, alto), p)
+        cara = pygame.Rect(r.x + p, r.y + p, r.w - 2 * p, alto - 2 * p - (0 if hundido else labio))
+        if not hundido:   # el labio: el costado de la tecla que se ve debajo de la cara
+            pygame.draw.rect(pantalla, mezclar(cara_color, NEGRO, 0.45), (cara.x, cara.bottom, cara.w, labio))
+        pygame.draw.rect(pantalla, cara_color, cara)
+        pygame.draw.rect(pantalla, mezclar(cara_color, tema.texto, 0.3), (cara.x, cara.y, cara.w, p))   # luz
+        flecha = 3 * p + px(6)
+        img = fuente.render(recortar(self.texto, fuente, cara.w - 2 * flecha), True, color_texto)
+        destino = img.get_rect(center=cara.center)
+        pantalla.blit(img, destino)
+        if encima:   # flechita pixel a la izquierda del texto (tres columnas: 5, 3 y 1 pixeles)
+            x = destino.x - flecha
+            for k, filas in enumerate((5, 3, 1)):   # alturas en pixeles: no es un color
+                pygame.draw.rect(pantalla, tema.acento, (x + k * p, cara.centery - filas * p // 2, p, filas * p))
+
+
+def recortar(texto: str, fuente: pygame.font.Font, ancho: int) -> str:
+    """El texto entero si cabe en `ancho`; si no, cortado con "..." (no se escala: la letra pixel se veria borrosa)."""
+    if fuente.size(texto)[0] <= ancho:
+        return texto
+    while texto and fuente.size(texto + "...")[0] > ancho:
+        texto = texto[:-1]
+    return texto.rstrip() + "..."
 
 
 class Panel:
