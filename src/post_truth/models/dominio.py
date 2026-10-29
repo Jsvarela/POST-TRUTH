@@ -77,17 +77,6 @@ class Impact:
             score=self.score + other.score,
         )
 
-    def as_lines(self) -> list[str]:
-        return [
-            f"Informacion verificada: {self.verified_information:+}",
-            f"Confianza ciudadana: {self.trust:+}",
-            f"Convivencia: {self.coexistence:+}",
-            f"Bienestar digital: {self.digital_wellbeing:+}",
-            f"Desinformacion: {self.misinformation:+}",
-            f"Conflictos: {self.conflicts:+}",
-            f"Puntaje: {self.score:+}",
-        ]
-
 
 SENTIDOS = {"favor": 1, "contra": -1}   # como afecta una publicacion a un candidato si circula
 

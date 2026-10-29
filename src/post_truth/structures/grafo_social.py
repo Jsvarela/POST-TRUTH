@@ -92,11 +92,6 @@ class ResultadoPropagacion:
         llegadas = sorted(t for c, t in self.tiempos.items() if c != self.origen)
         return llegadas[(len(llegadas) - 1) // 2] if llegadas else 0.0
 
-    @property
-    def rapidez(self) -> float:
-        """Personas por hora simulada."""
-        return self.alcanzados / self.tiempo_total if self.tiempo_total > 0 else 0.0
-
     def impacto(self) -> Impact:
         """Consecuencia en la ciudad segun la veracidad y el alcance."""
         n = self.alcanzados

@@ -35,15 +35,6 @@ class CityState:
     def from_dict(cls, datos: dict[str, int]) -> "CityState":
         return cls(**{k: int(v) for k, v in datos.items()})
 
-    def reset(self) -> None:
-        self.verified_information = 55
-        self.trust = 55
-        self.coexistence = 60
-        self.digital_wellbeing = 58
-        self.misinformation = 35
-        self.conflicts = 22
-        self.score = 0
-
     def as_display_rows(self) -> list[tuple[str, int]]:
         return [
             ("Informacion verificada", self.verified_information),

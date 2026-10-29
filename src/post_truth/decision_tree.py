@@ -115,11 +115,6 @@ class DecisionTree:
             total += node.impact
         return total
 
-    def pretty(self) -> str:
-        lines: list[str] = []
-        _pretty(self.root, lines, depth=0)
-        return "\n".join(lines)
-
 
 def load_trees(path: str | Path) -> list[DecisionTree]:
     with Path(path).open("r", encoding="utf-8") as file:
@@ -170,10 +165,3 @@ def _path_to(node: DecisionNode, target_id: str, path: list[DecisionNode]) -> bo
             return True
     path.pop()
     return False
-
-
-def _pretty(node: DecisionNode, lines: list[str], depth: int) -> None:
-    prefix = "  " * depth
-    lines.append(f"{prefix}- {node.label} ({node.node_id})")
-    for child in node.children:
-        _pretty(child, lines, depth + 1)
