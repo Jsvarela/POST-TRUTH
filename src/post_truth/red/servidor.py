@@ -24,18 +24,18 @@ from post_truth.decision_tree import load_trees
 from post_truth.mapa_abierto import MapaAbierto
 from post_truth.models import Role
 from post_truth.models import minijuego as mj
-from post_truth.models import posts
+from post_truth.models import posts, roles
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.red.protocolo import Lector, MensajeInvalido, empaquetar
 from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, FIN_DIA, MAX_JUGADORES, PartidaSesion
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
-from post_truth.structures.propagacion_vivo import ASPECTO_RED, RADIO_ESCUDO, RADIO_ONDA
+from post_truth.structures.propagacion_vivo import ASPECTO_RED, RADIO_ESCUDO
 
 FOTO = 0.1               # segundos entre fotos del estado (10 por segundo)
 MIN_JUGADORES = 2
 GRACIA = 10.0            # segundos que se espera a un jugador desconectado en su turno antes de decidir por el
-AUTO_CONTINUAR = 6.0     # segundos de consecuencias antes de seguir solos
+AUTO_CONTINUAR = 30.0    # segundos que se espera a que quien decidio cierre la animacion o las consecuencias
 ESPERA_DIA = 15.0        # resumen del dia: se sigue cuando todos lo pasan o despues de esto
 MAX_SALIDA = 1024 * 1024 # un cliente que no lee (mas de 1 MB pendiente) se desconecta
 ESCUDO_VIGENTE = 0.5     # un escudo que no se actualiza en este tiempo deja de atajar
@@ -52,6 +52,7 @@ class Conexion:
         self.lector = Lector()
         self.salida = bytearray()
         self.lugar: dict | None = None     # su entrada en la sala
+        self.ack = 0                       # el ultimo "n" de sus acciones ya procesado (va en cada foto)
 
 
 class Servidor:
@@ -71,7 +72,7 @@ class Servidor:
         self.acelerar = acelerar            # pruebas: la simulacion corre mas rapido que el reloj
         self.posiciones: dict[str, dict] = {}   # jugador -> {pos, dir, t}
         self.escudos: dict[str, tuple[tuple[float, float], float]] = {}
-        self.minijugador: str | None = None
+        self.eventos: list[dict] = []       # lo que hicieron los jugadores y las novedades, numerado
         self.t = 0.0
         self._foto = 0.0
         self._espera = 0.0                  # tiempo esperando a un desconectado, en consecuencias o en el resumen
@@ -169,6 +170,8 @@ class Servidor:
         con = self.conexiones.pop(sock, None)
         if con is None:
             return
+        if con.lugar is not None and self.sesion is not None:
+            self._evento(f"{con.lugar['nombre']} se desconecto", con.lugar["jugador"], "malo")
         try:
             self.selector.unregister(sock)
         except (KeyError, ValueError):
@@ -199,11 +202,25 @@ class Servidor:
             self._enviar(con, {"tipo": "error", "motivo": str(r), "para": tipo})
         except (KeyError, ValueError, TypeError) as e:   # datos mal formados: se rechaza, el servidor sigue
             self._enviar(con, {"tipo": "error", "motivo": f"datos_invalidos: {e}", "para": tipo})
+        n = mensaje.get("n")
+        if isinstance(n, int):
+            con.ack = max(con.ack, n)
+
+    def _evento(self, texto: str, jugador: str | None = None, tipo: str = "info", novedad: str = "") -> None:
+        """Queda en las fotos que siguen: cada cliente lo muestra una sola vez (por su numero)."""
+        n = self.eventos[-1]["n"] + 1 if self.eventos else 1
+        self.eventos = self.eventos[-29:] + [{"n": n, "texto": texto, "jugador": jugador, "tipo": tipo,
+                                              "novedad": novedad}]
+
+    def _nombre(self, jid: str) -> str:
+        return next((l["nombre"] for l in self.sala if l["jugador"] == jid), jid)
 
     def _sala(self) -> None:
-        self._a_todos({"tipo": "sala", "jugadores": [
-            {"nombre": l["nombre"], "rol": l["rol"], "jugador": l["jugador"], "conectado": l["conexion"] is not None,
-             "anfitrion": i == 0} for i, l in enumerate(self.sala)]})
+        jugadores = [{"nombre": l["nombre"], "rol": l["rol"], "genero": l["genero"], "jugador": l["jugador"],
+                      "conectado": l["conexion"] is not None, "anfitrion": i == 0} for i, l in enumerate(self.sala)]
+        for i, l in enumerate(self.sala):   # a cada uno, cual es el (los nombres se pueden repetir)
+            if l["conexion"] is not None:
+                self._enviar(l["conexion"], {"tipo": "sala", "jugadores": jugadores, "yo": i})
 
     def _m_unirse(self, con: Conexion, m: dict) -> None:
         if con.lugar is not None:
@@ -216,6 +233,7 @@ class Servidor:
             lugar["conexion"], con.lugar = con, lugar
             if self.sesion is not None:
                 self.sesion.asignar(Role[lugar["rol"]], lugar["jugador"])
+                self._evento(f"{lugar['nombre']} volvio", lugar["jugador"], "bueno")
                 self._enviar(con, {"tipo": "bienvenida", "token": lugar["token"], "jugador": lugar["jugador"]})
                 self._enviar(con, {"tipo": "inicio", "jugador": lugar["jugador"], "sesion": self.sesion.to_dict()})
             else:
@@ -296,15 +314,35 @@ class Servidor:
         s.situar(jid, p, zona)
 
     def _m_decidir(self, con: Conexion, m: dict) -> None:
-        r = self.sesion.decidir(self._jugador(con), str(m["nodo"]))
+        """Queda pendiente: quien decidio ve la propagacion y la cierra con `aplicar` (o se cierra sola)."""
+        jid = self._jugador(con)
+        r = self.sesion.decidir(jid, str(m["nodo"]))
         if not r.ok:
             raise Rechazo(r.motivo)
-        self.sesion.aplicar()
         self._espera = 0.0
+        self._evento(f"{self._nombre(jid)} decidio: {r.nodo.label}", jid)
+
+    def _m_aplicar(self, con: Conexion, m: dict) -> None:
+        s, jid = self.sesion, self._jugador(con)
+        if s.pendiente is None or s.pendiente.jugador != jid:
+            raise Rechazo("sin_decision")
+        s.aplicar()
+        self._espera = 0.0
+
+    def _m_ver(self, con: Conexion, m: dict) -> None:
+        """El de turno abrio la noticia: desde aqui corre su reloj (si es viral)."""
+        if self.sesion.jugador_actual.id != self._jugador(con):
+            raise Rechazo("no_es_su_turno")
+        self.sesion.iniciar_reloj()
+
+    def _m_evidencia(self, con: Conexion, m: dict) -> None:
+        self.sesion.buscar_evidencia(self._jugador(con))
 
     def _m_continuar(self, con: Conexion, m: dict) -> None:
         s, jid = self.sesion, self._jugador(con)
         if s.fase == CONSECUENCIA:
+            if s.jugador_actual.id != jid:
+                raise Rechazo("no_es_su_turno")
             s.continuar()
             self._espera = 0.0
         elif s.fase == FIN_DIA:
@@ -330,51 +368,53 @@ class Servidor:
             raise Rechazo("testigo_no_disponible")
         s.anotar_testimonio(jid, t)
 
-    def _rumor(self):
-        if self.sesion.en_vivo is None:
-            raise Rechazo("sin_rumor")
-        return self.sesion.en_vivo
-
     def _m_escudo(self, con: Conexion, m: dict) -> None:
         self.escudos[self._jugador(con)] = ((_acotar(m["x"]), _acotar(m["y"])), self.t)
 
     def _m_onda(self, con: Conexion, m: dict) -> None:
-        self._jugador(con)
-        r = self._rumor().onda((_acotar(m["x"]), _acotar(m["y"])), RADIO_ONDA, ASPECTO_RED)
+        jid = self._jugador(con)
+        r = self.sesion.onda((_acotar(m["x"]), _acotar(m["y"])))
         if not r.ok:
             raise Rechazo(r.motivo)
+        self._evento(f"{self._nombre(jid)} lanzo un desmentido en onda", jid, "bueno")
 
     def _m_publicar(self, con: Conexion, m: dict) -> None:
-        ok, motivo, _ = self.sesion.publicar(posts.Post(**m["post"]), self._jugador(con))
+        jid = self._jugador(con)
+        ok, motivo, _ = self.sesion.publicar(posts.Post(**m["post"]), jid)
         if not ok:
             raise Rechazo(motivo)
+        self._evento(f"{self._nombre(jid)} publico un post", jid)
 
     def _m_habilidad(self, con: Conexion, m: dict) -> None:
-        r = self.sesion.usar_habilidad(self._jugador(con))
+        jid = self._jugador(con)
+        r = self.sesion.usar_habilidad(jid)
         if not r.ok:
             raise Rechazo(r.motivo)
+        self._evento(f"{self._nombre(jid)} uso {roles.HABILIDADES[self.sesion.jugador(jid).rol].nombre}", jid, "bueno")
 
     def _m_ayuda(self, con: Conexion, m: dict) -> None:
-        self._jugador(con)
-        r = self.sesion.pedir_ayuda(Role[m["rol"]])
+        jid = self._jugador(con)
+        rol = Role[m["rol"]]
+        r = self.sesion.pedir_ayuda(rol)
         if not r.ok:
             raise Rechazo(r.motivo)
+        self._evento(f"{self._nombre(jid)} pidio ayuda al {rol.value} aliado", jid)
 
     def _m_minijuego(self, con: Conexion, m: dict) -> None:
+        """El minijuego se juega en el cliente (sin lag en las teclas); al terminar manda su estado y el servidor
+        valida que estaba disponible ahi y para el, y aplica el resultado con las reglas de la sesion."""
         s, jid = self.sesion, self._jugador(con)
-        if "iniciar" in m:
-            if s.minijuego is not None:
-                raise Rechazo("minijuego_ocupado")    # uno a la vez en toda la partida
-            zona = str(m["iniciar"])
-            if s.jugador(jid).zona != zona or s.iniciar_minijuego(zona) is None:
-                raise Rechazo("minijuego_no_disponible")
-            self.minijugador = jid
-        elif "tecla" in m:
-            if s.minijuego is None or self.minijugador != jid:
-                raise Rechazo("no_es_tu_minijuego")
-            s.minijuego.accion(str(m["tecla"]))
-        else:
-            raise Rechazo("datos_invalidos")
+        d = m["terminar"]
+        juego = mj.desde_dict({**d, "contexto": {**d["contexto"], "jugador": jid}})
+        lugar = juego.contexto.lugar
+        if (s.jugador(jid).zona != lugar or s.minijuegos.get(lugar) != juego.id or s.minijuego is not None
+                or lugar in s.campana.minijuegos_hoy):   # uno por lugar y por dia, como en el modo individual
+            raise Rechazo("minijuego_no_disponible")
+        if not juego.terminado:
+            raise Rechazo("minijuego_sin_terminar")
+        s.minijuego = juego
+        r = s.terminar_minijuego()
+        self._evento(f"{self._nombre(jid)} jugo {juego.nombre}", jid, "bueno" if r.impacto.score >= 0 else "malo")
 
     def _m_salir(self, con: Conexion, m: dict) -> None:
         self._escribir(con.sock)
@@ -393,7 +433,10 @@ class Servidor:
         self._foto += dt
         if s is not None and self._foto >= FOTO:
             self._foto = 0.0
-            self._a_todos(self.foto())
+            foto = self.foto()
+            for con in list(self.conexiones.values()):
+                if con.lugar is not None:
+                    self._enviar(con, {**foto, "ack": con.ack})
         if s is not None and s.fase == FIN and not self._fin_enviado:
             self._fin_enviado = True
             e = s.resultado_eleccion()
@@ -402,7 +445,12 @@ class Servidor:
 
     def _simular(self, dt: float) -> None:
         s = self.sesion
-        if s.fase == DECIDIENDO and s.pendiente is None:
+        if s.fase == DECIDIENDO and s.pendiente is not None:   # se espera a que quien decidio vea la propagacion
+            self._espera += dt
+            if not self._conectado(s.pendiente.jugador) or self._espera >= self.auto_continuar:
+                s.aplicar()
+                self._espera = 0.0
+        elif s.fase == DECIDIENDO:
             if not self._conectado(s.jugador_actual.id):   # su turno y no esta: se lo espera un rato
                 self._espera += dt
                 if self._espera >= self.gracia:
@@ -412,15 +460,8 @@ class Servidor:
                     s.aplicar()
                     self._espera = 0.0
                     return
-            if s.transcurrir(dt) is not None:           # vencio un reloj viral: la sesion decidio sola
-                s.aplicar()
+            if s.transcurrir(dt) is not None:           # vencio un reloj viral: queda pendiente para que se vea
                 self._espera = 0.0
-            m = s.minijuego
-            if m is not None:
-                m.update(dt)
-                if m.terminado:
-                    s.terminar_minijuego()
-                    self.minijugador = None
             v = s.en_vivo
             if v is not None:                           # los escudos de quienes tienen el telefono abierto
                 for pos, cuando in self.escudos.values():
@@ -428,13 +469,14 @@ class Servidor:
                         v.interceptar(pos, RADIO_ESCUDO, ASPECTO_RED)
         elif s.fase == CONSECUENCIA:
             self._espera += dt
-            if self._espera >= self.auto_continuar:
+            if not self._conectado(s.jugador_actual.id) or self._espera >= self.auto_continuar:
                 s.continuar()
                 self._espera = 0.0
         elif s.fase == FIN_DIA:
             self._espera += dt
             conectados = {l["jugador"] for l in self.sala if l["conexion"] is not None}
             if conectados <= self._listos or self._espera >= self.espera_dia:
+                s.anunciar_fase = False                 # solo queda en True si el dia nuevo empieza una fase
                 s.empezar_siguiente_dia()
                 self._listos.clear()
                 self._espera = 0.0
@@ -442,11 +484,15 @@ class Servidor:
                     centro = self.mapa.zonas[s.mapa.zona_inicial].centro
                     self.posiciones[j.id] = {"pos": centro, "dir": "abajo", "t": self.t}
                     s.situar(j.id, centro, s.mapa.zona_inicial)
+        if s.novedad:                                   # crisis, viral o mapa: cada cliente la avisa una vez
+            self._evento(s.notificaciones[-1]["titulo"] if s.notificaciones else s.novedad, None, "info", s.novedad)
+            s.novedad = ""
 
     def foto(self) -> dict:
-        """Lo que cambia a cada rato, compacto (la sesion completa va una sola vez en `inicio`)."""
+        """La sesion completa (unos 21 KB: el cliente la copia tal cual) y, aparte, lo que el cliente usa sin
+        reconstruirla: posiciones con su direccion, nombres, conexion y los eventos numerados."""
         s = self.sesion
-        c, v, m = s.campana, s.en_vivo, s.minijuego
+        c, v = s.campana, s.en_vivo
         nuevas, self._notificadas = s.notificaciones[self._notificadas:], len(s.notificaciones)
         nombres = {l["jugador"]: l["nombre"] for l in self.sala}
         return {
@@ -463,8 +509,7 @@ class Servidor:
                              "crisis": list(s.zonas_crisis), "aisladas": list(s.aisladas)},
             "rumor": None if v is None else {"estado": v.estado, "frenados": v.frenados, "progreso": v.progreso_paso,
                                              "viajes": [list(x) for x in v.viajes]},
-            "minijuego": None if m is None else {"id": m.id, "jugador": self.minijugador, "estado": m.estado()},
-            "notificaciones": nuevas,
+            "notificaciones": nuevas, "eventos": self.eventos, "sesion": s.to_dict(),
         }
 
 
