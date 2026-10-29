@@ -37,8 +37,8 @@ class ClienteRed:
                 datos = self.sock.recv(65536)
             except (BlockingIOError, InterruptedError):
                 datos = None
-            if datos == b"":
-                self.cerrado = True
+            if datos == b"":   # el servidor corto: se cierra tambien de este lado
+                self.cerrar()
             elif datos:
                 nuevos = self.lector.agregar(datos)
         self.recibidos += nuevos
