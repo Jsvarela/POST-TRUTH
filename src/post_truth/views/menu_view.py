@@ -6,7 +6,7 @@ import pygame
 from post_truth.config import ANCHO, ALTO, px
 from post_truth.views.componentes import Boton, Fuentes, panel
 from post_truth.views.fondo import dibujar_fondo_ciudad
-from post_truth.views.theme import TOKENS, Tema, esp
+from post_truth.views.theme import NEGRO, TOKENS, Tema, esp, mezclar
 
 
 def rect_boton(i: int) -> pygame.Rect:
@@ -26,13 +26,18 @@ def dibujar_menu(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, botones
     dibujar_fondo_ciudad(pantalla, tema, t)
     entrada = min(1.0, t / TOKENS.dur_lenta)
     desliza = round(px(40) * (1 - entrada) ** 2)      # el titulo baja suave al abrir
-    titulo = fuentes.enorme.render("POST & TRUTH", True, tema.texto)
+    titulo = fuentes.enorme.render("POST & TRUTH", True, tema.texto)   # Jersey 10
     centro = (ANCHO // 2, px(130) - desliza)
-    pantalla.blit(fuentes.enorme.render("POST & TRUTH", True, tema.fondo), titulo.get_rect(center=centro).move(px(4), px(4)))
+    p = px(2)
+    oscuro = mezclar(tema.fondo, NEGRO, 0.6)
+    pantalla.blit(fuentes.enorme.render("POST & TRUTH", True, oscuro), titulo.get_rect(center=centro).move(2 * p, 2 * p))
     pantalla.blit(titulo, titulo.get_rect(center=centro))
-    ancho_linea = round(titulo.get_width() * entrada * (0.9 + 0.1 * math.sin(t * 2)))
-    pygame.draw.rect(pantalla, tema.acento, (ANCHO // 2 - ancho_linea // 2, centro[1] + titulo.get_height() // 2,
-                                             ancho_linea, px(6)))
+    # linea dorada pixel: ancho en pixeles enteros (de 2 en 2) y su sombra dura debajo
+    ancho_linea = round(titulo.get_width() * entrada * (0.9 + 0.1 * math.sin(t * 2)) / (2 * p)) * 2 * p
+    linea = pygame.Rect(ANCHO // 2 - ancho_linea // 2, centro[1] + titulo.get_height() // 2, ancho_linea, 2 * p)
+    pygame.draw.rect(pantalla, oscuro, linea.move(p, p))
+    pygame.draw.rect(pantalla, tema.acento, linea)
+    pygame.draw.rect(pantalla, mezclar(tema.acento, tema.texto, 0.5), (linea.x, linea.y, linea.w, p))   # brillo
     sub = fuentes.normal.render("Alcalde Digital  -  Ciudad Nova elige alcalde en 4 dias", True, tema.acento)
     pantalla.blit(sub, sub.get_rect(center=(ANCHO // 2, centro[1] + titulo.get_height() // 2 + px(36))))
     for i, b in enumerate(botones):   # entran uno tras otro
