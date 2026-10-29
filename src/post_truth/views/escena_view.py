@@ -23,7 +23,7 @@ ETIQUETAS_IMPACTO = {
 }
 
 RECT_HUD = pygame.Rect(0, 0, ANCHO, px(56))   # franja del HUD en fila (lo dibuja la capa global)
-RECT_PERSONAJE = pygame.Rect(px(40), px(114), px(260), px(286))
+RECT_PERSONAJE = pygame.Rect(px(40), px(138), px(260), px(262))   # el pixel art llena el alto: deja libre el reloj viral
 RECT_PANEL = pygame.Rect(px(330), px(68), px(664), px(328))
 RECT_ESCENA = pygame.Rect(0, px(57), ANCHO, px(404) - px(57))
 RECT_TARJETA = pygame.Rect(RECT_PANEL.x + px(12), RECT_PANEL.y + px(8), px(346), px(312))
