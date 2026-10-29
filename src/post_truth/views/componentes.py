@@ -2,6 +2,7 @@
 Panel, Tarjeta, BarraAnimada, Modal y CajaDialogo. El aviso flotante es `anuncio_view.Anuncio` y el texto
 flotante de impacto vive en `efectos.py`."""
 import math
+import re
 from dataclasses import dataclass
 from typing import Callable
 
@@ -25,10 +26,29 @@ class Fuentes:
         return cls(**{nombre: fuente(archivo, tam) for nombre, tam, archivo in TOKENS.fuentes})
 
 
+_LIGADURA = re.compile(r"f(?=[fil])")
+
+
+def sin_ligaduras(texto: str) -> str:
+    """Pixelify Sans dibuja "fi", "fl" y "ff" con un glyph que parece otra letra ("Verificada" -> "VeriAcada"): un
+    separador invisible (ZWNJ, U+200C) entre la f y la letra siguiente evita que se unan."""
+    return _LIGADURA.sub("f" + chr(0x200C), texto) if isinstance(texto, str) else texto
+
+
+class FuentePixel(pygame.font.Font):
+    """Font que no une letras en ligaduras (al dibujar y al medir, para que el ajuste de lineas coincida)."""
+
+    def render(self, texto, *args, **kwargs):
+        return super().render(sin_ligaduras(texto), *args, **kwargs)
+
+    def size(self, texto):
+        return super().size(sin_ligaduras(texto))
+
+
 def fuente(archivo: str, tam: int) -> pygame.font.Font:
     """La fuente pixel de assets/fuentes; si falta o no se puede leer, Arial del sistema (el juego sigue)."""
     try:
-        return pygame.font.Font(str(RUTA_FUENTES / archivo), px(tam))
+        return FuentePixel(str(RUTA_FUENTES / archivo), px(tam))
     except (FileNotFoundError, OSError, pygame.error):
         return pygame.font.SysFont("arial", px(tam), bold=tam >= 30)
 
@@ -119,9 +139,11 @@ class Boton:
             pygame.draw.rect(pantalla, mezclar(cara_color, NEGRO, 0.45), (cara.x, cara.bottom, cara.w, labio))
         pygame.draw.rect(pantalla, cara_color, cara)
         pygame.draw.rect(pantalla, mezclar(cara_color, tema.texto, 0.3), (cara.x, cara.y, cara.w, p))   # luz
-        flecha = 3 * p + px(6)
-        img = fuente.render(recortar(self.texto, fuente, cara.w - 2 * flecha), True, color_texto)
+        flecha = 3 * p + px(4)
+        img = fuente.render(recortar(self.texto, fuente, cara.w - flecha - 2 * p), True, color_texto)
         destino = img.get_rect(center=cara.center)
+        if destino.x - flecha < cara.x:   # texto largo: se corre a la derecha para dejar sitio a la flechita
+            destino.x = cara.x + flecha
         pantalla.blit(img, destino)
         if encima:   # flechita pixel a la izquierda del texto (tres columnas: 5, 3 y 1 pixeles)
             x = destino.x - flecha
