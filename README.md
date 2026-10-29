@@ -30,6 +30,9 @@ python src/main.py
 - G: mostrar la guia hacia la noticia
 - Chat bajo presion (Colegio): flechas o A/D mueven a Sofi para atrapar el apoyo y esquivar los ataques; Espacio usa la calma
 - Mitin (Plaza): revienta los globos de rumor con 1 dato, 2 pregunta o 3 calma segun su forma
+- Rueda de prensa (Alcaldia): A/D o flechas giran el foco hacia el periodista que pregunta; responde con la prueba que pide su icono (1 pista, triangulo; 2 evidencia, cuadrado; 3 testimonio, circulo) y a una trampa (X) con Espacio, "sin pruebas". Lo que investigaste es tu municion
+- De boca en boca (Barrio): WASD o flechas para correr hasta quien cree el chisme y mantener E cerca para convencerlo; con evidencia o credibilidad alta convences mas rapido, y si sueltas un argumento debil se enoja
+- En la calle: los transeuntes caminan de zona en zona. Junto a uno con rumor (triangulo) manten E y siguele el paso para convencerlo; junto a un testigo de la noticia (circulo), mantenla para escucharlo. Para esquivarlos, sigue de largo
 - P (en un minijuego): pausa
 - T: abrir o cerrar el telefono Civitas (la red en vivo; el mundo corre al 25%). Frena el rumor: mueve el escudo (WASD, flechas o raton) para atajar las bolitas rojas y Espacio lanza el desmentido en onda; Tab cambia de pestana
 - Pestana Publicar del telefono: flechas o clic para armar el post (formato segun el rol, titular, imagen, fuente y tono) y Enter para publicarlo
@@ -44,6 +47,10 @@ python src/main.py
 ## Fases de la campana
 
 Cuatro dias, uno por fase (data/fases.json): Inicio de campana, Debates (abre el Auditorio), Semana final y Dia de eleccion (abre la Registraduria, de noche). Si los conflictos o la desinformacion suben, una protesta cierra una calle; si una zona queda sin camino a la Alcaldia, a sus vecinos no les llegan los desmentidos. Las zonas con mucha desinformacion entran en crisis.
+
+## Rutas de los transeuntes
+
+Cada transeunte elige un destino entre las zonas que puede alcanzar (BFS sobre el grafo de la ciudad) y va por el camino mas corto a pie: Dijkstra sobre una copia del grafo cuyas aristas pesan lo que se camina (centro de una zona, paso de la frontera, centro de la otra). Las fronteras cerradas no son aristas, asi que nunca las cruza; si se cierra una de su ruta, recalcula desde donde esta, y si su zona queda aislada, espera (`src/post_truth/structures/rutas.py`, `models/transeuntes.py`).
 
 ## Multijugador
 

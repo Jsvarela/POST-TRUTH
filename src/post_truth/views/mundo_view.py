@@ -51,6 +51,8 @@ class EstadoMundo:
     texto_accion: str = ""                     # que hace E aqui, cuando hay una sola opcion
     animacion: AnimacionPersonaje = field(default_factory=AnimacionPersonaje)
     otros: tuple = ()   # multijugador: (nombre, personaje, posicion, animacion, cuadro, conectado) de los demas
+    transeuntes: tuple = ()   # (nombre, personaje, posicion, animacion, cuadro, marca: rumor/testigo/enojado/"")
+    charla: tuple | None = None   # (posicion, progreso 0..1, lo que dice el, tu argumento)
 
 
 class Camara:
@@ -256,6 +258,17 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
             if visible(x, y):
                 arte.arbol(pantalla, tema, a_pantalla((x, y), cam), px(34 * tam), math.sin(estado.t * 1.3 + fase))
     alto = px(ALTO_PERSONAJE * 14)
+    for nombre, personaje, (tx, ty), animacion, cuadro, marca in estado.transeuntes:
+        if visible(tx, ty):
+            pies = a_pantalla((tx, ty + mundo.pies[1] / 2), cam)
+            arte.personaje(pantalla, tema, pies, alto, personaje, animacion, cuadro)
+            if marca:
+                _marca_transeunte(pantalla, tema, marca, (pies[0], pies[1] - alto - px(14)))
+    if estado.charla is not None:
+        (cx, cy), lleno, _, _ = estado.charla
+        caja = pygame.Rect(0, 0, px(64), px(64))
+        caja.center = a_pantalla((cx, cy - mundo.pies[1]), cam)
+        pygame.draw.arc(pantalla, tema.bueno, caja, math.pi / 2, math.pi / 2 + 2 * math.pi * max(0.02, lleno), px(6))
     for nombre, personaje, (ox, oy), animacion, cuadro, conectado in estado.otros:   # los demas, debajo del propio
         if visible(ox, oy):
             pies = a_pantalla((ox, oy + mundo.pies[1] / 2), cam)
@@ -280,6 +293,20 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
     if estado.reloj is not None:
         dibujar_reloj(pantalla, fuentes, tema, *estado.reloj, (PLACA.x, PLACA.bottom + px(10)))
     _franja(pantalla, fuentes, tema, _mensaje(estado))
+
+
+def _marca_transeunte(pantalla: pygame.Surface, tema: Tema, marca: str, c: tuple[int, int]) -> None:
+    """Sobre la cabeza, por forma: triangulo con rumor, circulo testigo, cuadrado enojado."""
+    x, y = c
+    r = px(10)
+    if marca == "rumor":
+        pygame.draw.polygon(pantalla, tema.malo, [(x, y - r), (x + r, y + r), (x - r, y + r)])
+        pygame.draw.line(pantalla, tema.fondo, (x, y - r // 3), (x, y + r // 2), px(2))
+    elif marca == "testigo":
+        pygame.draw.circle(pantalla, tema.bueno, c, r)
+        pygame.draw.circle(pantalla, tema.fondo, c, r // 3)
+    else:
+        pygame.draw.rect(pantalla, tema.detalle, (x - r, y - r, 2 * r, 2 * r), border_radius=px(3))
 
 
 def _etiqueta(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, texto: str, punta: tuple[int, int],
@@ -355,8 +382,12 @@ def _minimapa(pantalla: pygame.Surface, tema: Tema, mundo: MapaAbierto, estado: 
 
 
 def _mensaje(estado: EstadoMundo) -> str:
+    if estado.charla is not None:                       # lo que dice el transeunte y tu argumento
+        return f"{estado.charla[2]}   {estado.charla[3]}".strip()
     if estado.aviso:
         return estado.aviso
+    if estado.texto_accion.startswith("Manten E"):      # alguien de la calle al alcance
+        return estado.texto_accion
     if estado.accion is not None:
         zona, que = estado.accion
         if que == "elegir":

@@ -10,6 +10,7 @@ from post_truth.controllers.base_state import BaseState
 from post_truth.decision_tree import load_trees
 from post_truth.models import Role
 from post_truth.models import minijuego as mj
+from post_truth.models import transeuntes as tr
 from post_truth.mapa_abierto import MapaAbierto
 from post_truth.models.animacion import AnimacionPersonaje
 from post_truth.models.personaje import Genero, Personaje
@@ -60,6 +61,8 @@ class MundoState(BaseState):
         self.alerta = 0.0
         self.menu_aliados = False   # Y: pedir ayuda a los aliados
         self.otros: dict[str, tuple[tuple[float, float], AnimacionPersonaje]] = {}   # multijugador: los demas
+        self.calle: dict[str, tuple[tuple[float, float], AnimacionPersonaje]] = {}   # transeuntes
+        self.charlando: str | None = None   # transeunte con quien se habla mientras E sigue apretada
 
     @property
     def personaje(self) -> Personaje:
@@ -108,6 +111,12 @@ class MundoState(BaseState):
         """La zona que pisa el jugador: E funciona en cualquier punto dentro de ella."""
         return self.mundo.zona_en(self.mundo.jugador)
 
+    def etiqueta_calle(self) -> str:
+        t = self.sesion.transeunte_cerca(self.jugador_id)
+        if t is None:
+            return ""
+        return f"Manten E: escuchar a {t.nombre} (testigo)" if t.testigo else f"Manten E: convencer a {t.nombre} (rumor)"
+
     def accion_disponible(self) -> tuple[str, str] | None:
         """(zona, "entrar") si el jugador esta dentro de un lugar: E entra siempre y adentro se decide."""
         zona = self.zona_aqui()
@@ -135,7 +144,11 @@ class MundoState(BaseState):
             elif event.key in DIRECCIONES:
                 self.presionadas.add(event.key)
             elif event.key == pygame.K_e:
-                self._usar()
+                t = self.sesion.transeunte_cerca(self.jugador_id)
+                if t is not None:              # hablar con alguien de la calle tiene prioridad sobre entrar
+                    self.charlando = t.id
+                else:
+                    self._usar()
             elif event.key == pygame.K_g:
                 self.guia = not self.guia
             elif event.key == pygame.K_F3:
@@ -145,6 +158,9 @@ class MundoState(BaseState):
                 self.app.estados.cambiar("telefono")
         elif event.type == pygame.KEYUP:
             self.presionadas.discard(event.key)
+            if event.key == pygame.K_e and self.charlando is not None:
+                self.charlando = None
+                self._fin_charla(self.sesion.soltar(self.jugador_id))
 
     def update(self, dt: float) -> None:
         for anuncio in ("anuncio", "toast"):
@@ -165,6 +181,7 @@ class MundoState(BaseState):
             self._avisar(f"Entraste a {self.mundo.zonas[zona].nombre}.")
         self._situar()
         self.animacion.actualizar(dx, dy, math.dist(antes, self.mundo.jugador), dt)
+        self._calle(dt)
         self.camara.seguir(self.mundo.jugador, dt)
         self.t += dt
         s = self.sesion
@@ -193,6 +210,57 @@ class MundoState(BaseState):
         if self._t_aviso == 0:
             self.aviso = ""
 
+    def _calle(self, dt: float) -> None:
+        """Anima a los transeuntes y avanza la charla mientras E siga apretada."""
+        s = self.sesion
+        if s.calle is None:
+            return
+        for t in s.calle.transeuntes:
+            antes, anim = self.calle.get(t.id, (tuple(t.pos), AnimacionPersonaje()))
+            ahora = tuple(t.pos)
+            anim.actualizar(ahora[0] - antes[0], ahora[1] - antes[1], math.dist(antes, ahora), dt)
+            self.calle[t.id] = (ahora, anim)
+        if self.charlando is not None:
+            r = s.hablar(self.jugador_id, self.charlando, dt)
+            if r or s.charla is None:          # termino, o se alejo y se corto
+                self.charlando = None
+                self._fin_charla(r or "lejos")
+
+    def _fin_charla(self, como: str) -> None:
+        if como == "convencido":
+            self._avisar("Ya no va a regar ese rumor.", "Lo convenciste", "bueno")
+        elif como == "testigo":
+            n = self.sesion.notificaciones[-1]
+            self._avisar(n["texto"], n["titulo"], "bueno")
+        elif como == "enojado":
+            self._avisar("No quiso escucharte. Con evidencia o mas credibilidad te va mejor.", "Se enojo", "malo")
+        elif como == "lejos":
+            self._avisar("Se fue: hay que seguirle el paso mientras le hablas.")
+
+    def vista_calle(self) -> tuple[tuple, tuple | None]:
+        """(transeuntes para dibujar, charla en curso) con lo que la vista necesita."""
+        s = self.sesion
+        if s.calle is None:
+            return (), None
+        salida = []
+        for t in s.calle.transeuntes:
+            pos, anim = self.calle.get(t.id, (tuple(t.pos), AnimacionPersonaje()))
+            marca = "enojado" if t.enojado > 0 else "rumor" if t.rumor else "testigo" if t.testigo else ""
+            if t.testigo and s.jugador_actual.investigacion.esta_descubierta(t.testigo):
+                marca = ""
+            genero = Genero.MUJER if t.nombre.split()[0].endswith("a") else Genero.HOMBRE
+            salida.append((t.nombre, Personaje(Role[t.rol], genero, sum(map(ord, t.id)) % 2), pos, anim.nombre,
+                           anim.cuadro, marca))
+        c = s.charla
+        if c is None or c["jugador"] != self.jugador_id or s.calle.buscar(c["id"]) is None:
+            return tuple(salida), None
+        t = s.calle.buscar(c["id"])
+        if c["p"] is None:
+            return tuple(salida), (tuple(t.pos), min(1.0, c["t"] / tr.datos()["escuchar"]), f"{t.nombre} te cuenta lo que vio...", "")
+        p = c["p"]
+        return tuple(salida), (tuple(t.pos), (len(p.camino) + p.progreso) / 3,
+                               f"{t.nombre}: {p.nodo.texto if p.nodo else ''}", f"Tu: {p.opcion.texto if p.opcion else ''}")
+
     def _red(self, dt: float) -> None:
         """Multijugador: el servidor corrige una posicion invalida, y se anima a los demas entre fotos."""
         s = self.sesion
@@ -220,6 +288,7 @@ class MundoState(BaseState):
 
     def estado_vista(self) -> EstadoMundo:
         s = self.sesion
+        calle = self.vista_calle()
         zonas, puntos = (self.mundo.ruta_puntos(s.mapa, self.mundo.ultima_zona, s.zona_noticia) if self.guia
                          else ((), []))
         inv = s.jugador_actual.investigacion
@@ -236,8 +305,9 @@ class MundoState(BaseState):
             reloj=(s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
             dia=(s.campana.dia + 1, len(s.campana.dias)), fraccion_dia=s.campana.fraccion,
             credibilidad=s.jugador_actual.credibilidad, otros=self.vista_otros(),
-            texto_accion=self.etiqueta(accion[1], accion[0]) if (accion := self.accion_disponible())
-            and accion[1] != "elegir" else "")
+            transeuntes=calle[0], charla=calle[1],
+            texto_accion=self.etiqueta_calle() or (self.etiqueta(accion[1], accion[0]) if (accion := self.accion_disponible())
+                                                   and accion[1] != "elegir" else ""))
 
     def datos_hud(self) -> DatosHud | None:
         s = self.sesion
