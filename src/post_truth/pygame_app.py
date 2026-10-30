@@ -50,6 +50,7 @@ class App:
         self.estados.capa = CapaRetro(self.fuentes, self.temas)
         self.estados.sustentacion = Sustentacion(self)
         self.estados.ayuda = Ayuda(self)
+        self.estados.permitida = self.pantalla_permitida
         self.estados.registrar("menu", MenuState(self))
         self.estados.registrar("intro", IntroState(self))
         self.estados.registrar("seleccion", SeleccionState(self))
@@ -78,6 +79,11 @@ class App:
             self.estados.draw(self.pantalla)
             pygame.display.flip()
         pygame.quit()
+
+    def pantalla_permitida(self, nombre: str) -> str:
+        """La pantalla pedida si el paso del dia la permite; si no, la del paso (models/director.py)."""
+        d = getattr(self.partida, "director", None)
+        return nombre if d is None or d.permite(nombre) else d.pantalla()
 
     def atender_red(self, dt: float) -> None:
         """Multijugador: la sesion espejo lee la cola de la red (sin esperar). Si se cae la conexion, a conectar."""

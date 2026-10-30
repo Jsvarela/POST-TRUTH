@@ -19,6 +19,8 @@ class StateManager:
         self.capa = None   # capa global encima de todo (HUD compacto y textos flotantes)
         self.sustentacion = None   # modo sustentacion (F1): tapa todo y pausa la pantalla de abajo
         self.ayuda = None          # ayuda (F2): igual, encima de todo y con la pantalla de abajo en pausa
+        self.permitida = None      # nombre -> nombre: a que pantalla ir si el paso del dia no permite la pedida
+        self._nombre = ""
 
     def registrar(self, nombre: str, estado: BaseState) -> None:
         self._estados[nombre] = estado
@@ -31,11 +33,15 @@ class StateManager:
         return self._estados[nombre]
 
     def cambiar(self, nombre: str, fundido: bool = False) -> None:
+        if self.permitida is not None:     # el director del dia decide que pantalla toca (models/director.py)
+            pedida, nombre = nombre, self.permitida(nombre)
+            if nombre != pedida and self._estados[nombre] is self._actual and self._fase is None:
+                return                     # redirigida a la que ya esta: no se reinicia
         if fundido and self._actual is not None:
             self._destino, self._fase, self._t = nombre, "salida", 0.0
             return
         self._fase = None
-        self._actual = self._estados[nombre]
+        self._actual, self._nombre = self._estados[nombre], nombre
         self._actual.al_entrar()
 
     @property
@@ -75,7 +81,7 @@ class StateManager:
         if self._fase == "salida":
             self._t += dt
             if self._t >= DURACION_FUNDIDO:
-                self._actual = self._estados[self._destino]
+                self._actual, self._nombre = self._estados[self._destino], self._destino
                 self._actual.al_entrar()
                 self._fase, self._t = "entrada", 0.0
             return
@@ -85,6 +91,9 @@ class StateManager:
                 self._fase = None
         if self._actual:
             self._actual.update(dt)
+        if self.permitida is not None and self._fase is None and self._nombre:
+            if self.permitida(self._nombre) != self._nombre:   # el paso cambio y esta pantalla ya no toca
+                self.cambiar(self._nombre, fundido=True)
         if self.capa is not None:
             self.capa.update(dt, self._actual)
 

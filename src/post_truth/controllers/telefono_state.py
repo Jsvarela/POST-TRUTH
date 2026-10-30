@@ -47,7 +47,7 @@ class TelefonoState(BaseState):
             s.novedad = ""
             self.modal = Modal("Crisis viral!", f"\"{s.arbol.event.title}\" se esta regando en "
                                f"{s.zona_noticia.capitalize()}. Tienes {round(s.tiempo_restante or 0)} s: frenala "
-                               "desde la red o ve al lugar.", ("Defender la red",), "crisis")
+                               "desde la red.", ("Defender la red",), "crisis")
             self.modal.cuenta = (s.tiempo_restante or 0.0, s.tiempo_viral_total)
 
     @property

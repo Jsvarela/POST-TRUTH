@@ -329,7 +329,7 @@ class MundoState(BaseState):
             noticia=s.zona_noticia, evidencias=inv.lugares_pendientes() - {s.zona_noticia},
             accion=self.accion_disponible(),
             indicadores=s.ciudad.as_display_rows(), guia=zonas, guia_puntos=tuple(puntos), aviso=self.aviso,
-            crisis=s.campana.crisis_lanzada and s.indice in s.campana.crisis, depuracion=self.depuracion,
+            crisis=s.director is not None and s.director.nombre == "consecuencia", depuracion=self.depuracion,
             abiertas=frozenset(z.id for z in s.mapa.zonas()), zonas_crisis=frozenset(s.zonas_crisis),
             aisladas=frozenset(s.aisladas), noche=bool(s.fase_actual and s.fase_actual.variante == "noche"),
             salud=salud(s.ciudad),
