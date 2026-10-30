@@ -30,7 +30,7 @@ PANTALLAS = {   # que pantallas se pueden abrir en cada paso
 }
 DESTINO = {"apertura": "mundo", "objetivo": "mundo", "noticia": "mundo", "consecuencia": "telefono",
            "minijuego": "mundo", "cierre": "resumen"}   # a donde va el jugador si pide algo que el paso no permite
-SIEMPRE = {"menu", "intro", "seleccion", "conectar", "sala", "cinematica"}   # fuera de la partida o por encima
+SIEMPRE = {"menu", "seleccion", "conectar", "sala", "cinematica"}   # fuera de la partida o por encima
 OBJETIVOS = {"apertura": "", "objetivo": "Ir a: {lugar}", "noticia": "Investiga y decide: {lugar}",
              "consecuencia": "Frena el rumor en la red", "minijuego": "Ayuda en: {lugar}", "cierre": "Fin del dia"}
 # L2: cada herramienta aparece solo en el paso donde sirve (Role.name -> paso)
@@ -41,19 +41,27 @@ ALIADO_EN = {"JOURNALIST": "noticia", "INFLUENCER": "consecuencia", "CANDIDATE":
 
 @dataclass(frozen=True)
 class DiaHistoria:
-    noticia: str      # event_id de data/events.json
-    zona: str         # el objetivo del mapa
-    minijuego: str    # lugar cuyo minijuego se juega ese dia
-    post: bool = False                          # ese dia la historia pide crear un post (en la consecuencia)
-    personajes: tuple[tuple[str, str], ...] = ()   # (id, lo que dice): los unicos transeuntes con marca y charla
+    noticias: tuple[str, ...]   # versiones posibles del rumor del dia (event_id); la partida sortea una
+    minijuego: str              # lugar cuyo minijuego se juega ese dia
+    post: bool = False                             # ese dia la historia pide crear un post (en la consecuencia)
+    personajes: tuple[tuple[str, str], ...] = ()   # (id, lo que dice): ciudadanos con marca y charla
+    apertura: str = ""          # cinematicas (data/cinematicas.json)
+    cierre: str = ""
+    pista: tuple[str, ...] = ()   # condiciones para que el dia deje su pista sobre @VerdadNova
+
+
+@lru_cache(maxsize=1)
+def datos() -> dict:
+    with RUTA_HISTORIA.open("r", encoding="utf-8") as f:
+        return json.load(f)
 
 
 @lru_cache(maxsize=1)
 def historia() -> tuple[DiaHistoria, ...]:
-    with RUTA_HISTORIA.open("r", encoding="utf-8") as f:
-        return tuple(DiaHistoria(d["noticia"], d["zona"], d["minijuego"], d.get("post", False),
-                                 tuple((p["id"], p.get("dice", "")) for p in d.get("personajes", ())))
-                     for d in json.load(f)["dias"])
+    return tuple(DiaHistoria(tuple(d["noticias"]), d["minijuego"], d.get("post", False),
+                             tuple((p["id"], p.get("dice", "")) for p in d.get("personajes", ())),
+                             d.get("apertura", ""), d.get("cierre", ""), tuple(d.get("pista", ())))
+                 for d in datos()["dias"])
 
 
 @dataclass
@@ -63,10 +71,12 @@ class DirectorDia:
     minijuego: str
     paso: int = 0
     post: bool = False
+    abierto: bool = False   # L4: ya se vio la cinematica de apertura
+    cerrado: bool = False   # L4: ya se vio la de cierre
 
     @classmethod
-    def para(cls, dia: DiaHistoria) -> "DirectorDia":
-        return cls(dia.noticia, dia.zona, dia.minijuego, post=dia.post)
+    def para(cls, dia: DiaHistoria, noticia: str, zona: str) -> "DirectorDia":
+        return cls(noticia, zona, dia.minijuego, post=dia.post)
 
     @property
     def nombre(self) -> str:
@@ -115,4 +125,5 @@ class DirectorDia:
 
     @classmethod
     def from_dict(cls, d: dict) -> "DirectorDia":
-        return cls(d["noticia"], d["zona"], d["minijuego"], int(d["paso"]), bool(d.get("post", False)))
+        return cls(d["noticia"], d["zona"], d["minijuego"], int(d["paso"]), bool(d.get("post", False)),
+                   bool(d.get("abierto", False)), bool(d.get("cerrado", False)))

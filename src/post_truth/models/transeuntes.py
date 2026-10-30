@@ -79,10 +79,8 @@ class Calle:
                                                    list(geo.centros[e.lugar]), testigo=e.id))
 
     def poner_personajes(self, personajes, ciudadanos: dict, mapa: GrafoCiudad) -> None:
-        """Dia nuevo: solo los personajes de la historia hablan. Los testigos que no estan en la lista se van; quien
-        tiene algo que decir sale a caminar (si no estaba ya) desde su zona."""
-        ids = {i for i, _ in personajes}
-        self.transeuntes = [t for t in self.transeuntes if t.testigo is None or f"testigo:{t.testigo}" in ids]
+        """Dia nuevo: solo los personajes de la historia hablan (ademas de los testigos de la noticia, que puso
+        `poner_testigos`); quien tiene algo que decir sale a caminar (si no estaba ya) desde su zona."""
         for t in self.transeuntes:
             t.dice = None
         geo = geometria()

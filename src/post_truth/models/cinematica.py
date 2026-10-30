@@ -25,11 +25,12 @@ from post_truth.structures.rutas import Geometria
 # comando -> campos obligatorios
 COMANDOS = {"actor": ("id", "en"), "quitar": ("id",), "caminar": ("id", "a"), "girar": ("id", "dir"),
             "camara": ("a",), "decir": ("texto",), "esperar": ("segundos",), "fundido": ("a",),
-            "cartel": ("texto",), "sacudir": (), "noche": ("on",), "sonido": ("nombre",)}
+            "cartel": ("texto",), "sacudir": (), "noche": ("on",), "sonido": ("nombre",), "ciudad": ()}
 EN_FONDO = {"caminar", "camara", "esperar", "fundido", "sacudir"}   # los que pueden ir "sin_esperar"
 CON_TIEMPO = EN_FONDO | {"decir", "cartel"}   # los demas son instantaneos: no gastan el dt del cuadro
 CLAVES = {"credibilidad", "desinformacion", "conflictos", "confianza", "verificada", "convivencia", "bienestar",
-          "dia", "fase", "crisis", "aislada", "cerrada", "acierto", "pistas"}   # lo que un "si" puede preguntar
+          "dia", "fase", "crisis", "aislada", "cerrada", "acierto", "pistas", "noticia", "escucho",
+          "verdad"}   # lo que un "si" puede preguntar
 VELOCIDAD_TEXTO = 40.0       # letras por segundo
 VELOCIDAD_ACTOR = 140.0      # px del mapa por segundo
 LEER = (1.2, 1 / 30)         # avance solo: espera 1.2 s + 1/30 s por letra con el texto completo
@@ -97,13 +98,15 @@ def contexto(s) -> dict:
             "confianza": c.trust, "verificada": c.verified_information, "convivencia": c.coexistence,
             "bienestar": c.digital_wellbeing, "dia": s.campana.dia + 1 if s.campana else 0,
             "fase": s.fase_campana + 1, "crisis": set(s.zonas_crisis), "aislada": set(s.aisladas),
-            "cerrada": set(s.protestas), "acierto": inv.acierto is True, "pistas": len(inv.descubiertas)}
+            "cerrada": set(s.protestas), "acierto": inv.acierto is True, "pistas": len(inv.descubiertas),
+            "noticia": {s.arbol.event.event_id}, "escucho": set(s.escuchados), "verdad": set(s.pistas_verdad),
+            "personaje": (j.personaje.rol.name, j.personaje.genero.name, j.personaje.apariencia)}
 
 
 class Interprete:
     def __init__(self, guion: list[dict], ctx: dict | None = None, camara: tuple[float, float] = (0.0, 0.0),
                  manual: bool = False) -> None:
-        self.guion, self.ctx, self.manual = guion, ctx or {}, manual
+        self.guion, self.ctx, self.manual = list(guion), ctx or {}, manual   # copia: "ciudad" inserta comandos
         self.pc = 0
         self.fondo: list[dict] = []          # comandos "sin_esperar" que siguen corriendo
         self.actual: dict | None = None      # el comando en curso, con su estado ("_t", ...)
@@ -148,6 +151,9 @@ class Interprete:
             self.pc += 1
             if not all(cumple(x, self.ctx) for x in c.get("si", ())):
                 continue
+            if c["cmd"] == "ciudad":   # se reemplaza por lo que cambio en la ciudad
+                self.guion[self.pc:self.pc] = self._ciudad(c)
+                continue
             self._empezar(c)
             if c.get("sin_esperar"):
                 self.fondo.append(c)
@@ -155,6 +161,24 @@ class Interprete:
             self.actual = c
             return True
         return False
+
+    def _ciudad(self, c: dict) -> list[dict]:
+        """Mostrar, no solo contar: la camara va a cada calle cerrada, zona en crisis o aislada (del contexto)."""
+        geo, cmds = geometria(), []
+        for clave in sorted(self.ctx.get("cerrada", ())):
+            a, b = clave.split("|")
+            if geo.paso(a, b) is not None:
+                cmds += [{"cmd": "camara", "a": list(geo.paso(a, b)), "segundos": 1.2},
+                         {"cmd": "sacudir", "segundos": 0.3, "fuerza": 6},
+                         {"cmd": "decir", "quien": "Civitas",
+                          "texto": f"Protesta: cerraron la calle entre {a.capitalize()} y {b.capitalize()}."}]
+        for clave, texto in (("crisis", "esta en crisis: alli los rumores corren mas rapido."),
+                             ("aislada", "quedo aislada: no le llegan los desmentidos.")):
+            for z in sorted(self.ctx.get(clave, ())):
+                if z in geo.centros:
+                    cmds += [{"cmd": "camara", "a": z, "segundos": 1.2},
+                             {"cmd": "decir", "quien": "Civitas", "texto": f"{z.capitalize()} {texto}"}]
+        return cmds or [{"cmd": "decir", "quien": "Civitas", "texto": c.get("calma", "Las calles siguen abiertas.")}]
 
     def avanzar(self) -> None:
         """Enter: completa el texto; si ya estaba completo, cierra el dialogo o el cartel."""
@@ -186,8 +210,10 @@ class Interprete:
     def _empezar(self, c: dict) -> None:
         cmd = c["cmd"]
         if cmd == "actor":
-            self.actores[c["id"]] = {"nombre": c.get("nombre", c["id"]), "rol": c.get("rol", "CITIZEN"),
-                                     "genero": c.get("genero", "MUJER"), "variante": c.get("variante", 0),
+            rol, genero, variante = (self.ctx.get("personaje", ("CITIZEN", "MUJER", 0)) if c.get("jugador")
+                                     else (c.get("rol", "CITIZEN"), c.get("genero", "MUJER"), c.get("variante", 0)))
+            self.actores[c["id"]] = {"nombre": c.get("nombre", c["id"]), "rol": rol, "genero": genero,
+                                     "variante": variante,
                                      "pos": list(self.punto(c["en"])),
                                      "anim": AnimacionPersonaje(c.get("dir", "abajo"))}
         elif cmd == "quitar":

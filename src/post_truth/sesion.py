@@ -12,6 +12,7 @@ from post_truth.decision_tree import DecisionNode, DecisionTree, load_trees
 from post_truth.game_state import CityState
 from post_truth.models import Impact, Role
 from post_truth.models import credibilidad as cred
+from post_truth.models import cinematica as cin
 from post_truth.models import director as dr
 from post_truth.models import eleccion
 from post_truth.models import fases
@@ -24,6 +25,7 @@ from post_truth.models.persuasion import Persuasion
 from post_truth.models.personaje import Personaje
 from post_truth.models.pistas import Evidencia, Investigacion, Pista, TipoEvidencia
 from post_truth.structures.arbol_dialogo import NodoDialogo
+from post_truth.structures.arbol_finales import NodoFinal
 from post_truth.structures.grafo_ciudad import GrafoCiudad, Zona
 from post_truth.structures.grafo_social import Ciudadano, GrafoSocial, TipoRelacion
 from post_truth.structures.propagacion_vivo import (ACTIVO, ASPECTO_RED, COMPARTIO, INMUNE, RADIO_ONDA, PropagacionEnVivo,
@@ -67,6 +69,8 @@ class Campana:
     ciudad_al_amanecer: dict = field(default_factory=dict)
     minijuegos_hoy: list[str] = field(default_factory=list)          # lugares cuyo minijuego ya se jugo hoy
     aliados_hoy: list[str] = field(default_factory=list)             # aliados que ya actuaron solos hoy
+    semillas: list[int] = field(default_factory=list)       # L4: el rumor de cada dia (quien lo empieza y a quien llega)
+    velocidades: list[float] = field(default_factory=list)  # L4: que tan rapido se vuelve viral cada dia (0.8..1.2)
 
     @property
     def duracion(self) -> float:
@@ -83,13 +87,15 @@ class Campana:
     def to_dict(self) -> dict:
         return {"dias": self.dias, "factor": self.factor, "dia": self.dia, "t": self.t,
                 "resueltas": [list(r) for r in self.resueltas], "ciudad_al_amanecer": self.ciudad_al_amanecer,
-                "minijuegos_hoy": self.minijuegos_hoy, "aliados_hoy": self.aliados_hoy}
+                "minijuegos_hoy": self.minijuegos_hoy, "aliados_hoy": self.aliados_hoy,
+                "semillas": self.semillas, "velocidades": self.velocidades}
 
     @classmethod
     def from_dict(cls, d: dict) -> "Campana":
         return cls([list(x) for x in d["dias"]], float(d["factor"]), int(d["dia"]), float(d["t"]),
                    [(int(i), a) for i, a in d["resueltas"]], dict(d["ciudad_al_amanecer"]),
-                   list(d.get("minijuegos_hoy", [])), list(d.get("aliados_hoy", [])))
+                   list(d.get("minijuegos_hoy", [])), list(d.get("aliados_hoy", [])),
+                   [int(x) for x in d.get("semillas", [])], [float(x) for x in d.get("velocidades", [])])
 
 
 @dataclass
@@ -156,6 +162,8 @@ class ResultadoDecision:
 
 
 class PartidaSesion:
+    con_cinematicas = False   # la App lo enciende: la apertura espera a su cinematica (bot, pruebas y servidor no)
+
     def __init__(self, jugadores: Sequence[Jugador], arboles: list[DecisionTree], grafo: GrafoSocial,
                  mapa: GrafoCiudad, rng: random.Random, ciudad: CityState | None = None) -> None:
         _validar_cantidad(len(jugadores))
@@ -174,6 +182,9 @@ class PartidaSesion:
         self.campana: Campana | None = None         # None: partida clasica de publicaciones sueltas
         self.novedad = ""                           # "crisis" cuando aparece una; el controlador la avisa y la limpia
         self.director: dr.DirectorDia | None = None  # paso del dia en la campana (L1)
+        self.pistas_verdad: list[str] = []          # L4: dias ("1".."4") que dejaron su pista sobre @VerdadNova
+        self.escuchados: list[str] = []             # L4: personajes de la historia a los que se escucho
+        self.final_visto = False                    # L4: ya se vio la revelacion y el final
         self._accion_aplicada = ""                  # la ultima decision aplicada (para el resumen del dia)
         self.minijuegos: dict[str, str] = {}        # lugar -> id del minijuego (data/minijuegos.json)
         self.minijuego: mj.Minijuego | None = None  # el que se esta jugando
@@ -220,16 +231,20 @@ class PartidaSesion:
     @classmethod
     def nueva_campana(cls, personajes: Sequence[Personaje], todos: list[DecisionTree], grafo: GrafoSocial,
                       mapa: GrafoCiudad, rng: random.Random, dias: int = DIAS, extendido: bool = False,
-                      minijuegos: dict[str, str] | None = None) -> "PartidaSesion":
-        """Un capitulo por dia, con la noticia que dice data/historia.json."""
+                      minijuegos: dict[str, str] | None = None, cinematicas: bool = False) -> "PartidaSesion":
+        """Un capitulo por dia (data/historia.json). Lo aleatorio se sortea aqui, una sola vez, y queda guardado:
+        que version del rumor sale cada dia, quien lo empieza y a quien llega (semilla) y que tan rapido corre."""
         historia = dr.historia()[:dias]
         if len(historia) < dias:
             raise ValueError(f"La historia tiene {len(historia)} dias, no {dias}")
         por_id = {a.event.event_id: a for a in todos}
-        elegidas = [por_id[d.noticia] for d in historia]
-        campana = Campana([[d] for d in range(dias)], FACTOR_TIEMPO_EXTENDIDO if extendido else 1.0)
+        elegidas = [por_id[rng.choice(d.noticias)] for d in historia]
+        campana = Campana([[d] for d in range(dias)], FACTOR_TIEMPO_EXTENDIDO if extendido else 1.0,
+                          semillas=[rng.randrange(2 ** 31) for _ in historia],
+                          velocidades=[round(rng.uniform(0.8, 1.2), 2) for _ in historia])
         sesion = cls.nueva(personajes, elegidas, grafo, mapa, rng)
         sesion.campana = campana
+        sesion.con_cinematicas = cinematicas   # antes del amanecer: la apertura del dia 1 espera su cinematica
         sesion.minijuegos = dict(minijuegos or {})
         semilla = int(hashlib.md5(":".join(a.event.event_id for a in elegidas).encode()).hexdigest()[:8], 16)
         sesion.calle = tr.Calle.crear(grafo.vertices(), mapa, semilla, {j.id for j in sesion.jugadores})   # no toca el rng
@@ -642,6 +657,7 @@ class PartidaSesion:
         elif como == "escuchado" and t.dice is not None:   # personaje de la historia (L2)
             self.notificar("info", t.nombre, t.dice)
             t.dice = None
+            self.escuchados.append(t.id)
         elif como == "convencido" and t.rumor is not None:
             t.rumor = None
             j.credibilidad = cred.acotar(j.credibilidad + 1)
@@ -891,7 +907,7 @@ class PartidaSesion:
         self._entrar_fase()
         self.abrir_evento(c.dias[c.dia][0])
         dia = dr.historia()[c.dia]
-        self.director = dr.DirectorDia.para(dia)
+        self.director = dr.DirectorDia.para(dia, self.arbol.event.event_id, self.zona_noticia)
         if self.calle is not None:   # L2: solo los personajes del dia hablan; los demas son ambiente
             self.calle.poner_personajes(dia.personajes, {v.id: v for v in self.grafo.vertices()}, self.mapa)
         self._avanzar_director()
@@ -907,8 +923,8 @@ class PartidaSesion:
 
     def _paso_cumplido(self, paso: str) -> bool:
         d = self.director
-        if paso == "apertura":   # L3: cuando termine su cinematica
-            return True
+        if paso == "apertura":   # L4: cuando termine su cinematica (sin cinematicas, enseguida)
+            return d.abierto or not self.con_cinematicas
         if paso == "objetivo":   # quien tiene el turno llego a la zona del dia
             return self.jugadores[(self.indice + self.turno) % len(self.jugadores)].zona == d.zona
         if paso == "noticia":
@@ -926,18 +942,53 @@ class PartidaSesion:
             self.tiempo_restante, self.reloj_activo = None, False
         elif paso == "cierre":
             self.reloj_activo, self.fase = False, FIN_DIA
+            dia = dr.historia()[self.campana.dia]
+            ctx = cin.contexto(self)
+            if dia.pista and all(cin.cumple(c, ctx) for c in dia.pista):   # lo investigado deja una pista
+                self.pistas_verdad.append(str(self.campana.dia + 1))
+
+    def terminar_apertura(self) -> None:
+        """La cinematica de apertura termino (o se salto): el dia sigue con su objetivo."""
+        if self.director is not None:
+            self.director.abierto = True
+            self._avanzar_director()
+
+    def cinematica_pendiente(self) -> list[str]:
+        """Las cinematicas que tocan ahora: la apertura del dia, su cierre (una vez) o la revelacion y el final.
+        Las de cierre y final se marcan vistas al pedirlas; la apertura, al terminarla (`terminar_apertura`)."""
+        d = self.director
+        if not self.con_cinematicas or d is None:
+            return []
+        if self.fase == FIN:
+            if self.final_visto:
+                return []
+            self.final_visto = True
+            return [dr.datos()["revelacion"], self.final()]
+        dia = dr.historia()[self.campana.dia]
+        if d.nombre == "apertura" and not d.abierto:
+            return [dia.apertura]
+        if self.fase == FIN_DIA and not d.cerrado:
+            d.cerrado = True
+            return [dia.cierre]
+        return []
+
+    def final(self) -> str:
+        """Que final toca segun como quedo todo: el arbol de decision de data/historia.json."""
+        return NodoFinal.from_dict(dr.datos()["finales"]).elegir(cin.contexto(self))
 
     def _soltar_rumor(self) -> None:
         """La noticia del dia corre en vivo por la red, con el reloj de la defensa (antes era la crisis suelta)."""
         if self.en_vivo is not None:
             self.cerrar_en_vivo()
         c, evento = self.campana, self.arbol.event
-        semilla = int(hashlib.md5(f"{evento.event_id}:{c.dia}".encode()).hexdigest()[:8], 16)   # no toca el rng
+        semilla = (c.semillas[c.dia] if c.dia < len(c.semillas)   # sorteada al empezar: no toca el rng ahora
+                   else int(hashlib.md5(f"{evento.event_id}:{c.dia}".encode()).hexdigest()[:8], 16))
         propios = {j.id for j in self.jugadores}
         autores = sorted(v.id for v in self.grafo.vertices() if v.id not in propios)
         j = self.jugador_actual
         self.en_vivo = PropagacionEnVivo(self.grafo, autores[semilla % len(autores)], j.id, j.credibilidad, semilla,
-                                         es_falsa(evento.truth_level))
+                                         es_falsa(evento.truth_level),
+                                         c.velocidades[c.dia] if c.dia < len(c.velocidades) else 1.0)
         self.en_vivo_viral = False
         self.tiempo_restante, self.reloj_activo = self.tiempo_viral_total, True
         self.novedad = "crisis"
@@ -1085,6 +1136,7 @@ class PartidaSesion:
             "sociales_cortadas": self.sociales_cortadas, "cambios_fase": self.cambios_fase,
             "anunciar_fase": self.anunciar_fase,
             "director": None if self.director is None else self.director.to_dict(),
+            "pistas_verdad": self.pistas_verdad, "escuchados": self.escuchados, "final_visto": self.final_visto,
             "grafo": self.grafo.to_dict(),
             "calle": None if self.calle is None else self.calle.to_dict(),
             "charla": None if self.charla is None else {**self.charla, "p": self.charla["p"] and self.charla["p"].to_dict()},
@@ -1134,6 +1186,9 @@ class PartidaSesion:
         sesion.sociales_cortadas = [dict(a) for a in datos.get("sociales_cortadas", [])]
         sesion.cambios_fase = [tuple(c) for c in datos.get("cambios_fase", [])]
         sesion.anunciar_fase = bool(datos.get("anunciar_fase", False))
+        sesion.pistas_verdad = list(datos.get("pistas_verdad", []))
+        sesion.escuchados = list(datos.get("escuchados", []))
+        sesion.final_visto = bool(datos.get("final_visto", False))
         sesion.por_rumores.update(datos.get("por_rumores", {}))
         if datos.get("campana") is not None:
             sesion.campana = Campana.from_dict(datos["campana"])

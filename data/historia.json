@@ -1,26 +1,35 @@
 {
+ "campana": "campana",
+ "revelacion": "revelacion",
+ "finales": {
+  "pregunta": "desinformacion<50",
+  "si": {"pregunta": "credibilidad>=55", "si": "final_informada", "no": "final_dividida"},
+  "no": {"pregunta": "credibilidad>=55", "si": "final_dividida", "no": "final_enganada"}
+ },
  "dias": [
-  {"noticia": "agua-contaminada", "zona": "barrio", "minijuego": "barrio",
+  {"noticias": ["agua-contaminada", "wifi-con-recibo"], "minijuego": "barrio",
+   "apertura": "dia1_apertura", "cierre": "dia1_cierre", "pista": ["escucho:tomas"],
    "personajes": [
-    {"id": "testigo:tendero-del-barrio"},
-    {"id": "testigo:enfermera-del-colegio"},
-    {"id": "tomas", "dice": "A mi me llego lo del agua por un grupo, de una cuenta que nadie conoce: @VerdadNova."}
+    {"id": "tomas", "dice": "@VerdadNova me escribio anoche: me ofrecia plata por compartir lo del dia. Le dije que no. Sera que le paga a todo el barrio?"},
+    {"id": "nicolas", "dice": "Antes de compartir nada, vamos a ver de donde salio. Yo te sigo."}
    ]},
-  {"noticia": "video-debate-editado", "zona": "alcaldia", "minijuego": "alcaldia",
+  {"noticias": ["video-debate-editado", "foto-con-contratista"], "minijuego": "alcaldia",
+   "apertura": "dia2_apertura", "cierre": "dia2_cierre", "pista": ["acierto"],
    "personajes": [
-    {"id": "testigo:testigo-del-debate"},
-    {"id": "camila", "dice": "El video lo corto alguien que sabia editar. Y lo subio de madrugada, otra vez @VerdadNova."}
+    {"id": "camila", "dice": "Lo de hoy lo subieron a las 3 de la madrugada, editado con cuidado. Eso no lo hace un vecino enojado."},
+    {"id": "nicolas", "dice": "Si concluyes bien que paso, Camila puede seguir el rastro de la cuenta."}
    ]},
-  {"noticia": "colegio-cerrado", "zona": "colegio", "minijuego": "colegio", "post": true,
+  {"noticias": ["colegio-cerrado", "parques-cerrados"], "minijuego": "colegio", "post": true,
+   "apertura": "dia3_apertura", "cierre": "dia3_cierre", "pista": ["escucho:isabela"],
    "personajes": [
-    {"id": "testigo:testigo-directora"},
-    {"id": "testigo:testigo-vecina"},
-    {"id": "isabela", "dice": "Si nadie desmiente lo del colegio, manana lo cree todo el mundo. Publica tu lo que sabes."}
+    {"id": "isabela", "dice": "En el colegio vi a un muchacho grabando con dos celulares a la vez. Uno tenia una funda verde con un rayo."},
+    {"id": "nicolas", "dice": "Hoy no basta con frenar el rumor: alguien tiene que publicar lo que sabemos. Tu."}
    ]},
-  {"noticia": "encuesta-inventada", "zona": "plaza", "minijuego": "plaza",
+  {"noticias": ["encuesta-inventada", "pasajes-gratis"], "minijuego": "plaza",
+   "apertura": "dia4_apertura", "cierre": "dia4_cierre", "pista": ["acierto"],
    "personajes": [
-    {"id": "testigo:profesor-de-estadistica"},
-    {"id": "valentina", "dice": "@VerdadNova sigue a todos los candidatos menos a uno. Raro, no?"}
+    {"id": "valentina", "dice": "@VerdadNova sigue a todos los candidatos. Y a una sola tienda: la de fundas de Esteban Lara."},
+    {"id": "nicolas", "dice": "Ultimo dia. Si hoy lo hacemos bien, manana la ciudad vota con la cabeza fria."}
    ]}
  ]
 }
