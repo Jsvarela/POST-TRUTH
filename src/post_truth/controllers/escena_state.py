@@ -14,6 +14,7 @@ from post_truth.sesion import CONSECUENCIA, DECIDIENDO, FIN, FIN_DIA, PartidaSes
 from post_truth.structures.grafo_ciudad import GrafoCiudad
 from post_truth.structures.grafo_social import GrafoSocial
 from post_truth.views import sonido
+from post_truth.views import hud
 from post_truth.views.hud import DatosHud
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.componentes import Boton, CajaDialogo
@@ -425,6 +426,8 @@ class EscenaState(BaseState):
             dibujar_anuncio(pantalla, self.app.fuentes, self.app.temas.actual, self.anuncio)
 
     def datos_hud(self) -> DatosHud:
+        if self.sesion.director is not None:   # L2: HUD minimo; los indicadores se ven en el cierre
+            return hud.minimo(self.sesion, self.sesion.jugador_actual.credibilidad, "barra")
         return DatosHud(self.ciudad.as_display_rows(), self.sesion.jugador_actual.credibilidad, origen=id(self.ciudad))
 
     def _reloj(self) -> tuple[float, float] | None:

@@ -13,11 +13,11 @@ from post_truth.views.arte_mundo import ARTE_PIXEL, ArteFormas
 from post_truth.views.decorado import Decorado
 from post_truth.views.componentes import Fuentes, ajustar_texto, panel
 from post_truth.views.escena_view import dibujar_reloj
-from post_truth.views.hud import PLACA
+from post_truth.views.hud import MINIMO
 from post_truth.views.mapa_view import _rombo
 from post_truth.views.theme import TEMAS, TOKENS, Tema, esp
 
-AYUDA = "WASD: caminar   |   E: entrar al lugar   |   G: guia   |   H: habilidad   |   Y: aliados   |   F3   |   ESC: menu"
+AYUDA = "WASD: caminar   |   E: entrar o escuchar   |   G: ruta   |   P: pausa   |   F2: ayuda   |   F3   |   ESC: menu"
 ALTO_PERSONAJE = 3.2
 PAJAROS = ((260, 70, 0.0), (300, 70, 0.6), (1100, -55, 9.0))
 RECT_MINIMAPA = pygame.Rect(ANCHO - px(16) - px(220), px(16), px(220), px(138))
@@ -53,6 +53,8 @@ class EstadoMundo:
     otros: tuple = ()   # multijugador: (nombre, personaje, posicion, animacion, cuadro, conectado) de los demas
     transeuntes: tuple = ()   # (nombre, personaje, posicion, animacion, cuadro, marca: rumor/testigo/enojado/"")
     charla: tuple | None = None   # (posicion, progreso 0..1, lo que dice el, tu argumento)
+    flecha: tuple[float, float] | None = None   # L2: punto del mapa al que apunta la guia (el objetivo del paso)
+    pausa: bool = False                         # P: minimapa, indicadores y teclas; el mundo quieto
 
 
 class Camara:
@@ -290,10 +292,49 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
     _tinte_de_salud(pantalla, tema, estado.salud)
     if estado.depuracion:
         _depuracion(pantalla, fuentes, tema, mundo, cam)
-    _minimapa(pantalla, tema, mundo, estado)   # la placa de indicadores la pone la capa global (views/efectos.py)
+    if estado.pausa:   # L2: el minimapa y las teclas se miran en la pausa (los indicadores los pone la capa global)
+        _pausa(pantalla, fuentes, tema)
+        _minimapa(pantalla, tema, mundo, estado)
+        _franja(pantalla, fuentes, tema, "", ayuda=True)
+        return
+    if estado.flecha is not None:
+        _flecha(pantalla, tema, a_pantalla(mundo.jugador, cam), a_pantalla(estado.flecha, cam), estado.t)
     if estado.reloj is not None:
-        dibujar_reloj(pantalla, fuentes, tema, *estado.reloj, (PLACA.x, PLACA.bottom + px(10)))
+        dibujar_reloj(pantalla, fuentes, tema, *estado.reloj, (MINIMO.x, MINIMO.bottom + px(10)))
     _franja(pantalla, fuentes, tema, _mensaje(estado))
+
+
+def _flecha(pantalla: pygame.Surface, tema: Tema, desde: tuple[int, int], hacia: tuple[int, int], t: float) -> None:
+    """Flecha de guia al objetivo del paso: en el borde de la pantalla si esta lejos; si se ve, encima de el."""
+    area = pantalla.get_rect().inflate(-px(90), -px(150))
+    dx, dy = hacia[0] - desde[0], hacia[1] - desde[1]
+    if math.hypot(dx, dy) < px(40):
+        return
+    ang = math.atan2(dy, dx)
+    if area.collidepoint(hacia):   # se ve: flota sobre el lugar, apuntando hacia abajo
+        punta, ang = (hacia[0], hacia[1] - px(70) + round(px(6) * math.sin(t * 4))), math.pi / 2
+    else:                          # fuera de la vista: en el borde, en la direccion del lugar
+        f = min(area.w / 2 / max(abs(dx), 1e-6), area.h / 2 / max(abs(dy), 1e-6))
+        punta = (round(area.centerx + dx * f), round(area.centery + dy * f))
+    largo, ancho = px(26), px(16)
+    base = (punta[0] - math.cos(ang) * largo, punta[1] - math.sin(ang) * largo)
+    normal = (-math.sin(ang) * ancho, math.cos(ang) * ancho)
+    puntos = [punta, (base[0] + normal[0], base[1] + normal[1]), (base[0] - normal[0], base[1] - normal[1])]
+    pygame.draw.polygon(pantalla, tema.acento, puntos)
+    pygame.draw.polygon(pantalla, tema.texto, puntos, px(2))   # contorno: se distingue sin color
+
+
+def _pausa(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema) -> None:
+    velo = pygame.Surface(pantalla.get_size(), pygame.SRCALPHA)
+    velo.fill((*tema.fondo, 170))
+    pantalla.blit(velo, (0, 0))
+    caja = pygame.Rect(0, 0, px(420), px(150))
+    caja.center = pantalla.get_rect().center
+    panel(pantalla, tema, caja, TOKENS.alfa_panel, borde=tema.acento)
+    img = fuentes.grande.render("Pausa", True, tema.texto)
+    pantalla.blit(img, img.get_rect(midtop=(caja.centerx, caja.y + esp(3))))
+    img = fuentes.normal.render("P o ESC: seguir", True, tema.texto_off)
+    pantalla.blit(img, img.get_rect(midbottom=(caja.centerx, caja.bottom - esp(3))))
 
 
 def _marca_transeunte(pantalla: pygame.Surface, tema: Tema, marca: str, c: tuple[int, int]) -> None:
@@ -399,15 +440,16 @@ def _mensaje(estado: EstadoMundo) -> str:
     return ""
 
 
-def _franja(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mensaje: str) -> None:
-    """Abajo: el mensaje del momento en una pildora flotante y la ayuda de teclas en una linea pequena."""
+def _franja(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mensaje: str, ayuda: bool = False) -> None:
+    """Abajo: el mensaje del momento en una pildora flotante; la linea de teclas solo en la pausa (L2)."""
     ancho, alto = pantalla.get_size()
-    ayuda = fuentes.chica.render(AYUDA, True, tema.texto)
-    fondo = pygame.Rect(0, alto - ayuda.get_height() - esp(2), ancho, ayuda.get_height() + esp(2))
-    capa = pygame.Surface(fondo.size, pygame.SRCALPHA)
-    capa.fill((*tema.panel, TOKENS.alfa_panel))
-    pantalla.blit(capa, fondo)
-    pantalla.blit(ayuda, ayuda.get_rect(center=fondo.center))
+    linea = fuentes.chica.render(AYUDA, True, tema.texto)
+    fondo = pygame.Rect(0, alto - linea.get_height() - esp(2), ancho, linea.get_height() + esp(2))
+    if ayuda:
+        capa = pygame.Surface(fondo.size, pygame.SRCALPHA)
+        capa.fill((*tema.panel, TOKENS.alfa_panel))
+        pantalla.blit(capa, fondo)
+        pantalla.blit(linea, linea.get_rect(center=fondo.center))
     if not mensaje:
         return
     lineas = ajustar_texto(mensaje, fuentes.normal, ancho - px(240))[:2]

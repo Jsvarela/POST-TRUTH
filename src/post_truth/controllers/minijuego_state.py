@@ -5,6 +5,7 @@ from post_truth.controllers.base_state import BaseState
 from post_truth.models import guia
 from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
+from post_truth.views import hud
 from post_truth.views.hud import DatosHud
 from post_truth.views.minijuego_view import dibujar_minijuego
 
@@ -57,8 +58,7 @@ class MinijuegoState(BaseState):
 
     def datos_hud(self) -> DatosHud:
         s = self.app.partida
-        return DatosHud(s.ciudad.as_display_rows(), s.jugador(self.minijuego.contexto.jugador).credibilidad,
-                        origen=id(s.ciudad))
+        return hud.minimo(s, s.jugador(self.minijuego.contexto.jugador).credibilidad, "barra")
 
     def draw(self, pantalla: pygame.Surface) -> None:
         s = self.app.partida

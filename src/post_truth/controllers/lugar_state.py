@@ -6,6 +6,7 @@ from post_truth.controllers.base_state import BaseState
 from post_truth.models import minijuego as mj
 from post_truth.sesion import FIN, FIN_DIA
 from post_truth.views.componentes import Boton
+from post_truth.views import hud
 from post_truth.views.hud import DatosHud
 from post_truth.views.lugar_view import dibujar_lugar, rect_boton
 
@@ -17,20 +18,21 @@ class LugarState(BaseState):
         s = self.app.partida
         self.t = 0.0
         self.zona = s.jugador_actual.zona
-        evidencia = s.buscar_evidencia(s.jugador_actual.id)
+        noticia = s.director is None or s.director.nombre == "noticia"   # L2: la noticia solo en su paso
+        evidencia = s.buscar_evidencia(s.jugador_actual.id) if noticia else None
         self.tarjetas: list[tuple[str, str, str]] = []
         if evidencia is not None:
             self.tarjetas.append(("Encontraste evidencia", f"{evidencia.titulo}: {evidencia.hallazgo}", "bueno"))
-        if self.zona == s.zona_noticia:
+        if self.zona == s.zona_noticia and noticia:
             self.tarjetas.append(("La noticia es aqui", s.arbol.event.title, "crisis" if s.reloj_activo else "info"))
         if not self.tarjetas:
-            self.tarjetas.append(("Nada nuevo por aqui", "Aqui no hay nada de la noticia de hoy.", "info"))
+            self.tarjetas.append(("Nada nuevo por aqui", "Aqui no hay nada que hacer ahora.", "info"))
         acciones = []
-        if self.zona == s.zona_noticia and getattr(s, "en_red", False) and not s.es_mi_turno:
+        if self.zona == s.zona_noticia and noticia and getattr(s, "en_red", False) and not s.es_mi_turno:
             self.tarjetas.insert(0, (f"Turno de {s.nombre(s.de_turno.id)}",
                                      "Solo quien tiene el turno decide la noticia; tu puedes jugar o defender la red.",
                                      "info"))
-        elif self.zona == s.zona_noticia:
+        elif self.zona == s.zona_noticia and noticia:
             acciones.append(("Ver la noticia", self._noticia))
         juego = s.minijuego_en(self.zona)
         if juego is not None:
@@ -77,7 +79,7 @@ class LugarState(BaseState):
 
     def datos_hud(self) -> DatosHud:
         s = self.app.partida
-        return DatosHud(s.ciudad.as_display_rows(), s.jugador_actual.credibilidad, origen=id(s.ciudad))
+        return hud.minimo(s, s.jugador_actual.credibilidad, "barra")
 
     def draw(self, pantalla: pygame.Surface) -> None:
         nombre = self.app.partida.mapa.zona(self.zona).nombre if self.zona in self.app.partida.mapa else self.zona

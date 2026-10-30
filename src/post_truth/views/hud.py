@@ -1,12 +1,13 @@
-"""HUD compacto: cada indicador es un icono de forma propia con su barra animada. Sobre el mapa es una placa en
-la esquina (dia, fase, indicadores, credibilidad, puntaje y reloj); en las demas pantallas, una fila arriba."""
+"""HUD compacto: cada indicador es un icono de forma propia con su barra animada. Desde L2 lo normal es el modo
+"minimo" (dia, objetivo del paso y credibilidad); la "placa" con todos los indicadores sale en la pausa (P) y la
+"fila" en el cierre del dia."""
 import math
 from dataclasses import dataclass
 
 import pygame
 
 from post_truth.config import ANCHO, px
-from post_truth.views.componentes import BarraAnimada, Fuentes, panel
+from post_truth.views.componentes import BarraAnimada, Fuentes, panel, recortar
 from post_truth.views.theme import TOKENS, Tema, esp
 
 INDICADORES = (   # (nombre de as_display_rows, etiqueta corta, es malo que suba)
@@ -17,17 +18,19 @@ INDICADORES = (   # (nombre de as_display_rows, etiqueta corta, es malo que suba
 CREDIBILIDAD = "Credibilidad"
 PLACA = pygame.Rect(px(16), px(16), px(292), px(276))
 FILA = pygame.Rect(0, 0, ANCHO, px(56))
+MINIMO = pygame.Rect(px(16), px(16), px(292), px(96))
 
 
 @dataclass
 class DatosHud:
     filas: list[tuple[str, int]]          # as_display_rows de la ciudad (incluye el puntaje)
     credibilidad: int | None = None
-    modo: str = "fila"                    # "placa" sobre el mapa o "fila" arriba
+    modo: str = "fila"                    # "minimo" (esquina) / "barra" (arriba): L2; "placa" o "fila": todo
     dia: tuple[int, int] | None = None
     fase: str = ""
     fraccion_dia: float = 0.0
     origen: int = 0                       # id de la ciudad: si cambia (partida nueva) no se anima el salto
+    objetivo: str = ""                    # modo minimo: lo que toca ahora (models/director.py)
 
 
 def icono(pantalla: pygame.Surface, tema: Tema, nombre: str, centro: tuple[int, int], r: int) -> None:
@@ -66,6 +69,9 @@ def icono(pantalla: pygame.Surface, tema: Tema, nombre: str, centro: tuple[int, 
 
 def posiciones(modo: str) -> dict[str, tuple[int, int]]:
     """Donde esta cada indicador en pantalla: ahi nacen sus textos flotantes."""
+    if modo in ("minimo", "barra"):   # los indicadores no se ven: sus textos nacen apilados junto al HUD
+        x, y = (MINIMO.right + px(8), MINIMO.y + px(10)) if modo == "minimo" else (px(16), FILA.bottom + px(12))
+        return {n: (x, y + i * px(18)) for i, n in enumerate([i[0] for i in INDICADORES] + [CREDIBILIDAD])}
     if modo == "placa":
         y0 = PLACA.y + px(78)
         return {n: (PLACA.right + px(8), y0 + i * px(24)) for i, n in enumerate([i[0] for i in INDICADORES]
@@ -89,6 +95,12 @@ def dibujar(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, d: DatosHud,
     nombres = [i[0] for i in INDICADORES] + ([CREDIBILIDAD] if d.credibilidad is not None else [])
     etiquetas = {i[0]: i[1] for i in INDICADORES} | {CREDIBILIDAD: "Credibilidad"}
     puntaje = valores.get("Puntaje jugador", 0)
+    if d.modo == "minimo":
+        _minimo(pantalla, fuentes, tema, d, barras, valores)
+        return
+    if d.modo == "barra":
+        _barra_minima(pantalla, fuentes, tema, d, barras, valores)
+        return
     if d.modo == "placa":
         panel(pantalla, tema, PLACA, TOKENS.alfa_panel)
         x, y = PLACA.x + esp(3), PLACA.y + esp(2)
@@ -119,6 +131,58 @@ def dibujar(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, d: DatosHud,
         _barra(pantalla, tema, barras, n, valores[n], pygame.Rect(x0, px(34), px(104), px(9)))
     img = fuentes.normal.render(f"Puntaje {puntaje}", True, tema.texto)
     pantalla.blit(img, img.get_rect(midright=(FILA.right - esp(3), FILA.centery)))
+
+
+def _minimo(pantalla, fuentes: Fuentes, tema: Tema, d: DatosHud, barras, valores) -> None:
+    panel(pantalla, tema, MINIMO, TOKENS.alfa_panel)
+    x, y = MINIMO.x + esp(3), MINIMO.y + esp(2)
+    if d.dia:
+        pantalla.blit(fuentes.normal.render(f"Dia {d.dia[0]} de {d.dia[1]}", True, tema.texto), (x, y))
+        _sol(pantalla, tema, pygame.Rect(MINIMO.right - px(66), y + px(2), px(52), px(36)), d.fraccion_dia)
+    y += fuentes.normal.get_linesize()
+    if d.objetivo:
+        texto = recortar(d.objetivo, fuentes.chica, MINIMO.right - px(74) - x)
+        pantalla.blit(fuentes.chica.render(texto, True, tema.acento), (x, y))
+    if d.credibilidad is not None:
+        cy = MINIMO.bottom - esp(3) - px(4)
+        icono(pantalla, tema, CREDIBILIDAD, (x + px(9), cy), px(8))
+        pantalla.blit(fuentes.chica.render("Credibilidad", True, tema.texto), (x + px(24), cy - px(10)))
+        _barra(pantalla, tema, barras, CREDIBILIDAD, valores[CREDIBILIDAD],
+               pygame.Rect(MINIMO.x + px(140), cy - px(4), px(96), px(8)))
+        img = fuentes.chica.render(str(valores[CREDIBILIDAD]), True, tema.texto)
+        pantalla.blit(img, img.get_rect(midright=(MINIMO.right - esp(3), cy)))
+
+
+def _barra_minima(pantalla, fuentes: Fuentes, tema: Tema, d: DatosHud, barras, valores) -> None:
+    """Lo mismo que el minimo, en una fila arriba (pantallas con contenido en la esquina)."""
+    capa = pygame.Surface(FILA.size, pygame.SRCALPHA)
+    capa.fill((*tema.panel, TOKENS.alfa_panel))
+    pantalla.blit(capa, FILA)
+    pygame.draw.line(pantalla, tema.borde, FILA.bottomleft, FILA.bottomright, px(2))
+    x = esp(3)
+    if d.dia:
+        img = fuentes.normal.render(f"Dia {d.dia[0]} de {d.dia[1]}", True, tema.texto)
+        pantalla.blit(img, img.get_rect(midleft=(x, FILA.centery)))
+        x += img.get_width() + esp(4)
+    fin = FILA.right - px(300)
+    if d.objetivo:
+        img = fuentes.chica.render(recortar(d.objetivo, fuentes.chica, fin - x - esp(3)), True, tema.acento)
+        pantalla.blit(img, img.get_rect(midleft=(x, FILA.centery)))
+    if d.credibilidad is not None:
+        icono(pantalla, tema, CREDIBILIDAD, (fin + px(9), FILA.centery), px(8))
+        pantalla.blit(fuentes.chica.render("Credibilidad", True, tema.texto), (fin + px(24), FILA.centery - px(10)))
+        _barra(pantalla, tema, barras, CREDIBILIDAD, valores[CREDIBILIDAD],
+               pygame.Rect(fin + px(150), FILA.centery - px(4), px(96), px(8)))
+        img = fuentes.chica.render(str(valores[CREDIBILIDAD]), True, tema.texto)
+        pantalla.blit(img, img.get_rect(midright=(FILA.right - esp(3), FILA.centery)))
+
+
+def minimo(s, credibilidad: int, modo: str = "minimo") -> DatosHud:
+    """El HUD de L2 a partir de la sesion: dia, objetivo del paso y credibilidad (solo lee)."""
+    c, d = s.campana, s.director
+    nombre = (lambda z: s.mapa.zona(z).nombre if z in s.mapa else z.capitalize())
+    return DatosHud(s.ciudad.as_display_rows(), credibilidad, modo, (c.dia + 1, len(c.dias)) if c else None,
+                    "", c.fraccion if c else 0.0, id(s.ciudad), d.objetivo(nombre) if d else "")
 
 
 def _barra(pantalla, tema, barras, nombre, valor, rect) -> None:
