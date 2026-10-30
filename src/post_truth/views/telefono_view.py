@@ -71,6 +71,7 @@ class VistaTelefono:
     hora: float = 0.0                         # fraccion del dia (la hora de la barra de estado)
     ondas: tuple = ()                         # (centro normalizado, edad) de los desmentidos en onda
     atajo: float = 0.0                        # destello del escudo cuando acaba de atajar un rumor
+    pestanas: int = len(PESTANAS)             # Publicar solo cuando la historia lo ofrece (L2)
 
 
 def dibujar_telefono(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) -> None:
@@ -126,7 +127,7 @@ def _marco(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) 
     sup.blit(img, img.get_rect(midright=(x, CERRAR.centery + px(6))))
     pygame.draw.rect(sup, tema.boton, CERRAR)
     _equis(sup, tema.boton_texto, CERRAR.center, px(6))
-    for i, nombre in enumerate(PESTANAS):
+    for i, nombre in enumerate(PESTANAS[:v.pestanas]):
         r = rect_pestana(i)
         activa = i == v.pestana
         pygame.draw.rect(sup, tema.boton if activa else tema.fondo, r)
@@ -135,8 +136,8 @@ def _marco(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) 
         etiqueta = f"{nombre} ({sin_leer})" if i == 1 and sin_leer > 0 else nombre
         img = fuentes.chica.render(etiqueta, True, tema.boton_texto if activa else tema.texto)
         sup.blit(img, img.get_rect(center=r.center))
-    ayuda = ("Flechas: armar   Enter: publicar   Tab: pestana   T: cerrar" if v.pestana == 2
-             else "WASD, flechas o raton: escudo   Espacio: desmentido   Tab   T: cerrar")
+    ayuda = ("Flechas: armar   Enter: publicar   Tab: pestana" if v.pestana == 2
+             else "WASD, flechas o raton: escudo   Espacio: desmentido   Tab: pestana")
     img = fuentes.chica.render(ayuda, True, tema.texto_off)
     sup.blit(img, img.get_rect(midbottom=(TELEFONO.centerx, TELEFONO.bottom - px(10))))
 

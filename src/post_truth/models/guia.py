@@ -4,11 +4,10 @@ dice y si ya se dijo."""
 from __future__ import annotations
 
 MENSAJES = {
-    "inicio": ("Bienvenida a Ciudad Nova", "Camina con WASD o flechas. El globo ! marca la noticia de hoy y G te "
-                                           "guia hasta ella. F2 abre la ayuda."),
+    "inicio": ("Bienvenida a Ciudad Nova", "Camina con WASD o flechas. Arriba ves tu objetivo y la flecha te "
+                                           "lleva hasta el. P pausa, F2 abre la ayuda."),
     "zona": ("Entraste a un lugar", "Pulsa E para entrar: adentro aparece sola la evidencia y eliges que hacer."),
-    "transeunte": ("Alguien con un rumor", "Manten E y siguele el paso para convencerlo, o sigue de largo para "
-                                          "esquivarlo. Con evidencia convences mas rapido."),
+    "transeunte": ("Alguien quiere hablar", "Manten E a su lado y siguele el paso para escuchar lo que sabe."),
     "testigo": ("Un testigo", "Manten E a su lado para escuchar lo que vio: cuenta como evidencia."),
     "credibilidad": ("Tu credibilidad baja", "Con poca credibilidad tus desmentidos pesan menos. Verifica antes "
                                              "de compartir y no reportes sin pruebas."),
