@@ -5,10 +5,10 @@
    "Tu trabajo es llegar al dia de la eleccion con la ciudad lo mas sana posible: poca desinformacion y pocos conflictos, mucha confianza y convivencia.",
    "Aqui no hay preguntas de examen: aprendes por lo que pasa cuando decides. Verificar antes de compartir, reportar lo danino y no amplificar rumores cambia la ciudad y la eleccion."]},
   {"id": "dia", "titulo": "Como es un dia", "texto": [
-   "Cada dia dura unos {duracion_dia} segundos de reloj y trae {por_dia} noticias y una crisis viral.",
-   "La noticia activa se marca con un globo (!) sobre su lugar. Ve hasta alli, entra con E y decide.",
-   "La crisis aparece de repente, abre el telefono y trae reloj: tienes {tiempo_viral} s para decidir. Si se acaba, cuenta como Ignorar y la publicacion sigue circulando.",
-   "Al terminar el dia ves un resumen de lo que cambio y de tu credibilidad. Lo que quedo sin decidir cuenta como Ignorar."]},
+   "Cada dia es un capitulo con pasos en orden, uno a la vez: ir al lugar de la noticia del dia, investigarla y decidir, defender la red mientras se riega, jugar el minijuego del lugar y ver el cierre del dia.",
+   "El lugar de la noticia se marca con un globo (!). Ve hasta alli, entra con E y decide. Si la noticia es viral, tiene reloj: {tiempo_viral} s; si se acaba, cuenta como Ignorar.",
+   "Despues de decidir, la noticia corre por la red: el telefono se abre solo y tienes {tiempo_viral} s para frenarla.",
+   "Al terminar el dia ves un resumen de lo que cambio y de tu credibilidad."]},
   {"id": "controles", "titulo": "Controles del mundo", "texto": [
    "- WASD o flechas: caminar libre por la ciudad (8 direcciones).",
    "- E: entrar al lugar donde estas. Junto a un transeunte, mantener E para hablarle.",

@@ -12,6 +12,7 @@ from post_truth.decision_tree import DecisionNode, DecisionTree, load_trees
 from post_truth.game_state import CityState
 from post_truth.models import Impact, Role
 from post_truth.models import credibilidad as cred
+from post_truth.models import director as dr
 from post_truth.models import eleccion
 from post_truth.models import fases
 from post_truth.models import minijuego as mj
@@ -40,12 +41,12 @@ PRESENTES = 3          # ciudadanos del grafo social en el lugar de la publicaci
 UMBRAL_VIRAL = 300     # likes desde los que una publicacion es viral y se decide con reloj
 TIEMPO_VIRAL = 25.0    # segundos por turno; corren tambien en la calle (buscar evidencia cuesta tiempo)
 AVISO_VENCIDO = "Se te acabo el tiempo: la publicacion siguio circulando sin que nadie la frenara."
-DIAS, NOTICIAS_POR_DIA = DIAS_CAMPANA, 2   # campana: cada dia trae sus noticias y una crisis viral
+DIAS = DIAS_CAMPANA                   # campana: un capitulo por dia (data/historia.json)
 DURACION_DIA = 80.0                   # segundos de un dia (calle, decision y minijuegos): 4 dias = 5.3 min de reloj
-MOMENTO_CRISIS = (0.2, 0.5)           # la crisis aparece entre el 20% y el 50% del dia (y su reloj cabe en el dia)
 FACTOR_TIEMPO_EXTENDIDO = 1.5         # accesibilidad: dias y relojes mas largos
 RITMO_TELEFONO = 0.25                 # con el telefono abierto el mundo corre al 25%...
 RITMO_RUMOR_TELEFONO = 0.6            # ...pero el rumor al 60%, para que atajarlo sea un juego de reflejos
+RUMOR_SUELTO = Impact(misinformation=6, trust=-2)   # un minijuego que deja un rumor sin aclarar (L1)
 IMPACTO_EN_VIVO = 0.5                 # el rumor de cada crisis pesa la mitad: sin defender, la ciudad empeora sin hundirse
 VIRAL_EN_VIVO = 0.35                  # fraccion de la red que cree el rumor para avisar que se volvio viral
 CONCLUSION = {"buena": (2, 4), "a_ciegas": (1, 1), "error": (-4, -3), "no_concluyente": (0, 0)}   # (cred, puntos)
@@ -56,16 +57,12 @@ HERRAMIENTAS = {"verificador": "Verificador", "limitar": "Limitar cuenta", "desm
 
 @dataclass
 class Campana:
-    """Varios dias con reloj. Los indices apuntan a `PartidaSesion.arboles`: noticias del dia y una crisis viral
-    por dia, que aparece a mitad de jornada e interrumpe la noticia en curso."""
+    """Los dias de la campana: `dias[d]` son los indices (en `PartidaSesion.arboles`) de la noticia de cada dia.
+    El orden dentro del dia lo lleva el director (models/director.py)."""
     dias: list[list[int]]
-    crisis: list[int]
-    momento_crisis: list[float]       # fraccion del dia en que aparece cada crisis
     factor: float = 1.0               # FACTOR_TIEMPO_EXTENDIDO si se pidio tiempo extendido
     dia: int = 0
-    t: float = 0.0                    # segundos transcurridos del dia
-    cola: list[int] = field(default_factory=list)          # noticias del dia que faltan, en orden
-    crisis_lanzada: bool = False
+    t: float = 0.0                    # avance del dia (sigue al director: el arco del sol del HUD)
     resueltas: list[tuple[int, str]] = field(default_factory=list)   # (indice, accion) del dia, para el resumen
     ciudad_al_amanecer: dict = field(default_factory=dict)
     minijuegos_hoy: list[str] = field(default_factory=list)          # lugares cuyo minijuego ya se jugo hoy
@@ -84,15 +81,13 @@ class Campana:
         return self.dia >= len(self.dias) - 1
 
     def to_dict(self) -> dict:
-        return {"dias": self.dias, "crisis": self.crisis, "momento_crisis": self.momento_crisis, "factor": self.factor,
-                "dia": self.dia, "t": self.t, "cola": self.cola, "crisis_lanzada": self.crisis_lanzada,
+        return {"dias": self.dias, "factor": self.factor, "dia": self.dia, "t": self.t,
                 "resueltas": [list(r) for r in self.resueltas], "ciudad_al_amanecer": self.ciudad_al_amanecer,
                 "minijuegos_hoy": self.minijuegos_hoy, "aliados_hoy": self.aliados_hoy}
 
     @classmethod
     def from_dict(cls, d: dict) -> "Campana":
-        return cls([list(x) for x in d["dias"]], list(d["crisis"]), list(d["momento_crisis"]), float(d["factor"]),
-                   int(d["dia"]), float(d["t"]), list(d["cola"]), bool(d["crisis_lanzada"]),
+        return cls([list(x) for x in d["dias"]], float(d["factor"]), int(d["dia"]), float(d["t"]),
                    [(int(i), a) for i, a in d["resueltas"]], dict(d["ciudad_al_amanecer"]),
                    list(d.get("minijuegos_hoy", [])), list(d.get("aliados_hoy", [])))
 
@@ -178,7 +173,7 @@ class PartidaSesion:
         self.reloj_activo = False                   # arranca al ver la publicacion por primera vez
         self.campana: Campana | None = None         # None: partida clasica de publicaciones sueltas
         self.novedad = ""                           # "crisis" cuando aparece una; el controlador la avisa y la limpia
-        self._en_pausa: dict[int, list[dict]] = {}  # investigacion de una noticia interrumpida por la crisis
+        self.director: dr.DirectorDia | None = None  # paso del dia en la campana (L1)
         self._accion_aplicada = ""                  # la ultima decision aplicada (para el resumen del dia)
         self.minijuegos: dict[str, str] = {}        # lugar -> id del minijuego (data/minijuegos.json)
         self.minijuego: mj.Minijuego | None = None  # el que se esta jugando
@@ -224,18 +219,15 @@ class PartidaSesion:
 
     @classmethod
     def nueva_campana(cls, personajes: Sequence[Personaje], todos: list[DecisionTree], grafo: GrafoSocial,
-                      mapa: GrafoCiudad, rng: random.Random, dias: int = DIAS, por_dia: int = NOTICIAS_POR_DIA,
-                      extendido: bool = False, minijuegos: dict[str, str] | None = None) -> "PartidaSesion":
-        """Sortea las noticias del dia (no virales) y una crisis por dia (virales), sin repetir."""
-        virales = [a for a in todos if a.event.likes >= UMBRAL_VIRAL]
-        normales = [a for a in todos if a.event.likes < UMBRAL_VIRAL]
-        if len(virales) < dias or len(normales) < dias * por_dia:
-            raise ValueError("No hay suficientes publicaciones para la campana")
-        elegidas = rng.sample(normales, dias * por_dia) + rng.sample(virales, dias)
-        campana = Campana([list(range(d * por_dia, (d + 1) * por_dia)) for d in range(dias)],
-                          [dias * por_dia + d for d in range(dias)],
-                          [rng.uniform(*MOMENTO_CRISIS) for _ in range(dias)],
-                          FACTOR_TIEMPO_EXTENDIDO if extendido else 1.0)
+                      mapa: GrafoCiudad, rng: random.Random, dias: int = DIAS, extendido: bool = False,
+                      minijuegos: dict[str, str] | None = None) -> "PartidaSesion":
+        """Un capitulo por dia, con la noticia que dice data/historia.json."""
+        historia = dr.historia()[:dias]
+        if len(historia) < dias:
+            raise ValueError(f"La historia tiene {len(historia)} dias, no {dias}")
+        por_id = {a.event.event_id: a for a in todos}
+        elegidas = [por_id[d.noticia] for d in historia]
+        campana = Campana([[d] for d in range(dias)], FACTOR_TIEMPO_EXTENDIDO if extendido else 1.0)
         sesion = cls.nueva(personajes, elegidas, grafo, mapa, rng)
         sesion.campana = campana
         sesion.minijuegos = dict(minijuegos or {})
@@ -291,19 +283,28 @@ class PartidaSesion:
         if self.fase != DECIDIENDO or self.pendiente is not None:
             return None
         if self.campana is not None:
-            ya_estaba = self.campana.crisis_lanzada
-            if self._avanzar_dia(dt) or self.campana.crisis_lanzada != ya_estaba:
-                return None   # se acabo el dia, o la crisis recien aparece: su reloj corre desde el proximo paso
+            self._avanzar_director()
+            if self.fase != DECIDIENDO:
+                return None   # el director cerro el dia
             self._actualizar_ciudad()
             self._avanzar_calle(dt)
-            self._avanzar_en_vivo(dt / self.campana.factor)   # tiempo extendido: el rumor tambien va mas lento
+            if self.director.nombre == "consecuencia":   # una cosa a la vez: el rumor solo corre en su paso
+                self._avanzar_en_vivo(dt / self.campana.factor)   # tiempo extendido: el rumor tambien va mas lento
             self.enfriamiento_post = max(0.0, self.enfriamiento_post - dt)
             for k in self.enfriamientos:
                 self.enfriamientos[k] = max(0.0, self.enfriamientos[k] - dt)
         if not self.reloj_activo or self.tiempo_restante is None:
             return None
         self.tiempo_restante = max(0.0, self.tiempo_restante - dt)
-        return self.decidir_por_tiempo() if self.tiempo_restante == 0 else None
+        if self.tiempo_restante > 0:
+            return None
+        if self.director is not None and self.director.nombre == "consecuencia":   # se acabo el tiempo de defender
+            self.reloj_activo = False
+            if self.en_vivo is not None:
+                self.cerrar_en_vivo()
+            self._avanzar_director()
+            return None
+        return self.decidir_por_tiempo()
 
     def decidir_por_tiempo(self) -> ResultadoDecision:
         """Nadie decidio a tiempo: cuenta como Ignorar y ademas nadie freno la publicacion."""
@@ -428,6 +429,8 @@ class PartidaSesion:
     def decidir(self, jugador: str, accion: DecisionNode | str) -> ResultadoDecision:
         """Elige una rama de la publicacion."""
         j, motivo = self._turno_de(jugador)
+        if not motivo and self.director is not None and self.director.nombre != "noticia":
+            motivo = "fuera_de_paso"   # L1: la noticia se decide en su paso, una vez por dia
         if motivo:
             return ResultadoDecision(False, motivo, jugador)
         nodo = accion if isinstance(accion, DecisionNode) else self.arbol.find(accion)
@@ -483,9 +486,10 @@ class PartidaSesion:
             self.fase = DECIDIENDO
             self._reiniciar_reloj()
             return True
-        if self.campana is not None:
+        if self.campana is not None:   # la noticia del dia queda resuelta: el director sigue con la consecuencia
             self.campana.resueltas.append((self.indice, self._accion_aplicada))
-            self._siguiente_de_la_campana()
+            self.turno, self.fase, self.tiempo_restante, self.reloj_activo = 0, DECIDIENDO, None, False
+            self._avanzar_director()
             return True
         self.turno, self.indice = 0, self.indice + 1
         if self.indice < len(self.arboles):
@@ -530,7 +534,8 @@ class PartidaSesion:
     def minijuego_en(self, zona: str) -> str | None:
         """Id del minijuego disponible en `zona` para el jugador de turno (uno por lugar y por dia), o None."""
         if (self.campana is None or self.fase != DECIDIENDO or self.pendiente is not None
-                or zona in self.campana.minijuegos_hoy):
+                or zona in self.campana.minijuegos_hoy
+                or self.director is not None and (self.director.nombre != "minijuego" or zona != self.director.minijuego)):
             return None
         return self.minijuegos.get(zona)
 
@@ -560,10 +565,11 @@ class PartidaSesion:
                             "falsa": False, "respaldo": 0, "credibilidad": r.credibilidad})
         self.campana.minijuegos_hoy.append(m.contexto.lugar)
         self.minijuego = None
-        if r.rumor and self.en_vivo is None:
-            self.iniciar_en_vivo()
-            self.notificar("malo", "Arranca un rumor", f"Lo que quedo sin aclarar en {m.contexto.lugar.capitalize()} "
-                                                       "ya corre por la red.")
+        if r.rumor:   # una cosa a la vez: no arranca un rumor en vivo mientras se camina; deja su huella de una vez
+            self.ciudad.apply(RUMOR_SUELTO)
+            self._sumar_desinformacion(RUMOR_SUELTO.misinformation)
+            self.notificar("malo", "Se rego un rumor", f"Lo que quedo sin aclarar en {m.contexto.lugar.capitalize()} "
+                                                       "se rego por la red.")
         return r
 
     @staticmethod
@@ -669,8 +675,9 @@ class PartidaSesion:
         return impacto
 
     def avanzar_rumor(self, dt: float) -> None:
-        """Solo el rumor en vivo (el telefono lo adelanta aparte del dia)."""
-        if self.campana is not None and self.fase == DECIDIENDO and self.pendiente is None:
+        """Solo el rumor en vivo (el telefono lo adelanta aparte del dia), y solo en el paso de consecuencia."""
+        if (self.campana is not None and self.fase == DECIDIENDO and self.pendiente is None
+                and self.director is not None and self.director.nombre == "consecuencia"):
             self._avanzar_en_vivo(dt / self.campana.factor)
 
     def _avanzar_en_vivo(self, dt: float) -> None:
@@ -866,14 +873,61 @@ class PartidaSesion:
     # --- campana ---------------------------------------------------------------------------
     def _amanecer(self) -> None:
         c = self.campana
-        c.t, c.crisis_lanzada, c.resueltas, c.minijuegos_hoy, c.aliados_hoy = 0.0, False, [], [], []
-        c.cola = list(c.dias[c.dia][1:])
+        c.t, c.resueltas, c.minijuegos_hoy, c.aliados_hoy = 0.0, [], [], []
         c.ciudad_al_amanecer = self.ciudad.to_dict()
-        self._en_pausa.clear()
         if self.calle is not None:
             self.calle.amanecer()
         self._entrar_fase()
         self.abrir_evento(c.dias[c.dia][0])
+        self.director = dr.DirectorDia.para(dr.historia()[c.dia])
+        self._avanzar_director()
+
+    # --- director del dia (L1) ----------------------------------------------------------------------
+    def _avanzar_director(self) -> None:
+        """Avanza los pasos cumplidos. Lo llaman transcurrir y las acciones que pueden cumplir un paso."""
+        d = self.director
+        if d is None or self.fase in (FIN_DIA, FIN):
+            return
+        d.avanzar(self._paso_cumplido, self._entrar_paso)
+        self.campana.t = self.campana.duracion * d.fraccion
+
+    def _paso_cumplido(self, paso: str) -> bool:
+        d = self.director
+        if paso == "apertura":   # L3: cuando termine su cinematica
+            return True
+        if paso == "objetivo":   # quien tiene el turno llego a la zona del dia
+            return self.jugadores[(self.indice + self.turno) % len(self.jugadores)].zona == d.zona
+        if paso == "noticia":
+            return any(i == self.indice for i, _ in self.campana.resueltas)
+        if paso == "consecuencia":
+            return self.en_vivo is None
+        if paso == "minijuego":
+            return d.minijuego in self.campana.minijuegos_hoy or d.minijuego not in self.minijuegos
+        return False             # el cierre lo termina empezar_siguiente_dia
+
+    def _entrar_paso(self, paso: str) -> None:
+        if paso == "consecuencia":
+            self._soltar_rumor()
+        elif paso == "minijuego":
+            self.tiempo_restante, self.reloj_activo = None, False
+        elif paso == "cierre":
+            self.reloj_activo, self.fase = False, FIN_DIA
+
+    def _soltar_rumor(self) -> None:
+        """La noticia del dia corre en vivo por la red, con el reloj de la defensa (antes era la crisis suelta)."""
+        if self.en_vivo is not None:
+            self.cerrar_en_vivo()
+        c, evento = self.campana, self.arbol.event
+        semilla = int(hashlib.md5(f"{evento.event_id}:{c.dia}".encode()).hexdigest()[:8], 16)   # no toca el rng
+        propios = {j.id for j in self.jugadores}
+        autores = sorted(v.id for v in self.grafo.vertices() if v.id not in propios)
+        j = self.jugador_actual
+        self.en_vivo = PropagacionEnVivo(self.grafo, autores[semilla % len(autores)], j.id, j.credibilidad, semilla,
+                                         es_falsa(evento.truth_level))
+        self.en_vivo_viral = False
+        self.tiempo_restante, self.reloj_activo = self.tiempo_viral_total, True
+        self.novedad = "crisis"
+        self.notificar("crisis", "Se esta regando!", f"\"{evento.title}\" corre por la red. Defiendela.")
 
     # --- fases que cambian el grafo de la ciudad (R9) ----------------------------------------------
     @property
@@ -986,67 +1040,6 @@ class PartidaSesion:
         self._amanecer()
         return True
 
-    def _lanzar_crisis(self) -> None:
-        """La crisis del dia pasa al frente; la noticia en curso (con lo investigado) espera su turno."""
-        c = self.campana
-        if self.fase == DECIDIENDO and self.indice not in c.crisis:
-            c.cola.insert(0, self.indice)
-            self._en_pausa[self.indice] = [j.investigacion.to_dict() for j in self.jugadores]
-        c.crisis_lanzada = True
-        self.abrir_evento(c.crisis[c.dia])
-        self.reloj_activo = self.tiempo_restante is not None   # la crisis no espera a que la vean
-        self.novedad = "crisis"
-        self.notificar("crisis", "Crisis viral!", f"Algo se esta regando en {self.zona_noticia.capitalize()}.")
-        if self.en_vivo is None:   # el rumor de la crisis corre solo por la red (semilla por hash: no toca el rng)
-            semilla = int(hashlib.md5(f"{self.arbol.event.event_id}:{c.dia}".encode()).hexdigest()[:8], 16)
-            propios = {j.id for j in self.jugadores}
-            autores = sorted(v.id for v in self.grafo.vertices() if v.id not in propios)
-            j = self.jugador_actual
-            self.en_vivo = PropagacionEnVivo(self.grafo, autores[semilla % len(autores)], j.id, j.credibilidad,
-                                             semilla, es_falsa(self.arbol.event.truth_level))
-            self.en_vivo_viral = False
-
-    def _siguiente_de_la_campana(self) -> None:
-        c = self.campana
-        if c.cola:
-            siguiente = c.cola.pop(0)
-            self.abrir_evento(siguiente)
-            guardadas = self._en_pausa.pop(siguiente, None)
-            if guardadas is not None:
-                evento = self.arbol.event
-                for j, datos in zip(self.jugadores, guardadas):
-                    j.investigacion = Investigacion.from_dict(datos, evento.clues, evento.evidences)
-        elif not c.crisis_lanzada:      # se resolvio todo antes de tiempo: la crisis no se salta
-            self._lanzar_crisis()
-        else:
-            self.fase = FIN_DIA
-
-    def _avanzar_dia(self, dt: float) -> bool:
-        """True si el dia termino (por tiempo) en este paso."""
-        c = self.campana
-        c.t += dt
-        if not c.crisis_lanzada and c.t >= c.momento_crisis[c.dia] * c.duracion:
-            self._lanzar_crisis()
-        if c.t < c.duracion:
-            return False
-        self._cerrar_dia_sin_respuesta()
-        return True
-
-    def _cerrar_dia_sin_respuesta(self) -> None:
-        """Se acabo el dia: lo que quedo pendiente cuenta como Ignorar (sin castigo extra) y sale el resumen."""
-        c = self.campana
-        for indice in [self.indice] + c.cola + ([] if c.crisis_lanzada else [c.crisis[c.dia]]):
-            self.indice, self.turno, self.fase, self.pendiente = indice, 0, DECIDIENDO, None
-            nodo = next((n for n in self.arbol.root.children if n.tipo == "ignorar"), None)
-            if nodo is not None:
-                self.decidir(self.jugador_actual.id, nodo)
-                self.aplicar()
-            c.resueltas.append((indice, "sin respuesta"))
-        c.cola, c.crisis_lanzada = [], True
-        self.pendiente, self.reloj_activo, self.fase = None, False, FIN_DIA
-        if self.en_vivo is not None:   # el rumor que quedaba corriendo deja su huella en la ciudad
-            self.cerrar_en_vivo()
-
     def to_dict(self) -> dict:
         """Todo el estado en tipos de JSON."""
         estado_rng = self.rng.getstate()
@@ -1077,7 +1070,7 @@ class PartidaSesion:
             "desinfo_zona": self.desinfo_zona, "zonas_crisis": self.zonas_crisis, "aisladas": self.aisladas,
             "sociales_cortadas": self.sociales_cortadas, "cambios_fase": self.cambios_fase,
             "anunciar_fase": self.anunciar_fase,
-            "en_pausa": {str(k): v for k, v in self._en_pausa.items()},
+            "director": None if self.director is None else self.director.to_dict(),
             "grafo": self.grafo.to_dict(),
             "calle": None if self.calle is None else self.calle.to_dict(),
             "charla": None if self.charla is None else {**self.charla, "p": self.charla["p"] and self.charla["p"].to_dict()},
@@ -1130,7 +1123,8 @@ class PartidaSesion:
         sesion.por_rumores.update(datos.get("por_rumores", {}))
         if datos.get("campana") is not None:
             sesion.campana = Campana.from_dict(datos["campana"])
-            sesion._en_pausa = {int(k): v for k, v in datos.get("en_pausa", {}).items()}
+            if datos.get("director") is not None:
+                sesion.director = dr.DirectorDia.from_dict(datos["director"])
         if datos.get("calle") is not None:
             sesion.calle = tr.Calle.from_dict(datos["calle"])
         c = datos.get("charla")
