@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from post_truth.models.intro import AspectoRetrato, COLORES
+from post_truth.models.reparto import AspectoRetrato, COLORES
 
 TIPOS_AVATAR = ("retrato", "anonimo", "institucional")
 MOTIVOS_IMAGEN = ("colegio", "barrio", "parque", "plaza", "alcaldia")

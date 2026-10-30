@@ -3,7 +3,7 @@ import pygame
 
 from post_truth.config import ANCHO, px
 from post_truth.models.eleccion import ResultadoEleccion
-from post_truth.models.intro import Candidato
+from post_truth.models.reparto import Candidato
 from post_truth.views.componentes import Fuentes
 from post_truth.views.retrato_view import dibujar_retrato
 from post_truth.views.theme import Tema

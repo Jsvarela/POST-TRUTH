@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 from post_truth.game_state import CityState
 
-CANDIDATOS = ("juan", "maria", "andres", "lucia")   # los mismos ids de data/intro.json
+CANDIDATOS = ("juan", "maria", "andres", "lucia")   # los mismos ids de data/reparto.json
 # Afinidad con la ciudad al final: cuanto gana cada uno por punto de cambio de un indicador desde el inicio.
 # Lucia ("Hablemos claro") crece con la informacion verificada y la confianza; Maria con la convivencia; Andres con
 # el bienestar digital; Juan ("mas orden") crece cuando hay conflictos.

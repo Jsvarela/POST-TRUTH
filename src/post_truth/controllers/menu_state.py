@@ -23,7 +23,13 @@ class MenuState(BaseState):
 
     # --- acciones ------------------------------------------------------------------------------------
     def _jugar(self) -> None:
-        self.app.estados.cambiar("seleccion" if self.app.intro_vista else "intro")
+        if self.app.intro_vista:
+            self.app.estados.cambiar("seleccion")
+        else:   # la primera vez, la apertura de la campana (L4)
+            self.app.estados.estado("cinematica").reproducir("campana", "seleccion", self._intro_vista)
+
+    def _intro_vista(self) -> None:
+        self.app.intro_vista = True
 
     def _ayuda(self) -> None:
         self.app.estados.ayuda.abrir("objetivo")
@@ -32,7 +38,7 @@ class MenuState(BaseState):
         self.app.estados.cambiar("conectar")
 
     def _intro(self) -> None:
-        self.app.estados.cambiar("intro")
+        self.app.estados.estado("cinematica").reproducir("campana", "menu", self._intro_vista)
 
     def _opciones(self) -> None:
         self.en_opciones, self.fila = True, 0

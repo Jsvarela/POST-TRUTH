@@ -3,7 +3,7 @@ import math
 
 import pygame
 
-from post_truth.models.intro import AspectoRetrato
+from post_truth.models.reparto import AspectoRetrato
 from post_truth.views.theme import Tema
 
 ANCHO_U, ALTO_U = 100, 120

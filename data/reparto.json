@@ -1,0 +1,56 @@
+{
+ "candidatos": [
+  {
+   "id": "juan",
+   "nombre": "Juan Ardila",
+   "lema": "Menos gasto, mas orden",
+   "propuesta": "Fusionar colegios pequenos en sedes grandes y bien equipadas.",
+   "aspecto": {
+    "piel": 0,
+    "cabello": 0,
+    "peinado": "corto",
+    "accesorio": "corbata",
+    "color": 0
+   }
+  },
+  {
+   "id": "maria",
+   "nombre": "Maria Lozano",
+   "lema": "Mas rutas, mas oportunidades",
+   "propuesta": "Ampliar las rutas nocturnas de buses hacia todos los barrios.",
+   "aspecto": {
+    "piel": 1,
+    "cabello": 0,
+    "peinado": "largo",
+    "accesorio": "aretes",
+    "color": 2
+   }
+  },
+  {
+   "id": "andres",
+   "nombre": "Andres Quintero",
+   "lema": "Tecnologia con los vecinos",
+   "propuesta": "Internet gratuito en parques y plazas, y talleres digitales.",
+   "aspecto": {
+    "piel": 0,
+    "cabello": 1,
+    "peinado": "rizado",
+    "accesorio": "lentes",
+    "color": 3
+   }
+  },
+  {
+   "id": "lucia",
+   "nombre": "Lucia Barrera",
+   "lema": "Hablemos claro",
+   "propuesta": "Debates abiertos y una oficina que verifique las noticias de la ciudad.",
+   "aspecto": {
+    "piel": 1,
+    "cabello": 1,
+    "peinado": "recogido",
+    "accesorio": "bufanda",
+    "color": 1
+   }
+  }
+ ]
+}
