@@ -48,6 +48,7 @@ class MenuState(BaseState):
                 ("Volumen de los pasos", f"{round(sonido.PASOS[0] * 100)}%"),
                 ("Silencio", "Si" if sonido.SILENCIO[0] else "No"),
                 ("Mensajes guia", "Si" if app.guias else "No"),
+                ("Avance manual", "Si" if app.avance_manual else "No"),
                 ("Cerrar", "")]
 
     def _cambiar_opcion(self, paso: int) -> None:
@@ -68,6 +69,8 @@ class MenuState(BaseState):
             sonido.SILENCIO[0] = not sonido.SILENCIO[0]
         elif self.fila == 5:
             app.guias = not app.guias
+        elif self.fila == 6:
+            app.avance_manual = not app.avance_manual
         if self.fila in (1, 3):   # se escucha como queda
             sonido.tocar("acierto" if self.fila == 1 else "pasos")
 
@@ -88,6 +91,8 @@ class MenuState(BaseState):
                 self.app.temas.siguiente()
             elif event.key == pygame.K_x:
                 self.app.tiempo_extendido = not self.app.tiempo_extendido
+            elif event.key == pygame.K_c:   # cinematica de prueba (L3)
+                self.app.estados.estado("cinematica").reproducir("prueba", "menu")
             elif event.key in atajos:
                 atajos[event.key]()
             return

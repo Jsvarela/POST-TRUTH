@@ -55,6 +55,7 @@ class EstadoMundo:
     charla: tuple | None = None   # (posicion, progreso 0..1, lo que dice el, tu argumento)
     flecha: tuple[float, float] | None = None   # L2: punto del mapa al que apunta la guia (el objetivo del paso)
     pausa: bool = False                         # P: minimapa, indicadores y teclas; el mundo quieto
+    jugador_visible: bool = True                # las cinematicas (L3) dibujan solo a sus actores
 
 
 class Camara:
@@ -278,8 +279,9 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
             arte.personaje(pantalla, tema, pies, alto, personaje, animacion, cuadro)
             _etiqueta(pantalla, fuentes, tema, nombre, (pies[0], pies[1] - alto - px(4)), conectado)
     x, y = mundo.jugador
-    arte.personaje(pantalla, tema, a_pantalla((x, y + mundo.pies[1] / 2), cam), alto,
-                   estado.personaje, estado.animacion.nombre, estado.animacion.cuadro)
+    if estado.jugador_visible:
+        arte.personaje(pantalla, tema, a_pantalla((x, y + mundo.pies[1] / 2), cam), alto,
+                       estado.personaje, estado.animacion.nombre, estado.animacion.cuadro)
     if deco is not None:
         ancho = mundo.tamano[0] + 400
         for i, (y0, v, desfase) in enumerate(PAJAROS):

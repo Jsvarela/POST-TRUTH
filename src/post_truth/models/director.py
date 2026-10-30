@@ -30,7 +30,7 @@ PANTALLAS = {   # que pantallas se pueden abrir en cada paso
 }
 DESTINO = {"apertura": "mundo", "objetivo": "mundo", "noticia": "mundo", "consecuencia": "telefono",
            "minijuego": "mundo", "cierre": "resumen"}   # a donde va el jugador si pide algo que el paso no permite
-SIEMPRE = {"menu", "intro", "seleccion", "conectar", "sala"}   # fuera de la partida
+SIEMPRE = {"menu", "intro", "seleccion", "conectar", "sala", "cinematica"}   # fuera de la partida o por encima
 OBJETIVOS = {"apertura": "", "objetivo": "Ir a: {lugar}", "noticia": "Investiga y decide: {lugar}",
              "consecuencia": "Frena el rumor en la red", "minijuego": "Ayuda en: {lugar}", "cierre": "Fin del dia"}
 # L2: cada herramienta aparece solo en el paso donde sirve (Role.name -> paso)

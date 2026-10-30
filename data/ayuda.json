@@ -87,6 +87,7 @@
    "- Tiempo extendido (tambien X en el menu): dias, relojes y minijuegos {factor} veces mas largos; en la rueda nunca preguntan dos a la vez.",
    "- Volumen general, volumen de los pasos y silencio. Cada sonido tiene su aviso en pantalla.",
    "- Mensajes guia: pistas cortas la primera vez que pasa algo.",
+   "- Avance manual: en las cinematicas el dialogo solo avanza con Enter, a tu ritmo. ESC salta la escena entera.",
    "P pausa los minijuegos. Todo se juega con teclado y casi todo tambien con raton."]},
   {"id": "sustentacion", "titulo": "Modo sustentacion", "texto": [
    "F1 en cualquier pantalla muestra las estructuras de datos en crudo y pausa el juego:",
