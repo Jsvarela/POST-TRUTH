@@ -1,8 +1,26 @@
 {
  "dias": [
-  {"noticia": "agua-contaminada", "zona": "barrio", "minijuego": "barrio"},
-  {"noticia": "video-debate-editado", "zona": "alcaldia", "minijuego": "alcaldia"},
-  {"noticia": "colegio-cerrado", "zona": "colegio", "minijuego": "colegio"},
-  {"noticia": "encuesta-inventada", "zona": "plaza", "minijuego": "plaza"}
+  {"noticia": "agua-contaminada", "zona": "barrio", "minijuego": "barrio",
+   "personajes": [
+    {"id": "testigo:tendero-del-barrio"},
+    {"id": "testigo:enfermera-del-colegio"},
+    {"id": "tomas", "dice": "A mi me llego lo del agua por un grupo, de una cuenta que nadie conoce: @VerdadNova."}
+   ]},
+  {"noticia": "video-debate-editado", "zona": "alcaldia", "minijuego": "alcaldia",
+   "personajes": [
+    {"id": "testigo:testigo-del-debate"},
+    {"id": "camila", "dice": "El video lo corto alguien que sabia editar. Y lo subio de madrugada, otra vez @VerdadNova."}
+   ]},
+  {"noticia": "colegio-cerrado", "zona": "colegio", "minijuego": "colegio", "post": true,
+   "personajes": [
+    {"id": "testigo:testigo-directora"},
+    {"id": "testigo:testigo-vecina"},
+    {"id": "isabela", "dice": "Si nadie desmiente lo del colegio, manana lo cree todo el mundo. Publica tu lo que sabes."}
+   ]},
+  {"noticia": "encuesta-inventada", "zona": "plaza", "minijuego": "plaza",
+   "personajes": [
+    {"id": "testigo:profesor-de-estadistica"},
+    {"id": "valentina", "dice": "@VerdadNova sigue a todos los candidatos menos a uno. Raro, no?"}
+   ]}
  ]
 }

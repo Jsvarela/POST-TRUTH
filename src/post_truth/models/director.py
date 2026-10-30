@@ -31,6 +31,12 @@ PANTALLAS = {   # que pantallas se pueden abrir en cada paso
 DESTINO = {"apertura": "mundo", "objetivo": "mundo", "noticia": "mundo", "consecuencia": "telefono",
            "minijuego": "mundo", "cierre": "resumen"}   # a donde va el jugador si pide algo que el paso no permite
 SIEMPRE = {"menu", "intro", "seleccion", "conectar", "sala"}   # fuera de la partida
+OBJETIVOS = {"apertura": "", "objetivo": "Ir a: {lugar}", "noticia": "Investiga y decide: {lugar}",
+             "consecuencia": "Frena el rumor en la red", "minijuego": "Ayuda en: {lugar}", "cierre": "Fin del dia"}
+# L2: cada herramienta aparece solo en el paso donde sirve (Role.name -> paso)
+HABILIDAD_EN = {"JOURNALIST": "noticia", "INFLUENCER": "consecuencia", "CANDIDATE": "minijuego", "CITIZEN": "minijuego"}
+ALIADO_EN = {"JOURNALIST": "noticia", "INFLUENCER": "consecuencia", "CANDIDATE": "consecuencia",
+             "CITIZEN": "consecuencia"}
 
 
 @dataclass(frozen=True)
@@ -38,12 +44,16 @@ class DiaHistoria:
     noticia: str      # event_id de data/events.json
     zona: str         # el objetivo del mapa
     minijuego: str    # lugar cuyo minijuego se juega ese dia
+    post: bool = False                          # ese dia la historia pide crear un post (en la consecuencia)
+    personajes: tuple[tuple[str, str], ...] = ()   # (id, lo que dice): los unicos transeuntes con marca y charla
 
 
 @lru_cache(maxsize=1)
 def historia() -> tuple[DiaHistoria, ...]:
     with RUTA_HISTORIA.open("r", encoding="utf-8") as f:
-        return tuple(DiaHistoria(**d) for d in json.load(f)["dias"])
+        return tuple(DiaHistoria(d["noticia"], d["zona"], d["minijuego"], d.get("post", False),
+                                 tuple((p["id"], p.get("dice", "")) for p in d.get("personajes", ())))
+                     for d in json.load(f)["dias"])
 
 
 @dataclass
@@ -52,10 +62,11 @@ class DirectorDia:
     zona: str
     minijuego: str
     paso: int = 0
+    post: bool = False
 
     @classmethod
     def para(cls, dia: DiaHistoria) -> "DirectorDia":
-        return cls(dia.noticia, dia.zona, dia.minijuego)
+        return cls(dia.noticia, dia.zona, dia.minijuego, post=dia.post)
 
     @property
     def nombre(self) -> str:
@@ -72,6 +83,23 @@ class DirectorDia:
     def pantalla(self) -> str:
         return DESTINO[self.nombre]
 
+    @property
+    def destino(self) -> str | None:
+        """La unica zona a la que apuntan la flecha y el globo en este paso (None: no hay que ir a ningun lado)."""
+        return {"objetivo": self.zona, "noticia": self.zona, "minijuego": self.minijuego}.get(self.nombre)
+
+    def objetivo(self, nombre_lugar: Callable[[str], str] = str) -> str:
+        """Texto corto del HUD para el paso actual."""
+        d = self.destino
+        return OBJETIVOS[self.nombre].format(lugar=nombre_lugar(d) if d else "")
+
+    def ofrece(self, herramienta: str, rol: str = "") -> bool:
+        """"post", "aliados" (del rol `rol`) o "habilidad" (del rol `rol`): si el paso actual la pone a mano."""
+        if herramienta == "post":
+            return self.post and self.nombre == "consecuencia"
+        tabla = HABILIDAD_EN if herramienta == "habilidad" else ALIADO_EN
+        return tabla.get(rol) == self.nombre
+
     def avanzar(self, cumplido: Callable[[str], bool], al_entrar: Callable[[str], None]) -> list[str]:
         """Mientras el paso actual este cumplido pasa al siguiente (y avisa al entrar). El cierre no avanza solo:
         el dia siguiente lo arma la sesion. Devuelve los pasos a los que entro."""
@@ -87,4 +115,4 @@ class DirectorDia:
 
     @classmethod
     def from_dict(cls, d: dict) -> "DirectorDia":
-        return cls(d["noticia"], d["zona"], d["minijuego"], int(d["paso"]))
+        return cls(d["noticia"], d["zona"], d["minijuego"], int(d["paso"]), bool(d.get("post", False)))
