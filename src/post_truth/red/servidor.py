@@ -409,6 +409,7 @@ class Servidor:
         juego = mj.desde_dict({**d, "contexto": {**d["contexto"], "jugador": jid}})
         lugar = juego.contexto.lugar
         if (s.jugador(jid).zona != lugar or s.minijuegos.get(lugar) != juego.id or s.minijuego is not None
+                or s.director is not None and (s.director.nombre != "minijuego" or lugar != s.director.minijuego)
                 or lugar in s.campana.minijuegos_hoy):   # uno por lugar y por dia, como en el modo individual
             raise Rechazo("minijuego_no_disponible")
         if not juego.terminado:
@@ -464,7 +465,8 @@ class Servidor:
                 s.aplicar()
                 self._espera = 0.0
         elif s.fase == DECIDIENDO:
-            if not self._conectado(s.jugador_actual.id):   # su turno y no esta: se lo espera un rato
+            if not self._conectado(s.jugador_actual.id) and (s.director is None or s.director.nombre == "noticia"):
+                # su turno de decidir la noticia y no esta: se lo espera un rato
                 self._espera += dt
                 if self._espera >= self.gracia:
                     ramas = s.arbol.root.children

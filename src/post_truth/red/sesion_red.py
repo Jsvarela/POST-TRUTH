@@ -196,7 +196,6 @@ class SesionEnRed(PartidaSesion):
     def transcurrir(self, dt: float) -> ResultadoDecision | None:
         if self.fase == DECIDIENDO and self.pendiente is None and self.campana is not None:
             c = self.campana
-            c.t = min(c.duracion, c.t + dt)
             if self.reloj_activo and self.tiempo_restante is not None:
                 self.tiempo_restante = max(0.0, self.tiempo_restante - dt)
             self.avanzar_rumor(dt)
