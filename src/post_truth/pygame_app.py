@@ -1,4 +1,6 @@
 """Game loop de Pygame + StateManager."""
+import os
+
 import pygame
 
 from post_truth.config import FLUJO, ANCHO, ALTO, FPS, TITULO, px
@@ -6,7 +8,6 @@ from post_truth.controllers.ayuda import Ayuda
 from post_truth.controllers.cinematica_state import CinematicaState
 from post_truth.controllers.escena_state import EscenaState
 from post_truth.controllers.fase_state import FaseState
-from post_truth.controllers.intro_state import IntroState
 from post_truth.controllers.investigacion_state import InvestigacionState
 from post_truth.controllers.lugar_state import LugarState
 from post_truth.controllers.menu_state import MenuState
@@ -47,6 +48,7 @@ class App:
         self.volumen = 0.7              # de 0 a 1 (Opciones del menu)
         self.guias = True               # mensajes guia de la primera vez (Opciones del menu)
         self.avance_manual = False      # accesibilidad: el dialogo de las cinematicas solo avanza con Enter
+        self.cinematicas = os.environ.get("POSTTRUTH_CINEMATICAS", "1") != "0"   # las pruebas las apagan
         self.guias_vistas: set[str] = set()
         self.estados = StateManager(lambda: self.temas.actual.fondo)
         self.estados.capa = CapaRetro(self.fuentes, self.temas)
@@ -54,7 +56,6 @@ class App:
         self.estados.ayuda = Ayuda(self)
         self.estados.permitida = self.pantalla_permitida
         self.estados.registrar("menu", MenuState(self))
-        self.estados.registrar("intro", IntroState(self))
         self.estados.registrar("cinematica", CinematicaState(self))
         self.estados.registrar("seleccion", SeleccionState(self))
         self.estados.registrar("escena", EscenaState(self))

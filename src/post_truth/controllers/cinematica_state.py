@@ -11,12 +11,21 @@ from post_truth.views.cinematica_view import dibujar_cinematica
 class CinematicaState(BaseState):
     def __init__(self, app) -> None:
         super().__init__(app)
-        self.id, self.destino, self.al_terminar = "", "menu", None
+        self.ids, self.destino, self.al_terminar = [], "menu", None
         self.interprete: Interprete | None = None
 
-    def reproducir(self, id: str, destino: str, al_terminar=None) -> None:
-        self.id, self.destino, self.al_terminar = id, destino, al_terminar
+    def reproducir(self, ids: str | list[str], destino: str, al_terminar=None) -> None:
+        """Una o varias cinematicas seguidas (la revelacion y el final van juntas)."""
+        self.ids, self.destino, self.al_terminar = [ids] if isinstance(ids, str) else list(ids), destino, al_terminar
         self.app.estados.cambiar("cinematica", fundido=True)
+
+    def si_toca(self, destino: str) -> bool:
+        """Si la partida tiene una cinematica pendiente (L4), la reproduce y despues vuelve a `destino`."""
+        s = self.app.partida
+        ids = s.cinematica_pendiente() if s is not None else []
+        if ids:
+            self.reproducir(ids, destino, s.terminar_apertura)
+        return bool(ids)
 
     @property
     def mundo(self):
@@ -24,7 +33,10 @@ class CinematicaState(BaseState):
 
     def al_entrar(self) -> None:
         self.terminada = False
-        self.interprete = Interprete(guiones()[self.id], contexto(self.app.partida), self.mundo.mundo.jugador,
+        if self.app.partida is not None:   # las calles cerradas se ven como barreras
+            self.mundo.mundo.sincronizar(self.app.partida.mapa)
+        guion = [c for id in self.ids for c in guiones()[id]]
+        self.interprete = Interprete(guion, contexto(self.app.partida), self.mundo.mundo.jugador,
                                      getattr(self.app, "avance_manual", False))
 
     def handle_event(self, event: pygame.event.Event) -> None:

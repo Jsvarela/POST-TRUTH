@@ -4,12 +4,13 @@ import pygame
 
 from post_truth.config import px
 from post_truth.mapa_abierto import MapaAbierto
-from post_truth.models import Role
+from post_truth.models import Role, reparto
 from post_truth.models.cinematica import Interprete
 from post_truth.models.personaje import Genero, Personaje
 from post_truth.views.arte_mundo import ARTE_PIXEL
 from post_truth.views.componentes import CajaDialogo, Fuentes, marco_pixel, panel
 from post_truth.views.mundo_view import EstadoMundo, dibujar_mundo
+from post_truth.views.retrato_view import dibujar_retrato
 from post_truth.views.theme import NEGRO, TOKENS, Tema, esp
 
 FRANJA = px(64)
@@ -57,10 +58,15 @@ def _dialogo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, i: Interpre
     d = i.dialogo
     ancho, alto = pantalla.get_size()
     abajo = alto - FRANJA - esp(2)
-    actor = i.actores.get(d["retrato"]) if d["retrato"] else None
+    retrato = d["retrato"] or ""
+    actor = i.actores.get(retrato)
     x = esp(4)
-    if actor is not None:   # retrato: el mismo sprite del actor, en grande
-        cuadro = pygame.Rect(x, abajo - RETRATO, RETRATO, RETRATO)
+    cuadro = pygame.Rect(x, abajo - RETRATO, RETRATO, RETRATO)
+    if retrato.startswith("candidato:"):   # los candidatos con su retrato de busto (data/reparto.json)
+        marco_pixel(pantalla, tema, cuadro, borde=tema.acento)
+        dibujar_retrato(pantalla, reparto.candidato(retrato.split(":", 1)[1]).aspecto, tema, cuadro.inflate(-px(12), -px(12)))
+        x = cuadro.right + esp(2)
+    elif actor is not None:   # retrato: el mismo sprite del actor, en grande
         marco_pixel(pantalla, tema, cuadro, borde=tema.acento)
         ARTE_PIXEL.personaje(pantalla, tema, (cuadro.centerx, cuadro.bottom - px(10)), RETRATO - px(24),
                              personaje(actor), "idle_abajo", 0)

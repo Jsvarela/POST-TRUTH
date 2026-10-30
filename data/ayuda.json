@@ -5,7 +5,8 @@
    "Tu trabajo es llegar al dia de la eleccion con la ciudad lo mas sana posible: poca desinformacion y pocos conflictos, mucha confianza y convivencia.",
    "Aqui no hay preguntas de examen: aprendes por lo que pasa cuando decides. Verificar antes de compartir, reportar lo danino y no amplificar rumores cambia la ciudad y la eleccion."]},
   {"id": "dia", "titulo": "Como es un dia", "texto": [
-   "Cada dia es un capitulo con pasos en orden, uno a la vez: ir al lugar de la noticia del dia, investigarla y decidir, defender la red mientras se riega, jugar el minijuego del lugar y ver el cierre del dia.",
+   "Cada dia es un capitulo con pasos en orden, uno a la vez: una escena de apertura, ir al lugar de la noticia del dia, investigarla y decidir, defender la red mientras se riega, jugar el minijuego del lugar y una escena de cierre. En las escenas Enter avanza y ESC las salta.",
+   "Cada dia la cuenta anonima @VerdadNova publica un rumor nuevo. Lo que investigas deja pistas sobre quien esta detras; antes de votar se revela, y el final depende de como quedo la ciudad.",
    "El lugar de la noticia se marca con un globo (!). Ve hasta alli, entra con E y decide. Si la noticia es viral, tiene reloj: {tiempo_viral} s; si se acaba, cuenta como Ignorar.",
    "Despues de decidir, la noticia corre por la red: el telefono se abre solo y tienes {tiempo_viral} s para frenarla.",
    "Al terminar el dia ves un resumen de lo que cambio y de tu credibilidad."]},

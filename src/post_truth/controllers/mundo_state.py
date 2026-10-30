@@ -83,7 +83,7 @@ class MundoState(BaseState):
             self.app.partida = PartidaSesion.nueva_campana(
                 getattr(self.app, "personajes", None) or [self.personaje], load_trees(RUTA_EVENTOS), GrafoSocial.cargar(RUTA_GRAFO_SOCIAL),
                 GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.rng, extendido=self.app.tiempo_extendido,
-                minijuegos=mj.cargar_lugares(RUTA_MINIJUEGOS))
+                minijuegos=mj.cargar_lugares(RUTA_MINIJUEGOS), cinematicas=self.app.cinematicas)
             self._dia = -1
         if self.sesion.campana.dia != self._dia:   # amanece: de vuelta en la Plaza
             self._dia = self.sesion.campana.dia
@@ -94,7 +94,8 @@ class MundoState(BaseState):
             c = self.sesion.campana
             f = self.sesion.fase_actual
             texto = f"{f.nombre}: {f.descripcion}" if f else "Amanece en Ciudad Nova." 
-            self.anuncio = Anuncio(f"Dia {c.dia + 1} de {len(c.dias)}", texto, "dia", duracion=2.4)
+            if not self.sesion.con_cinematicas:   # con cinematicas, el cartel del dia lo pone la apertura
+                self.anuncio = Anuncio(f"Dia {c.dia + 1} de {len(c.dias)}", texto, "dia", duracion=2.4)
         self.mundo.sincronizar(self.sesion.mapa)   # el grafo manda: aristas que faltan = barreras
         self.camara.saltar(self.mundo.jugador)
         self.presionadas.clear()
@@ -172,6 +173,10 @@ class MundoState(BaseState):
 
     def update(self, dt: float) -> None:
         if self.pausa:
+            return
+        d = self.sesion.director
+        if d is not None and d.nombre == "apertura" and self.app.estados.estado("cinematica").si_toca("mundo"):
+            self.presionadas.clear()
             return
         for anuncio in ("anuncio", "toast"):
             a = getattr(self, anuncio)

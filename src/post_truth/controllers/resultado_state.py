@@ -1,9 +1,9 @@
 """Controlador de la eleccion del alcalde al final de la campana."""
 import pygame
 
-from post_truth.config import RUTA_INTRO
 from post_truth.controllers.base_state import BaseState
-from post_truth.models.intro import Intro
+from post_truth.models import reparto
+from post_truth.views.theme import NEGRO
 from post_truth.views.resultado_view import dibujar_resultado
 
 DURACION_CONTEO = 3.0   # segundos del conteo animado
@@ -12,11 +12,13 @@ DURACION_CONTEO = 3.0   # segundos del conteo animado
 class ResultadoState(BaseState):
     def __init__(self, app) -> None:
         super().__init__(app)
-        self.candidatos = list(Intro.cargar(RUTA_INTRO).candidatos)
+        self.candidatos = list(reparto.candidatos())
         self.t = 0.0
 
+    NOMBRE = "resultado"
+
     def al_entrar(self) -> None:
-        self.t = 0.0
+        self.t, self.cubrir = 0.0, True
         self.resultado = self.app.partida.resultado_eleccion()
 
     def handle_event(self, event: pygame.event.Event) -> None:
@@ -30,9 +32,15 @@ class ResultadoState(BaseState):
             self.app.estados.cambiar("menu")
 
     def update(self, dt: float) -> None:
+        self.cubrir = self.app.estados.estado("cinematica").si_toca(self.NOMBRE)   # L4: primero su cinematica
+        if self.cubrir:
+            return
         self.t += dt
 
     def draw(self, pantalla: pygame.Surface) -> None:
+        if self.cubrir and self.app.partida is not None and self.app.partida.con_cinematicas:
+            pantalla.fill(NEGRO)   # sin asomarse antes de la cinematica pendiente
+            return
         s = self.app.partida
         nombre = (lambda j: f"{s.nombre(j.id)} ({j.personaje.rol.value})") if getattr(s, "en_red", False) else (
             lambda j: j.personaje.rol.value)

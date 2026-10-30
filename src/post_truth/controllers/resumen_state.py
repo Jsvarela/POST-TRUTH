@@ -9,9 +9,15 @@ from post_truth.models import Impact
 from post_truth.sesion import FIN, FIN_DIA
 from post_truth.views.hud import DatosHud
 from post_truth.views.resumen_view import dibujar_resumen
+from post_truth.views.theme import NEGRO
 
 
 class ResumenState(BaseState):
+    NOMBRE = "resumen"
+
+    def al_entrar(self) -> None:
+        self.cubrir = True
+
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN and event.key in (pygame.K_RETURN, pygame.K_SPACE):
             if self.en_red:   # el servidor sigue cuando todos lo pasan; update espera su foto
@@ -26,6 +32,9 @@ class ResumenState(BaseState):
         return getattr(self.app.partida, "en_red", False)
 
     def update(self, dt: float) -> None:
+        self.cubrir = self.app.estados.estado("cinematica").si_toca(self.NOMBRE)   # L4: primero su cinematica
+        if self.cubrir:
+            return
         s = self.app.partida
         if self.en_red and s.fase != FIN_DIA:
             if s.fase == FIN:
@@ -48,6 +57,9 @@ class ResumenState(BaseState):
         return s.jugador_actual if self.en_red else s.jugadores[0]   # en red, el de esta pantalla
 
     def draw(self, pantalla: pygame.Surface) -> None:
+        if self.cubrir and self.app.partida is not None and self.app.partida.con_cinematicas:
+            pantalla.fill(NEGRO)   # sin asomarse antes de la cinematica pendiente
+            return
         s = self.app.partida
         c = s.campana
         j = self._jugador()   # shortcut: en el modo local con varios jugadores se resume solo al primero

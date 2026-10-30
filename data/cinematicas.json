@@ -1,24 +1,1629 @@
 {
+ "campana": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 0
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1220,
+    940
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "yo",
+   "jugador": true,
+   "nombre": "Tu",
+   "en": [
+    1280,
+    1020
+   ],
+   "dir": "arriba"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "cartel",
+   "texto": "Ciudad Nova",
+   "sub": "Faltan cuatro dias para elegir alcalde",
+   "segundos": 2.6
+  },
+  {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "En Ciudad Nova todo pasa por Civitas: la red donde los vecinos se informan, opinan y comparten."
+  },
+  {
+   "cmd": "caminar",
+   "id": "yo",
+   "a": [
+    1280,
+    950
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Por fin llegas. Esta semana se elige alcalde y Civitas esta que arde."
+  },
+  {
+   "cmd": "camara",
+   "a": "alcaldia",
+   "segundos": 1.4
+  },
+  {
+   "cmd": "actor",
+   "id": "juan",
+   "nombre": "Juan Ardila",
+   "rol": "CANDIDATE",
+   "genero": "HOMBRE",
+   "variante": 0,
+   "en": [
+    1970,
+    550
+   ],
+   "dir": "abajo"
+  },
+  {
+   "cmd": "actor",
+   "id": "maria",
+   "nombre": "Maria Lozano",
+   "rol": "CANDIDATE",
+   "genero": "MUJER",
+   "variante": 0,
+   "en": [
+    2030,
+    550
+   ],
+   "dir": "abajo"
+  },
+  {
+   "cmd": "actor",
+   "id": "andres",
+   "nombre": "Andres Quintero",
+   "rol": "CANDIDATE",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    2090,
+    550
+   ],
+   "dir": "abajo"
+  },
+  {
+   "cmd": "actor",
+   "id": "lucia",
+   "nombre": "Lucia Barrera",
+   "rol": "CANDIDATE",
+   "genero": "MUJER",
+   "variante": 1,
+   "en": [
+    2150,
+    550
+   ],
+   "dir": "abajo"
+  },
+  {
+   "cmd": "decir",
+   "quien": "Juan Ardila",
+   "retrato": "candidato:juan",
+   "texto": "Menos gasto y mas orden: colegios grandes y bien equipados."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Maria Lozano",
+   "retrato": "candidato:maria",
+   "texto": "Mas rutas de bus para que nadie quede lejos de nada."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Andres Quintero",
+   "retrato": "candidato:andres",
+   "texto": "Internet gratis en parques y plazas, y talleres para todos."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Lucia Barrera",
+   "retrato": "candidato:lucia",
+   "texto": "Debates abiertos y una oficina que verifique lo que circula."
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 1.4
+  },
+  {
+   "cmd": "sonido",
+   "nombre": "alerta"
+  },
+  {
+   "cmd": "sacudir",
+   "segundos": 0.4,
+   "fuerza": 6
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "Lo que los candidatos no quieren que sepas. Manana, la primera prueba. #NoTeDejesEnganar"
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Esa cuenta aparecio hace una semana. Nadie sabe quien es, pero todo el mundo la comparte."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Vamos a hacer las cosas bien: mirar de donde sale cada noticia antes de compartirla. Juntos."
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "dia1_apertura": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 0
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1230,
+    930
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "yo",
+   "jugador": true,
+   "nombre": "Tu",
+   "en": [
+    1310,
+    930
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "cartel",
+   "texto": "Dia 1: Inicio de campana",
+   "sub": "Ciudad Nova",
+   "segundos": 2.2
+  },
+  {
+   "cmd": "sonido",
+   "nombre": "alerta"
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "URGENTE: el agua del Barrio esta contaminada y el equipo de Juan Ardila escondio el informe.",
+   "si": [
+    "noticia:agua-contaminada"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": "barrio",
+   "segundos": 1.4,
+   "si": [
+    "noticia:agua-contaminada"
+   ]
+  },
+  {
+   "cmd": "actor",
+   "id": "tomas",
+   "nombre": "Tomas",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 0,
+   "en": [
+    500,
+    1220
+   ],
+   "dir": "abajo",
+   "si": [
+    "noticia:agua-contaminada"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Tomas",
+   "retrato": "tomas",
+   "texto": "Medio barrio esta comprando agua en botella. Mi tienda no da abasto.",
+   "si": [
+    "noticia:agua-contaminada"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 1.2,
+   "si": [
+    "noticia:agua-contaminada"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "El 'wifi gratis' de Andres Quintero llega con recibo. Lo pagas tu. #NoTeDejesEnganar",
+   "si": [
+    "noticia:wifi-con-recibo"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": "parque",
+   "segundos": 1.4,
+   "si": [
+    "noticia:wifi-con-recibo"
+   ]
+  },
+  {
+   "cmd": "actor",
+   "id": "tomas",
+   "nombre": "Tomas",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 0,
+   "en": [
+    2060,
+    1220
+   ],
+   "dir": "abajo",
+   "si": [
+    "noticia:wifi-con-recibo"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Tomas",
+   "retrato": "tomas",
+   "texto": "En el parque nadie quiere conectarse. Dicen que te cobran hasta por mirar.",
+   "si": [
+    "noticia:wifi-con-recibo"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 1.2,
+   "si": [
+    "noticia:wifi-con-recibo"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Primera publicacion de @VerdadNova y ya la comparten cientos. Hay que ver si es cierta."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Vamos hasta alla. Y escucha a la gente: a veces saben mas de lo que parece."
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "dia1_cierre": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 0
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1240,
+    920
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "yo",
+   "jugador": true,
+   "nombre": "Tu",
+   "en": [
+    1320,
+    920
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "Cae la tarde en Ciudad Nova. Asi termina el primer dia."
+  },
+  {
+   "cmd": "ciudad",
+   "calma": "Las calles siguen abiertas. Por ahora la ciudad aguanta."
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 1.0
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Mucha gente se trago el rumor. Manana va a ser peor si no lo frenamos.",
+   "si": [
+    "desinformacion>=50"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Hoy le ganamos a @VerdadNova. Pero no creo que se rinda.",
+   "si": [
+    "desinformacion<50"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Lo que conto Tomas no me lo saco de la cabeza: @VerdadNova le paga a la gente por compartir.",
+   "si": [
+    "escucho:tomas"
+   ]
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "dia2_apertura": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "auditorio",
+   "segundos": 0
+  },
+  {
+   "cmd": "actor",
+   "id": "lucia",
+   "nombre": "Lucia Barrera",
+   "rol": "CANDIDATE",
+   "genero": "MUJER",
+   "variante": 1,
+   "en": [
+    1240,
+    360
+   ],
+   "dir": "abajo"
+  },
+  {
+   "cmd": "actor",
+   "id": "juan",
+   "nombre": "Juan Ardila",
+   "rol": "CANDIDATE",
+   "genero": "HOMBRE",
+   "variante": 0,
+   "en": [
+    1320,
+    360
+   ],
+   "dir": "abajo"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "cartel",
+   "texto": "Dia 2: Debates",
+   "sub": "Abre el Auditorio",
+   "segundos": 2.2
+  },
+  {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "El Auditorio abre sus puertas para los debates de la campana."
+  },
+  {
+   "cmd": "sonido",
+   "nombre": "alerta"
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "MIREN: Lucia Barrera se burla de los vecinos en pleno debate. El video no miente.",
+   "si": [
+    "noticia:video-debate-editado"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Lucia Barrera",
+   "retrato": "candidato:lucia",
+   "texto": "Ese video esta cortado. Yo nunca dije eso.",
+   "si": [
+    "noticia:video-debate-editado"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "Andres Quintero cenando con el contratista del wifi. Coincidencia? #NoTeDejesEnganar",
+   "si": [
+    "noticia:foto-con-contratista"
+   ]
+  },
+  {
+   "cmd": "actor",
+   "id": "andres",
+   "nombre": "Andres Quintero",
+   "rol": "CANDIDATE",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1280,
+    410
+   ],
+   "dir": "arriba",
+   "si": [
+    "noticia:foto-con-contratista"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Andres Quintero",
+   "retrato": "candidato:andres",
+   "texto": "Esa foto es de un acto publico, con cien personas. La recortaron.",
+   "si": [
+    "noticia:foto-con-contratista"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 1.4
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1240,
+    930
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "camila",
+   "nombre": "Camila",
+   "rol": "JOURNALIST",
+   "genero": "MUJER",
+   "variante": 0,
+   "en": [
+    1320,
+    930
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "decir",
+   "quien": "Camila",
+   "retrato": "camila",
+   "texto": "Soy Camila, periodista. Llevo dias detras de @VerdadNova. Esta vez el montaje es profesional."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Si averiguamos bien que paso, Camila puede seguirle el rastro."
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "dia2_cierre": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "auditorio",
+   "segundos": 0
+  },
+  {
+   "cmd": "actor",
+   "id": "camila",
+   "nombre": "Camila",
+   "rol": "JOURNALIST",
+   "genero": "MUJER",
+   "variante": 0,
+   "en": [
+    1310,
+    920
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1250,
+    920
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "Se apagan las luces del Auditorio. El debate siguio en las redes toda la noche."
+  },
+  {
+   "cmd": "ciudad",
+   "calma": "Ninguna calle se cerro hoy. La ciudad discute, pero sin pelear."
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 1.0
+  },
+  {
+   "cmd": "decir",
+   "quien": "Camila",
+   "retrato": "camila",
+   "texto": "Con lo que averiguaste encontre algo: el video lo subieron desde una agencia de 'alcance' del Parque.",
+   "si": [
+    "acierto"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Camila",
+   "retrato": "camila",
+   "texto": "Sin saber bien que paso hoy, el rastro se me enfrio. Seguire buscando.",
+   "si": [
+    "!acierto"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "La gente esta muy dividida. Se nota en la calle.",
+   "si": [
+    "conflictos>=40"
+   ]
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "dia3_apertura": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "colegio",
+   "segundos": 0
+  },
+  {
+   "cmd": "actor",
+   "id": "isabela",
+   "nombre": "Isabela",
+   "rol": "CITIZEN",
+   "genero": "MUJER",
+   "variante": 1,
+   "en": [
+    500,
+    570
+   ],
+   "dir": "abajo"
+  },
+  {
+   "cmd": "actor",
+   "id": "juan",
+   "nombre": "Juan Ardila",
+   "rol": "CANDIDATE",
+   "genero": "HOMBRE",
+   "variante": 0,
+   "en": [
+    570,
+    570
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "cartel",
+   "texto": "Dia 3: Semana final",
+   "sub": "Quedan dos dias",
+   "segundos": 2.2
+  },
+  {
+   "cmd": "sonido",
+   "nombre": "alerta"
+  },
+  {
+   "cmd": "sacudir",
+   "segundos": 0.5,
+   "fuerza": 8
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "ULTIMA HORA: Juan Ardila cerrara el colegio de Nova si gana. Los ninos a la calle.",
+   "si": [
+    "noticia:colegio-cerrado"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Isabela",
+   "retrato": "isabela",
+   "texto": "Soy enfermera aqui. Los papas llegan llorando a preguntar. Nadie ha dicho eso.",
+   "si": [
+    "noticia:colegio-cerrado"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "Se acabaron los parques: el proximo alcalde los vende a una constructora. #NoTeDejesEnganar",
+   "si": [
+    "noticia:parques-cerrados"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": "parque",
+   "segundos": 1.2,
+   "si": [
+    "noticia:parques-cerrados"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Isabela",
+   "retrato": "isabela",
+   "texto": "Traigo a los ninos del colegio al parque todos los dias. Ya nadie quiere venir.",
+   "si": [
+    "noticia:parques-cerrados"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 1.2
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1240,
+    930
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "yo",
+   "jugador": true,
+   "nombre": "Tu",
+   "en": [
+    1320,
+    930
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Esto ya es miedo, no informacion. Hoy no basta con frenarlo: hay que contar lo que sabemos."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Cuando la red se llene del rumor, publica tu. Con fuente, sin gritar."
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "dia3_cierre": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "colegio",
+   "segundos": 0
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1250,
+    920
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "yo",
+   "jugador": true,
+   "nombre": "Tu",
+   "en": [
+    1310,
+    920
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "Tercer dia. Lo que se dijo hoy se va a recordar el dia de la eleccion."
+  },
+  {
+   "cmd": "ciudad",
+   "calma": "La ciudad sigue unida: todas las calles abiertas."
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 1.0
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "La funda verde con un rayo que vio Isabela... yo he visto eso en algun lado.",
+   "si": [
+    "escucho:isabela"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Hay barrios en crisis. Alli ya nadie le cree a nadie.",
+   "si": [
+    "crisis"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Ningun barrio en crisis. Algo estamos haciendo bien.",
+   "si": [
+    "!crisis"
+   ]
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "dia4_apertura": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "registraduria",
+   "segundos": 0
+  },
+  {
+   "cmd": "noche",
+   "on": true
+  },
+  {
+   "cmd": "actor",
+   "id": "valentina",
+   "nombre": "Valentina",
+   "rol": "INFLUENCER",
+   "genero": "MUJER",
+   "variante": 0,
+   "en": [
+    1280,
+    940
+   ],
+   "dir": "abajo"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "cartel",
+   "texto": "Dia 4: Dia de eleccion",
+   "sub": "Abre la Registraduria",
+   "segundos": 2.2
+  },
+  {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "La Registraduria abre en la noche: manana se vota."
+  },
+  {
+   "cmd": "sonido",
+   "nombre": "alerta"
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "ENCUESTA: Lucia Barrera ya perdio. No pierdas tu voto. #NoTeDejesEnganar",
+   "si": [
+    "noticia:encuesta-inventada"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "Los 'pasajes gratis' de Maria Lozano son mentira: los vas a pagar con impuestos.",
+   "si": [
+    "noticia:pasajes-gratis"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 1.4
+  },
+  {
+   "cmd": "decir",
+   "quien": "Valentina",
+   "retrato": "valentina",
+   "texto": "Soy influencer y conozco el negocio: cuanto mas grita una cuenta, mas le pagan por publicidad."
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1220,
+    930
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Ultimo rumor antes de votar. Y el peor: le dice a la gente que no vale la pena ir."
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "dia4_cierre": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "registraduria",
+   "segundos": 0
+  },
+  {
+   "cmd": "noche",
+   "on": true
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "Ultima noche de campana. Asi llega Ciudad Nova a la eleccion."
+  },
+  {
+   "cmd": "ciudad",
+   "calma": "Todas las calles abiertas: nadie se queda sin poder votar."
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "revelacion": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "parque",
+   "segundos": 0
+  },
+  {
+   "cmd": "noche",
+   "on": true
+  },
+  {
+   "cmd": "actor",
+   "id": "camila",
+   "nombre": "Camila",
+   "rol": "JOURNALIST",
+   "genero": "MUJER",
+   "variante": 0,
+   "en": [
+    2000,
+    1220
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1950,
+    1220
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "yo",
+   "jugador": true,
+   "nombre": "Tu",
+   "en": [
+    1980,
+    1270
+   ],
+   "dir": "arriba"
+  },
+  {
+   "cmd": "actor",
+   "id": "esteban",
+   "nombre": "Esteban Lara",
+   "rol": "INFLUENCER",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    2150,
+    1180
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "cartel",
+   "texto": "Quien es @VerdadNova?",
+   "sub": "La noche antes de votar",
+   "segundos": 2.2
+  },
+  {
+   "cmd": "decir",
+   "quien": "Camila",
+   "retrato": "camila",
+   "texto": "La encuesta falsa salio de la misma red que el video del debate: la del estudio de Esteban Lara.",
+   "si": [
+    "verdad:4"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "La funda verde con el rayo. Es la de Esteban Lara: la vende en su tienda.",
+   "si": [
+    "verdad:3",
+    "!verdad:4"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Camila",
+   "retrato": "camila",
+   "texto": "La agencia de 'alcance' del Parque tiene un solo cliente: @VerdadNova. Y un solo dueno: Esteban Lara.",
+   "si": [
+    "verdad:2",
+    "!verdad:3",
+    "!verdad:4"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Tomas guardo el mensaje con el que le ofrecian plata. Lo mando el celular de Esteban Lara.",
+   "si": [
+    "verdad:1",
+    "!verdad:2",
+    "!verdad:3",
+    "!verdad:4"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Camila",
+   "retrato": "camila",
+   "texto": "Lo encontre yo sola, siguiendo el dinero de los anuncios: todo lleva a Esteban Lara. Ojala lo hubieramos visto antes.",
+   "si": [
+    "!verdad"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": {
+    "actor": "esteban"
+   },
+   "segundos": 1.0
+  },
+  {
+   "cmd": "decir",
+   "quien": "Esteban Lara",
+   "retrato": "esteban",
+   "texto": "Y que? No trabajo para ningun candidato. Publico lo que la gente quiere leer."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Esteban Lara",
+   "retrato": "esteban",
+   "texto": "La indignacion se comparte sola. Cada rumor me dejaba miles de visitas. Y las visitas son plata."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Camila",
+   "retrato": "camila",
+   "texto": "No tenia un bando. Tenia un negocio. Y la ciudad pago la cuenta."
+  },
+  {
+   "cmd": "caminar",
+   "id": "esteban",
+   "a": [
+    2360,
+    1180
+   ],
+   "velocidad": 120,
+   "sin_esperar": true
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Manana se vota. Ahora veamos que hicieron los vecinos con todo esto."
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "final_informada": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "registraduria",
+   "segundos": 0
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1240,
+    1630
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "yo",
+   "jugador": true,
+   "nombre": "Tu",
+   "en": [
+    1310,
+    1630
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "actor",
+   "id": "tomas",
+   "nombre": "Tomas",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 0,
+   "en": [
+    1180,
+    1680
+   ],
+   "dir": "abajo"
+  },
+  {
+   "cmd": "actor",
+   "id": "isabela",
+   "nombre": "Isabela",
+   "rol": "CITIZEN",
+   "genero": "MUJER",
+   "variante": 1,
+   "en": [
+    1370,
+    1680
+   ],
+   "dir": "abajo"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "cartel",
+   "texto": "Ciudad informada",
+   "sub": "",
+   "segundos": 2.2
+  },
+  {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "Filas largas en la Registraduria. Los vecinos llegan con dudas, pero preguntan antes de creer."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Tomas",
+   "retrato": "tomas",
+   "texto": "Antes compartia todo. Ahora miro quien lo publico y de donde salio."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "@VerdadNova grito toda la semana y la ciudad aprendio a no correr detras de cada grito."
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "final_dividida": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 0
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1240,
+    940
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "yo",
+   "jugador": true,
+   "nombre": "Tu",
+   "en": [
+    1310,
+    940
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "actor",
+   "id": "tomas",
+   "nombre": "Tomas",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 0,
+   "en": [
+    1160,
+    860
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "isabela",
+   "nombre": "Isabela",
+   "rol": "CITIZEN",
+   "genero": "MUJER",
+   "variante": 1,
+   "en": [
+    1400,
+    860
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "cartel",
+   "texto": "Ciudad dividida",
+   "sub": "",
+   "segundos": 2.2
+  },
+  {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "La ciudad llega a votar partida en dos. Unos creen los rumores, otros ya no creen nada."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Tomas",
+   "retrato": "tomas",
+   "texto": "Yo ya no se a quien creerle."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Isabela",
+   "retrato": "isabela",
+   "texto": "Pues a nadie que no muestre de donde lo saco."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Frenamos mucho, pero no todo. Lo que se rego no se recoge en un dia."
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
+ "final_enganada": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 0
+  },
+  {
+   "cmd": "noche",
+   "on": true
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1240,
+    940
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "yo",
+   "jugador": true,
+   "nombre": "Tu",
+   "en": [
+    1310,
+    940
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "cartel",
+   "texto": "Ciudad enganada",
+   "sub": "",
+   "segundos": 2.2
+  },
+  {
+   "cmd": "sacudir",
+   "segundos": 0.6,
+   "fuerza": 8
+  },
+  {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "Esa noche los rumores de @VerdadNova seguian circulando, aunque ya todos sabian quien los escribio."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Saber la verdad no basta si llega tarde. La gente ya habia decidido con miedo."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "La proxima vez hay que frenarlo desde el primer dia. Y sin perder la confianza de la gente."
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
  "prueba": [
-  {"cmd": "fundido", "a": "negro", "segundos": 0},
-  {"cmd": "camara", "a": "plaza", "segundos": 0},
-  {"cmd": "actor", "id": "nico", "nombre": "Nico", "rol": "CITIZEN", "genero": "HOMBRE", "en": [1200, 900], "dir": "derecha"},
-  {"cmd": "actor", "id": "camila", "nombre": "Camila", "rol": "JOURNALIST", "genero": "MUJER", "en": [1500, 900], "dir": "izquierda"},
-  {"cmd": "fundido", "a": "claro", "segundos": 0.8},
-  {"cmd": "cartel", "texto": "Dia 1: Inicio de campana", "sub": "Ciudad Nova", "segundos": 2.0},
-  {"cmd": "caminar", "id": "nico", "a": [1320, 900], "sin_esperar": true},
-  {"cmd": "decir", "quien": "Camila", "retrato": "camila", "texto": "Otra vez @VerdadNova. Publico de madrugada y ya lo comparte medio barrio."},
-  {"cmd": "girar", "id": "nico", "dir": "abajo"},
-  {"cmd": "decir", "quien": "Nico", "retrato": "nico", "texto": "La ciudad esta tranquila. Por ahora.", "si": ["!crisis"]},
-  {"cmd": "decir", "quien": "Nico", "retrato": "nico", "texto": "Hay zonas en crisis. Esto se nos esta yendo de las manos.", "si": ["crisis"]},
-  {"cmd": "decir", "quien": "Camila", "retrato": "camila", "texto": "Contigo de nuestro lado la gente escucha. Vamos.", "si": ["credibilidad>=60"]},
-  {"cmd": "camara", "a": "barrio", "segundos": 1.5},
-  {"cmd": "sacudir", "segundos": 0.5, "fuerza": 10},
-  {"cmd": "sonido", "nombre": "alerta"},
-  {"cmd": "noche", "on": true},
-  {"cmd": "decir", "quien": "Civitas", "texto": "Cae la noche sobre el Barrio y el rumor sigue corriendo."},
-  {"cmd": "esperar", "segundos": 0.5},
-  {"cmd": "quitar", "id": "camila"},
-  {"cmd": "fundido", "a": "negro", "segundos": 0.8}
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 0
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "en": [
+    1200,
+    900
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "camila",
+   "nombre": "Camila",
+   "rol": "JOURNALIST",
+   "genero": "MUJER",
+   "en": [
+    1500,
+    900
+   ],
+   "dir": "izquierda"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "cartel",
+   "texto": "Dia 1: Inicio de campana",
+   "sub": "Ciudad Nova",
+   "segundos": 2.0
+  },
+  {
+   "cmd": "caminar",
+   "id": "nico",
+   "a": [
+    1320,
+    900
+   ],
+   "sin_esperar": true
+  },
+  {
+   "cmd": "decir",
+   "quien": "Camila",
+   "retrato": "camila",
+   "texto": "Otra vez @VerdadNova. Publico de madrugada y ya lo comparte medio barrio."
+  },
+  {
+   "cmd": "girar",
+   "id": "nico",
+   "dir": "abajo"
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "La ciudad esta tranquila. Por ahora.",
+   "si": [
+    "!crisis"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Hay zonas en crisis. Esto se nos esta yendo de las manos.",
+   "si": [
+    "crisis"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Camila",
+   "retrato": "camila",
+   "texto": "Contigo de nuestro lado la gente escucha. Vamos.",
+   "si": [
+    "credibilidad>=60"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": "barrio",
+   "segundos": 1.5
+  },
+  {
+   "cmd": "sacudir",
+   "segundos": 0.5,
+   "fuerza": 10
+  },
+  {
+   "cmd": "sonido",
+   "nombre": "alerta"
+  },
+  {
+   "cmd": "noche",
+   "on": true
+  },
+  {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "Cae la noche sobre el Barrio y el rumor sigue corriendo."
+  },
+  {
+   "cmd": "esperar",
+   "segundos": 0.5
+  },
+  {
+   "cmd": "quitar",
+   "id": "camila"
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
  ]
 }
