@@ -38,4 +38,5 @@ RUTA_PERSUASION = Path(__file__).resolve().parents[2] / "data" / "persuasion.jso
 RUTA_TRANSEUNTES = Path(__file__).resolve().parents[2] / "data" / "transeuntes.json"
 RUTA_AYUDA = Path(__file__).resolve().parents[2] / "data" / "ayuda.json"
 RUTA_HISTORIA = Path(__file__).resolve().parents[2] / "data" / "historia.json"
+RUTA_CINEMATICAS = Path(__file__).resolve().parents[2] / "data" / "cinematicas.json"
 RUTA_FUENTES = Path(__file__).resolve().parents[2] / "assets" / "fuentes"

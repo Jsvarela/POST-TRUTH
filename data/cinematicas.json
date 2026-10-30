@@ -1,0 +1,24 @@
+{
+ "prueba": [
+  {"cmd": "fundido", "a": "negro", "segundos": 0},
+  {"cmd": "camara", "a": "plaza", "segundos": 0},
+  {"cmd": "actor", "id": "nico", "nombre": "Nico", "rol": "CITIZEN", "genero": "HOMBRE", "en": [1200, 900], "dir": "derecha"},
+  {"cmd": "actor", "id": "camila", "nombre": "Camila", "rol": "JOURNALIST", "genero": "MUJER", "en": [1500, 900], "dir": "izquierda"},
+  {"cmd": "fundido", "a": "claro", "segundos": 0.8},
+  {"cmd": "cartel", "texto": "Dia 1: Inicio de campana", "sub": "Ciudad Nova", "segundos": 2.0},
+  {"cmd": "caminar", "id": "nico", "a": [1320, 900], "sin_esperar": true},
+  {"cmd": "decir", "quien": "Camila", "retrato": "camila", "texto": "Otra vez @VerdadNova. Publico de madrugada y ya lo comparte medio barrio."},
+  {"cmd": "girar", "id": "nico", "dir": "abajo"},
+  {"cmd": "decir", "quien": "Nico", "retrato": "nico", "texto": "La ciudad esta tranquila. Por ahora.", "si": ["!crisis"]},
+  {"cmd": "decir", "quien": "Nico", "retrato": "nico", "texto": "Hay zonas en crisis. Esto se nos esta yendo de las manos.", "si": ["crisis"]},
+  {"cmd": "decir", "quien": "Camila", "retrato": "camila", "texto": "Contigo de nuestro lado la gente escucha. Vamos.", "si": ["credibilidad>=60"]},
+  {"cmd": "camara", "a": "barrio", "segundos": 1.5},
+  {"cmd": "sacudir", "segundos": 0.5, "fuerza": 10},
+  {"cmd": "sonido", "nombre": "alerta"},
+  {"cmd": "noche", "on": true},
+  {"cmd": "decir", "quien": "Civitas", "texto": "Cae la noche sobre el Barrio y el rumor sigue corriendo."},
+  {"cmd": "esperar", "segundos": 0.5},
+  {"cmd": "quitar", "id": "camila"},
+  {"cmd": "fundido", "a": "negro", "segundos": 0.8}
+ ]
+}
