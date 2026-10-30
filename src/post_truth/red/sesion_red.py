@@ -22,7 +22,8 @@ ENVIO = 0.1             # posicion y escudo, 10 veces por segundo
 ESCUDO_ACTIVO = 0.2     # el escudo se manda mientras se haya movido hace menos que esto
 MUESTRAS = 12           # fotos que se guardan por jugador remoto
 MOTIVOS = {"no_es_su_turno": "Espera tu turno.", "minijuego_no_disponible": "Ese minijuego ya no esta disponible.",
-           "enfriando": "Aun se esta recargando.", "sin_rumor": "No hay un rumor corriendo ahora."}
+           "enfriando": "Aun se esta recargando.", "sin_rumor": "No hay un rumor corriendo ahora.",
+           "fuera_de_paso": "Ahora no: la historia te lo ofrecera en su momento."}
 
 
 def _direccion(dx: float, dy: float, previa: str) -> str:

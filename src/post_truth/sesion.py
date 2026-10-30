@@ -288,7 +288,7 @@ class PartidaSesion:
                 return None   # el director cerro el dia
             self._actualizar_ciudad()
             self._avanzar_calle(dt)
-            if self.director.nombre == "consecuencia":   # una cosa a la vez: el rumor solo corre en su paso
+            if self.director is None or self.director.nombre == "consecuencia":   # el rumor solo corre en su paso
                 self._avanzar_en_vivo(dt / self.campana.factor)   # tiempo extendido: el rumor tambien va mas lento
             self.enfriamiento_post = max(0.0, self.enfriamiento_post - dt)
             for k in self.enfriamientos:
@@ -588,7 +588,7 @@ class PartidaSesion:
                 self.desinfo_zona[t.zona] = self.desinfo_zona.get(t.zona, 0) + 1
 
     def transeunte_cerca(self, jugador: str) -> tr.Transeunte | None:
-        """Con quien puede hablar ahora: un rumor, o un testigo que todavia no le conto lo suyo."""
+        """Con quien puede hablar ahora: un personaje del dia, o un testigo que todavia no le conto lo suyo."""
         j = self.jugador(jugador)
         if self.calle is None or j.posicion is None:
             return None
@@ -605,13 +605,15 @@ class PartidaSesion:
         if j.posicion is None or math.dist(j.posicion, t.pos) > tr.datos()["radio"]:   # se alejo: hay que seguirle el paso
             return self.soltar(jugador)
         c = self.charla
+        escuchar = t.testigo is not None or t.dice is not None
         if c is None or (c["jugador"], c["id"]) != (jugador, id):
             self.soltar(jugador)
             c = self.charla = {"jugador": jugador, "id": id, "t": 0.0,
-                               "p": None if t.testigo else Persuasion(self._evidencias(j), j.credibilidad)}
+                               "p": None if escuchar else Persuasion(self._evidencias(j), j.credibilidad)}
         c["t"] += dt
-        if t.testigo is not None:
-            return self.cerrar_encuentro(jugador, id, "testigo") if c["t"] >= tr.datos()["escuchar"] else ""
+        if escuchar:
+            como = "testigo" if t.testigo is not None else "escuchado"
+            return self.cerrar_encuentro(jugador, id, como) if c["t"] >= tr.datos()["escuchar"] else ""
         return self.cerrar_encuentro(jugador, id, "convencido") if c["p"].avanzar(dt) else ""
 
     def soltar(self, jugador: str) -> str:
@@ -637,6 +639,9 @@ class PartidaSesion:
                 j.investigacion.descubiertas.append(t.testigo)
                 e = j.investigacion.hallazgo(t.testigo)
                 self.notificar("bueno", f"Testigo: {t.nombre}", e.hallazgo)
+        elif como == "escuchado" and t.dice is not None:   # personaje de la historia (L2)
+            self.notificar("info", t.nombre, t.dice)
+            t.dice = None
         elif como == "convencido" and t.rumor is not None:
             t.rumor = None
             j.credibilidad = cred.acotar(j.credibilidad + 1)
@@ -677,7 +682,7 @@ class PartidaSesion:
     def avanzar_rumor(self, dt: float) -> None:
         """Solo el rumor en vivo (el telefono lo adelanta aparte del dia), y solo en el paso de consecuencia."""
         if (self.campana is not None and self.fase == DECIDIENDO and self.pendiente is None
-                and self.director is not None and self.director.nombre == "consecuencia"):
+                and (self.director is None or self.director.nombre == "consecuencia")):
             self._avanzar_en_vivo(dt / self.campana.factor)
 
     def _avanzar_en_vivo(self, dt: float) -> None:
@@ -713,6 +718,8 @@ class PartidaSesion:
     def publicar(self, post: posts.Post, jugador: str | None = None) -> tuple[bool, str, posts.Evaluacion | None]:
         """El jugador publica: si la red esta en calma su post arranca una propagacion en vivo; si ya corre una
         noticia, uno que dice lo mismo se suma a ella y uno veraz que la contradice sale como desmentido."""
+        if self.director is not None and not self.director.ofrece("post"):
+            return False, "fuera_de_paso", None   # L2: solo cuando la historia lo pide (sin director: reglas libres)
         if self.enfriamiento_post > 0:
             return False, "enfriando", None
         if self.post is not None:
@@ -777,6 +784,8 @@ class PartidaSesion:
 
     def usar_habilidad(self, jugador: str) -> ResultadoAccion:
         j, motivo = self._turno_de(jugador)
+        if not motivo and self.director is not None and not self.director.ofrece("habilidad", j.rol.name):
+            motivo = "fuera_de_paso"   # L2: en el paso donde sirve
         if motivo:
             return ResultadoAccion(False, motivo)
         clave = f"habilidad:{j.id}"
@@ -812,6 +821,8 @@ class PartidaSesion:
         """Politica sencilla de cada aliado; con enfriamiento por aliado."""
         if self.asignacion.get(rol.name) != roles.ALIADO:
             return ResultadoAccion(False, "no_es_aliado")
+        if self.director is not None and not self.director.ofrece("aliados", rol.name):
+            return ResultadoAccion(False, "fuera_de_paso")   # L2: en el paso donde sirve
         clave = f"aliado:{rol.name}"
         if self.falta(clave) > 0:
             return ResultadoAccion(False, "enfriando")
@@ -879,7 +890,10 @@ class PartidaSesion:
             self.calle.amanecer()
         self._entrar_fase()
         self.abrir_evento(c.dias[c.dia][0])
-        self.director = dr.DirectorDia.para(dr.historia()[c.dia])
+        dia = dr.historia()[c.dia]
+        self.director = dr.DirectorDia.para(dia)
+        if self.calle is not None:   # L2: solo los personajes del dia hablan; los demas son ambiente
+            self.calle.poner_personajes(dia.personajes, {v.id: v for v in self.grafo.vertices()}, self.mapa)
         self._avanzar_director()
 
     # --- director del dia (L1) ----------------------------------------------------------------------

@@ -426,7 +426,8 @@ class Servidor:
         como = s.cerrar_encuentro(jid, t.id, str(m["como"])) if cerca else ""
         if not como:
             raise Rechazo("encuentro_invalido")
-        texto = {"testigo": f"escucho a {t.nombre}", "convencido": f"convencio a {t.nombre}",
+        texto = {"testigo": f"escucho a {t.nombre}", "escuchado": f"escucho a {t.nombre}",
+                 "convencido": f"convencio a {t.nombre}",
                  "enojado": f"hizo enojar a {t.nombre}"}[como]
         self._evento(f"{self._nombre(jid)} {texto}", jid, "malo" if como == "enojado" else "bueno")
 

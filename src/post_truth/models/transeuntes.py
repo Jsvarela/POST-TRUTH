@@ -1,7 +1,8 @@
-"""Transeuntes (R13): ciudadanos del grafo social que caminan por la ciudad abierta de zona en zona. La mayoria lleva
-un rumor; los testigos de la noticia actual que viven en otra zona (R6) tambien salen a caminar. Al cruzarse con uno
-se lo puede persuadir (manteniendo E, models/persuasion.py) o esquivar. Un rumor que nadie frena suma desinformacion
-en la zona a la que llega.
+"""Transeuntes (R13, L2): ciudadanos del grafo social que caminan por la ciudad abierta de zona en zona, como
+ambiente. Solo los personajes del dia (data/historia.json: los testigos de la noticia y quien tiene algo que decir)
+llevan marca y se puede hablar con ellos manteniendo E; los demas solo pasan.
+shortcut: el rumor por transeunte y su persuasion (models/persuasion.py) quedan en el codigo pero nadie sale con
+rumor desde L2; L4 decide si vuelven como personajes de la historia o se borran.
 
 RUTAS: cada transeunte elige un destino entre las zonas que puede alcanzar (BFS `saltos` sobre el grafo de la
 ciudad, O(V + E)) y va por el camino mas corto a pie (Dijkstra sobre las distancias reales, structures/rutas.py).
@@ -46,10 +47,11 @@ class Transeunte:
     testigo: str | None = None       # id de la evidencia (TESTIGO) de la noticia actual que cuenta
     enojado: float = 0.0             # segundos en que no quiere hablar
     regado: bool = False             # ya solto su rumor hoy (uno por dia: no dispara solo las crisis de zona)
+    dice: str | None = None          # personaje de la historia de hoy: lo que cuenta si se lo escucha
 
     @property
     def interesa(self) -> bool:
-        return (self.rumor is not None or self.testigo is not None) and self.enojado <= 0
+        return (self.rumor is not None or self.testigo is not None or self.dice is not None) and self.enojado <= 0
 
 
 class Calle:
@@ -64,8 +66,7 @@ class Calle:
         candidatos = sorted((c for c in ciudadanos if c.id not in propios and c.zona in mapa), key=lambda c: c.id)
         geo = geometria()
         for c in calle.rng.sample(candidatos, min(datos()["cantidad"], len(candidatos))):
-            calle.transeuntes.append(Transeunte(c.id, c.nombre, c.rol.name, c.zona, list(geo.centros[c.zona]),
-                                                rumor=calle.rng.choice(datos()["rumores"])))
+            calle.transeuntes.append(Transeunte(c.id, c.nombre, c.rol.name, c.zona, list(geo.centros[c.zona])))
         return calle
 
     def poner_testigos(self, evidencias, mapa: GrafoCiudad) -> None:
@@ -76,6 +77,25 @@ class Calle:
             if e.lugar in mapa:
                 self.transeuntes.append(Transeunte(f"testigo:{e.id}", e.titulo, "CITIZEN", e.lugar,
                                                    list(geo.centros[e.lugar]), testigo=e.id))
+
+    def poner_personajes(self, personajes, ciudadanos: dict, mapa: GrafoCiudad) -> None:
+        """Dia nuevo: solo los personajes de la historia hablan. Los testigos que no estan en la lista se van; quien
+        tiene algo que decir sale a caminar (si no estaba ya) desde su zona."""
+        ids = {i for i, _ in personajes}
+        self.transeuntes = [t for t in self.transeuntes if t.testigo is None or f"testigo:{t.testigo}" in ids]
+        for t in self.transeuntes:
+            t.dice = None
+        geo = geometria()
+        for i, dice in personajes:
+            if i.startswith("testigo:") or not dice:
+                continue
+            t = self.buscar(i)
+            c = ciudadanos.get(i)
+            if t is None and c is not None and c.zona in mapa:
+                t = Transeunte(c.id, c.nombre, c.rol.name, c.zona, list(geo.centros[c.zona]))
+                self.transeuntes.append(t)
+            if t is not None:
+                t.dice = dice
 
     def buscar(self, id: str) -> Transeunte | None:
         return next((t for t in self.transeuntes if t.id == id), None)
@@ -88,11 +108,9 @@ class Calle:
         return t if d <= radio else None
 
     def amanecer(self) -> None:
-        """Dia nuevo: quien fue convencido sale con otro rumor y todos pueden volver a regarlo."""
+        """Dia nuevo: nadie sigue enojado."""
         for t in self.transeuntes:
-            if t.testigo is None:
-                t.rumor = t.rumor or self.rng.choice(datos()["rumores"])
-                t.regado, t.enojado = False, 0.0
+            t.regado, t.enojado = False, 0.0
 
     def actualizar(self, dt: float, mapa: GrafoCiudad) -> list[Transeunte]:
         """Mueve a todos. Devuelve los que acaban de llegar a su destino."""

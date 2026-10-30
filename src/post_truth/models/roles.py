@@ -30,7 +30,8 @@ AYUDAS = {   # lo que hace cada aliado cuando se le pide (politica sencilla)
 }
 MOTIVOS = {"enfriando": "Aun se esta recargando.", "nada_pendiente": "No queda nada por revisar en esta noticia.",
            "sin_rumor": "No hay un rumor corriendo ahora.", "sin_desmentido": "Primero lanza tu desmentido.",
-           "no_es_aliado": "Ese rol lo juega una persona.", "no_es_su_turno": "No es tu turno."}
+           "no_es_aliado": "Ese rol lo juega una persona.", "no_es_su_turno": "No es tu turno.",
+           "fuera_de_paso": "Ahora no: la historia te lo ofrecera en su momento."}
 
 COMUNICADO, COMUNICADO_ALIADO = Impact(trust=4, conflicts=-3), Impact(trust=2, conflicts=-2)
 CONVIVENCIA, CONVIVENCIA_ALIADO = Impact(coexistence=3, digital_wellbeing=1), Impact(coexistence=2)
