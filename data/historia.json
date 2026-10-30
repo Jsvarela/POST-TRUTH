@@ -1,0 +1,8 @@
+{
+ "dias": [
+  {"noticia": "agua-contaminada", "zona": "barrio", "minijuego": "barrio"},
+  {"noticia": "video-debate-editado", "zona": "alcaldia", "minijuego": "alcaldia"},
+  {"noticia": "colegio-cerrado", "zona": "colegio", "minijuego": "colegio"},
+  {"noticia": "encuesta-inventada", "zona": "plaza", "minijuego": "plaza"}
+ ]
+}

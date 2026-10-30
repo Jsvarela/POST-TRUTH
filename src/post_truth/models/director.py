@@ -1,0 +1,90 @@
+"""Director del dia (L1): el dia es un capitulo con pasos fijos y en orden. Logica pura y serializable.
+
+POR QUE UNA MAQUINA DE ESTADOS LINEAL Y NO EVENTOS SUELTOS: antes el dia era un reloj donde cada cosa aparecia por
+su cuenta (la crisis "entre el 20% y el 50% del dia", el fin por tiempo, el telefono y los minijuegos siempre
+abiertos). Con eventos sueltos cualquier combinacion puede pasar a la vez, que es justo la sobresaturacion que se
+quiere evitar, y el estado del dia queda repartido en banderas. Aqui hay UN solo estado actual (el paso) y una sola
+transicion posible (al siguiente, cuando se cumple su condicion): siempre se sabe que toca, que pantallas se pueden
+abrir y que falta; no hay combinaciones imposibles, se guarda en un entero y el servidor lo repite tal cual.
+
+El director solo conoce el orden y lo permitido; las CONDICIONES y lo que pasa al entrar a cada paso las pone la
+sesion (que es quien sabe si la noticia ya se decidio o si el rumor se apago).
+"""
+from __future__ import annotations
+
+import json
+from dataclasses import asdict, dataclass
+from functools import lru_cache
+from typing import Callable
+
+from post_truth.config import RUTA_HISTORIA
+
+PASOS = ("apertura", "objetivo", "noticia", "consecuencia", "minijuego", "cierre")
+PANTALLAS = {   # que pantallas se pueden abrir en cada paso
+    "apertura": {"mundo", "fase"},   # la pantalla de fase abre el capitulo (viene del resumen del dia anterior)
+    "objetivo": {"mundo", "fase"},
+    "noticia": {"mundo", "lugar", "escena", "investigacion"},
+    "consecuencia": {"telefono"},
+    "minijuego": {"mundo", "lugar", "minijuego"},
+    "cierre": {"resumen", "fase", "resultado"},
+}
+DESTINO = {"apertura": "mundo", "objetivo": "mundo", "noticia": "mundo", "consecuencia": "telefono",
+           "minijuego": "mundo", "cierre": "resumen"}   # a donde va el jugador si pide algo que el paso no permite
+SIEMPRE = {"menu", "intro", "seleccion", "conectar", "sala"}   # fuera de la partida
+
+
+@dataclass(frozen=True)
+class DiaHistoria:
+    noticia: str      # event_id de data/events.json
+    zona: str         # el objetivo del mapa
+    minijuego: str    # lugar cuyo minijuego se juega ese dia
+
+
+@lru_cache(maxsize=1)
+def historia() -> tuple[DiaHistoria, ...]:
+    with RUTA_HISTORIA.open("r", encoding="utf-8") as f:
+        return tuple(DiaHistoria(**d) for d in json.load(f)["dias"])
+
+
+@dataclass
+class DirectorDia:
+    noticia: str
+    zona: str
+    minijuego: str
+    paso: int = 0
+
+    @classmethod
+    def para(cls, dia: DiaHistoria) -> "DirectorDia":
+        return cls(dia.noticia, dia.zona, dia.minijuego)
+
+    @property
+    def nombre(self) -> str:
+        return PASOS[self.paso]
+
+    @property
+    def fraccion(self) -> float:
+        """0 al amanecer .. 1 en el cierre (el arco del sol del HUD)."""
+        return self.paso / (len(PASOS) - 1)
+
+    def permite(self, pantalla: str) -> bool:
+        return pantalla in SIEMPRE or pantalla in PANTALLAS[self.nombre]
+
+    def pantalla(self) -> str:
+        return DESTINO[self.nombre]
+
+    def avanzar(self, cumplido: Callable[[str], bool], al_entrar: Callable[[str], None]) -> list[str]:
+        """Mientras el paso actual este cumplido pasa al siguiente (y avisa al entrar). El cierre no avanza solo:
+        el dia siguiente lo arma la sesion. Devuelve los pasos a los que entro."""
+        entrados = []
+        while self.paso < len(PASOS) - 1 and cumplido(self.nombre):
+            self.paso += 1
+            al_entrar(self.nombre)
+            entrados.append(self.nombre)
+        return entrados
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "DirectorDia":
+        return cls(d["noticia"], d["zona"], d["minijuego"], int(d["paso"]))
