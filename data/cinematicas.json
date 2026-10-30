@@ -124,25 +124,25 @@
   {
    "cmd": "decir",
    "quien": "Juan Ardila",
-   "retrato": "candidato:juan",
+   "retrato": "juan",
    "texto": "Menos gasto y mas orden: colegios grandes y bien equipados."
   },
   {
    "cmd": "decir",
    "quien": "Maria Lozano",
-   "retrato": "candidato:maria",
+   "retrato": "maria",
    "texto": "Mas rutas de bus para que nadie quede lejos de nada."
   },
   {
    "cmd": "decir",
    "quien": "Andres Quintero",
-   "retrato": "candidato:andres",
+   "retrato": "andres",
    "texto": "Internet gratis en parques y plazas, y talleres para todos."
   },
   {
    "cmd": "decir",
    "quien": "Lucia Barrera",
-   "retrato": "candidato:lucia",
+   "retrato": "lucia",
    "texto": "Debates abiertos y una oficina que verifique lo que circula."
   },
   {
@@ -503,7 +503,7 @@
   {
    "cmd": "decir",
    "quien": "Lucia Barrera",
-   "retrato": "candidato:lucia",
+   "retrato": "lucia",
    "texto": "Ese video esta cortado. Yo nunca dije eso.",
    "si": [
     "noticia:video-debate-editado"
@@ -536,7 +536,7 @@
   {
    "cmd": "decir",
    "quien": "Andres Quintero",
-   "retrato": "candidato:andres",
+   "retrato": "andres",
    "texto": "Esa foto es de un acto publico, con cien personas. La recortaron.",
    "si": [
     "noticia:foto-con-contratista"

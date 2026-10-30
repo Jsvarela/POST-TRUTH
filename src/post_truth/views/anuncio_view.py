@@ -6,7 +6,8 @@ from dataclasses import dataclass
 import pygame
 
 from post_truth.config import px
-from post_truth.views.componentes import Fuentes, ajustar_texto
+from post_truth.views.componentes import Fuentes, ajustar_texto, marco_pixel
+from post_truth.views.hud import MINIMO
 from post_truth.views.theme import Tema
 
 ENTRADA, SALIDA = 0.35, 0.4   # segundos de la animacion de entrada y de salida
@@ -75,10 +76,10 @@ def dibujar_anuncio(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, a: A
         return
     color = _color(tema, a.tipo)
     w, h = (px(660), px(210)) if a.grande else (px(560), px(74))
-    panel = pygame.Surface((w, h), pygame.SRCALPHA)
-    pygame.draw.rect(panel, (*tema.panel, 245), panel.get_rect())
+    panel = pygame.Surface((w + px(4), h + px(4)), pygame.SRCALPHA)   # + la sombra dura del marco
+    marco_pixel(panel, tema, pygame.Rect(0, 0, w, h), alfa=245, borde=color)
     latido = 0.5 + 0.5 * math.sin(a.t * 8) if a.tipo == "crisis" else 1.0
-    pygame.draw.rect(panel, color, panel.get_rect(), px(4) + round(px(3) * latido))
+    pygame.draw.rect(panel, color, pygame.Rect(0, 0, w, h).inflate(-px(4), -px(4)), px(1) + round(px(2) * latido))
     r = px(40) if a.grande else px(20)
     _icono(panel, tema, a.tipo, (px(24) + r, h // 2), r, a.t)
     x = px(40) + 2 * r
@@ -104,6 +105,7 @@ def dibujar_anuncio(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, a: A
         dx = round(math.sin(a.t * 60) * px(8) * max(0.0, 1 - a.t / 0.5)) if a.tipo == "crisis" else 0   # sacudida
         rect = panel.get_rect(center=(ancho_p // 2 + dx, alto_p // 2 - round(px(30) * salida)))
     else:
-        rect = panel.get_rect(midtop=(ancho_p // 2, px(64) - round(px(60) * (1 - _rebote(entrada))) - round(px(40) * salida)))
+        centro = max(ancho_p // 2, MINIMO.right + px(12) + w // 2)   # al lado del HUD de la calle, sin taparlo
+        rect = panel.get_rect(midtop=(centro, px(64) - round(px(60) * (1 - _rebote(entrada))) - round(px(40) * salida)))
     panel.set_alpha(alfa)
     pantalla.blit(panel, rect)

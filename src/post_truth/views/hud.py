@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import pygame
 
 from post_truth.config import ANCHO, px
-from post_truth.views.componentes import BarraAnimada, Fuentes, panel, recortar
+from post_truth.views.componentes import BarraAnimada, Fuentes, ajustar_texto, panel, recortar
 from post_truth.views.theme import TOKENS, Tema, esp
 
 INDICADORES = (   # (nombre de as_display_rows, etiqueta corta, es malo que suba)
@@ -18,7 +18,7 @@ INDICADORES = (   # (nombre de as_display_rows, etiqueta corta, es malo que suba
 CREDIBILIDAD = "Credibilidad"
 PLACA = pygame.Rect(px(16), px(16), px(292), px(276))
 FILA = pygame.Rect(0, 0, ANCHO, px(56))
-MINIMO = pygame.Rect(px(16), px(16), px(292), px(96))
+MINIMO = pygame.Rect(px(16), px(16), px(292), px(118))
 
 
 @dataclass
@@ -139,10 +139,10 @@ def _minimo(pantalla, fuentes: Fuentes, tema: Tema, d: DatosHud, barras, valores
     if d.dia:
         pantalla.blit(fuentes.normal.render(f"Dia {d.dia[0]} de {d.dia[1]}", True, tema.texto), (x, y))
         _sol(pantalla, tema, pygame.Rect(MINIMO.right - px(66), y + px(2), px(52), px(36)), d.fraccion_dia)
-    y += fuentes.normal.get_linesize()
-    if d.objetivo:
-        texto = recortar(d.objetivo, fuentes.chica, MINIMO.right - px(74) - x)
-        pantalla.blit(fuentes.chica.render(texto, True, tema.acento), (x, y))
+    y += px(40)   # debajo del sol: el objetivo usa todo el ancho
+    for linea in lineas_objetivo(d.objetivo, fuentes):
+        pantalla.blit(fuentes.chica.render(linea, True, tema.acento), (x, y))
+        y += fuentes.chica.get_linesize()
     if d.credibilidad is not None:
         cy = MINIMO.bottom - esp(3) - px(4)
         icono(pantalla, tema, CREDIBILIDAD, (x + px(9), cy), px(8))
@@ -151,6 +151,11 @@ def _minimo(pantalla, fuentes: Fuentes, tema: Tema, d: DatosHud, barras, valores
                pygame.Rect(MINIMO.x + px(140), cy - px(4), px(96), px(8)))
         img = fuentes.chica.render(str(valores[CREDIBILIDAD]), True, tema.texto)
         pantalla.blit(img, img.get_rect(midright=(MINIMO.right - esp(3), cy)))
+
+
+def lineas_objetivo(texto: str, fuentes: Fuentes) -> list[str]:
+    """El objetivo del HUD de la calle en a lo sumo dos lineas del ancho de la caja."""
+    return ajustar_texto(texto, fuentes.chica, MINIMO.w - 2 * esp(3))[:2] if texto else []
 
 
 def _barra_minima(pantalla, fuentes: Fuentes, tema: Tema, d: DatosHud, barras, valores) -> None:
