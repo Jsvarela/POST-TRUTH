@@ -5,6 +5,7 @@ import pygame
 
 from post_truth.config import FLUJO, ANCHO, ALTO, FPS, TITULO, px
 from post_truth.controllers.ayuda import Ayuda
+from post_truth.models import director
 from post_truth.controllers.cinematica_state import CinematicaState
 from post_truth.controllers.escena_state import EscenaState
 from post_truth.controllers.fase_state import FaseState
@@ -96,6 +97,12 @@ class App:
         if not getattr(s, "en_red", False):
             return
         s.tick(dt)
+        if s.cine_pendiente:   # L6: el servidor manda la cinematica a todos a la vez
+            ids, s.cine_pendiente = s.cine_pendiente, None
+            h = director.historia()
+            destino = ("resultado" if ids[0] == director.datos()["revelacion"] else
+                       "resumen" if ids[0] in {d.cierre for d in h} else "mundo")
+            self.estados.estado("cinematica").reproducir(ids, destino, s.cinematica_terminada)
         if s.conexion.cerrada and s.fin is None:
             self.salir_de_red(f"Se perdio la conexion: {s.conexion.motivo}")
 

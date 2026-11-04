@@ -59,6 +59,10 @@ class SesionEnRed(PartidaSesion):
         s._vencida: ResultadoDecision | None = None
         s.esperando = False              # fin del dia: ya paso el resumen y espera a los demas
         s.fin: dict | None = None
+        s.cine_pendiente: list[str] | None = None   # L6: la cinematica que mando el servidor (la App la pone)
+        s.cine_listos: list[int] | None = None      # [cuantos ya la terminaron, cuantos hay]
+        s.minijuego_vivo: dict | None = None        # el minijuego del de turno, para verlo
+        s.cines_vistas: set[tuple] = set()
         return s
 
     # --- quien es quien ------------------------------------------------------------------------
@@ -124,6 +128,18 @@ class SesionEnRed(PartidaSesion):
             self.acciones.append(("No se pudo", MOTIVOS.get(motivo, motivo.replace("_", " ")), "malo"))
         elif tipo == "fin":
             self.fin = m
+        elif tipo == "cinematica":   # L6: todos la ven a la vez (la App la reproduce)
+            self._ver_cinematica(m["ids"], self.campana.dia)
+        elif tipo == "paso":   # L6: que toca ahora y quien
+            yo = m["turno"] == self.yo
+            quien = "Tu" if yo else self.nombre(m["turno"])
+            texto = {"objetivo": "Vamos al lugar del dia.",
+                     "noticia": "Te toca decidir la noticia." if yo else f"{quien} decide la noticia de hoy.",
+                     "consecuencia": "Todos al telefono: defiendan la red juntos.",
+                     "minijuego": "Te toca el minijuego del dia." if yo else f"{quien} juega el minijuego: puedes verlo."
+                     }.get(m["paso"])
+            if texto:
+                self.acciones.append(("Ahora", texto, "info"))
 
     def _foto(self, m: dict) -> None:
         for j in m.get("jugadores", []):
@@ -141,6 +157,10 @@ class SesionEnRed(PartidaSesion):
                 self.novedad = "crisis" if "crisis" in (self.novedad, e["novedad"]) else e["novedad"]
             elif e.get("jugador") != self.yo:
                 self.acciones.append(("Otros jugadores", e["texto"], e.get("tipo", "info")))
+        self.minijuego_vivo = m.get("minijuego_vivo")   # L6: el minijuego del de turno, para verlo
+        self.cine_listos = m.get("cine_listos")
+        if m.get("cine"):   # la que esta corriendo (si el aviso se perdio, p. ej. llego junto con `inicio`)
+            self._ver_cinematica(m["cine"]["ids"], m["cine"]["dia"])
         if m.get("ack", 0) >= self.n and "sesion" in m:
             self.aplicar_foto(m["sesion"])
 
@@ -274,6 +294,26 @@ class SesionEnRed(PartidaSesion):
         e = super().buscar_evidencia(self.yo)
         self._enviar("evidencia")
         return e
+
+    def _ver_cinematica(self, ids: list[str], dia: int) -> None:
+        clave = (dia, tuple(ids))
+        if clave not in self.cines_vistas:   # cada una una sola vez aunque la anuncien el aviso y la foto
+            self.cines_vistas.add(clave)
+            self.cine_pendiente = list(ids)
+
+    def cinematica_terminada(self) -> None:
+        self._enviar("cinematica_fin")
+
+    def enviar_progreso(self) -> None:
+        """El de turno, mientras juega: su minijuego para que los demas lo vean (unas 5 veces por segundo)."""
+        if self.minijuego is not None:
+            self._enviar("minijuego", progreso=self.minijuego.to_dict())
+
+    def minijuego_en(self, zona: str) -> str | None:
+        """L6: el minijuego del dia lo juega solo el de turno; los demas lo miran."""
+        if self.director is not None and not self.es_mi_turno:
+            return None
+        return super().minijuego_en(zona)
 
     def terminar_minijuego(self) -> mj.ResultadoMinijuego:
         estado = self.minijuego.to_dict() if self.minijuego is not None else None

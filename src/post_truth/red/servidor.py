@@ -38,6 +38,7 @@ MIN_JUGADORES = 2
 GRACIA = 10.0            # segundos que se espera a un jugador desconectado en su turno antes de decidir por el
 AUTO_CONTINUAR = 30.0    # segundos que se espera a que quien decidio cierre la animacion o las consecuencias
 ESPERA_DIA = 15.0        # resumen del dia: se sigue cuando todos lo pasan o despues de esto
+ESPERA_CINEMATICA = 90.0  # L6: una cinematica espera a que todos la terminen (o la salten) a lo sumo esto
 MAX_SALIDA = 1024 * 1024 # un cliente que no lee (mas de 1 MB pendiente) se desconecta
 ESCUDO_VIGENTE = 0.5     # un escudo que no se actualiza en este tiempo deja de atajar
 HOLGURA_VELOCIDAD = 1.6  # el cliente puede ir algo mas rapido que la velocidad (lag, sub-pasos)
@@ -59,7 +60,7 @@ class Conexion:
 class Servidor:
     def __init__(self, host: str = "127.0.0.1", puerto: int = 0, semilla: int | None = None,
                  gracia: float = GRACIA, auto_continuar: float = AUTO_CONTINUAR, espera_dia: float = ESPERA_DIA,
-                 acelerar: float = 1.0) -> None:
+                 acelerar: float = 1.0, espera_cinematica: float = ESPERA_CINEMATICA) -> None:
         self.selector = selectors.DefaultSelector()
         self.escucha = socket.create_server((host, puerto))
         self.escucha.setblocking(False)
@@ -71,6 +72,10 @@ class Servidor:
         self.rng = random.Random(semilla)
         self.gracia, self.auto_continuar, self.espera_dia = gracia, auto_continuar, espera_dia
         self.acelerar = acelerar            # pruebas: la simulacion corre mas rapido que el reloj
+        self.espera_cinematica = espera_cinematica
+        self.cine: dict | None = None       # L6: la cinematica que todos estan viendo {ids, listos, t, apertura}
+        self.minijuego_vivo: dict | None = None   # L6: el minijuego del de turno, para que los demas lo vean
+        self._paso_visto: tuple | None = None
         self.posiciones: dict[str, dict] = {}   # jugador -> {pos, dir, t}
         self.escudos: dict[str, tuple[tuple[float, float], float]] = {}
         self.eventos: list[dict] = []       # lo que hicieron los jugadores y las novedades, numerado
@@ -274,7 +279,8 @@ class Servidor:
         personajes = [Personaje(Role[l["rol"]], Genero[l["genero"]]) for l in self.sala]
         self.sesion = s = PartidaSesion.nueva_campana(
             personajes, load_trees(RUTA_EVENTOS), GrafoSocial.cargar(RUTA_GRAFO_SOCIAL),
-            GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.rng, minijuegos=mj.cargar_lugares(RUTA_MINIJUEGOS))
+            GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.rng, minijuegos=mj.cargar_lugares(RUTA_MINIJUEGOS),
+            cinematicas=True)   # L6: el servidor manda las cinematicas y espera a todos
         for lugar, j in zip(self.sala, s.jugadores):
             lugar["jugador"] = j.id
             centro = self.mapa.zonas[s.mapa.zona_inicial].centro
@@ -401,10 +407,25 @@ class Servidor:
             raise Rechazo(r.motivo)
         self._evento(f"{self._nombre(jid)} pidio ayuda al {rol.value} aliado", jid)
 
+    def _m_cinematica_fin(self, con: Conexion, m: dict) -> None:
+        """Este jugador termino (o salto) la cinematica en su equipo."""
+        jid = self._jugador(con)
+        if self.cine is not None:
+            self.cine["listos"].add(jid)
+
     def _m_minijuego(self, con: Conexion, m: dict) -> None:
-        """El minijuego se juega en el cliente (sin lag en las teclas); al terminar manda su estado y el servidor
-        valida que estaba disponible ahi y para el, y aplica el resultado con las reglas de la sesion."""
+        """El minijuego se juega en el cliente (sin lag en las teclas) y solo lo juega el de turno (L6). Mientras juega
+        manda su `progreso` para que los demas lo vean; al terminar manda su estado y el servidor valida que estaba
+        disponible ahi y para el, y aplica el resultado con las reglas de la sesion."""
         s, jid = self.sesion, self._jugador(con)
+        if s.director is not None and jid != s.jugador_actual.id:
+            raise Rechazo("no_es_su_turno")
+        if "progreso" in m:
+            if s.director is None or s.director.nombre != "minijuego":
+                raise Rechazo("minijuego_no_disponible")
+            mj.desde_dict({**m["progreso"], "contexto": {**m["progreso"]["contexto"], "jugador": jid}})   # que sea valido
+            self.minijuego_vivo = {"jugador": jid, "estado": m["progreso"]}
+            return
         d = m["terminar"]
         juego = mj.desde_dict({**d, "contexto": {**d["contexto"], "jugador": jid}})
         lugar = juego.contexto.lugar
@@ -415,6 +436,7 @@ class Servidor:
         if not juego.terminado:
             raise Rechazo("minijuego_sin_terminar")
         s.minijuego = juego
+        self.minijuego_vivo = None
         r = s.terminar_minijuego()
         self._evento(f"{self._nombre(jid)} jugo {juego.nombre}", jid, "bueno" if r.impacto.score >= 0 else "malo")
 
@@ -443,8 +465,11 @@ class Servidor:
         """Avanza la sesion (autoritativa) y cada FOTO segundos manda el estado a todos."""
         self.t += dt
         s = self.sesion
+        if s is not None:
+            self._cinematicas(dt)
         if s is not None and s.fase != FIN:
             self._simular(dt * self.acelerar)
+            self._avisar_paso()
         self._foto += dt
         if s is not None and self._foto >= FOTO:
             self._foto = 0.0
@@ -457,6 +482,38 @@ class Servidor:
             e = s.resultado_eleccion()
             self._a_todos({"tipo": "fin", "ganador": e.ganador, "votos": e.votos, "participacion": e.participacion,
                            "puntos": {j.id: j.puntos for j in s.jugadores}})
+
+    def _cinematicas(self, dt: float) -> None:
+        """L6: la apertura, el cierre y el final se ven en todos a la vez. Cada uno puede saltarla en su equipo; el
+        dia sigue cuando terminaron todos los conectados o tras `espera_cinematica`."""
+        s = self.sesion
+        if self.cine is None:
+            ids = s.cinematica_pendiente()
+            if ids:
+                apertura = s.fase not in (FIN_DIA, FIN) and s.director is not None and s.director.nombre == "apertura"
+                self.cine = {"ids": ids, "listos": set(), "t": 0.0, "apertura": apertura}
+                self._a_todos({"tipo": "cinematica", "ids": ids, "limite": self.espera_cinematica})
+            return
+        c = self.cine
+        c["t"] += dt
+        conectados = {l["jugador"] for l in self.sala if l["conexion"] is not None}
+        if conectados <= c["listos"] or c["t"] >= self.espera_cinematica:
+            self.cine = None
+            if c["apertura"]:
+                s.terminar_apertura()
+
+    def _avisar_paso(self) -> None:
+        """L6: cada cambio de paso del director se avisa a todos (la foto lo trae tambien, por si se pierde)."""
+        s = self.sesion
+        if s.director is None:
+            return
+        clave = (s.campana.dia, s.director.nombre)
+        if clave != self._paso_visto:
+            self._paso_visto = clave
+            if s.director.nombre != "minijuego":
+                self.minijuego_vivo = None
+            self._a_todos({"tipo": "paso", "dia": s.campana.dia, "paso": s.director.nombre,
+                           "turno": s.jugador_actual.id})
 
     def _simular(self, dt: float) -> None:
         s = self.sesion
@@ -526,6 +583,10 @@ class Servidor:
             "rumor": None if v is None else {"estado": v.estado, "frenados": v.frenados, "progreso": v.progreso_paso,
                                              "viajes": [list(x) for x in v.viajes]},
             "notificaciones": nuevas, "eventos": self.eventos, "sesion": s.to_dict(),
+            "minijuego_vivo": self.minijuego_vivo,
+            "cine_listos": None if self.cine is None else [len(self.cine["listos"]), sum(
+                1 for l in self.sala if l["conexion"] is not None)],
+            "cine": None if self.cine is None else {"ids": self.cine["ids"], "dia": s.campana.dia},   # por si se perdio el aviso
         }
 
 
