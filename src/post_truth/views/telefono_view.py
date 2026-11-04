@@ -159,12 +159,12 @@ def _red(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) ->
         edad = (v.pulsos or {}).get(c.id)
         if edad is not None and edad < PULSO:   # le acaba de llegar: un anillo que crece y se apaga
             color = tema.bueno if estado == INMUNE else tema.malo
-            pygame.draw.circle(sup, (*color, round(220 * (1 - edad / PULSO))), pos[c.id],
-                               RADIO + round(px(26) * edad / PULSO), px(3))
+            _translucido(sup, (*color, round(220 * (1 - edad / PULSO))), pos[c.id],
+                         RADIO + round(px(26) * edad / PULSO), px(3))
         _nodo(sup, tema, pos[c.id], estado, activo, v.t)
     for centro, edad in v.ondas:   # la onda de desmentido crece y se apaga
         r = round(radio_onda() * min(1.0, edad / ONDA))
-        pygame.draw.circle(sup, (*tema.bueno, round(200 * (1 - edad / ONDA))), a_pantalla(centro), max(1, r), px(4))
+        _translucido(sup, (*tema.bueno, round(200 * (1 - edad / ONDA))), a_pantalla(centro), max(1, r), px(4))
     if p is not None:   # los rumores en camino: bolitas que se mueven por su arista
         for viaje in p.viajes:
             centro = a_pantalla(p.posicion_viaje(viaje))
@@ -174,7 +174,7 @@ def _red(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) ->
     r = radio_escudo(v.extendido)
     color = tema.bueno if v.atajo > 0 else tema.acento   # al atajar, el escudo se ilumina y crece un poco
     r += round(px(6) * v.atajo / 0.35)
-    pygame.draw.circle(sup, (*color, 60), escudo, r)
+    _translucido(sup, (*color, 60), escudo, r)
     pygame.draw.circle(sup, color, escudo, r, px(3))
     pygame.draw.line(sup, tema.acento, (escudo[0] - px(6), escudo[1]), (escudo[0] + px(6), escudo[1]), px(2))
     pygame.draw.line(sup, tema.acento, (escudo[0], escudo[1] - px(6)), (escudo[0], escudo[1] + px(6)), px(2))
@@ -194,6 +194,14 @@ def _red(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) ->
               else f"Recargando {math.ceil(falta)} s")
     sup.blit(fuentes.chica.render(estado, True, tema.bueno if p is not None and falta == 0 else tema.texto_off),
              (barra.x, barra.bottom + px(6)))
+
+
+def _translucido(sup: pygame.Surface, color: tuple, centro: tuple[int, int], r: int, ancho: int = 0) -> None:
+    """Circulo con alfa que SE MEZCLA: pygame.draw sobre una superficie con alfa reemplaza los pixeles y abria un
+    hueco en el telefono (se veia la plaza de atras y se borraban los nodos y las bolitas bajo el escudo)."""
+    capa = pygame.Surface((2 * r + 2, 2 * r + 2), pygame.SRCALPHA)
+    pygame.draw.circle(capa, color, (r + 1, r + 1), r, ancho)
+    sup.blit(capa, (centro[0] - r - 1, centro[1] - r - 1))
 
 
 def radio_escudo(extendido: bool) -> int:
