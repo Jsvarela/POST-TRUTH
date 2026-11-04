@@ -1,6 +1,8 @@
 {
-  "colegio": "chat",
-  "plaza": "mitin",
-  "alcaldia": "rueda",
-  "barrio": "boca"
+ "colegio": "chat",
+ "plaza": "mitin",
+ "alcaldia": "rueda",
+ "barrio": "boca",
+ "auditorio": "rueda",
+ "registraduria": "mitin"
 }

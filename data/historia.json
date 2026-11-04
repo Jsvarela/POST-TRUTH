@@ -13,7 +13,7 @@
     {"id": "tomas", "dice": "@VerdadNova me escribio anoche: me ofrecia plata por compartir lo del dia. Le dije que no. Sera que le paga a todo el barrio?"},
     {"id": "nicolas", "dice": "Antes de compartir nada, vamos a ver de donde salio. Yo te sigo."}
    ]},
-  {"noticias": ["video-debate-editado", "foto-con-contratista"], "minijuego": "alcaldia",
+  {"noticias": ["video-debate-editado", "foto-con-contratista"], "minijuego": "auditorio",
    "apertura": "dia2_apertura", "cierre": "dia2_cierre", "pista": ["acierto"],
    "personajes": [
     {"id": "camila", "dice": "Lo de hoy lo subieron a las 3 de la madrugada, editado con cuidado. Eso no lo hace un vecino enojado."},
@@ -25,7 +25,7 @@
     {"id": "isabela", "dice": "En el colegio vi a un muchacho grabando con dos celulares a la vez. Uno tenia una funda verde con un rayo."},
     {"id": "nicolas", "dice": "Hoy no basta con frenar el rumor: alguien tiene que publicar lo que sabemos. Tu."}
    ]},
-  {"noticias": ["encuesta-inventada", "pasajes-gratis"], "minijuego": "plaza",
+  {"noticias": ["encuesta-inventada", "pasajes-gratis"], "minijuego": "registraduria",
    "apertura": "dia4_apertura", "cierre": "dia4_cierre", "pista": ["acierto"],
    "personajes": [
     {"id": "valentina", "dice": "@VerdadNova sigue a todos los candidatos. Y a una sola tienda: la de fundas de Esteban Lara."},

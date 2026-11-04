@@ -586,6 +586,12 @@
    "texto": "Si averiguamos bien que paso, Camila puede seguirle el rastro."
   },
   {
+   "cmd": "decir",
+   "quien": "Camila",
+   "retrato": "camila",
+   "texto": "Y despues, al Auditorio: el debate termina con preguntas de la prensa. Ve con pruebas."
+  },
+  {
    "cmd": "fundido",
    "a": "negro",
    "segundos": 0.8
@@ -1006,6 +1012,26 @@
    "quien": "Nico",
    "retrato": "nico",
    "texto": "Ultimo rumor antes de votar. Y el peor: le dice a la gente que no vale la pena ir."
+  },
+  {
+   "cmd": "camara",
+   "a": "registraduria",
+   "segundos": 1.4
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "El mitin de cierre es frente a la Registraduria, junto a la fila. Si cierran las calles, no llegamos."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Ya esta aislada. Habra que buscar otra calle abierta... si queda alguna.",
+   "si": [
+    "aislada:registraduria"
+   ]
   },
   {
    "cmd": "fundido",

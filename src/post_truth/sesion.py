@@ -561,7 +561,8 @@ class PartidaSesion:
         j = self.jugador_actual
         evidencias = self._evidencias(j)
         contexto = mj.ContextoMinijuego(zona, j.id, j.rol.value, j.credibilidad, self.campana.dia,
-                                        self.campana.factor > 1, evidencias, zona in self.zonas_crisis,
+                                        self.campana.factor > 1, evidencias,
+                                        zona in self.zonas_crisis or zona in self.aisladas,   # aislada: mas dificil
                                         j.investigacion.municion())
         self.minijuego = mj.crear(id, contexto)
         return self.minijuego
@@ -918,8 +919,23 @@ class PartidaSesion:
         d = self.director
         if d is None or self.fase in (FIN_DIA, FIN):
             return
+        self._lugar_inalcanzable()
         d.avanzar(self._paso_cumplido, self._entrar_paso)
         self.campana.t = self.campana.duracion * d.fraccion
+
+    def _lugar_inalcanzable(self) -> None:
+        """Si las calles cerradas dejaron sin camino el lugar del minijuego, no se juega: cuenta como perdido y lo
+        que alli no se aclaro se riega (las protestas y el aislamiento importan)."""
+        d, c = self.director, self.campana
+        j = self.jugadores[(self.indice + self.turno) % len(self.jugadores)]
+        if (d.nombre != "minijuego" or d.minijuego in c.minijuegos_hoy or d.minijuego not in self.mapa
+                or j.zona not in self.mapa or d.minijuego in self.mapa.saltos(j.zona)):
+            return
+        c.minijuegos_hoy.append(d.minijuego)
+        self.ciudad.apply(RUMOR_SUELTO)
+        self._sumar_desinformacion(RUMOR_SUELTO.misinformation)
+        self.notificar("malo", f"Sin camino a {d.minijuego.capitalize()}",
+                       "Las calles cerradas lo dejaron aislado: no llegaste y el rumor se rego.")
 
     def _paso_cumplido(self, paso: str) -> bool:
         d = self.director
