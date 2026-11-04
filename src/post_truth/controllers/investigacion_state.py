@@ -46,7 +46,7 @@ class InvestigacionState(BaseState):
                      max(RECT_TARJETA.top, min(RECT_TARJETA.bottom, round(pos[1]))))
 
     def _actualizar_lupa(self, dt: float) -> None:
-        """Mantener la lupa sobre una senal sin descubrir la revela; moverse a otra zona reinicia la cuenta."""
+        """Mantener la lupa sobre una señal sin descubrir la revela; moverse a otra zona reinicia la cuenta."""
         inv = self.sesion.jugador_actual.investigacion
         evento = self.sesion.arbol.event
         zona = next((z for z, r in zonas_con_senal(evento).items() if r.collidepoint(self.lupa)), None)

@@ -1,4 +1,4 @@
-"""Vista del resumen del dia de campana: lo que cambio en la ciudad y lo que se decidio."""
+"""Vista del resumen del dia de campaña: lo que cambio en la ciudad y lo que se decidio."""
 import pygame
 
 from post_truth.config import ANCHO, px

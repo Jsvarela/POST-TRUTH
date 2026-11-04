@@ -66,7 +66,7 @@ def mezclar(a: Color, b: Color, f: float) -> Color:
 
 @dataclass(frozen=True)
 class Tokens:
-    """Medidas del sistema visual, iguales en los tres temas (en pixeles de diseno: se escalan con px())."""
+    """Medidas del sistema visual, iguales en los tres temas (en pixeles de diseño: se escalan con px())."""
     espacio: tuple[int, ...] = (4, 8, 12, 16, 24, 32)   # xs, s, m, l, xl, xxl
     radio_s: int = 0   # pixel art: sin esquinas redondeadas (los marcos recortan un pixel, ver componentes.marco_pixel)
     radio_m: int = 0

@@ -1,4 +1,4 @@
-"""Fases electorales (R9): agrupan los dias de la campana y dicen que cambia en el grafo de la ciudad
+"""Fases electorales (R9): agrupan los dias de la campaña y dicen que cambia en el grafo de la ciudad
 (zonas que abren, fronteras que una protesta cierra segun los indicadores, umbrales de crisis). Logica pura."""
 from __future__ import annotations
 

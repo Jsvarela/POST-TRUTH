@@ -1,7 +1,7 @@
 {
   "centro": "alcaldia",
   "fases": [
-    {"id": "inicio", "nombre": "Inicio de campana", "dias": [1], "abre": [],
+    {"id": "inicio", "nombre": "Inicio de campaña", "dias": [1], "abre": [],
      "descripcion": "Los candidatos salen a la calle y Civitas se llena de promesas."},
     {"id": "debates", "nombre": "Debates", "dias": [2], "abre": ["auditorio"],
      "descripcion": "Abre el Auditorio para los debates. Cada frase se recorta y se comparte."},

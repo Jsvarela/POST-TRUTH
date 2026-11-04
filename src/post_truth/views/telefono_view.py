@@ -32,7 +32,7 @@ def rect_pestana(i: int) -> pygame.Rect:
 
 
 def rect_fila(i: int) -> pygame.Rect:
-    """Fila de una pieza del post en la pestana Publicar."""
+    """Fila de una pieza del post en la pestaña Publicar."""
     return pygame.Rect(TELEFONO.x + px(18), TELEFONO.y + px(98) + i * px(46), TELEFONO.w - px(36), px(40))
 
 
@@ -136,8 +136,8 @@ def _marco(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) 
         etiqueta = f"{nombre} ({sin_leer})" if i == 1 and sin_leer > 0 else nombre
         img = fuentes.chica.render(etiqueta, True, tema.boton_texto if activa else tema.texto)
         sup.blit(img, img.get_rect(center=r.center))
-    ayuda = ("Flechas: armar   Enter: publicar   Tab: pestana" if v.pestana == 2
-             else "WASD, flechas o raton: escudo   Espacio: desmentido   Tab: pestana")
+    ayuda = ("Flechas: armar   Enter: publicar   Tab: pestaña" if v.pestana == 2
+             else "WASD, flechas o raton: escudo   Espacio: desmentido   Tab: pestaña")
     img = fuentes.chica.render(ayuda, True, tema.texto_off)
     sup.blit(img, img.get_rect(midbottom=(TELEFONO.centerx, TELEFONO.bottom - px(10))))
 

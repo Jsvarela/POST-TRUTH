@@ -396,7 +396,7 @@ def _guia(pantalla: pygame.Surface, tema: Tema, cam: tuple[float, float], puntos
 
 
 def _minimapa(pantalla: pygame.Surface, tema: Tema, mundo: MapaAbierto, estado: EstadoMundo) -> None:
-    """Toda la ciudad en pequeno: zonas, fronteras abiertas, la noticia, la evidencia y el jugador."""
+    """Toda la ciudad en pequeño: zonas, fronteras abiertas, la noticia, la evidencia y el jugador."""
     r = RECT_MINIMAPA
     pygame.draw.rect(pantalla, tema.panel, r)
     pygame.draw.rect(pantalla, tema.borde, r, px(2))

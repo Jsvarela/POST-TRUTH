@@ -245,7 +245,7 @@ class Investigacion:
         return "buena" if self.calidad_conclusion >= CALIDAD_BUENA else "a_ciegas"
 
     def calidad(self, es_falsa: bool) -> int:
-        """Cuanto de lo reunido apunta a la verdad: senales y evidencias que coinciden, y testigos fiables
+        """Cuanto de lo reunido apunta a la verdad: señales y evidencias que coinciden, y testigos fiables
         (los de otras zonas ya cuentan como evidencia)."""
         verdad = Senal.FALSA if es_falsa else Senal.VERDADERA
         return (sum(h.senal is verdad for h in self.pistas_descubiertas())

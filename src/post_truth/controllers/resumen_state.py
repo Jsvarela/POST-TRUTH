@@ -1,4 +1,4 @@
-"""Controlador del resumen del dia de campana."""
+"""Controlador del resumen del dia de campaña."""
 import pygame
 
 from post_truth.config import px

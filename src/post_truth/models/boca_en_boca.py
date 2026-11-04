@@ -1,5 +1,5 @@
 """Minijuego del Barrio, "De boca en boca" (de accion): el chisme salta de casa en casa por las conexiones del
-barrio (un grafo pequeno, como el social) y se ve viajar. El jugador corre (WASD o flechas) hasta un vecino que lo
+barrio (un grafo pequeño, como el social) y se ve viajar. El jugador corre (WASD o flechas) hasta un vecino que lo
 cree y mantiene E cerca para convencerlo (models/persuasion.py: la rama del arbol sale de la evidencia y la
 credibilidad). Un vecino convencido ya no lo cree ni lo pasa. Con tiempo extendido el chisme salta mas lento."""
 from __future__ import annotations

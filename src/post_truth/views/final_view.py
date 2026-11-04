@@ -17,7 +17,7 @@ ACCION = {"compartir": "Compartiste", "verificar": "Verificaste", "ignorar": "Ig
 INDICADORES = (("misinformation", "Desinformacion", "Desinfo."), ("trust", "Confianza ciudadana", "Confianza"),
                ("conflicts", "Conflictos", "Conflictos"), ("verified_information", "Informacion verificada", "Verificada"))
 FINALES = {"final_informada": "Ciudad informada", "final_dividida": "Ciudad dividida",
-           "final_enganada": "Ciudad enganada"}
+           "final_enganada": "Ciudad engañada"}
 GENTE = 20   # "la red lo creyo": 20 personitas
 
 

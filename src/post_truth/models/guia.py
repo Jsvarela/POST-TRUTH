@@ -13,7 +13,7 @@ MENSAJES = {
                                              "de compartir y no reportes sin pruebas."),
     "protesta": ("La ciudad cambia", "Una protesta cerro una calle: busca otro camino (G recalcula la ruta)."),
     "telefono": ("Frena el rumor", "Mueve el escudo (WASD o raton) sobre las bolitas rojas para atajarlas; "
-                                   "Espacio lanza un desmentido en onda. Tab cambia de pestana."),
+                                   "Espacio lanza un desmentido en onda. Tab cambia de pestaña."),
     "minijuego:chat": ("Chat del Colegio", "Ponte bajo los mensajes de apoyo (circulo) y esquiva los ataques "
                                            "(triangulo). Con 3 apoyos, Espacio borra los ataques."),
     "minijuego:mitin": ("Mitin", "Mira la forma del globo antes de responder: 1 cuadrado, 2 circulo, 3 triangulo."),

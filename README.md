@@ -35,8 +35,8 @@ python src/main.py
 - De boca en boca (Barrio): WASD o flechas para correr hasta quien cree el chisme y mantener E cerca para convencerlo; con evidencia o credibilidad alta convences mas rapido, y si sueltas un argumento debil se enoja
 - En la calle: los transeuntes caminan de zona en zona. Junto a uno con rumor (triangulo) manten E y siguele el paso para convencerlo; junto a un testigo de la noticia (circulo), mantenla para escucharlo. Para esquivarlos, sigue de largo
 - P (en un minijuego): pausa
-- T: abrir o cerrar el telefono Civitas (la red en vivo; el mundo corre al 25%). Frena el rumor: mueve el escudo (WASD, flechas o raton) para atajar las bolitas rojas y Espacio lanza el desmentido en onda; Tab cambia de pestana
-- Pestana Publicar del telefono: flechas o clic para armar el post (formato segun el rol, titular, imagen, fuente y tono) y Enter para publicarlo
+- T: abrir o cerrar el telefono Civitas (la red en vivo; el mundo corre al 25%). Frena el rumor: mueve el escudo (WASD, flechas o raton) para atajar las bolitas rojas y Espacio lanza el desmentido en onda; Tab cambia de pestaña
+- Pestaña Publicar del telefono: flechas o clic para armar el post (formato segun el rol, titular, imagen, fuente y tono) y Enter para publicarlo
 - H: usar la habilidad de tu rol (Periodista: verificar a distancia; Influencer: desmentido viral; Candidato: comunicado; Ciudadano: convivencia vecinal)
 - Y: menu de aliados (los roles que no elegiste); 1-3 les pide ayuda
 - 1-4: decidir sobre una publicacion
@@ -49,9 +49,9 @@ python src/main.py
 
 Temas de alto contraste y daltonismo, formas que no dependen del color, tiempo extendido, pausa, avisos visuales de cada sonido, volumen y silencio, ayuda y mensajes guia. Que dificultad atiende cada una: [docs/inclusividad.md](docs/inclusividad.md).
 
-## Fases de la campana
+## Fases de la campaña
 
-Cuatro dias, uno por fase (data/fases.json): Inicio de campana, Debates (abre el Auditorio), Semana final y Dia de eleccion (abre la Registraduria, de noche). Si los conflictos o la desinformacion suben, una protesta cierra una calle; si una zona queda sin camino a la Alcaldia, a sus vecinos no les llegan los desmentidos. Las zonas con mucha desinformacion entran en crisis.
+Cuatro dias, uno por fase (data/fases.json): Inicio de campaña, Debates (abre el Auditorio), Semana final y Dia de eleccion (abre la Registraduria, de noche). Si los conflictos o la desinformacion suben, una protesta cierra una calle; si una zona queda sin camino a la Alcaldia, a sus vecinos no les llegan los desmentidos. Las zonas con mucha desinformacion entran en crisis.
 
 ## Rutas de los transeuntes
 
@@ -70,7 +70,7 @@ python -m post_truth.red.servidor --puerto 5050
 
 El servidor guarda la unica `PartidaSesion` y es la autoridad: simula el dia, el rumor en vivo, las fases y el grafo de la ciudad, asi que todos ven la misma red en el telefono y las mismas fronteras en el mapa. Cada cliente tiene una copia (sesion espejo) que el servidor reemplaza unas 10 veces por segundo; las acciones se predicen en local y el servidor las valida. Los demas jugadores se ven en el mapa con su nombre, interpolados entre fotos para que no salten, y lo que hacen sale como aviso. El hilo de red no bloquea el juego: lee y escribe en sus propios hilos y entrega los mensajes por una cola.
 
-El servidor es dueno del director del dia (los pasos del capitulo) y avisa cada cambio de paso a todos:
+El servidor es dueño del director del dia (los pasos del capitulo) y avisa cada cambio de paso a todos:
 - Escenas: la apertura, el cierre de cada dia y la revelacion con el final se ven en todos a la vez. Cada jugador puede saltarlas en su equipo; el dia sigue cuando todos los conectados terminaron o tras 90 segundos. El final lo calcula el servidor, asi que todos ven el mismo.
 - Turnos: cada dia tiene un jugador de turno, rotando por orden de llegada a la sala. El decide la noticia (una decision por dia) y juega el minijuego del dia; los demas lo ven en vivo. En la consecuencia todos defienden la red juntos. Los roles sin jugador siguen siendo aliados.
 - En red los minijuegos son mas grandes y dificiles: la rueda tiene 3 preguntas mas por cada jugador extra y una zona mas angosta, el mitin dura mas y sus globos salen mas seguido, y todos van algo mas rapido. El tiempo extendido sigue compensando.

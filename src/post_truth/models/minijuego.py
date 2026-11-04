@@ -131,7 +131,7 @@ def cargar_lugares(ruta: str | Path) -> dict[str, str]:
 
 # --- minijuego de prueba: hasta que cada lugar tenga el suyo (R5-R8) ---------------------------------------
 MENSAJES_ENSAYO = (
-    ("Un vecino reenvia: 'Manana cortan el agua en todo el barrio'.",
+    ("Un vecino reenvia: 'Mañana cortan el agua en todo el barrio'.",
      ("Le pregunto de donde salio", "Lo reenvio al grupo por si acaso")),
     ("Alguien escribe: 'Ese candidato es un ladron, todos lo saben'.",
      ("Pido pruebas con calma", "Le respondo con otro insulto")),

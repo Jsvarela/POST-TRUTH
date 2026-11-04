@@ -60,7 +60,7 @@ class MapaAbierto:
     def __init__(self, datos: dict, zonas: pygame.Surface, colisiones: pygame.Surface) -> None:
         self.tamano: tuple[int, int] = tuple(datos["tamano"])
         if zonas.get_size() != self.tamano or colisiones.get_size() != self.tamano:
-            raise ValueError("Las capas del mapa deben tener el tamano de data/mapa.json")
+            raise ValueError("Las capas del mapa deben tener el tamaño de data/mapa.json")
         self.zonas = {id: ZonaMapa(id, z["nombre"], _color(z["color"]), tuple(z["centro"]), tuple(z["edificio"]),
                                tuple(z["rect"])) for id, z in datos["zonas"].items()}
         self._por_color = {z.color: z.id for z in self.zonas.values()}

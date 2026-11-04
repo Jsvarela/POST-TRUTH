@@ -14,7 +14,7 @@ from post_truth.views.theme import NEGRO, TOKENS, Tema, esp, mezclar
 
 @dataclass
 class Fuentes:
-    """Tamanos de fuente compartidos."""
+    """Tamaños de fuente compartidos."""
     chica: pygame.font.Font
     normal: pygame.font.Font
     grande: pygame.font.Font
@@ -183,7 +183,7 @@ class Panel:
 
 
 def _cortado(sup: pygame.Surface, color, r: pygame.Rect, p: int) -> None:
-    """Rectangulo con las cuatro esquinas recortadas un pixel (de tamano `p`)."""
+    """Rectangulo con las cuatro esquinas recortadas un pixel (de tamaño `p`)."""
     pygame.draw.rect(sup, color, (r.x + p, r.y, r.w - 2 * p, r.h))
     pygame.draw.rect(sup, color, (r.x, r.y + p, r.w, r.h - 2 * p))
 

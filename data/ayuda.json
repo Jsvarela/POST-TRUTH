@@ -3,7 +3,7 @@
   {"id": "objetivo", "titulo": "Objetivo", "texto": [
    "Ciudad Nova elige alcalde en {dias} dias. En la red Civitas circulan noticias ciertas, opiniones y rumores falsos.",
    "Tu trabajo es llegar al dia de la eleccion con la ciudad lo mas sana posible: poca desinformacion y pocos conflictos, mucha confianza y convivencia.",
-   "Aqui no hay preguntas de examen: aprendes por lo que pasa cuando decides. Verificar antes de compartir, reportar lo danino y no amplificar rumores cambia la ciudad y la eleccion."]},
+   "Aqui no hay preguntas de examen: aprendes por lo que pasa cuando decides. Verificar antes de compartir, reportar lo dañino y no amplificar rumores cambia la ciudad y la eleccion."]},
   {"id": "dia", "titulo": "Como es un dia", "texto": [
    "Cada dia es un capitulo con pasos en orden, uno a la vez: una escena de apertura, ir al lugar de la noticia del dia, investigarla y decidir, defender la red mientras se riega, jugar el minijuego del lugar y una escena de cierre. En las escenas Enter avanza y ESC las salta.",
    "Cada dia la cuenta anonima @VerdadNova publica un rumor nuevo. Lo que investigas deja pistas sobre quien esta detras; antes de votar se revela, y el final depende de como quedo la ciudad.",
@@ -24,7 +24,7 @@
    "Si los conflictos o la desinformacion suben mucho, una protesta cierra una calle: aparece una valla y hay que buscar otro camino.",
    "Si una zona se queda sin camino a la Alcaldia, queda aislada y no le llegan los desmentidos.",
    "Las zonas con mucha desinformacion entran en crisis (franjas en el mapa): alli los rumores corren mas rapido y los minijuegos dan menos tiempo.",
-   "La campana tiene fases: Inicio de campana, Debates (abre el Auditorio), Semana final y Dia de eleccion (abre la Registraduria, de noche)."]},
+   "La campaña tiene fases: Inicio de campaña, Debates (abre el Auditorio), Semana final y Dia de eleccion (abre la Registraduria, de noche)."]},
   {"id": "noticias", "titulo": "Noticias e investigacion", "texto": [
    "Cada noticia se resuelve con Compartir, Verificar, Ignorar o Reportar (1-4). Cada decision tiene sus consecuencias en la ciudad y en tu credibilidad.",
    "Verificar o reportar sin pruebas sirve poco: antes, investiga.",
@@ -34,16 +34,16 @@
    "- Concluye si es falsa (F), verdadera (V) o no concluyente (N). Acertar respalda tu decision; equivocarte la deja sin respaldo."]},
   {"id": "telefono", "titulo": "Telefono Civitas", "texto": [
    "Se abre solo despues de decidir la noticia del dia y dura lo que dura la defensa. Fuera de ese momento no corre nada en la red.",
-   "Pestanas (Tab): Red (la red social en vivo) y Notificaciones (lo que paso en la ciudad). El dia que la historia lo pide aparece Publicar.",
+   "Pestañas (Tab): Red (la red social en vivo) y Notificaciones (lo que paso en la ciudad). El dia que la historia lo pide aparece Publicar.",
    "Un rumor se vuelve viral cuando lo cree el {viral}% de la red: suena una alerta y sale un aviso."]},
   {"id": "red", "titulo": "Defensa de la red", "texto": [
-   "En la pestana Red el rumor viaja de persona en persona como bolitas rojas por las conexiones.",
+   "En la pestaña Red el rumor viaja de persona en persona como bolitas rojas por las conexiones.",
    "- Escudo: muevelo con WASD, flechas o raton. Si una bolita pasa por el, la atajas.",
    "- Espacio (o clic): desmentido en onda alrededor del escudo; vuelve a estar listo en {onda} s.",
    "Las personas se ven por forma: circulo vacio no sabe, circulo lleno lo cree, triangulo lo comparte, cuadrado ya es inmune.",
    "Cuando el rumor se apaga, lo que dejo entra a la ciudad: cuanto menos lo crean, mejor."]},
   {"id": "posts", "titulo": "Crear posts", "texto": [
-   "En la pestana Publicar armas tu post con piezas: formato (segun tu rol), titular, imagen, fuente y tono. Flechas o clic para cambiarlas, Enter para publicar.",
+   "En la pestaña Publicar armas tu post con piezas: formato (segun tu rol), titular, imagen, fuente y tono. Flechas o clic para cambiarlas, Enter para publicar.",
    "Antes de publicar ves su veracidad, su alcance y su riesgo.",
    "Sin fuente, con tono agresivo o falso cuesta credibilidad; veraz y verificable la sube. Un post veraz contra un rumor sale como desmentido.",
    "Solo se publica cuando la historia lo pide (el tercer dia, mientras defiendes la red). Uno cada {enfriamiento_post} s."]},
@@ -75,7 +75,7 @@
    "- Desinformacion y Conflictos: conviene que bajen. Si suben mucho llegan las protestas y las zonas en crisis.",
    "Ademas hay un puntaje de la ciudad y uno por jugador. El mapa se tine segun la salud de la ciudad."]},
   {"id": "ganar", "titulo": "Como ganar", "texto": [
-   "Al final de la campana se elige al alcalde. Los votos salen de dos cosas:",
+   "Al final de la campaña se elige al alcalde. Los votos salen de dos cosas:",
    "- Lo que se decidio: compartir un rumor falso sobre un candidato le quita apoyo injustamente; verificarlo o reportarlo lo protege.",
    "- Como quedo la ciudad: cada candidato gana con una ciudad distinta (menos conflictos, mas convivencia, mas bienestar o mas informacion verificada y confianza).",
    "La pantalla final cuenta los votos, dice si un rumor falso cambio al ganador y muestra el puntaje de la ciudad y de cada jugador.",
@@ -101,7 +101,7 @@
    "- Grafo social con sus pesos y las olas de BFS.",
    "- Grafo de la ciudad con Dijkstra, el BFS de aislamiento y las calles cerradas.",
    "- Arbol de dialogo del chat con su mejor camino.",
-   "1-4 o Tab cambian de pestana; F1 o ESC vuelven al juego."]},
+   "1-4 o Tab cambian de pestaña; F1 o ESC vuelven al juego."]},
   {"id": "leyenda", "titulo": "Leyenda de formas", "texto": []}
  ]
 }

@@ -29,7 +29,7 @@
         "zona": "fuente",
         "titulo": "Sin fuente",
         "senal": "falsa",
-        "hallazgo": "El mensaje no cita ningun comunicado de la alcaldia ni de la campana de Juan Ardila."
+        "hallazgo": "El mensaje no cita ningun comunicado de la alcaldia ni de la campaña de Juan Ardila."
       },
       {
         "id": "imagen-reutilizada",
@@ -50,7 +50,7 @@
         "zona": "fecha",
         "titulo": "Hora normal",
         "senal": "neutra",
-        "hallazgo": "Se publico esta manana; la hora no tiene nada raro."
+        "hallazgo": "Se publico esta mañana; la hora no tiene nada raro."
       }
     ],
     "evidencias": [
@@ -59,7 +59,7 @@
         "lugar": "colegio",
         "tipo": "testigo",
         "titulo": "La directora del colegio",
-        "hallazgo": "Dice que no hay ninguna orden de cierre: manana hay clases con normalidad.",
+        "hallazgo": "Dice que no hay ninguna orden de cierre: mañana hay clases con normalidad.",
         "senal": "falsa"
       },
       {
@@ -75,7 +75,7 @@
         "lugar": "barrio",
         "tipo": "testigo",
         "titulo": "Una vecina del barrio",
-        "hallazgo": "Reconoce la foto: son unas obras de mantenimiento de hace anos.",
+        "hallazgo": "Reconoce la foto: son unas obras de mantenimiento de hace años.",
         "senal": "falsa"
       }
     ],
@@ -285,14 +285,14 @@
         "zona": "texto",
         "titulo": "Urgencia sin dato",
         "senal": "falsa",
-        "hallazgo": "Dice \"manana\" pero no da hora, decreto ni numero de resolucion."
+        "hallazgo": "Dice \"mañana\" pero no da hora, decreto ni numero de resolucion."
       },
       {
         "id": "imagen-otra-ciudad",
         "zona": "imagen",
         "titulo": "Imagen de otra ciudad",
         "senal": "falsa",
-        "hallazgo": "La cinta y el parque son de otra ciudad: la foto sale en una nota de hace 3 anos."
+        "hallazgo": "La cinta y el parque son de otra ciudad: la foto sale en una nota de hace 3 años."
       },
       {
         "id": "sin-comunicado",
@@ -328,7 +328,7 @@
       }
     ],
     "title": "Alerta viral sobre parques",
-    "content": "Manana cerraran todos los parques por orden de la alcaldia.",
+    "content": "Mañana cerraran todos los parques por orden de la alcaldia.",
     "kind": "fake_news",
     "truth_level": 10,
     "root_effect": {
@@ -458,7 +458,7 @@
         "color": 3
       }
     },
-    "fuente": "Comunicado de la campana",
+    "fuente": "Comunicado de la campaña",
     "fecha": "ayer, 18:30",
     "imagen": {
       "motivo": "plaza",
@@ -472,14 +472,14 @@
         "zona": "autor",
         "titulo": "Medio con historial",
         "senal": "verdadera",
-        "hallazgo": "Lleva anos publicando noticias locales y corrige sus errores."
+        "hallazgo": "Lleva años publicando noticias locales y corrige sus errores."
       },
       {
         "id": "cita-el-plan",
         "zona": "fuente",
         "titulo": "Cita el plan oficial",
         "senal": "verdadera",
-        "hallazgo": "El comunicado enlaza al plan de transporte que presento la campana."
+        "hallazgo": "El comunicado enlaza al plan de transporte que presento la campaña."
       },
       {
         "id": "coincide-con-el-debate",
@@ -508,7 +508,7 @@
         "id": "plan-de-transporte",
         "lugar": "plaza",
         "tipo": "documento",
-        "titulo": "Plan de transporte de la campana",
+        "titulo": "Plan de transporte de la campaña",
         "hallazgo": "El plan existe y propone ampliar las rutas nocturnas, tal como dice el comunicado.",
         "senal": "verdadera"
       },
@@ -808,7 +808,7 @@
       {
         "action": "Reportar manipulacion",
         "tipo": "reportar",
-        "description": "Se marca el clip como posible edicion enganosa.",
+        "description": "Se marca el clip como posible edicion engañosa.",
         "variantes": [
           {
             "si": [
@@ -869,7 +869,7 @@
         "zona": "autor",
         "titulo": "Vecinos reales",
         "senal": "verdadera",
-        "hallazgo": "El grupo existe hace anos y sus voceros dan la cara en las reuniones del barrio."
+        "hallazgo": "El grupo existe hace años y sus voceros dan la cara en las reuniones del barrio."
       },
       {
         "id": "propuesta-concreta",
@@ -918,8 +918,8 @@
         "senal": "verdadera"
       }
     ],
-    "title": "Campana de convivencia digital",
-    "content": "Un grupo de vecinos propone una campana para debatir sin ataques personales durante la eleccion.",
+    "title": "Campaña de convivencia digital",
+    "content": "Un grupo de vecinos propone una campaña para debatir sin ataques personales durante la eleccion.",
     "kind": "campana_civica",
     "truth_level": 95,
     "root_effect": {
@@ -933,7 +933,7 @@
     },
     "decisions": [
       {
-        "action": "Apoyar campana",
+        "action": "Apoyar campaña",
         "tipo": "compartir",
         "description": "El jugador invita a participar y refuerza normas de dialogo.",
         "variantes": [
@@ -964,7 +964,7 @@
       {
         "action": "Convertirlo en ataque",
         "tipo": "compartir",
-        "description": "Se usa la campana para burlarse de otros candidatos.",
+        "description": "Se usa la campaña para burlarse de otros candidatos.",
         "variantes": [
           {
             "si": [
@@ -986,7 +986,7 @@
       {
         "action": "Invitar a verificar",
         "tipo": "verificar",
-        "description": "Se conecta la campana con fuentes y reglas claras de publicacion.",
+        "description": "Se conecta la campaña con fuentes y reglas claras de publicacion.",
         "variantes": [
           {
             "si": [
@@ -1043,7 +1043,7 @@
         "zona": "fuente",
         "titulo": "Captura sin enlace",
         "senal": "falsa",
-        "hallazgo": "Es una imagen recortada: no enlaza a ningun documento de la campana."
+        "hallazgo": "Es una imagen recortada: no enlaza a ningun documento de la campaña."
       },
       {
         "id": "foto-de-otra-ciudad",
@@ -1072,7 +1072,7 @@
         "id": "propuesta-impresa",
         "lugar": "plaza",
         "tipo": "documento",
-        "titulo": "La propuesta impresa de la campana",
+        "titulo": "La propuesta impresa de la campaña",
         "hallazgo": "El documento dice que el internet de los parques sera gratuito y lo pagara un convenio con empresas.",
         "senal": "falsa"
       },
@@ -1449,7 +1449,7 @@
             "si": [
               "sin-ficha-tecnica"
             ],
-            "texto": "Reportas una encuesta sin ficha tecnica: la plataforma la marca como enganosa."
+            "texto": "Reportas una encuesta sin ficha tecnica: la plataforma la marca como engañosa."
           },
           {
             "si": [
@@ -1517,12 +1517,12 @@
         "zona": "imagen",
         "titulo": "Agua turbia vieja",
         "senal": "falsa",
-        "hallazgo": "La foto del agua turbia circulo hace tres anos en otra ciudad."
+        "hallazgo": "La foto del agua turbia circulo hace tres años en otra ciudad."
       },
       {
         "id": "hora-de-la-manana",
         "zona": "fecha",
-        "titulo": "Hora de la manana",
+        "titulo": "Hora de la mañana",
         "senal": "neutra",
         "hallazgo": "Salio temprano; no dice nada sobre si es cierto."
       }
@@ -1737,14 +1737,14 @@
         "zona": "fuente",
         "titulo": "Volante sin firma",
         "senal": "falsa",
-        "hallazgo": "No lo firma ninguna campana ni empresa de buses."
+        "hallazgo": "No lo firma ninguna campaña ni empresa de buses."
       },
       {
         "id": "promete-a-cambio-de-voto",
         "zona": "texto",
         "titulo": "Promete a cambio de voto",
         "senal": "falsa",
-        "hallazgo": "Ofrecer un premio por votar es compra de votos: una campana seria no lo publicaria."
+        "hallazgo": "Ofrecer un premio por votar es compra de votos: una campaña seria no lo publicaria."
       },
       {
         "id": "cara-pegada",
@@ -1957,7 +1957,7 @@
         "zona": "autor",
         "titulo": "Cuenta de ataque",
         "senal": "falsa",
-        "hallazgo": "Solo publica contra un candidato desde que empezo la campana."
+        "hallazgo": "Solo publica contra un candidato desde que empezo la campaña."
       },
       {
         "id": "foto-sin-lugar",
@@ -2176,7 +2176,7 @@
         }
       }
     },
-    "fuente": "Campana de Lucia, cita actas",
+    "fuente": "Campaña de Lucia, cita actas",
     "fecha": "hoy, 10:20",
     "imagen": {
       "motivo": "alcaldia",
@@ -2188,7 +2188,7 @@
       {
         "id": "cuenta-de-la-campana",
         "zona": "autor",
-        "titulo": "Cuenta de la campana",
+        "titulo": "Cuenta de la campaña",
         "senal": "verdadera",
         "hallazgo": "Es la cuenta oficial de Lucia Barrera, verificada hace meses."
       },
@@ -2389,7 +2389,7 @@
         "zona": "autor",
         "titulo": "Emisora local",
         "senal": "verdadera",
-        "hallazgo": "La emisora tiene anos informando sobre el colegio y las campanas."
+        "hallazgo": "La emisora tiene años informando sobre el colegio y las campañas."
       },
       {
         "id": "comunicado-del-colegio",
@@ -2556,7 +2556,7 @@
         }
       }
     },
-    "fuente": "Cronograma de la campana",
+    "fuente": "Cronograma de la campaña",
     "fecha": "ayer, 17:45",
     "imagen": {
       "motivo": "parque",
@@ -2570,7 +2570,7 @@
         "zona": "autor",
         "titulo": "Grupo del parque",
         "senal": "verdadera",
-        "hallazgo": "Es el grupo de vecinos que cuida el parque desde hace anos."
+        "hallazgo": "Es el grupo de vecinos que cuida el parque desde hace años."
       },
       {
         "id": "cronograma-oficial",
@@ -2728,7 +2728,7 @@
             "si": [
               "reacciones-normales"
             ],
-            "texto": "Reportaste un taller real solo porque lo promovia una campana. La plataforma lo mantiene y pierdes confianza."
+            "texto": "Reportaste un taller real solo porque lo promovia una campaña. La plataforma lo mantiene y pierdes confianza."
           }
         ],
         "effect": {
@@ -2806,7 +2806,7 @@
         "lugar": "plaza",
         "tipo": "testigo",
         "titulo": "Un obrero",
-        "hallazgo": "Dice que empiezan manana y que cada dia habra un paso peatonal abierto.",
+        "hallazgo": "Dice que empiezan mañana y que cada dia habra un paso peatonal abierto.",
         "senal": "verdadera"
       },
       {
@@ -2962,7 +2962,7 @@
     "fecha": "hoy, 6:50",
     "imagen": {
       "motivo": "colegio",
-      "pie": "Un grupo de ninos saliendo de clase"
+      "pie": "Un grupo de niños saliendo de clase"
     },
     "likes": 85,
     "comentarios": 63,
@@ -3015,7 +3015,7 @@
       }
     ],
     "title": "Colegios mas grandes",
-    "content": "Fusionar colegios pequenos suena bien en el papel, pero los chicos de los barrios lejanos van a caminar mas.",
+    "content": "Fusionar colegios pequeños suena bien en el papel, pero los chicos de los barrios lejanos van a caminar mas.",
     "kind": "opinion",
     "truth_level": 50,
     "root_effect": {
@@ -3329,7 +3329,7 @@
         "id": "reporte-de-danos",
         "lugar": "alcaldia",
         "tipo": "documento",
-        "titulo": "Reporte de danos",
+        "titulo": "Reporte de daños",
         "hallazgo": "La alcaldia tiene el semaforo en su lista de arreglos, sin fecha.",
         "senal": "neutra"
       }
@@ -3385,7 +3385,7 @@
             "si": [
               "reporte-de-danos"
             ],
-            "texto": "Respondiste con el reporte de danos de la alcaldia: tu comentario aterriza la queja en datos."
+            "texto": "Respondiste con el reporte de daños de la alcaldia: tu comentario aterriza la queja en datos."
           }
         ],
         "effect": {
@@ -3445,7 +3445,7 @@
         "zona": "autor",
         "titulo": "Radios reales",
         "senal": "verdadera",
-        "hallazgo": "Las radios existen hace anos y sus voceros dan la cara."
+        "hallazgo": "Las radios existen hace años y sus voceros dan la cara."
       },
       {
         "id": "comunicado-conjunto",

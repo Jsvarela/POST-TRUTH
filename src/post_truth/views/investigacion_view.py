@@ -1,5 +1,5 @@
-"""Ventana de investigacion: pestana Publicacion (la tarjeta en grande y una lupa que revela senales al mantenerla
-encima) y pestana Testigos (lista e interrogatorio); a la derecha lo reunido y la conclusion."""
+"""Ventana de investigacion: pestaña Publicacion (la tarjeta en grande y una lupa que revela señales al mantenerla
+encima) y pestaña Testigos (lista e interrogatorio); a la derecha lo reunido y la conclusion."""
 import math
 from dataclasses import dataclass
 
@@ -89,7 +89,7 @@ def dibujar_investigacion(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema
     _conclusion(pantalla, fuentes, tema, v)
     ayuda = ("Mueve la lupa con el raton o las flechas y mantenla sobre algo raro" if v.pestana == 0
              else "Flechas o clic: elegir testigo   Enter: hablar   1-4: preguntar")
-    img = fuentes.chica.render(f"{ayuda}   |   Tab: pestana   |   I o ESC: volver", True, tema.texto_off)
+    img = fuentes.chica.render(f"{ayuda}   |   Tab: pestaña   |   I o ESC: volver", True, tema.texto_off)
     pantalla.blit(img, img.get_rect(midbottom=(ANCHO // 2, ALTO - px(8))))
 
 

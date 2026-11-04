@@ -1,4 +1,4 @@
-"""Telefono Civitas: se abre solo en el paso de consecuencia (L1/L2) y dura lo que dura la defensa. Pestana Red =
+"""Telefono Civitas: se abre solo en el paso de consecuencia (L1/L2) y dura lo que dura la defensa. Pestaña Red =
 "Frena el rumor": mueve el escudo (WASD, flechas o raton) para atajar los rumores que viajan por la red y lanza el
 desmentido en onda con Espacio. Publicar aparece solo el dia que la historia lo pide."""
 import pygame
@@ -89,7 +89,7 @@ class TelefonoState(BaseState):
     def publicar(self) -> None:
         ok, motivo, _ = self.app.partida.publicar(self.post())
         if ok:
-            self._avisar("Publicado", "Mira en la pestana Red como viaja.", "bueno")
+            self._avisar("Publicado", "Mira en la pestaña Red como viaja.", "bueno")
             self.pestana = 0
         else:
             self._avisar("No se pudo publicar", MOTIVOS.get(motivo, "No se pudo."), "malo")

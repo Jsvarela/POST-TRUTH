@@ -59,7 +59,7 @@ HERRAMIENTAS = {"verificador": "Verificador", "limitar": "Limitar cuenta", "desm
 
 @dataclass
 class Campana:
-    """Los dias de la campana: `dias[d]` son los indices (en `PartidaSesion.arboles`) de la noticia de cada dia.
+    """Los dias de la campaña: `dias[d]` son los indices (en `PartidaSesion.arboles`) de la noticia de cada dia.
     El orden dentro del dia lo lleva el director (models/director.py)."""
     dias: list[list[int]]
     factor: float = 1.0               # FACTOR_TIEMPO_EXTENDIDO si se pidio tiempo extendido
@@ -294,7 +294,7 @@ class PartidaSesion:
             self.reloj_activo = True
 
     def transcurrir(self, dt: float) -> ResultadoDecision | None:
-        """Descuenta `dt` del reloj del turno (y del dia, en campana). Al llegar a 0 decide sola (ver
+        """Descuenta `dt` del reloj del turno (y del dia, en campaña). Al llegar a 0 decide sola (ver
         `decidir_por_tiempo`) y devuelve esa decision pendiente; si no, None. Solo corre mientras se decide."""
         if self.fase != DECIDIENDO or self.pendiente is not None:
             return None

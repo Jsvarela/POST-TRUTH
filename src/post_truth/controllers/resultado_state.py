@@ -1,4 +1,4 @@
-"""Controlador de la eleccion del alcalde al final de la campana."""
+"""Controlador de la eleccion del alcalde al final de la campaña."""
 import pygame
 
 from post_truth.controllers.base_state import BaseState

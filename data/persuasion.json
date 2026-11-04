@@ -18,7 +18,7 @@
      "texto": "A ver, muestreme eso...",
      "opciones": [
       {
-       "texto": "Esta foto es de otro ano: compare la fecha.",
+       "texto": "Esta foto es de otro año: compare la fecha.",
        "tipo": "evidencia",
        "requiere": "evidencia",
        "sigue": {
@@ -103,7 +103,7 @@
      "texto": "Usted siempre averigua antes de hablar, eso es cierto.",
      "opciones": [
       {
-       "texto": "Esta foto es de otro ano: compare la fecha.",
+       "texto": "Esta foto es de otro año: compare la fecha.",
        "tipo": "evidencia",
        "requiere": "evidencia",
        "sigue": {
@@ -187,7 +187,7 @@
      "texto": "Y usted como sabe? Yo lo lei clarito.",
      "opciones": [
       {
-       "texto": "Esta foto es de otro ano: compare la fecha.",
+       "texto": "Esta foto es de otro año: compare la fecha.",
        "tipo": "evidencia",
        "requiere": "evidencia",
        "sigue": {

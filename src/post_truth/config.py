@@ -10,7 +10,7 @@ ESCALA = float(os.environ.get("POSTTRUTH_ESCALA", "1.25"))
 
 
 def px(n: float) -> int:
-    """Convierte una medida del diseno original a pixeles reales segun ESCALA."""
+    """Convierte una medida del diseño original a pixeles reales segun ESCALA."""
     return round(n * ESCALA)
 
 

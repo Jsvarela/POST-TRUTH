@@ -34,7 +34,7 @@
       {"id": "amplificar", "texto": "Amplificar a mis seguidores", "veracidad": 0, "alcance": 1.4, "conflicto": 10}
     ],
     "CANDIDATE": [
-      {"id": "propuesta", "texto": "Propuesta de campana", "veracidad": 5, "alcance": 1.0, "conflicto": 0,
+      {"id": "propuesta", "texto": "Propuesta de campaña", "veracidad": 5, "alcance": 1.0, "conflicto": 0,
        "convivencia": 2},
       {"id": "desmentido", "texto": "Desmentido oficial", "veracidad": 10, "alcance": 1.1, "conflicto": 5,
        "desmiente": true}

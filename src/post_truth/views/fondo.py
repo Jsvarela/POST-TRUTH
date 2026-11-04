@@ -13,7 +13,7 @@ VELOCIDAD = 14.0   # pixeles por segundo
 
 
 def _ciudad(ancho: int, alto: int) -> pygame.Surface:
-    """mapa.png escalado para cubrir la pantalla con un 25% de sobra para desplazarse (una vez por tamano)."""
+    """mapa.png escalado para cubrir la pantalla con un 25% de sobra para desplazarse (una vez por tamaño)."""
     if (ancho, alto) not in _IMAGEN:
         ruta = RAIZ / json.loads(RUTA_MAPA.read_text(encoding="utf-8"))["imagenes"]["mapa"]
         img = pygame.image.load(str(ruta)).convert()

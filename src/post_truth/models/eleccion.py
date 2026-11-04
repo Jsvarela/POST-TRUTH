@@ -1,4 +1,4 @@
-"""Eleccion del alcalde: como las decisiones de la campana mueven el apoyo de cada candidato. Logica pura.
+"""Eleccion del alcalde: como las decisiones de la campaña mueven el apoyo de cada candidato. Logica pura.
 
 Cada publicacion que toca a un candidato (events.json, "candidatos") lo favorece (+1) o lo perjudica (-1) SI
 CIRCULA. Lo que hace el jugador decide cuanto circula:
@@ -72,7 +72,7 @@ def titulo(ciudad) -> str:
 
 
 def afinidad(ciudad) -> dict[str, float]:
-    """Apoyo que gana cada candidato por como quedo la ciudad (respecto a como empezo la campana)."""
+    """Apoyo que gana cada candidato por como quedo la ciudad (respecto a como empezo la campaña)."""
     inicio = CityState()
     return {c: sum(peso * (getattr(ciudad, campo) - getattr(inicio, campo)) for campo, peso in PERFILES[c].items())
             for c in CANDIDATOS}

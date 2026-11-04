@@ -162,7 +162,7 @@
   {
    "cmd": "decir",
    "quien": "@VerdadNova",
-   "texto": "Lo que los candidatos no quieren que sepas. Manana, la primera prueba. #NoTeDejesEnganar"
+   "texto": "Lo que los candidatos no quieren que sepas. Mañana, la primera prueba. #NoTeDejesEngañar"
   },
   {
    "cmd": "decir",
@@ -224,7 +224,7 @@
   },
   {
    "cmd": "cartel",
-   "texto": "Dia 1: Inicio de campana",
+   "texto": "Dia 1: Inicio de campaña",
    "sub": "Ciudad Nova",
    "segundos": 2.2
   },
@@ -284,7 +284,7 @@
   {
    "cmd": "decir",
    "quien": "@VerdadNova",
-   "texto": "El 'wifi gratis' de Andres Quintero llega con recibo. Lo pagas tu. #NoTeDejesEnganar",
+   "texto": "El 'wifi gratis' de Andres Quintero llega con recibo. Lo pagas tu. #NoTeDejesEngañar",
    "si": [
     "noticia:wifi-con-recibo"
    ]
@@ -406,7 +406,7 @@
    "cmd": "decir",
    "quien": "Nico",
    "retrato": "nico",
-   "texto": "Mucha gente se trago el rumor. Manana va a ser peor si no lo frenamos.",
+   "texto": "Mucha gente se trago el rumor. Mañana va a ser peor si no lo frenamos.",
    "si": [
     "desinformacion>=50"
    ]
@@ -486,7 +486,7 @@
   {
    "cmd": "decir",
    "quien": "Civitas",
-   "texto": "El Auditorio abre sus puertas para los debates de la campana."
+   "texto": "El Auditorio abre sus puertas para los debates de la campaña."
   },
   {
    "cmd": "sonido",
@@ -512,7 +512,7 @@
   {
    "cmd": "decir",
    "quien": "@VerdadNova",
-   "texto": "Andres Quintero cenando con el contratista del wifi. Coincidencia? #NoTeDejesEnganar",
+   "texto": "Andres Quintero cenando con el contratista del wifi. Coincidencia? #NoTeDejesEngañar",
    "si": [
     "noticia:foto-con-contratista"
    ]
@@ -746,7 +746,7 @@
   {
    "cmd": "decir",
    "quien": "@VerdadNova",
-   "texto": "ULTIMA HORA: Juan Ardila cerrara el colegio de Nova si gana. Los ninos a la calle.",
+   "texto": "ULTIMA HORA: Juan Ardila cerrara el colegio de Nova si gana. Los niños a la calle.",
    "si": [
     "noticia:colegio-cerrado"
    ]
@@ -763,7 +763,7 @@
   {
    "cmd": "decir",
    "quien": "@VerdadNova",
-   "texto": "Se acabaron los parques: el proximo alcalde los vende a una constructora. #NoTeDejesEnganar",
+   "texto": "Se acabaron los parques: el proximo alcalde los vende a una constructora. #NoTeDejesEngañar",
    "si": [
     "noticia:parques-cerrados"
    ]
@@ -780,7 +780,7 @@
    "cmd": "decir",
    "quien": "Isabela",
    "retrato": "isabela",
-   "texto": "Traigo a los ninos del colegio al parque todos los dias. Ya nadie quiere venir.",
+   "texto": "Traigo a los niños del colegio al parque todos los dias. Ya nadie quiere venir.",
    "si": [
     "noticia:parques-cerrados"
    ]
@@ -961,7 +961,7 @@
   {
    "cmd": "decir",
    "quien": "Civitas",
-   "texto": "La Registraduria abre en la noche: manana se vota."
+   "texto": "La Registraduria abre en la noche: mañana se vota."
   },
   {
    "cmd": "sonido",
@@ -970,7 +970,7 @@
   {
    "cmd": "decir",
    "quien": "@VerdadNova",
-   "texto": "ENCUESTA: Lucia Barrera ya perdio. No pierdas tu voto. #NoTeDejesEnganar",
+   "texto": "ENCUESTA: Lucia Barrera ya perdio. No pierdas tu voto. #NoTeDejesEngañar",
    "si": [
     "noticia:encuesta-inventada"
    ]
@@ -1062,7 +1062,7 @@
   {
    "cmd": "decir",
    "quien": "Civitas",
-   "texto": "Ultima noche de campana. Asi llega Ciudad Nova a la eleccion."
+   "texto": "Ultima noche de campaña. Asi llega Ciudad Nova a la eleccion."
   },
   {
    "cmd": "ciudad",
@@ -1173,7 +1173,7 @@
    "cmd": "decir",
    "quien": "Camila",
    "retrato": "camila",
-   "texto": "La agencia de 'alcance' del Parque tiene un solo cliente: @VerdadNova. Y un solo dueno: Esteban Lara.",
+   "texto": "La agencia de 'alcance' del Parque tiene un solo cliente: @VerdadNova. Y un solo dueño: Esteban Lara.",
    "si": [
     "verdad:2",
     "!verdad:3",
@@ -1240,7 +1240,7 @@
    "cmd": "decir",
    "quien": "Nico",
    "retrato": "nico",
-   "texto": "Manana se vota. Ahora veamos que hicieron los vecinos con todo esto."
+   "texto": "Mañana se vota. Ahora veamos que hicieron los vecinos con todo esto."
   },
   {
    "cmd": "fundido",
@@ -1490,7 +1490,7 @@
   },
   {
    "cmd": "cartel",
-   "texto": "Ciudad enganada",
+   "texto": "Ciudad engañada",
    "sub": "",
    "segundos": 2.2
   },
@@ -1564,7 +1564,7 @@
   },
   {
    "cmd": "cartel",
-   "texto": "Dia 1: Inicio de campana",
+   "texto": "Dia 1: Inicio de campaña",
    "sub": "Ciudad Nova",
    "segundos": 2.0
   },

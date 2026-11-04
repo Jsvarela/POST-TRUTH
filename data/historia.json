@@ -29,7 +29,7 @@
    "apertura": "dia4_apertura", "cierre": "dia4_cierre", "pista": ["acierto"],
    "personajes": [
     {"id": "valentina", "dice": "@VerdadNova sigue a todos los candidatos. Y a una sola tienda: la de fundas de Esteban Lara."},
-    {"id": "nicolas", "dice": "Ultimo dia. Si hoy lo hacemos bien, manana la ciudad vota con la cabeza fria."}
+    {"id": "nicolas", "dice": "Ultimo dia. Si hoy lo hacemos bien, mañana la ciudad vota con la cabeza fria."}
    ]}
  ]
 }

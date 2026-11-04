@@ -1,4 +1,4 @@
-"""Eleccion de la escala de la interfaz segun el tamano de la pantalla."""
+"""Eleccion de la escala de la interfaz segun el tamaño de la pantalla."""
 import os
 
 ESCALA_MAXIMA = 1.25

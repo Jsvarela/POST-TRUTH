@@ -55,5 +55,5 @@ def aviso_paso(s: PartidaSesion) -> Aviso | None:
     if ofrecidos(s):
         partes.append("Y: pedir ayuda a tus aliados")
     if s.director is not None and s.director.ofrece("post"):
-        partes.append("Tab: pestana Publicar")
+        partes.append("Tab: pestaña Publicar")
     return ("Ahora puedes", "   ".join(partes), "info") if partes else None
