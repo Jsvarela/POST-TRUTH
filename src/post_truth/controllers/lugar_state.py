@@ -37,6 +37,9 @@ class LugarState(BaseState):
         juego = s.minijuego_en(self.zona)
         if juego is not None:
             acciones.append((f"Jugar {mj.REGISTRO[juego].nombre}", self._minijuego))
+        elif (getattr(s, "en_red", False) and s.director is not None and s.director.nombre == "minijuego"
+              and not s.es_mi_turno):   # L6: el minijuego lo juega el de turno; los demas lo miran
+            acciones.append((f"Ver a {s.nombre(s.de_turno.id)} jugar", self._ver))
         acciones.append(("Volver a la calle", self._volver))
         self.botones = [Boton(rect_boton(i), f"{i + 1}. {texto}", accion, atajo=TECLAS[i])
                         for i, (texto, accion) in enumerate(acciones)]
@@ -51,6 +54,9 @@ class LugarState(BaseState):
     def _minijuego(self) -> None:
         if self.app.partida.iniciar_minijuego(self.zona) is not None:
             self.app.estados.cambiar("minijuego", fundido=True)
+
+    def _ver(self) -> None:
+        self.app.estados.cambiar("minijuego", fundido=True)
 
     def _volver(self) -> None:
         self.app.estados.cambiar("mundo", fundido=True)

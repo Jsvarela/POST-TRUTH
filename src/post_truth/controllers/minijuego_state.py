@@ -3,6 +3,7 @@ import pygame
 
 from post_truth.controllers.base_state import BaseState
 from post_truth.models import guia
+from post_truth.models import minijuego as mj
 from post_truth.models.tutorial import Tutorial, tiene_tutorial
 from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
@@ -17,15 +18,31 @@ TECLAS = {pygame.K_1: "1", pygame.K_2: "2", pygame.K_3: "3", pygame.K_4: "4", py
 
 class MinijuegoState(BaseState):
     def al_entrar(self) -> None:
-        self.minijuego = self.app.partida.minijuego   # lo creo el mundo con sesion.iniciar_minijuego
+        s = self.app.partida
+        # L6: en red, quien no tiene el turno mira el minijuego del de turno (el servidor reenvia su progreso)
+        self.espectador = getattr(s, "en_red", False) and s.minijuego is None
+        self.minijuego = self._vivo() if self.espectador else s.minijuego   # lo creo sesion.iniciar_minijuego
         self.resultado = None
         self.pausado = False
         self.tutorial: Tutorial | None = None
+        self._t_progreso = 0.0
+        if self.minijuego is None:   # no hay nada que ver (ya termino): de vuelta a la calle
+            self.app.estados.cambiar("mundo", fundido=True)
+            self.toast = None
+            return
+        if self.espectador:
+            self.toast = Anuncio(f"Juega {s.nombre(self.minijuego.contexto.jugador)}", "Lo estas viendo. ESC: volver.",
+                                 "info", grande=False, duracion=4.0)
+            return
         vistos = getattr(self.app, "tutoriales_vistos", set())
         if tiene_tutorial(self.minijuego.id) and self.minijuego.id not in vistos:   # la primera vez: como se juega
             self.abrir_tutorial()
         m = guia.mensaje(f"minijuego:{self.minijuego.id}", self.app.guias_vistas, self.app.guias)
         self.toast = None if m is None else Anuncio(m[0], m[1], "info", grande=False, duracion=5.0)
+
+    def _vivo(self):
+        v = getattr(self.app.partida, "minijuego_vivo", None)
+        return mj.desde_dict(v["estado"]) if v else None
 
     def abrir_tutorial(self) -> None:
         self.tutorial = Tutorial(self.minijuego.id, self.minijuego.contexto)
@@ -56,6 +73,10 @@ class MinijuegoState(BaseState):
             self.app.tutoriales_vistos = getattr(self.app, "tutoriales_vistos", set()) | {self.minijuego.id}
 
     def handle_event(self, event: pygame.event.Event) -> None:
+        if self.espectador:   # mirando: solo se puede volver
+            if event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_RETURN):
+                self.app.estados.cambiar("mundo", fundido=True)
+            return
         if self.tutorial is not None:
             self._tutorial(event)
             return
@@ -81,6 +102,13 @@ class MinijuegoState(BaseState):
         if self.toast is not None:
             self.toast.avanzar(dt)
             self.toast = None if self.toast.terminado else self.toast
+        if self.espectador:
+            vivo = self._vivo()
+            if vivo is None:   # el de turno termino
+                self.app.estados.cambiar("mundo", fundido=True)
+            else:
+                self.minijuego = vivo
+            return
         if self.tutorial is not None:   # la demo y la practica no gastan el dia ni tocan la partida
             self.tutorial.update(dt)
             return
@@ -88,6 +116,10 @@ class MinijuegoState(BaseState):
             return
         self.minijuego.update(dt)
         self.app.partida.transcurrir(dt)   # jugar cuesta tiempo del dia (la pausa lo detiene todo)
+        self._t_progreso += dt
+        if getattr(self.app.partida, "en_red", False) and self._t_progreso >= 0.2:   # que los demas lo vean
+            self._t_progreso = 0.0
+            self.app.partida.enviar_progreso()
         self._sonar()
         if self.minijuego.terminado:
             self.resultado = self.app.partida.terminar_minijuego()

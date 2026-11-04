@@ -178,6 +178,9 @@ class MundoState(BaseState):
         if d is not None and d.nombre == "apertura" and self.app.estados.estado("cinematica").si_toca("mundo"):
             self.presionadas.clear()
             return
+        listos = getattr(self.sesion, "cine_listos", None)
+        if listos:   # L6: salto la escena antes que los demas; el dia sigue cuando todos terminen
+            self.aviso, self._t_aviso = f"Esperando a que los demas terminen la escena ({listos[0]} de {listos[1]})", 0.5
         for anuncio in ("anuncio", "toast"):
             a = getattr(self, anuncio)
             if a is not None:
