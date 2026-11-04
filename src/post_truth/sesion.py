@@ -185,6 +185,7 @@ class PartidaSesion:
         self.pistas_verdad: list[str] = []          # L4: dias ("1".."4") que dejaron su pista sobre @VerdadNova
         self.escuchados: list[str] = []             # L4: personajes de la historia a los que se escucho
         self.final_visto = False                    # L4: ya se vio la revelacion y el final
+        self.bitacora: list[dict] = []              # por dia: que se decidio y que causo (la explicacion del final)
         self._accion_aplicada = ""                  # la ultima decision aplicada (para el resumen del dia)
         self.minijuegos: dict[str, str] = {}        # lugar -> id del minijuego (data/minijuegos.json)
         self.minijuego: mj.Minijuego | None = None  # el que se esta jugando
@@ -487,7 +488,12 @@ class PartidaSesion:
         self.jugador(r.jugador).puntos += r.impacto.score
         self._sumar_desinformacion(r.impacto.misinformation)
         self._accion_aplicada = "se acabo el tiempo" if r.vencido else r.nodo.label
-        self._mover_apoyo(r)
+        cambios = self._mover_apoyo(r)
+        if self.campana is not None:   # la bitacora del dia: la explicacion del final (eleccion.explicar)
+            evento = self.arbol.event
+            self.bitacora.append({"dia": self.campana.dia + 1, "titulo": evento.title,
+                                  "falsa": es_falsa(evento.truth_level), "accion": "vencido" if r.vencido else r.nodo.tipo,
+                                  "apoyo": cambios, "creyeron": None, "ciudad": {}})
         self._anotar(self.jugador(r.jugador), r)
         self.pendiente, self.fase = None, CONSECUENCIA
         return r
@@ -526,16 +532,20 @@ class PartidaSesion:
         if self.calle is not None:   # los testigos de esta noticia que viven en otra zona salen a caminar
             self.calle.poner_testigos([e for e in evento.evidences if e.tipo is TipoEvidencia.TESTIGO], self.mapa)
 
-    def _mover_apoyo(self, r: ResultadoDecision) -> None:
+    def _mover_apoyo(self, r: ResultadoDecision) -> dict[str, float]:
+        """Mueve el apoyo de los candidatos que nombra la noticia; devuelve cuanto cambio cada uno."""
         evento = self.arbol.event
         falsa = es_falsa(evento.truth_level)
+        cambios = {}
         for candidato, sentido in evento.candidatos:
             delta = eleccion.efecto_en_apoyo(sentido, falsa, r.nodo.tipo, r.alcance, r.vencido)
             delta *= cred.factor(self.jugador(r.jugador).credibilidad)   # a un jugador creible se le cree mas
             nuevo = max(eleccion.APOYO_MINIMO, self.apoyo[candidato] + delta)
             if falsa:
                 self.por_rumores[candidato] += nuevo - self.apoyo[candidato]
+            cambios[candidato] = round(nuevo - self.apoyo[candidato], 1)
             self.apoyo[candidato] = nuevo
+        return cambios
 
     def _anotar(self, j: Jugador, r: ResultadoDecision) -> None:
         """Historial y credibilidad del jugador que decidio."""
@@ -688,6 +698,8 @@ class PartidaSesion:
         if self.en_vivo is None:
             raise ValueError("No hay un rumor en vivo")
         impacto = Impact(**{k: round(v * IMPACTO_EN_VIVO) for k, v in asdict(self.en_vivo.impacto()).items()})
+        if self.bitacora and self.campana is not None and self.bitacora[-1]["dia"] == self.campana.dia + 1:
+            self.bitacora[-1]["creyeron"] = round(100 * self.en_vivo.creen / max(1, len(self.en_vivo.estado)))
         self.ciudad.apply(impacto)
         self.jugador(self.en_vivo.jugador).puntos += impacto.score
         self._sumar_desinformacion(impacto.misinformation)
@@ -958,6 +970,9 @@ class PartidaSesion:
             self.tiempo_restante, self.reloj_activo = None, False
         elif paso == "cierre":
             self.reloj_activo, self.fase = False, FIN_DIA
+            if self.bitacora and self.bitacora[-1]["dia"] == self.campana.dia + 1:   # como cambio la ciudad hoy
+                antes, ahora = self.campana.ciudad_al_amanecer, self.ciudad.to_dict()
+                self.bitacora[-1]["ciudad"] = {k: ahora[k] - antes[k] for k in ahora if k in antes and ahora[k] != antes[k]}
             dia = dr.historia()[self.campana.dia]
             ctx = cin.contexto(self)
             if dia.pista and all(cin.cumple(c, ctx) for c in dia.pista):   # lo investigado deja una pista
@@ -1153,6 +1168,7 @@ class PartidaSesion:
             "anunciar_fase": self.anunciar_fase,
             "director": None if self.director is None else self.director.to_dict(),
             "pistas_verdad": self.pistas_verdad, "escuchados": self.escuchados, "final_visto": self.final_visto,
+            "bitacora": self.bitacora,
             "grafo": self.grafo.to_dict(),
             "calle": None if self.calle is None else self.calle.to_dict(),
             "charla": None if self.charla is None else {**self.charla, "p": self.charla["p"] and self.charla["p"].to_dict()},
@@ -1205,6 +1221,7 @@ class PartidaSesion:
         sesion.pistas_verdad = list(datos.get("pistas_verdad", []))
         sesion.escuchados = list(datos.get("escuchados", []))
         sesion.final_visto = bool(datos.get("final_visto", False))
+        sesion.bitacora = list(datos.get("bitacora", []))
         sesion.por_rumores.update(datos.get("por_rumores", {}))
         if datos.get("campana") is not None:
             sesion.campana = Campana.from_dict(datos["campana"])

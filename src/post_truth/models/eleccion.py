@@ -77,6 +77,55 @@ def afinidad(ciudad) -> dict[str, float]:
             for c in CANDIDATOS}
 
 
+ACCIONES = {"compartir": "Lo compartiste", "verificar": "Lo verificaste", "ignorar": "Lo ignoraste",
+            "reportar": "Lo reportaste", "vencido": "Se te acabo el tiempo y no decidiste"}
+INDICADOR = {"misinformation": ("la desinformacion", False), "trust": ("la confianza", False),
+             "conflicts": ("los conflictos", True), "verified_information": ("la informacion verificada", False)}
+VEREDICTO = {   # (falsa, accion) -> si estuvo bien o mal y por que: lo que el juego quiere que se aprenda
+    (True, "compartir"): "Mal: compartir un rumor falso lo hizo llegar mas lejos.",
+    (True, "verificar"): "Bien: verificarlo antes de compartir le quito fuerza.",
+    (True, "reportar"): "Bien: reportarlo freno a quien lo regaba.",
+    (True, "ignorar"): "Regular: ignorarlo no lo esparcio, pero tampoco lo freno.",
+    (True, "vencido"): "Mal: sin decidir, el rumor corrio solo.",
+    (False, "compartir"): "Bien: compartir algo cierto informo a la ciudad.",
+    (False, "verificar"): "Bien: verificar antes de compartir siempre suma.",
+    (False, "reportar"): "Mal: reportar algo cierto le resto confianza a la ciudad.",
+    (False, "ignorar"): "Regular: era cierto y no ayudaste a que se supiera.",
+    (False, "vencido"): "Regular: era cierto, pero se te paso el momento.",
+}
+
+
+def explicar(bitacora: list[dict], r: "ResultadoEleccion", nombres: dict[str, str]) -> list[str]:
+    """Una linea por dia (que publico @VerdadNova, que hiciste, a quien afecto y que dejo) y una de resumen:
+    que peso mas en el ganador. Sin cifras del grafo: palabras como "mucho" o "algo"."""
+    lineas = []
+    for b in bitacora:
+        partes = [f"Dia {b['dia']}: \"{b['titulo']}\" ({'falso' if b['falsa'] else 'cierto'}). {ACCIONES[b['accion']]}.",
+                  VEREDICTO[(b["falsa"], b["accion"])]]
+        for c, d in b["apoyo"].items():
+            cuanto = "mucho" if abs(d) >= 5 else "algo"
+            if d < 0:
+                partes.append(f"{nombres[c]} perdio {cuanto} de apoyo" + (" injustamente." if b["falsa"] else "."))
+            elif d > 0:
+                partes.append(f"{nombres[c]} gano {cuanto} de apoyo" + (": lo protegiste." if b["falsa"] else "."))
+        if b["creyeron"] is not None:
+            partes.append(f"Despues de tu defensa lo creyo el {b['creyeron']}% de la red.")
+        cambios = [f"{('subieron' if plural else 'subio') if b['ciudad'][k] > 0 else ('bajaron' if plural else 'bajo')} "
+                   f"{nombre}" for k, (nombre, plural) in INDICADOR.items() if b["ciudad"].get(k)]
+        if cambios:
+            partes.append("En la ciudad " + ", ".join(cambios) + ".")
+        lineas.append(" ".join(partes))
+    ganador = nombres[r.ganador]
+    if r.hundido_por_rumor:
+        lineas.append(f"Resultado: gano {ganador}, pero sin los rumores falsos habria ganado {nombres[r.hundido_por_rumor]}. "
+                      "Lo que se compartio sin verificar cambio la eleccion.")
+    elif r.por_la_ciudad:
+        lineas.append(f"Resultado: gano {ganador} por como quedo la ciudad, y la ciudad es la suma de tus decisiones.")
+    else:
+        lineas.append(f"Resultado: gano {ganador} por sus propuestas: los rumores no torcieron la eleccion.")
+    return lineas
+
+
 def calcular(apoyo_decisiones: dict[str, float], por_rumores: dict[str, float], ciudad) -> ResultadoEleccion:
     """Apoyo = lo que movieron las decisiones (rumores incluidos) + la afinidad con la ciudad final.
     `por_rumores`: la parte que movieron publicaciones FALSAS."""

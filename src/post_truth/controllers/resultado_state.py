@@ -4,7 +4,7 @@ import pygame
 from post_truth.controllers.base_state import BaseState
 from post_truth.models import reparto
 from post_truth.views.theme import NEGRO
-from post_truth.views.resultado_view import dibujar_resultado
+from post_truth.views.resultado_view import dibujar_bitacora, dibujar_resultado
 
 DURACION_CONTEO = 3.0   # segundos del conteo animado
 
@@ -18,7 +18,7 @@ class ResultadoState(BaseState):
     NOMBRE = "resultado"
 
     def al_entrar(self) -> None:
-        self.t, self.cubrir = 0.0, True
+        self.t, self.cubrir, self.pagina = 0.0, True, 0   # pagina 1: "Asi decidiste la eleccion"
         self.resultado = self.app.partida.resultado_eleccion()
 
     def handle_event(self, event: pygame.event.Event) -> None:
@@ -26,6 +26,8 @@ class ResultadoState(BaseState):
             return
         if event.key == pygame.K_SPACE or (self.t < DURACION_CONTEO and event.key == pygame.K_RETURN):
             self.t = DURACION_CONTEO   # saltar el conteo (accesibilidad)
+        elif event.key == pygame.K_RETURN and self.pagina == 0 and self.app.partida.bitacora:
+            self.pagina = 1
         elif event.key in (pygame.K_RETURN, pygame.K_ESCAPE):
             self.app.salir_de_red()
             self.app.partida = None
@@ -45,5 +47,9 @@ class ResultadoState(BaseState):
         nombre = (lambda j: f"{s.nombre(j.id)} ({j.personaje.rol.value})") if getattr(s, "en_red", False) else (
             lambda j: j.personaje.rol.value)
         jugadores = [(nombre(j), j.puntos, j.credibilidad) for j in s.jugadores]
+        if self.pagina == 1:
+            dibujar_bitacora(pantalla, self.app.fuentes, self.app.temas.actual, s.bitacora, self.resultado,
+                             self.candidatos)
+            return
         dibujar_resultado(pantalla, self.app.fuentes, self.app.temas.actual, self.resultado, self.candidatos,
-                          s.ciudad.score, min(1.0, self.t / DURACION_CONTEO), jugadores)
+                          s.ciudad.score, min(1.0, self.t / DURACION_CONTEO), jugadores, s.bitacora)
