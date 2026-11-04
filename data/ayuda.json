@@ -84,7 +84,9 @@
   {"id": "multijugador", "titulo": "Multijugador", "texto": [
    "De 2 a 4 jugadores en red local. Un equipo abre el servidor; cada jugador elige Multijugador en el menu (R) y escribe la IP y el puerto.",
    "En la sala cada uno elige un rol distinto; el primero en entrar inicia. Los roles libres son aliados.",
-   "Todos ven la misma ciudad, la misma red y las mismas calles cerradas. La noticia la decide el jugador de turno; los demas pueden caminar, jugar minijuegos y defender la red."]},
+   "Todos ven la misma ciudad, la misma red y las mismas calles cerradas, y las escenas a la vez: cada uno puede saltarlas, y el dia sigue cuando todos terminaron.",
+   "Cada dia tiene un jugador de turno, rotando por orden de llegada a la sala: el decide la noticia y juega el minijuego del dia; los demas lo ven en vivo (en el lugar, Ver a X jugar).",
+   "En la consecuencia todos defienden la red juntos, cada uno con su escudo. En red los minijuegos son mas largos y mas dificiles."]},
   {"id": "accesibilidad", "titulo": "Accesibilidad", "texto": [
    "En Opciones del menu (O):",
    "- Tema: normal, alto contraste o daltonismo. Ademas del color, todo se distingue por forma.",
