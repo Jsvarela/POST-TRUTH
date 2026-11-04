@@ -25,11 +25,17 @@ class ContextoMinijuego:
     evidencias: int = 0       # evidencia que el jugador ya reunio (el mitin la usa)
     crisis: bool = False      # el lugar esta en crisis (R9): menos tiempo
     municion: dict = field(default_factory=dict)   # pruebas reunidas por tipo: pista, evidencia, testimonio (rueda)
+    jugadores: int = 1        # L6: en multijugador el minijuego es mas grande y mas dificil
+
+    @property
+    def extra(self) -> int:
+        """Cuantos jugadores hay de mas (0 en el modo individual)."""
+        return max(0, self.jugadores - 1)
 
     @property
     def ritmo(self) -> float:
-        """Multiplica los tiempos: mas con tiempo extendido, menos si el lugar esta en crisis."""
-        return (1.5 if self.extendido else 1.0) * (0.8 if self.crisis else 1.0)
+        """Multiplica los tiempos: mas con tiempo extendido; menos si el lugar esta en crisis o hay mas jugadores."""
+        return (1.5 if self.extendido else 1.0) * (0.8 if self.crisis else 1.0) * (1 - 0.1 * min(3, self.extra))
 
     def to_dict(self) -> dict:
         return asdict(self)

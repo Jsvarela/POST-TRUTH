@@ -62,11 +62,13 @@ class RuedaPrensa(Minijuego):
 
     @property
     def total(self) -> int:
-        return datos()["qte"]["total"]
+        return datos()["qte"]["total"] + 3 * self.contexto.extra   # en multijugador, mas preguntas
 
     @property
     def a_la_vez(self) -> int:
-        return 1 if self.contexto.extendido or self.respondidas < datos()["doble_desde"] else 2
+        if self.contexto.extendido or self.respondidas < datos()["doble_desde"]:
+            return 1
+        return min(3, 2 + self.contexto.extra)
 
     @property
     def periodo(self) -> float:
@@ -75,7 +77,7 @@ class RuedaPrensa(Minijuego):
 
     @property
     def ancho_zona(self) -> float:
-        return datos()["qte"]["zona"] * (1.6 if self.contexto.extendido else 1.0)
+        return datos()["qte"]["zona"] * (1.6 if self.contexto.extendido else 1.0) * (1 - 0.1 * min(3, self.contexto.extra))
 
     def marcador(self, p: list) -> float:
         """0..1: donde va el marcador de esa pregunta (rebota en los extremos)."""

@@ -503,7 +503,7 @@ class PartidaSesion:
         if self.fase != CONSECUENCIA:
             return False
         self.turno += 1
-        if self.turno < len(self.jugadores):
+        if self.turno < len(self.jugadores) and self.director is None:   # L6: con director, uno decide por dia
             self.fase = DECIDIENDO
             self._reiniciar_reloj()
             return True
@@ -573,7 +573,7 @@ class PartidaSesion:
         contexto = mj.ContextoMinijuego(zona, j.id, j.rol.value, j.credibilidad, self.campana.dia,
                                         self.campana.factor > 1, evidencias,
                                         zona in self.zonas_crisis or zona in self.aisladas,   # aislada: mas dificil
-                                        j.investigacion.municion())
+                                        j.investigacion.municion(), len(self.jugadores))
         self.minijuego = mj.crear(id, contexto)
         return self.minijuego
 

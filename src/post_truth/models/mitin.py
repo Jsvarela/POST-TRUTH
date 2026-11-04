@@ -61,7 +61,7 @@ class Mitin(Minijuego):
 
     @property
     def duracion(self) -> float:
-        return datos()["duracion"]
+        return datos()["duracion"] + 6 * self.contexto.extra   # en multijugador, un mitin mas largo
 
     @property
     def subida(self) -> float:
@@ -75,7 +75,8 @@ class Mitin(Minijuego):
         """Donde esta (o estara, con `t`) el globo: sube y zigzaguea."""
         dt = 0.0 if t is None else t - self.t
         y = g[1] - self.subida * g[5] * dt
-        x = g[0] + datos()["disparo"]["zigzag"] * math.sin((self.t + dt) * 2.2 + g[4])
+        zigzag = datos()["disparo"]["zigzag"] * (1 + 0.2 * self.contexto.extra)
+        x = g[0] + zigzag * math.sin((self.t + dt) * 2.2 + g[4])
         return min(0.97, max(0.03, x)), y
 
     def update(self, dt: float) -> None:
@@ -92,7 +93,7 @@ class Mitin(Minijuego):
             r = self.rng.choice(datos()["interrupciones"])
             self.globos.append([round(self.rng.uniform(0.12, 0.88), 3), 1.0, r["tipo"], r["grito"],
                                 round(self.rng.uniform(0, 6.28), 2), round(self.rng.uniform(0.8, 1.25), 2)])
-            self._proximo = datos()["intervalo"] * self.contexto.ritmo
+            self._proximo = datos()["intervalo"] * self.contexto.ritmo / (1 + 0.25 * self.contexto.extra)
         quedan = []
         for g in self.globos:
             g[1] -= self.subida * g[5] * dt
