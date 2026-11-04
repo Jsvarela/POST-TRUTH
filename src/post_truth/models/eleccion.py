@@ -9,7 +9,7 @@ Sin azar: el resultado depende de la habilidad del jugador para frenar rumores.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from post_truth.game_state import CityState
 
@@ -54,6 +54,7 @@ class ResultadoEleccion:
     hundido_por_rumor: str           # candidato que habria ganado sin rumores falsos ("" si nadie)
     titulo_jugador: str
     por_la_ciudad: bool = False      # el ganador debe mas a como quedo la ciudad que a sus propuestas
+    sin_rumores: dict = field(default_factory=dict)   # % que habria sacado cada uno sin los rumores falsos
 
 
 def participacion(ciudad) -> int:
@@ -137,5 +138,6 @@ def calcular(apoyo_decisiones: dict[str, float], por_rumores: dict[str, float], 
     sin_rumores = {c: apoyo[c] - por_rumores.get(c, 0.0) for c in CANDIDATOS}
     justo = max(CANDIDATOS, key=lambda c: (sin_rumores[c], -CANDIDATOS.index(c)))
     por_ciudad = extra[ganador] > apoyo_decisiones[ganador] - APOYO_INICIAL
+    total_sin = sum(max(APOYO_MINIMO, v) for v in sin_rumores.values())
     return ResultadoEleccion(votos, ganador, participacion(ciudad), justo if justo != ganador else "", titulo(ciudad),
-                             por_ciudad)
+                             por_ciudad, {c: 100 * max(APOYO_MINIMO, sin_rumores[c]) / total_sin for c in CANDIDATOS})

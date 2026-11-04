@@ -2,11 +2,11 @@
 import pygame
 
 from post_truth.config import ANCHO, px
-from post_truth.models.eleccion import ResultadoEleccion, explicar
+from post_truth.models.eleccion import ResultadoEleccion
 from post_truth.models.reparto import Candidato
-from post_truth.views.componentes import Fuentes, ajustar_texto, panel
+from post_truth.views.componentes import Fuentes
 from post_truth.views.retrato_view import dibujar_retrato
-from post_truth.views.theme import TOKENS, Tema, esp
+from post_truth.views.theme import Tema
 
 
 POR_LA_CIUDAD = {"juan": "una ciudad con mas conflictos pidio mano dura", "maria": "la convivencia le dio la razon",
@@ -69,35 +69,7 @@ def dibujar_resultado(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, r:
         img = fuentes.normal.render(texto, True, color)
         pantalla.blit(img, img.get_rect(midtop=(ANCHO // 2, y)))
         y += fuentes.normal.get_linesize() + px(8)
-    texto = "Enter: ver como decidiste la eleccion" if bitacora else "Enter: volver al menu"
+    texto = "Enter: como decidiste la eleccion, dia por dia" if bitacora else "Enter: volver al menu"
     ayuda = fuentes.chica.render(texto, True, tema.acento if bitacora else tema.texto)
     pantalla.blit(ayuda, ayuda.get_rect(midbottom=(ANCHO // 2, pantalla.get_height() - px(14))))
 
-
-CAJA_BITACORA = pygame.Rect(px(48), px(104), ANCHO - px(96), px(480))
-
-
-def lineas_bitacora(bitacora: list[dict], r: ResultadoEleccion, candidatos: list[Candidato],
-                    fuentes: Fuentes) -> list[list[str]]:
-    """Cada dia (y el resumen) partido en las lineas que caben en la caja."""
-    nombres = {c.id: c.nombre for c in candidatos}
-    return [ajustar_texto(t, fuentes.normal, CAJA_BITACORA.w - 2 * esp(4)) for t in explicar(bitacora, r, nombres)]
-
-
-def dibujar_bitacora(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, bitacora: list[dict],
-                     r: ResultadoEleccion, candidatos: list[Candidato]) -> None:
-    """Despues de los votos: como cada decision (buena o mala) llevo a esta eleccion."""
-    pantalla.fill(tema.fondo)
-    titulo = fuentes.titulo.render("Asi decidiste la eleccion", True, tema.acento)
-    pantalla.blit(titulo, titulo.get_rect(midtop=(ANCHO // 2, px(36))))
-    panel(pantalla, tema, CAJA_BITACORA, TOKENS.alfa_panel)
-    bloques = lineas_bitacora(bitacora, r, candidatos, fuentes)
-    y, alto = CAJA_BITACORA.y + esp(3), fuentes.normal.get_linesize()
-    for i, lineas in enumerate(bloques):
-        color = tema.acento if i == len(bloques) - 1 else tema.texto   # el resumen, en acento
-        for linea in lineas:
-            pantalla.blit(fuentes.normal.render(linea, True, color), (CAJA_BITACORA.x + esp(4), y))
-            y += alto
-        y += esp(2)
-    ayuda = fuentes.chica.render("Enter: volver al menu", True, tema.texto)
-    pantalla.blit(ayuda, ayuda.get_rect(midbottom=(ANCHO // 2, pantalla.get_height() - px(14))))
