@@ -8,7 +8,7 @@ from post_truth.models import boca_en_boca as bb
 from post_truth.models import rueda_prensa as rp
 from post_truth.models.chat import CALMA_LLENA, CARRILES, FILA_SOFI, Chat
 from post_truth.models.minijuego import Ensayo, Minijuego, ResultadoMinijuego
-from post_truth.models.mitin import COLUMNAS, Mitin
+from post_truth.models.mitin import CANON as CANON_MITIN, Mitin
 from post_truth.views.componentes import Boton, Fuentes, ajustar_texto, panel, recortar
 from post_truth.views.escena_view import _dibujar_consecuencias
 from post_truth.views.theme import Tema
@@ -36,7 +36,7 @@ def dibujar_minijuego(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m:
             img = fuentes.titulo.render("Pausa (P para seguir)", True, tema.texto)
             pantalla.blit(img, img.get_rect(center=pantalla.get_rect().center))
     teclas = {"ensayo": "1-2: responder", "chat": "Flechas o A/D: mover a Sofi   |   Espacio: calma",
-              "mitin": "1 dato   2 pregunta   3 calma",
+              "mitin": "Raton o WASD: apuntar   |   1 dato  2 pregunta  3 calma   |   Clic o Espacio: disparar",
               "rueda": "A/D: girar   |   con el marcador en la zona: 1 pista  2 evidencia  3 testimonio  Espacio",
               "boca": "WASD o flechas: moverte   |   Manten E: convencer"}.get(m.id, "1-3: responder")
     ayuda = "Enter: volver a la calle" if resultado else f"{teclas}   |   P: pausa"
@@ -165,7 +165,8 @@ def dibujar_tutorial(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, t) 
         tecla.draw(pantalla, fuentes.normal, tema)
 
 
-def _forma_globo(pantalla: pygame.Surface, tema: Tema, tipo: str, centro: tuple[int, int], r: int) -> None:
+def _forma_globo(pantalla: pygame.Surface, tema: Tema, tipo: str, centro: tuple[int, int], r: int,
+                hilo: bool = True) -> None:
     x, y = centro
     color = {"dato": tema.acento, "pregunta": tema.detalle, "calma": tema.bueno}[tipo]
     if tipo == "dato":
@@ -174,15 +175,30 @@ def _forma_globo(pantalla: pygame.Surface, tema: Tema, tipo: str, centro: tuple[
         pygame.draw.circle(pantalla, color, centro, r)
     else:
         pygame.draw.polygon(pantalla, color, [(x, y - r), (x + r, y + r), (x - r, y + r)])
-    pygame.draw.line(pantalla, tema.texto_off, (x, y + r), (x, y + r + px(14)), 1)   # el hilo del globo
+    if hilo:
+        pygame.draw.line(pantalla, tema.texto_off, (x, y + r), (x, y + r + px(14)), 1)   # el hilo del globo
+
+
+CIELO = (px(44), px(44))   # el cielo del mitin: entre el escenario (arriba) y la multitud (abajo)
+
+
+def mitin_a_pantalla(x: float, y: float) -> tuple[int, int]:
+    return AREA.x + round(x * AREA.w), AREA.y + CIELO[0] + round(y * (AREA.h - CIELO[0] - CIELO[1]))
+
+
+def pantalla_a_mitin(pos: tuple[int, int]) -> tuple[float, float] | None:
+    """Del raton al area del mitin (None fuera de ella)."""
+    if not AREA.collidepoint(pos):
+        return None
+    return (pos[0] - AREA.x) / AREA.w, (pos[1] - AREA.y - CIELO[0]) / (AREA.h - CIELO[0] - CIELO[1])
 
 
 def _dibujar_mitin(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Mitin) -> None:
-    """Escenario arriba, multitud abajo; los rumores suben como globos."""
+    """Escenario arriba, multitud abajo; los rumores suben zigzagueando y se les dispara desde el canon."""
     panel(pantalla, tema, AREA, 255)
     escenario = pygame.Rect(AREA.x + px(10), AREA.y + px(8), AREA.w - px(20), px(26))
     pygame.draw.rect(pantalla, tema.boton, escenario)
-    img = fuentes.chica.render("Escenario: que no lleguen aqui", True, tema.boton_texto)
+    img = fuentes.chica.render("Arriba: que no lleguen aqui", True, tema.boton_texto)
     pantalla.blit(img, img.get_rect(center=escenario.center))
     animadas = round(16 * m.animo / 100)
     for k in range(16):   # la multitud: animada (circulo) o molesta (cuadrado)
@@ -191,20 +207,29 @@ def _dibujar_mitin(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Mi
             pygame.draw.circle(pantalla, tema.bueno, (cx, cy), px(9))
         else:
             pygame.draw.rect(pantalla, tema.malo, (cx - px(8), cy - px(8), px(16), px(16)))
-    ancho = AREA.w // COLUMNAS
-    alto_util = AREA.h - px(80)
-    for columna, altura, tipo, grito in m.globos:
-        cx = AREA.x + columna * ancho + ancho // 2
-        cy = escenario.bottom + px(20) + round(altura * alto_util)
-        _forma_globo(pantalla, tema, tipo, (cx, cy), px(18))
-        num = fuentes.normal.render({"dato": "1", "pregunta": "2", "calma": "3"}[tipo], True, tema.fondo)
-        pantalla.blit(num, num.get_rect(center=(cx, cy + (px(4) if tipo == "calma" else 0))))
-        _dos_lineas(pantalla, fuentes, grito, ancho - px(6), tema.texto_off, cx - (ancho - px(6)) // 2,
-                    cy + px(22) + fuentes.chica.get_linesize())
+    for g in m.globos:
+        cx, cy = mitin_a_pantalla(*m.posicion(g))
+        _forma_globo(pantalla, tema, g[2], (cx, cy), px(18))
+        num = fuentes.normal.render({"dato": "1", "pregunta": "2", "calma": "3"}[g[2]], True, tema.fondo)
+        pantalla.blit(num, num.get_rect(center=(cx, cy + (px(4) if g[2] == "calma" else 0))))
+        _dos_lineas(pantalla, fuentes, g[3], px(140), tema.texto_off, cx - px(70), cy + px(22) + fuentes.chica.get_linesize())
+    canon = mitin_a_pantalla(*CANON_MITIN)
+    mira = mitin_a_pantalla(*m.mira)
+    pygame.draw.line(pantalla, tema.borde, canon, mira, 1)                            # hacia donde apunta
+    for b in m.balas:   # el disparo tiene la forma de su municion
+        _forma_globo(pantalla, tema, b[4], mitin_a_pantalla(b[0], b[1]), px(6), hilo=False)
+    pygame.draw.rect(pantalla, tema.boton, (canon[0] - px(16), canon[1] - px(10), px(32), px(20)))
+    _forma_globo(pantalla, tema, m.municion, canon, px(7), hilo=False)
+    color = tema.texto if m.recarga <= 0 else tema.texto_off   # la mira se apaga mientras recarga
+    pygame.draw.circle(pantalla, color, mira, px(16), px(2))
+    pygame.draw.line(pantalla, color, (mira[0] - px(22), mira[1]), (mira[0] + px(22), mira[1]), px(2))
+    pygame.draw.line(pantalla, color, (mira[0], mira[1] - px(22)), (mira[0], mira[1] + px(22)), px(2))
     leyenda = pygame.Rect(AREA.x, AREA.bottom + px(22), AREA.w, px(24))
     for i, (tipo, nombre) in enumerate((("dato", "1 dato"), ("pregunta", "2 pregunta"), ("calma", "3 calma"))):
         x = leyenda.x + i * leyenda.w // 3 + px(20)
-        _forma_globo(pantalla, tema, tipo, (x, leyenda.centery), px(9))
+        if tipo == m.municion:   # la municion cargada, recuadrada (no solo por color)
+            pygame.draw.rect(pantalla, tema.acento, (x - px(14), leyenda.y - px(2), px(120), px(26)), px(2))
+        _forma_globo(pantalla, tema, tipo, (x, leyenda.centery), px(9), hilo=False)
         pantalla.blit(fuentes.chica.render(nombre, True, tema.texto), (x + px(16), leyenda.y + px(2)))
     _contador(pantalla, fuentes, tema, f"Animo de la multitud {round(m.animo)}   |   Evidencia reunida: "
                                        f"{m.contexto.evidencias}")

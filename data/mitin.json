@@ -65,5 +65,12 @@
  ],
  "duracion": 26,
  "intervalo": 1.6,
- "subida": 0.17
+ "subida": 0.17,
+ "disparo": {
+  "velocidad": 1.5,
+  "cadencia": 0.4,
+  "radio": 0.06,
+  "zigzag": 0.07,
+  "mira": 1.1
+ }
 }

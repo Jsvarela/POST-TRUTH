@@ -8,7 +8,7 @@ from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views import hud
 from post_truth.views.hud import DatosHud
-from post_truth.views.minijuego_view import dibujar_minijuego, dibujar_tutorial
+from post_truth.views.minijuego_view import dibujar_minijuego, dibujar_tutorial, pantalla_a_mitin
 
 TECLAS = {pygame.K_1: "1", pygame.K_2: "2", pygame.K_3: "3", pygame.K_4: "4", pygame.K_SPACE: "espacio",
           pygame.K_LEFT: "izq", pygame.K_a: "izq", pygame.K_RIGHT: "der", pygame.K_d: "der",
@@ -30,8 +30,19 @@ class MinijuegoState(BaseState):
     def abrir_tutorial(self) -> None:
         self.tutorial = Tutorial(self.minijuego.id, self.minijuego.contexto)
 
+    def _raton(self, event: pygame.event.Event, juego) -> None:
+        """Los minijuegos de punteria (el mitin): el raton mueve la mira y el clic dispara."""
+        if not getattr(juego, "usa_raton", False):
+            return
+        if event.type == pygame.MOUSEMOTION and (p := pantalla_a_mitin(event.pos)) is not None:
+            juego.accion(f"apuntar:{p[0]:.4f}:{p[1]:.4f}")
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            juego.accion("disparo")
+
     def _tutorial(self, event: pygame.event.Event) -> None:
         t = self.tutorial
+        if t.fase in ("practica", "listo"):
+            self._raton(event, t.juego)
         if event.type == pygame.KEYUP and event.key in TECLAS:
             t.accion("-" + TECLAS[event.key])
         elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
@@ -48,6 +59,8 @@ class MinijuegoState(BaseState):
         if self.tutorial is not None:
             self._tutorial(event)
             return
+        if self.resultado is None and not self.pausado:
+            self._raton(event, self.minijuego)
         if event.type == pygame.KEYUP and event.key in TECLAS and self.resultado is None:
             self.minijuego.accion("-" + TECLAS[event.key])   # soltar: los que se mantienen (moverse, E, girar)
             return
