@@ -3,11 +3,12 @@ import pygame
 
 from post_truth.controllers.base_state import BaseState
 from post_truth.models import guia
+from post_truth.models.tutorial import Tutorial, tiene_tutorial
 from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views import hud
 from post_truth.views.hud import DatosHud
-from post_truth.views.minijuego_view import dibujar_minijuego
+from post_truth.views.minijuego_view import dibujar_minijuego, dibujar_tutorial
 
 TECLAS = {pygame.K_1: "1", pygame.K_2: "2", pygame.K_3: "3", pygame.K_4: "4", pygame.K_SPACE: "espacio",
           pygame.K_LEFT: "izq", pygame.K_a: "izq", pygame.K_RIGHT: "der", pygame.K_d: "der",
@@ -19,10 +20,34 @@ class MinijuegoState(BaseState):
         self.minijuego = self.app.partida.minijuego   # lo creo el mundo con sesion.iniciar_minijuego
         self.resultado = None
         self.pausado = False
+        self.tutorial: Tutorial | None = None
+        vistos = getattr(self.app, "tutoriales_vistos", set())
+        if tiene_tutorial(self.minijuego.id) and self.minijuego.id not in vistos:   # la primera vez: como se juega
+            self.abrir_tutorial()
         m = guia.mensaje(f"minijuego:{self.minijuego.id}", self.app.guias_vistas, self.app.guias)
         self.toast = None if m is None else Anuncio(m[0], m[1], "info", grande=False, duracion=5.0)
 
+    def abrir_tutorial(self) -> None:
+        self.tutorial = Tutorial(self.minijuego.id, self.minijuego.contexto)
+
+    def _tutorial(self, event: pygame.event.Event) -> None:
+        t = self.tutorial
+        if event.type == pygame.KEYUP and event.key in TECLAS:
+            t.accion("-" + TECLAS[event.key])
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+            t.avanzar()
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            t.fase = "fin"
+        elif event.type == pygame.KEYDOWN and event.key in TECLAS:
+            t.accion(TECLAS[event.key])
+        if t.fase == "fin":
+            self.tutorial = None
+            self.app.tutoriales_vistos = getattr(self.app, "tutoriales_vistos", set()) | {self.minijuego.id}
+
     def handle_event(self, event: pygame.event.Event) -> None:
+        if self.tutorial is not None:
+            self._tutorial(event)
+            return
         if event.type == pygame.KEYUP and event.key in TECLAS and self.resultado is None:
             self.minijuego.accion("-" + TECLAS[event.key])   # soltar: los que se mantienen (moverse, E, girar)
             return
@@ -33,6 +58,8 @@ class MinijuegoState(BaseState):
                 self.app.estados.cambiar("mundo", fundido=True)
         elif event.key == pygame.K_p:
             self.pausado = not self.pausado   # accesibilidad: el reloj del minijuego se detiene
+        elif event.key == pygame.K_c and tiene_tutorial(self.minijuego.id):   # volver a ver como se juega
+            self.abrir_tutorial()
         elif not self.pausado and event.key in TECLAS:
             self.minijuego.accion(TECLAS[event.key])
             self._sonar()
@@ -41,6 +68,9 @@ class MinijuegoState(BaseState):
         if self.toast is not None:
             self.toast.avanzar(dt)
             self.toast = None if self.toast.terminado else self.toast
+        if self.tutorial is not None:   # la demo y la practica no gastan el dia ni tocan la partida
+            self.tutorial.update(dt)
+            return
         if self.resultado is not None or self.pausado:
             return
         self.minijuego.update(dt)
@@ -61,6 +91,9 @@ class MinijuegoState(BaseState):
         return hud.minimo(s, s.jugador(self.minijuego.contexto.jugador).credibilidad, "barra")
 
     def draw(self, pantalla: pygame.Surface) -> None:
+        if self.tutorial is not None:
+            dibujar_tutorial(pantalla, self.app.fuentes, self.app.temas.actual, self.tutorial)
+            return
         s = self.app.partida
         dibujar_minijuego(pantalla, self.app.fuentes, self.app.temas.actual, self.minijuego, s.ciudad.as_display_rows(),
                           s.jugador(self.minijuego.contexto.jugador).credibilidad, self.resultado, self.pausado)

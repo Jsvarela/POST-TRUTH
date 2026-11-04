@@ -38,6 +38,12 @@ class RuedaPrensa(Minijuego):
     ayuda = ("Gira el foco (A/D o flechas) hacia el periodista que pregunta y responde con la prueba que pide "
              "cuando el marcador este en la zona verde: 1 pista (triangulo), 2 evidencia (cuadrado), 3 testimonio "
              "(circulo). A una trampa (X), Espacio: no se afirma sin pruebas. Lo que investigaste es tu municion.")
+    pasos_tutorial = ("Un periodista pregunta: su icono dice que prueba pide.",
+                      "Gira el foco con A/D (o las flechas) hasta apuntarle.",
+                      "Mira su barra: el marcador va y vuelve sin parar.",
+                      "Cuando el marcador entra en la zona verde, pulsa la prueba: 1, 2, 3 o Espacio.",
+                      "A destiempo no pierdes la pregunta: el marcador vuelve a pasar.",
+                      "A una trampa (X) responde Espacio: no se afirma sin pruebas.")
 
     def __init__(self, contexto: ContextoMinijuego) -> None:
         super().__init__(contexto)

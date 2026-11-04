@@ -9,7 +9,7 @@ from post_truth.models import rueda_prensa as rp
 from post_truth.models.chat import CALMA_LLENA, CARRILES, FILA_SOFI, Chat
 from post_truth.models.minijuego import Ensayo, Minijuego, ResultadoMinijuego
 from post_truth.models.mitin import COLUMNAS, Mitin
-from post_truth.views.componentes import Fuentes, ajustar_texto, panel, recortar
+from post_truth.views.componentes import Boton, Fuentes, ajustar_texto, panel, recortar
 from post_truth.views.escena_view import _dibujar_consecuencias
 from post_truth.views.theme import Tema
 
@@ -137,6 +137,32 @@ def _dibujar_chat(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Cha
     _medidor(pantalla, fuentes, tema, "Calma (Espacio)", m.calma / CALMA_LLENA)
     _barra_tiempo(pantalla, tema, pygame.Rect(AREA.x, AREA.bottom + px(8), AREA.w, px(8)),
                   max(0.0, 1 - m.t / m.duracion))
+
+
+NOMBRE_TECLA = {"espacio": "Espacio", "disparo": "Clic"}
+
+
+def dibujar_tutorial(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, t) -> None:
+    """"Como se juega": el minijuego de la demo o la practica, con su cartel, el subtitulo y la tecla que toca."""
+    dibujar_minijuego(pantalla, fuentes, tema, t.juego, [], 50, None, False)
+    caja = pygame.Rect(0, 0, px(860), px(72))
+    caja.midtop = (ANCHO // 2, px(121))   # entre el titulo y el area del juego, tapando la ayuda de siempre
+    panel(pantalla, tema, caja, 255, borde=tema.acento)
+    titulo = {"demo": "Como se juega: mira la demostracion", "practica": "Ahora tu: practica sin consecuencias",
+              "listo": "Listo! Ya sabes jugar"}.get(t.fase, "")
+    pantalla.blit(fuentes.normal.render(titulo, True, tema.acento), (caja.x + px(14), caja.y + px(5)))
+    texto = (t.paso if t.fase == "demo" else
+             f"Aciertos: {min(t.aciertos, 3)} de 3" if t.fase == "practica" else "Ya puedes jugar de verdad.")
+    ancho = caja.w - px(160)
+    pantalla.blit(fuentes.chica.render(recortar(texto, fuentes.chica, ancho), True, tema.texto),
+                  (caja.x + px(14), caja.y + px(30)))
+    pie = "Enter: practicar   |   ESC: saltar" if t.fase == "demo" else "Enter: jugar de verdad   |   ESC: saltar"
+    pantalla.blit(fuentes.chica.render(pie, True, tema.texto_off), (caja.x + px(14), caja.y + px(50)))
+    if t.tecla:   # la tecla que acaba de pulsar la demo, como una tecla de verdad
+        tecla = Boton(pygame.Rect(caja.right - px(128), caja.y + px(12), px(112), px(44)),
+                      NOMBRE_TECLA.get(t.tecla, t.tecla), lambda: None)
+        tecla.foco = True
+        tecla.draw(pantalla, fuentes.normal, tema)
 
 
 def _forma_globo(pantalla: pygame.Surface, tema: Tema, tipo: str, centro: tuple[int, int], r: int) -> None:

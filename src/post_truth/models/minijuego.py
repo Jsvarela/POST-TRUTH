@@ -51,6 +51,7 @@ class Minijuego(ABC):
     id = ""
     nombre = ""
     ayuda = ""   # que hacer y con que teclas: se muestra en pantalla
+    pasos_tutorial: tuple[str, ...] = ()   # subtitulos de "Como se juega" (models/tutorial.py); vacio: sin tutorial
 
     def __init__(self, contexto: ContextoMinijuego) -> None:
         self.contexto = contexto
