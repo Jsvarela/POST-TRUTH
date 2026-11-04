@@ -37,7 +37,7 @@ def dibujar_minijuego(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m:
             pantalla.blit(img, img.get_rect(center=pantalla.get_rect().center))
     teclas = {"ensayo": "1-2: responder", "chat": "Flechas o A/D: mover a Sofi   |   Espacio: calma",
               "mitin": "1 dato   2 pregunta   3 calma",
-              "rueda": "A/D o flechas: girar   |   1 pista  2 evidencia  3 testimonio  Espacio: sin pruebas",
+              "rueda": "A/D: girar   |   con el marcador en la zona: 1 pista  2 evidencia  3 testimonio  Espacio",
               "boca": "WASD o flechas: moverte   |   Manten E: convencer"}.get(m.id, "1-3: responder")
     ayuda = "Enter: volver a la calle" if resultado else f"{teclas}   |   P: pausa"
     img = fuentes.chica.render(ayuda, True, tema.texto)
@@ -225,7 +225,7 @@ def _dibujar_rueda(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: rp
     """El atril abajo; los periodistas en semicirculo; el foco gira y el anillo de cada pregunta se cierra."""
     panel(pantalla, tema, AREA, 255)
     atril = (AREA.centerx, AREA.bottom - px(36))
-    radio = px(250)
+    radio = px(228)   # deja arriba el recuadro de la pregunta con su barra
     a = _angulo(m.foco)
     punta = (atril[0] + round(radio * math.cos(a)), atril[1] - round(radio * math.sin(a)))
     pygame.draw.line(pantalla, tema.acento, atril, punta, px(6))                      # el foco
@@ -240,22 +240,19 @@ def _dibujar_rueda(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: rp
         if p is None:
             pygame.draw.circle(pantalla, tema.texto_off, c, px(8))                     # periodista esperando
             continue
-        resto = max(0.0, p[3] / p[4])
-        color = tema.malo if resto < 0.35 else tema.acento
-        caja = pygame.Rect(0, 0, px(72), px(72))
-        caja.center = c
-        pygame.draw.arc(pantalla, color, caja, math.pi / 2, math.pi / 2 + 2 * math.pi * resto, px(6))   # su tiempo
         _icono_prueba(pantalla, tema, p[1], c, px(16))
+        _qte(pantalla, tema, m, p, pygame.Rect(c[0] - px(40), c[1] + px(36), px(80), px(10)))
         if p is apuntada:
             pygame.draw.circle(pantalla, tema.texto, c, px(38), px(3))
     pygame.draw.circle(pantalla, tema.boton, atril, px(22))
     img = fuentes.chica.render("Tu", True, tema.boton_texto)
     pantalla.blit(img, img.get_rect(center=atril))
-    if apuntada is not None:                                                         # lo que pregunta el apuntado
-        caja = pygame.Rect(AREA.x + px(16), AREA.y + px(10), AREA.w - px(32), px(32))
+    if apuntada is not None:                                       # lo que pregunta el apuntado y su barra en grande
+        caja = pygame.Rect(AREA.x + px(16), AREA.y + px(8), AREA.w - px(32), px(50))
         pygame.draw.rect(pantalla, tema.fondo, caja)
         img = _texto_corto(fuentes, apuntada[2], caja.w - px(20), tema.texto)
-        pantalla.blit(img, img.get_rect(center=caja.center))
+        pantalla.blit(img, img.get_rect(midtop=(caja.centerx, caja.y + px(4))))
+        _qte(pantalla, tema, m, apuntada, pygame.Rect(caja.centerx - px(180), caja.bottom - px(16), px(360), px(10)))
     leyenda = pygame.Rect(AREA.x, AREA.bottom + px(22), AREA.w, px(24))
     for i, (tipo, nombre) in enumerate((("pista", f"1 pista x{m.municion['pista']}"),
                                         ("evidencia", f"2 evidencia x{m.municion['evidencia']}"),
@@ -267,7 +264,19 @@ def _dibujar_rueda(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: rp
     _contador(pantalla, fuentes, tema, "Tu municion es lo que investigaste: cada respuesta gasta una prueba")
     _medidor(pantalla, fuentes, tema, "Credito ante la prensa", m.credito / 100)
     _barra_tiempo(pantalla, tema, pygame.Rect(AREA.x, AREA.bottom + px(8), AREA.w, px(8)),
-                  max(0.0, 1 - m.t / m.duracion))
+                  1 - m.respondidas / m.total)                     # sin reloj: lo que falta por responder
+
+
+def _qte(pantalla: pygame.Surface, tema: Tema, m: rp.RuedaPrensa, p: list, barra: pygame.Rect) -> None:
+    """Quick time event: la zona (bueno) y el marcador que va y vuelve; dentro, la tecla cuenta."""
+    pygame.draw.rect(pantalla, tema.panel, barra)
+    pygame.draw.rect(pantalla, tema.borde, barra, px(2))
+    zona = pygame.Rect(0, barra.y, round(barra.w * m.ancho_zona), barra.h)
+    zona.centerx = barra.x + round(barra.w * p[4])
+    pygame.draw.rect(pantalla, tema.bueno, zona)
+    x = barra.x + round(barra.w * m.marcador(p))
+    color = tema.texto if m.en_zona(p) else tema.malo
+    pygame.draw.rect(pantalla, color, (x - px(3), barra.y - px(4), px(6), barra.h + px(8)))   # forma: barra vertical
 
 
 ALTO_BARRIO = AREA.h - px(150)   # el barrio arriba; abajo queda el cuadro de la charla

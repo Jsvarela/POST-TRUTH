@@ -1,9 +1,10 @@
-"""Minijuego de la Alcaldia, "Rueda de prensa" (de accion): cinco periodistas en semicirculo. Uno se ilumina con
-una pregunta y un anillo que se cierra (su tiempo); su icono dice que prueba pide: pista (triangulo), evidencia
-(cuadrado), testimonio (circulo) o es una trampa (X). Se gira el foco (A/D o flechas) hacia el y se responde con
-1 pista, 2 evidencia, 3 testimonio o Espacio "no puedo afirmarlo sin pruebas". Lo investigado es la MUNICION: cada
-respuesta gasta una prueba de ese tipo, y sin ella no hay que responder. Con tiempo extendido los anillos van mas
-lentos y nunca preguntan dos a la vez."""
+"""Minijuego "Rueda de prensa" (de accion, con quick time event): cinco periodistas en semicirculo. Uno pregunta y su
+icono dice que prueba pide: pista (triangulo), evidencia (cuadrado), testimonio (circulo) o es una trampa (X). Se
+gira el foco (A/D o flechas) hacia el y se responde con 1 pista, 2 evidencia, 3 testimonio o Espacio "no puedo
+afirmarlo sin pruebas", pero SOLO cuenta si se pulsa cuando el marcador que va y vuelve por su barra esta dentro de
+la zona marcada. Sin reloj por pregunta: a destiempo cuesta un poco de credito y el marcador vuelve a pasar. Termina
+tras `total` respuestas. Lo investigado es la MUNICION: cada respuesta gasta una prueba de ese tipo. Con tiempo
+extendido la zona es mas ancha, el marcador mas lento y nunca preguntan dos a la vez."""
 from __future__ import annotations
 
 import json
@@ -34,9 +35,9 @@ def posicion(i: int) -> float:
 class RuedaPrensa(Minijuego):
     id = "rueda"
     nombre = "Rueda de prensa"
-    ayuda = ("Gira el foco (A/D o flechas) hacia el periodista que pregunta y responde con la prueba que pide: "
-             "1 pista (triangulo), 2 evidencia (cuadrado), 3 testimonio (circulo). A una trampa (X), Espacio: "
-             "no se afirma sin pruebas. Lo que investigaste es tu municion.")
+    ayuda = ("Gira el foco (A/D o flechas) hacia el periodista que pregunta y responde con la prueba que pide "
+             "cuando el marcador este en la zona verde: 1 pista (triangulo), 2 evidencia (cuadrado), 3 testimonio "
+             "(circulo). A una trampa (X), Espacio: no se afirma sin pruebas. Lo que investigaste es tu municion.")
 
     def __init__(self, contexto: ContextoMinijuego) -> None:
         super().__init__(contexto)
@@ -44,18 +45,39 @@ class RuedaPrensa(Minijuego):
         self.municion = {t: int(contexto.municion.get(t, 0)) for t in TIPOS.values()}
         self.foco = 0.0                  # -1 .. 1
         self.giro: set[str] = set()
-        self.preguntas: list[list] = []  # [periodista, tipo, texto, restante, total]
+        self.preguntas: list[list] = []  # [periodista, tipo, texto, fase (s), centro de la zona 0..1]
         self.resultados: list[str] = []
         self.credito = float(datos()["credito_inicial"])
         self.t, self._proxima = 0.0, 0.8
 
     @property
-    def duracion(self) -> float:
-        return datos()["duracion"]
+    def respondidas(self) -> int:
+        return sum(1 for r in self.resultados if r not in ("a_destiempo", "al_aire"))
+
+    @property
+    def total(self) -> int:
+        return datos()["qte"]["total"]
 
     @property
     def a_la_vez(self) -> int:
-        return 1 if self.contexto.extendido or self.t < datos()["doble_desde"] else 2
+        return 1 if self.contexto.extendido or self.respondidas < datos()["doble_desde"] else 2
+
+    @property
+    def periodo(self) -> float:
+        """Segundos que tarda el marcador en cruzar la barra (va y vuelve)."""
+        return datos()["qte"]["periodo"] * self.contexto.ritmo
+
+    @property
+    def ancho_zona(self) -> float:
+        return datos()["qte"]["zona"] * (1.6 if self.contexto.extendido else 1.0)
+
+    def marcador(self, p: list) -> float:
+        """0..1: donde va el marcador de esa pregunta (rebota en los extremos)."""
+        x = (p[3] / self.periodo) % 2
+        return x if x <= 1 else 2 - x
+
+    def en_zona(self, p: list) -> bool:
+        return abs(self.marcador(p) - p[4]) <= self.ancho_zona / 2
 
     def update(self, dt: float) -> None:
         if self.terminado:
@@ -64,21 +86,16 @@ class RuedaPrensa(Minijuego):
         sentido = ("der" in self.giro) - ("izq" in self.giro)
         self.foco = min(1.0, max(-1.0, self.foco + sentido * datos()["giro"] * dt))
         self._proxima -= dt
-        if self._proxima <= 0 and len(self.preguntas) < self.a_la_vez and self.t < self.duracion - 2:
+        faltan = self.total - self.respondidas - len(self.preguntas)
+        if self._proxima <= 0 and len(self.preguntas) < self.a_la_vez and faltan > 0:
             libres = [i for i in range(PERIODISTAS) if i not in {p[0] for p in self.preguntas}]
             tipo = self.rng.choice((*TIPOS.values(), TRAMPA))
-            total = datos()["tiempo_pregunta"] * self.contexto.ritmo
+            media = self.ancho_zona / 2
             self.preguntas.append([self.rng.choice(libres), tipo, self.rng.choice(datos()["preguntas"][tipo]),
-                                   total, total])
+                                   0.0, round(self.rng.uniform(media + 0.05, 1 - media - 0.05), 3)])
             self._proxima = datos()["intervalo"] * self.contexto.ritmo
-        quedan = []
-        for p in self.preguntas:
-            p[3] -= dt
-            if p[3] <= 0:              # nadie respondio: parece que evade
-                self._marcar("evade")
-            else:
-                quedan.append(p)
-        self.preguntas = quedan
+        for p in self.preguntas:   # sin reloj: el marcador solo avanza
+            p[3] += dt
 
     def apuntada(self) -> list | None:
         """La pregunta del periodista hacia el que mira el foco (si esta lo bastante cerca)."""
@@ -99,6 +116,9 @@ class RuedaPrensa(Minijuego):
         if p is None:                  # responder al aire: nadie preguntaba ahi
             self._marcar("al_aire")
             return
+        if not self.en_zona(p):        # a destiempo: cuesta poco y el marcador vuelve a pasar
+            self._marcar("a_destiempo")
+            return
         self.preguntas.remove(p)
         pide = p[1]
         if nombre == "espacio":        # "no puedo afirmarlo sin pruebas"
@@ -116,6 +136,19 @@ class RuedaPrensa(Minijuego):
             self.municion[tipo] -= 1
             self._marcar("acierto")
 
+    def demo(self) -> list[str]:
+        """Gira hacia la primera pregunta y responde cuando el marcador entra en la zona."""
+        if not self.preguntas:
+            return ["-izq", "-der"]
+        p = self.preguntas[0]
+        falta = posicion(p[0]) - self.foco
+        if abs(falta) > datos()["tolerancia"] / 2:
+            return ["-izq", "der"] if falta > 0 else ["-der", "izq"]
+        if not self.en_zona(p):
+            return ["-izq", "-der"]
+        tecla = next(k for k, v in TIPOS.items() if v == p[1]) if p[1] != TRAMPA else "espacio"
+        return ["-izq", "-der", tecla if p[1] == TRAMPA or self.municion[p[1]] else "espacio"]
+
     def _marcar(self, como: str) -> None:
         self.ecos.append("acierto" if datos()["efectos"][como] > 0 else "error")
         self.resultados.append(como)
@@ -123,12 +156,12 @@ class RuedaPrensa(Minijuego):
 
     @property
     def terminado(self) -> bool:
-        return self.t >= self.duracion
+        return self.respondidas >= self.total
 
     def resultado(self) -> ResultadoMinijuego:
         buenas = self.resultados.count("acierto") + self.resultados.count("trampa_bien")
         afirmo = self.resultados.count("afirmo")
-        malas = len(self.resultados) - buenas - self.resultados.count("honesto")
+        malas = self.respondidas - buenas - self.resultados.count("honesto")
         impacto = Impact(trust=buenas // 2 - afirmo, verified_information=self.resultados.count("acierto") // 2,
                          misinformation=afirmo, score=buenas - malas)
         texto = f"Respondiste bien {buenas} preguntas; {malas} salieron mal (credito ante la prensa {round(self.credito)})."

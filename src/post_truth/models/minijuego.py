@@ -76,6 +76,20 @@ class Minijuego(ABC):
     @abstractmethod
     def restaurar(self, estado: dict) -> None: ...
 
+    def demo(self) -> list[str]:
+        """Lo que haria ahora quien sabe jugar (acciones para `accion`): la demostracion de "Como se juega" y los
+        bots. Por defecto nada: el minijuego termina solo con el tiempo."""
+        return []
+
+    def jugar_solo(self, dt: float = 0.1, maximo: float = 600.0) -> None:
+        """Hasta terminar, con la demostracion (pruebas y bots)."""
+        t = 0.0
+        while not self.terminado and t < maximo:
+            for a in self.demo():
+                self.accion(a)
+            self.update(dt)
+            t += dt
+
     def to_dict(self) -> dict:
         return {"id": self.id, "contexto": self.contexto.to_dict(), "estado": self.estado()}
 
