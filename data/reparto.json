@@ -11,7 +11,9 @@
     "peinado": "corto",
     "accesorio": "corbata",
     "color": 0
-   }
+   },
+   "genero": "HOMBRE",
+   "variante": 0
   },
   {
    "id": "maria",
@@ -24,7 +26,9 @@
     "peinado": "largo",
     "accesorio": "aretes",
     "color": 2
-   }
+   },
+   "genero": "MUJER",
+   "variante": 0
   },
   {
    "id": "andres",
@@ -37,7 +41,9 @@
     "peinado": "rizado",
     "accesorio": "lentes",
     "color": 3
-   }
+   },
+   "genero": "HOMBRE",
+   "variante": 1
   },
   {
    "id": "lucia",
@@ -50,7 +56,9 @@
     "peinado": "recogido",
     "accesorio": "bufanda",
     "color": 1
-   }
+   },
+   "genero": "MUJER",
+   "variante": 1
   }
  ]
 }

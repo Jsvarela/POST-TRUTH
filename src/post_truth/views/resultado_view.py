@@ -43,7 +43,7 @@ def dibujar_resultado(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, r:
         x = x0 + i * ancho_col + ancho_col // 2
         gano = c.id == r.ganador and progreso >= 1   # el ganador se revela al terminar el conteo
         retrato = pygame.Rect(x - px(55), px(100), px(110), px(130))
-        dibujar_retrato(pantalla, c.aspecto, tema, retrato)
+        dibujar_retrato(pantalla, c.personaje, tema, retrato)
         alto = round(px(160) * r.votos[c.id] / max(r.votos.values()) * progreso)   # la mas alta llena la columna
         barra = pygame.Rect(x - px(30), base - alto, px(60), alto)
         pygame.draw.rect(pantalla, tema.acento if gano else tema.borde, barra)

@@ -74,7 +74,7 @@ def pista_con_tecla(evento: NewsEvent, letra: str) -> Pista | None:
 def _avatar(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, avatar: Avatar, nombre: str,
             rect: pygame.Rect) -> None:
     if avatar.tipo == "retrato" and avatar.aspecto is not None:
-        dibujar_retrato(pantalla, avatar.aspecto, tema, rect)
+        dibujar_retrato(pantalla, avatar.personaje, tema, rect, fondo=tema.rol[avatar.color])
     elif avatar.tipo == "anonimo":
         pygame.draw.circle(pantalla, tema.borde, rect.center, rect.width // 2)
         pygame.draw.circle(pantalla, tema.panel, (rect.centerx, rect.centery - px(5)), rect.width // 5)

@@ -1,75 +1,16 @@
-"""Vista: retratos de busto de los candidatos, dibujados con formas de Pygame."""
-import math
-
+"""Vista: retratos con el sprite pixel del personaje, en un marco pixel (L5: reemplaza el busto vectorial)."""
 import pygame
 
-from post_truth.models.reparto import AspectoRetrato
+from post_truth.config import px
+from post_truth.models.personaje import Personaje
+from post_truth.views.arte_mundo import ARTE_PIXEL
+from post_truth.views.componentes import marco_pixel
 from post_truth.views.theme import Tema
 
-ANCHO_U, ALTO_U = 100, 120
 
-
-def dibujar_retrato(pantalla: pygame.Surface, aspecto: AspectoRetrato, tema: Tema,
-                    rect: pygame.Rect) -> None:
-    s = min(rect.width / ANCHO_U, rect.height / ALTO_U)
-    ox = rect.centerx - ANCHO_U * s / 2
-    oy = rect.bottom - ALTO_U * s
-
-    def p(x: float, y: float) -> tuple[int, int]:
-        return round(ox + x * s), round(oy + y * s)
-
-    def r(x: float, y: float, w: float, h: float) -> pygame.Rect:
-        return pygame.Rect(round(ox + x * s), round(oy + y * s), round(w * s), round(h * s))
-
-    marco = r(0, 0, ANCHO_U, ALTO_U)
-    piel = tema.piel[aspecto.piel]
-    pelo = tema.cabello[aspecto.cabello]
-    campana = tema.rol[aspecto.color]
-    ancho_linea = max(2, round(2 * s))
-
-    pygame.draw.rect(pantalla, campana, marco)
-    clip_previo = pantalla.get_clip()
-    pantalla.set_clip(marco)
-
-    if aspecto.peinado == "largo":
-        pygame.draw.rect(pantalla, pelo, r(25, 28, 50, 64))
-    elif aspecto.peinado == "recogido":
-        pygame.draw.circle(pantalla, pelo, p(50, 17), round(10 * s))
-
-    pygame.draw.ellipse(pantalla, tema.edificio, r(8, 88, 84, 64))
-    pygame.draw.ellipse(pantalla, tema.borde, r(8, 88, 84, 64), ancho_linea)
-    pygame.draw.rect(pantalla, piel, r(43, 68, 14, 24))
-    pygame.draw.circle(pantalla, piel, p(50, 48), round(21 * s))
-
-    if aspecto.peinado == "rizado":
-        for cx, cy, rad in ((34, 32, 9), (44, 25, 10), (56, 25, 10), (66, 32, 9), (30, 44, 7), (70, 44, 7)):   # geometria: no es un color
-            pygame.draw.circle(pantalla, pelo, p(cx, cy), round(rad * s))
-    else:
-        pygame.draw.ellipse(pantalla, pelo, r(28, 24, 44, 24))
-        if aspecto.peinado == "corto":
-            pygame.draw.rect(pantalla, pelo, r(28, 34, 5, 10))
-            pygame.draw.rect(pantalla, pelo, r(67, 34, 5, 10))
-
-    if aspecto.accesorio == "barba":
-        pygame.draw.polygon(pantalla, pelo, [p(32, 54), p(68, 54), p(64, 72), p(50, 78), p(36, 72)])
-
-    for ex in (42, 58):
-        pygame.draw.circle(pantalla, tema.fondo, p(ex, 50), max(2, round(2.4 * s)))
-    pygame.draw.arc(pantalla, tema.fondo, r(43, 55, 14, 9), math.pi, 2 * math.pi, ancho_linea)
-
-    if aspecto.accesorio == "corbata":
-        pygame.draw.polygon(pantalla, tema.texto, [p(40, 90), p(50, 98), p(60, 90), p(50, 86)])
-        pygame.draw.polygon(pantalla, tema.acento, [p(50, 94), p(45, 102), p(50, 118), p(55, 102)])
-    elif aspecto.accesorio == "aretes":
-        for ax in (28.5, 71.5):
-            pygame.draw.circle(pantalla, tema.detalle, p(ax, 58), round(3.2 * s))
-    elif aspecto.accesorio == "lentes":
-        for ex in (42, 58):
-            pygame.draw.circle(pantalla, tema.texto, p(ex, 50), round(7.5 * s), ancho_linea)
-        pygame.draw.line(pantalla, tema.texto, p(49, 50), p(51, 50), ancho_linea)
-    elif aspecto.accesorio == "bufanda":
-        pygame.draw.rect(pantalla, tema.acento, r(32, 82, 36, 11))
-        pygame.draw.rect(pantalla, tema.acento, r(56, 88, 10, 26))
-
-    pantalla.set_clip(clip_previo)
-    pygame.draw.rect(pantalla, tema.borde, marco, width=max(2, round(3 * s)))
+def dibujar_retrato(pantalla: pygame.Surface, personaje: Personaje, tema: Tema, rect: pygame.Rect,
+                    fondo=None, borde=None) -> None:
+    marco_pixel(pantalla, tema, rect, relleno=fondo, borde=borde)
+    margen = max(px(4), rect.h // 10)
+    ARTE_PIXEL.personaje(pantalla, tema, (rect.centerx, rect.bottom - margen), rect.h - 2 * margen, personaje,
+                         "idle_abajo", 0)

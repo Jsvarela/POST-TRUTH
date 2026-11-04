@@ -37,13 +37,21 @@ class Candidato:
     lema: str
     propuesta: str
     aspecto: AspectoRetrato
+    genero: str = "MUJER"   # su sprite pixel (el mismo de las cinematicas)
+    variante: int = 0
+
+    @property
+    def personaje(self):
+        from post_truth.models.dominio import Role   # aqui: dominio importa publicacion, que importa este modulo
+        from post_truth.models.personaje import Genero, Personaje
+        return Personaje(Role.CANDIDATE, Genero[self.genero], self.variante)
 
 
 @lru_cache(maxsize=1)
 def candidatos() -> tuple[Candidato, ...]:
     with RUTA_REPARTO.open("r", encoding="utf-8") as f:
-        return tuple(Candidato(c["id"], c["nombre"], c["lema"], c["propuesta"], AspectoRetrato(**c["aspecto"]))
-                     for c in json.load(f)["candidatos"])
+        return tuple(Candidato(c["id"], c["nombre"], c["lema"], c["propuesta"], AspectoRetrato(**c["aspecto"]),
+                               c.get("genero", "MUJER"), c.get("variante", 0)) for c in json.load(f)["candidatos"])
 
 
 def candidato(id: str) -> Candidato:

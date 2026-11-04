@@ -10,6 +10,7 @@ from post_truth.models.personaje import Genero, Personaje
 from post_truth.views.arte_mundo import ARTE_PIXEL
 from post_truth.views.componentes import CajaDialogo, Fuentes, marco_pixel, panel
 from post_truth.views.mundo_view import EstadoMundo, dibujar_mundo
+from post_truth.views.retrato_view import dibujar_retrato
 from post_truth.views.theme import NEGRO, TOKENS, Tema, esp
 
 FRANJA = px(64)
@@ -64,9 +65,7 @@ def _dialogo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, i: Interpre
     x = esp(4)
     cuadro = pygame.Rect(x, abajo - RETRATO, RETRATO, RETRATO)
     if actor is not None:   # retrato: el mismo sprite del actor, en grande
-        marco_pixel(pantalla, tema, cuadro, borde=tema.acento)
-        ARTE_PIXEL.personaje(pantalla, tema, (cuadro.centerx, cuadro.bottom - px(10)), RETRATO - px(24),
-                             personaje(actor), "idle_abajo", 0)
+        dibujar_retrato(pantalla, personaje(actor), tema, cuadro, borde=tema.acento)
         x = cuadro.right + esp(2)
     caja = CajaDialogo(pygame.Rect(x, abajo - RETRATO, ancho - x - esp(4), RETRATO))
     caja.set_texto(d["texto"], d["quien"])

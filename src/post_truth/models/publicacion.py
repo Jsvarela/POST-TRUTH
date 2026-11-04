@@ -24,6 +24,15 @@ class Avatar:
         if self.tipo == "retrato" and self.aspecto is None:
             raise ValueError("Un avatar de tipo retrato necesita aspecto")
 
+    @property
+    def personaje(self):
+        """El sprite pixel del autor, sacado de su aspecto: el color es el rol y el peinado el genero."""
+        from post_truth.models.dominio import Role   # aqui: dominio importa este modulo
+        from post_truth.models.personaje import APARIENCIAS, Genero, Personaje
+        a = self.aspecto
+        genero = Genero.MUJER if a is not None and a.peinado in ("largo", "recogido") else Genero.HOMBRE
+        return Personaje(list(Role)[self.color], genero, (a.piel if a is not None else 0) % APARIENCIAS)
+
     def to_dict(self) -> dict:
         d: dict = {"tipo": self.tipo, "color": self.color}
         if self.aspecto is not None:
