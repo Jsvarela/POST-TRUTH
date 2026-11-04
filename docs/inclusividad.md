@@ -53,8 +53,11 @@ formas" de la ayuda las dibuja todas:
 Multiplica por 1.5 la duracion del dia, el reloj de las publicaciones virales y los tiempos de los minijuegos:
 
 - Chat: los mensajes caen mas lento.
-- Mitin: los globos suben mas lento.
-- Rueda de prensa: los anillos de cada pregunta duran mas y nunca preguntan dos periodistas a la vez.
+- Mitin (de disparos): los globos suben mas lento y el area de impacto es mas grande.
+- Rueda de prensa (quick time event): el marcador va mas lento, la zona donde la respuesta cuenta es mas ancha y
+  nunca preguntan dos periodistas a la vez. No hay reloj por pregunta: a destiempo el marcador vuelve a pasar.
+- Antes de la rueda y del mitin, "Como se juega": una demostracion que el juego hace solo y una practica sin
+  consecuencias, saltable con ESC y repetible con C.
 - De boca en boca: el chisme salta y vuelve a entrar mas lento.
 - Telefono: el escudo es mas grande y el rumor avanza al mismo ritmo relativo.
 

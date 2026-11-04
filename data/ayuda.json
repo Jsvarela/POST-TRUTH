@@ -50,8 +50,10 @@
   {"id": "minijuegos", "titulo": "Minijuegos", "texto": [
    "Cada dia se juega el minijuego del lugar que toca la historia; P pausa.",
    "- Colegio, chat: los mensajes caen por 3 carriles. Atrapa el apoyo (circulo) y esquiva los ataques (triangulo) con A/D o flechas. Con 3 apoyos, Espacio borra los ataques.",
-   "- Plaza, mitin: los rumores suben como globos. Revientalos con su respuesta: 1 dato (cuadrado, necesita evidencia), 2 pregunta (circulo), 3 calma (triangulo).",
-   "- Alcaldia, rueda de prensa: gira el foco (A/D) hacia quien pregunta y responde con la prueba que pide: 1 pista, 2 evidencia, 3 testimonio. A una trampa (X), Espacio: no se afirma sin pruebas. Lo que investigaste es tu municion.",
+   "- Mitin (Plaza; el del dia 4, frente a la Registraduria): los rumores suben zigzagueando como globos. Apunta con el raton o WASD, elige la municion que pide su forma (1 dato cuadrado, necesita evidencia; 2 pregunta circulo; 3 calma triangulo) y dispara con clic o Espacio. El disparo tarda en llegar: adelantate. La municion equivocada rebota.",
+   "- Rueda de prensa (Alcaldia; el debate del dia 2, en el Auditorio): gira el foco (A/D) hacia quien pregunta y responde con la prueba que pide (1 pista, 2 evidencia, 3 testimonio; Espacio a una trampa X) cuando el marcador de su barra este en la zona verde. No hay reloj por pregunta: a destiempo el marcador vuelve a pasar. Lo que investigaste es tu municion.",
+   "- La primera vez, la rueda y el mitin empiezan con Como se juega: una demostracion y una practica sin consecuencias. C la vuelve a abrir.",
+   "- Si las calles cerradas dejan sin camino el lugar del minijuego, no llegas: cuenta como perdido y el rumor se riega.",
    "- Barrio, de boca en boca: corre (WASD) hasta quien cree el chisme y manten E cerca. Con evidencia o credibilidad convences mas rapido; si sueltas un argumento debil, se enoja."]},
   {"id": "calle", "titulo": "Encuentros en la calle", "texto": [
    "Por la ciudad caminan ciudadanos de zona en zona, por el camino mas corto y sin cruzar calles cerradas. La mayoria solo pasa.",
@@ -77,6 +79,7 @@
    "- Lo que se decidio: compartir un rumor falso sobre un candidato le quita apoyo injustamente; verificarlo o reportarlo lo protege.",
    "- Como quedo la ciudad: cada candidato gana con una ciudad distinta (menos conflictos, mas convivencia, mas bienestar o mas informacion verificada y confianza).",
    "La pantalla final cuenta los votos, dice si un rumor falso cambio al ganador y muestra el puntaje de la ciudad y de cada jugador.",
+   "Despues, Enter abre Asi decidiste la eleccion: dia por dia, que hiciste con cada rumor, si estuvo bien o mal y por que, a que candidato afecto y como cambio la ciudad.",
    "Ganas cuando la ciudad termina sana y ningun rumor decidio la eleccion."]},
   {"id": "multijugador", "titulo": "Multijugador", "texto": [
    "De 2 a 4 jugadores en red local. Un equipo abre el servidor; cada jugador elige Multijugador en el menu (R) y escribe la IP y el puerto.",
@@ -85,7 +88,7 @@
   {"id": "accesibilidad", "titulo": "Accesibilidad", "texto": [
    "En Opciones del menu (O):",
    "- Tema: normal, alto contraste o daltonismo. Ademas del color, todo se distingue por forma.",
-   "- Tiempo extendido (tambien X en el menu): dias, relojes y minijuegos {factor} veces mas largos; en la rueda nunca preguntan dos a la vez.",
+   "- Tiempo extendido (tambien X en el menu): dias, relojes y minijuegos {factor} veces mas largos; en la rueda la zona del marcador es mas ancha y nunca preguntan dos a la vez; en el mitin los globos suben mas lento y es mas facil darles.",
    "- Volumen general, volumen de los pasos y silencio. Cada sonido tiene su aviso en pantalla.",
    "- Mensajes guia: pistas cortas la primera vez que pasa algo.",
    "- Avance manual: en las cinematicas el dialogo solo avanza con Enter, a tu ritmo. ESC salta la escena entera.",
