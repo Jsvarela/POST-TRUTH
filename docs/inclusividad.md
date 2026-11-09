@@ -18,6 +18,9 @@ esta en el codigo. Todo se configura en **Opciones** del menu principal (tecla O
 | Ayuda completa (F2) | Dudas sobre reglas o controles en cualquier momento; memoria de trabajo | F2 en cualquier pantalla (pausa el juego) o Ayuda en el menu | `controllers/ayuda.py`, `data/ayuda.json` |
 | Mensajes guia de la primera vez | Carga cognitiva, jugadores nuevos | Opciones > Mensajes guia (Si/No) | `models/guia.py` |
 | Teclado completo y raton | Distintas formas de controlar: solo teclado, raton para los menus y el telefono | Siempre activo | Controladores |
+| Cinematicas saltables y a ritmo propio | Lectura lenta, ansiedad ante texto que avanza solo, quien ya conoce la historia | Enter avanza, ESC salta la escena; Opciones > Avance manual | `controllers/cinematica_state.py`, `models/cinematica.py` |
+| Un paso a la vez | Carga cognitiva, atencion dividida | Siempre activo: cada dia muestra un solo objetivo y nada corre mientras se camina | `models/director.py` |
+| "Como se juega" con practica | Aprender un control nuevo sin presion | Antes de la rueda y el mitin; C lo repite, ESC lo salta | `models/tutorial.py` |
 | Juego sin texto obligatorio bajo presion | Lectura lenta | Los relojes se alargan con tiempo extendido; las instrucciones quedan a la vista en cada minijuego | `views/minijuego_view.py` |
 
 ## Alto contraste
@@ -69,6 +72,26 @@ vez con teclado. No cambia lo que se aprende, solo el ritmo.
 P pausa cualquier minijuego (en el modo individual tambien se detiene el reloj del dia). Las ventanas de ayuda (F2)
 y de sustentacion (F1) pausan el juego entero mientras estan abiertas. Ninguna mecanica exige pulsar al compas: el
 mitin y la rueda piden reaccionar a lo que aparece, y el tiempo extendido les da margen.
+
+## Un paso a la vez y cinematicas
+
+Cada dia es un capitulo con pasos en orden (escena de apertura, ir al lugar, la noticia, defender la red, el
+minijuego, escena de cierre). Solo hay un objetivo a la vez, escrito arriba y con una flecha que apunta al lugar;
+nada se propaga mientras se camina y las herramientas (habilidad, aliados, publicar) aparecen solo en el paso donde
+sirven, con un aviso. Esto baja la carga cognitiva: no hay que vigilar varias cosas al mismo tiempo.
+
+Las cinematicas son texto en cajas de dialogo, dibujadas en el motor:
+
+- Enter muestra todo el texto de la linea o pasa a la siguiente; ESC salta la escena entera.
+- Con **Avance manual** (Opciones) el dialogo nunca avanza solo: cada quien lee a su ritmo.
+- Cada linea dice quien habla y lleva su retrato, asi se sigue la conversacion sin depender del sonido.
+- En multijugador cada jugador avanza o salta la escena en su equipo; el dia sigue cuando todos terminaron (o tras
+  90 segundos), asi nadie tiene que leer al ritmo de otro.
+
+## Multijugador
+
+Cada dia un jugador decide la noticia y juega el minijuego; los demas pueden verlo en vivo desde el lugar ("Ver a X
+jugar") en vez de esperar sin saber que pasa. El tiempo extendido de cada equipo sigue valiendo en sus minijuegos.
 
 ## Sonido y sus avisos visuales
 
