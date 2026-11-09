@@ -22,6 +22,7 @@ from post_truth.views import hud
 from post_truth.views.hud import DatosHud
 from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
+from post_truth.views.componentes import Modal
 from post_truth.views.decorado import generar as generar_decorado
 from post_truth.views.mundo_view import RECT_MINIMAPA, Camara, EstadoMundo, dibujar_mundo
 from post_truth.views.roles_view import dibujar_habilidad, dibujar_menu_aliados
@@ -59,6 +60,7 @@ class MundoState(BaseState):
         self.anuncio: Anuncio | None = None   # grande, en el centro (el nuevo dia)
         self.toast: Anuncio | None = None     # corto, arriba
         self.pausa = False          # P: minimapa, indicadores y teclas con el mundo quieto (L2)
+        self.menu_pausa: Modal | None = None   # P o ESC: seguir, ayuda o salir (salir se confirma)
         self.paso_visto = ""        # el paso del dia que ya se aviso
         self.menu_aliados = False   # Y: pedir ayuda a los aliados
         self.otros: dict[str, tuple[tuple[float, float], AnimacionPersonaje]] = {}   # multijugador: los demas
@@ -137,8 +139,7 @@ class MundoState(BaseState):
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if self.pausa:
-            if event.type == pygame.KEYDOWN and event.key in (pygame.K_p, pygame.K_ESCAPE):
-                self.pausa = False
+            self._en_pausa(event)
             return
         if event.type == pygame.KEYDOWN:
             era, self.menu_aliados, aviso = roles_teclas.tecla(self.sesion, self.menu_aliados, event.key)
@@ -146,10 +147,8 @@ class MundoState(BaseState):
                 self._avisar(aviso[1], aviso[0], aviso[2])
             if era:
                 return
-            if event.key == pygame.K_ESCAPE:
-                self.app.salir_de_red()
-                self.app.partida = None
-                self.app.estados.cambiar("menu")
+            if event.key in (pygame.K_ESCAPE, pygame.K_p):
+                self.pausar()
             elif event.key in DIRECCIONES:
                 self.presionadas.add(event.key)
             elif event.key == pygame.K_e:
@@ -162,17 +161,57 @@ class MundoState(BaseState):
                 self.guia = not self.guia
             elif event.key == pygame.K_F3:
                 self.depuracion = not self.depuracion
-            elif event.key == pygame.K_p:
-                self.presionadas.clear()
-                self.pausa = True
         elif event.type == pygame.KEYUP:
             self.presionadas.discard(event.key)
             if event.key == pygame.K_e and self.charlando is not None:
                 self.charlando = None
                 self._fin_charla(self.sesion.soltar(self.jugador_id))
 
+    def pausar(self, confirmar: bool = False) -> None:
+        self.presionadas.clear()
+        self.pausa = True
+        if confirmar:   # la opcion segura va primero: Enter no borra la partida
+            self.menu_pausa = Modal("Salir de la partida?", "Volveras al menu y se perdera lo que llevas de la "
+                                    "campaña.", ("No, seguir", "Si, salir"), tipo="malo")
+        else:
+            texto = ("En red el dia sigue para los demas." if getattr(self.sesion, "en_red", False)
+                     else "El dia esta detenido.") + " Arriba ves los indicadores y el mapa."
+            self.menu_pausa = Modal("Pausa", texto, ("Seguir", "Ayuda", "Salir al menu"))
+        self.menu_pausa.bajar = px(90)   # debajo de los indicadores
+
+    def _en_pausa(self, event: pygame.event.Event) -> None:
+        confirmando = self.menu_pausa is not None and len(self.menu_pausa.botones) == 2
+        if event.type == pygame.KEYDOWN and event.key in (pygame.K_p, pygame.K_ESCAPE):
+            if confirmando:
+                self.pausar()   # ESC en la confirmacion vuelve a la pausa
+            else:
+                self.pausa, self.menu_pausa = False, None
+            return
+        if self.menu_pausa is None:
+            return
+        elegido = self.menu_pausa.handle_event(event)
+        if elegido is None:
+            return
+        if confirmando:
+            if elegido == 1:
+                self.pausa, self.menu_pausa = False, None
+                self.app.salir_de_red()
+                self.app.partida = None
+                self.app.estados.cambiar("menu")
+            else:
+                self.pausa, self.menu_pausa = False, None
+        elif elegido == 0:
+            self.pausa, self.menu_pausa = False, None
+        elif elegido == 1:
+            self.menu_pausa.elegido = None
+            self.app.estados.ayuda.abrir()
+        else:
+            self.pausar(confirmar=True)
+
     def update(self, dt: float) -> None:
         if self.pausa:
+            if self.menu_pausa is not None:
+                self.menu_pausa.update(dt)
             return
         d = self.sesion.director
         if d is not None and d.nombre == "apertura" and self.app.estados.estado("cinematica").si_toca("mundo"):
@@ -379,6 +418,10 @@ class MundoState(BaseState):
         if self.menu_aliados:
             dibujar_menu_aliados(pantalla, self.app.fuentes, tema, roles_teclas.filas_aliados(self.sesion))
         if self.app.estados.actual is not self:   # detras del telefono: sin anuncios encima
+            return
+        if self.pausa:
+            if self.menu_pausa is not None:
+                self.menu_pausa.draw(pantalla, self.app.fuentes, tema)
             return
         for a in (self.toast, self.anuncio):
             if a is not None:

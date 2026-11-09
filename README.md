@@ -34,7 +34,7 @@ python src/main.py
 - Rueda de prensa (Alcaldia): A/D o flechas giran el foco hacia el periodista que pregunta; responde con la prueba que pide su icono (1 pista, triangulo; 2 evidencia, cuadrado; 3 testimonio, circulo) y a una trampa (X) con Espacio, "sin pruebas". Lo que investigaste es tu municion
 - De boca en boca (Barrio): WASD o flechas para correr hasta quien cree el chisme y mantener E cerca para convencerlo; con evidencia o credibilidad alta convences mas rapido, y si sueltas un argumento debil se enoja
 - En la calle: los transeuntes caminan de zona en zona. Junto a uno con rumor (triangulo) manten E y siguele el paso para convencerlo; junto a un testigo de la noticia (circulo), mantenla para escucharlo. Para esquivarlos, sigue de largo
-- P (en un minijuego): pausa
+- P o ESC (en la calle): menu de pausa (seguir, ayuda o salir al menu; salir pide confirmacion). P en un minijuego: pausa
 - T: abrir o cerrar el telefono Civitas (la red en vivo; el mundo corre al 25%). Frena el rumor: mueve el escudo (WASD, flechas o raton) para atajar las bolitas rojas y Espacio lanza el desmentido en onda; Tab cambia de pestaña
 - Pestaña Publicar del telefono: flechas o clic para armar el post (formato segun el rol, titular, imagen, fuente y tono) y Enter para publicarlo
 - H: usar la habilidad de tu rol (Periodista: verificar a distancia; Influencer: desmentido viral; Candidato: comunicado; Ciudadano: convivencia vecinal)
@@ -43,7 +43,7 @@ python src/main.py
 - I (en la noticia): ventana de investigacion. Publicacion: mueve la lupa (raton o flechas) y mantenla sobre algo raro para revelarlo. Testigos: flechas o clic para elegir, Enter para hablar, 1-4 para preguntar. Conclusion: F falsa, V verdadera, N no concluyente
 - I (en el menu): ver la introduccion
 - X (en el menu): tiempo extendido (dias y relojes mas largos)
-- ESC: saltar la introduccion
+- ESC: saltar una escena
 
 ## Inclusividad
 

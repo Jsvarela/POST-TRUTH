@@ -275,6 +275,7 @@ class Modal:
         self.t = 0.0
         self.elegido: int | None = None
         self.cuenta: tuple[float, float] | None = None
+        self.bajar = 0                    # px: mas abajo del centro (para no quedar bajo el HUD)
         self._rects: list[pygame.Rect] = []
 
     def update(self, dt: float) -> None:
@@ -300,7 +301,8 @@ class Modal:
         lineas = ajustar_texto(self.texto, fuentes.normal, w - px(150))
         alto = px(150) + len(lineas) * fuentes.normal.get_linesize() + (px(150) if self.cuenta else 0)
         caja = pygame.Rect(0, 0, w, alto)
-        caja.center = (pantalla.get_width() // 2, pantalla.get_height() // 2 - round(px(30) * (1 - _rebote(entrada))))
+        caja.center = (pantalla.get_width() // 2,
+                       pantalla.get_height() // 2 + self.bajar - round(px(30) * (1 - _rebote(entrada))))
         color = _color(tema, self.tipo)
         panel(pantalla, tema, caja, 255, borde=color)
         _icono(pantalla, tema, self.tipo, (caja.x + px(56), caja.y + px(60)), px(32), self.t)

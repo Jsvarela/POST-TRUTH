@@ -17,7 +17,7 @@ from post_truth.views.hud import MINIMO
 from post_truth.views.mapa_view import _rombo
 from post_truth.views.theme import TEMAS, TOKENS, Tema, esp
 
-AYUDA = "WASD: caminar   |   E: entrar o escuchar   |   G: ruta   |   P: pausa   |   F2: ayuda   |   F3   |   ESC: menu"
+AYUDA = "WASD: caminar   |   E: entrar o escuchar   |   G: ruta   |   F2: ayuda   |   F3   |   ESC: pausa"
 ALTO_PERSONAJE = 3.2
 PAJAROS = ((260, 70, 0.0), (300, 70, 0.6), (1100, -55, 9.0))
 RECT_MINIMAPA = pygame.Rect(ANCHO - px(16) - px(220), px(16), px(220), px(138))
@@ -294,8 +294,7 @@ def dibujar_mundo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, mundo:
     _tinte_de_salud(pantalla, tema, estado.salud)
     if estado.depuracion:
         _depuracion(pantalla, fuentes, tema, mundo, cam)
-    if estado.pausa:   # L2: el minimapa y las teclas se miran en la pausa (los indicadores los pone la capa global)
-        _pausa(pantalla, fuentes, tema)
+    if estado.pausa:   # L2: el minimapa y las teclas se miran en la pausa (el menu lo pone el controlador)
         _minimapa(pantalla, tema, mundo, estado)
         _franja(pantalla, fuentes, tema, "", ayuda=True)
         return
@@ -324,19 +323,6 @@ def _flecha(pantalla: pygame.Surface, tema: Tema, desde: tuple[int, int], hacia:
     puntos = [punta, (base[0] + normal[0], base[1] + normal[1]), (base[0] - normal[0], base[1] - normal[1])]
     pygame.draw.polygon(pantalla, tema.acento, puntos)
     pygame.draw.polygon(pantalla, tema.texto, puntos, px(2))   # contorno: se distingue sin color
-
-
-def _pausa(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema) -> None:
-    velo = pygame.Surface(pantalla.get_size(), pygame.SRCALPHA)
-    velo.fill((*tema.fondo, 170))
-    pantalla.blit(velo, (0, 0))
-    caja = pygame.Rect(0, 0, px(420), px(150))
-    caja.center = pantalla.get_rect().center
-    panel(pantalla, tema, caja, TOKENS.alfa_panel, borde=tema.acento)
-    img = fuentes.grande.render("Pausa", True, tema.texto)
-    pantalla.blit(img, img.get_rect(midtop=(caja.centerx, caja.y + esp(3))))
-    img = fuentes.normal.render("P o ESC: seguir", True, tema.texto_off)
-    pantalla.blit(img, img.get_rect(midbottom=(caja.centerx, caja.bottom - esp(3))))
 
 
 def _marca_transeunte(pantalla: pygame.Surface, tema: Tema, marca: str, c: tuple[int, int]) -> None:
