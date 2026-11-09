@@ -10,8 +10,8 @@ from post_truth.views.theme import Tema
 
 def dibujar_resumen(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, dia: int, total: int,
                     filas: list[tuple[str, int]], cambio: Impact, decisiones: list[tuple[str, str, int]],
-                    credibilidad: int, cambio_credibilidad: int) -> None:
-    """`decisiones`: (titulo, accion, cambio de credibilidad que dejo)."""
+                    credibilidad: int, cambio_credibilidad: int, defensa: str = "") -> None:
+    """`decisiones`: (titulo, accion, cambio de credibilidad que dejo). `defensa`: lo que dejo la consecuencia."""
     pantalla.fill(tema.fondo)
     titulo = fuentes.titulo.render(f"Fin del dia {dia} de {total}", True, tema.acento)
     pantalla.blit(titulo, titulo.get_rect(midtop=(ANCHO // 2, px(80))))
@@ -34,6 +34,8 @@ def dibujar_resumen(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, dia:
         img = fuentes.chica.render(detalle, True, tema.malo if sin or delta < 0 else tema.acento)
         pantalla.blit(img, (der.x + px(28), y + fuentes.normal.get_linesize()))
         y += fuentes.normal.get_linesize() + fuentes.chica.get_linesize() + px(10)
+    if defensa:
+        pantalla.blit(fuentes.chica.render(defensa, True, tema.texto), (der.x + px(16), y))
     color = tema.bueno if cambio_credibilidad > 0 else tema.malo if cambio_credibilidad < 0 else tema.texto
     linea = fuentes.normal.render(f"Tu credibilidad: {credibilidad} ({cambio_credibilidad:+})", True, color)
     pantalla.blit(linea, (izq.x + px(16), izq.bottom - px(40)))

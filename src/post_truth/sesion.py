@@ -700,6 +700,7 @@ class PartidaSesion:
         impacto = Impact(**{k: round(v * IMPACTO_EN_VIVO) for k, v in asdict(self.en_vivo.impacto()).items()})
         if self.bitacora and self.campana is not None and self.bitacora[-1]["dia"] == self.campana.dia + 1:
             self.bitacora[-1]["creyeron"] = round(100 * self.en_vivo.creen / max(1, len(self.en_vivo.estado)))
+            self.bitacora[-1]["frenados"] = self.en_vivo.frenados
         self.ciudad.apply(impacto)
         self.jugador(self.en_vivo.jugador).puntos += impacto.score
         self._sumar_desinformacion(impacto.misinformation)

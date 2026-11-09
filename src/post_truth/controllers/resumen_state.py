@@ -15,6 +15,14 @@ from post_truth.views.theme import NEGRO
 class ResumenState(BaseState):
     NOMBRE = "resumen"
 
+    def defensa(self) -> str:
+        """Lo que dejo la defensa de la red hoy (de la bitacora)."""
+        s = self.app.partida
+        b = s.bitacora[-1] if s.bitacora and s.campana and s.bitacora[-1]["dia"] == s.campana.dia + 1 else {}
+        if b.get("creyeron") is None:
+            return ""
+        return f"El {b['creyeron']}% de la red creyo el rumor. Frenaste {b.get('frenados', 0)}."
+
     def al_entrar(self) -> None:
         self.cubrir = True
 
@@ -69,7 +77,7 @@ class ResumenState(BaseState):
                       for i, accion in c.resueltas]
         dibujar_resumen(pantalla, self.app.fuentes, self.app.temas.actual, c.dia + 1, len(c.dias),
                         s.ciudad.as_display_rows(), self.cambio(), decisiones, j.credibilidad,
-                        sum(por_evento.values()))
+                        sum(por_evento.values()), self.defensa())
         if self.en_red and s.esperando:
             listos = "Esperando a los demas jugadores..."
             img = self.app.fuentes.normal.render(listos, True, self.app.temas.actual.acento)
