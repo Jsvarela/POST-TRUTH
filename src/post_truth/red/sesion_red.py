@@ -11,6 +11,8 @@ igual; pero la autoridad es el servidor:
 """
 from __future__ import annotations
 
+from dataclasses import replace
+
 from post_truth.models import posts
 from post_truth.models import minijuego as mj
 from post_truth.sesion import (CONSECUENCIA, DECIDIENDO, FIN_DIA, Jugador, PartidaSesion, ResultadoConclusion,
@@ -63,6 +65,7 @@ class SesionEnRed(PartidaSesion):
         s.cine_listos: list[int] | None = None      # [cuantos ya la terminaron, cuantos hay]
         s.minijuego_vivo: dict | None = None        # el minijuego del de turno, para verlo
         s.cines_vistas: set[tuple] = set()
+        s.extendido = False              # tiempo extendido de este equipo (el servidor no lo conoce)
         return s
 
     # --- quien es quien ------------------------------------------------------------------------
@@ -308,6 +311,12 @@ class SesionEnRed(PartidaSesion):
         """El de turno, mientras juega: su minijuego para que los demas lo vean (unas 5 veces por segundo)."""
         if self.minijuego is not None:
             self._enviar("minijuego", progreso=self.minijuego.to_dict())
+
+    def iniciar_minijuego(self, zona: str) -> mj.Minijuego | None:
+        m = super().iniciar_minijuego(zona)
+        if m is not None and self.extendido:   # la campaña del servidor no tiene tiempo extendido: es de cada equipo
+            self.minijuego = m = mj.crear(m.id, replace(m.contexto, extendido=True))
+        return m
 
     def minijuego_en(self, zona: str) -> str | None:
         """L6: el minijuego del dia lo juega solo el de turno; los demas lo miran."""

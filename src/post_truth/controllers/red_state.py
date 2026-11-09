@@ -157,6 +157,7 @@ class SalaState(BaseState):
 
     def _empezar(self, mensaje: dict) -> None:
         s = SesionEnRed.desde_inicio(mensaje, self.red)
+        s.extendido = self.app.tiempo_extendido
         s.nombres = {sj.id: j["nombre"] for sj, j in zip(s.jugadores, self.jugadores)}   # mismo orden que la sala
         self.app.partida = s
         self.app.personaje = s.jugador_actual.personaje
