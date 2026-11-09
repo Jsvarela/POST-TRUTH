@@ -16,9 +16,10 @@ MENSAJES = {
                                    "Espacio lanza un desmentido en onda. Tab cambia de pestaña."),
     "minijuego:chat": ("Chat del Colegio", "Ponte bajo los mensajes de apoyo (circulo) y esquiva los ataques "
                                            "(triangulo). Con 3 apoyos, Espacio borra los ataques."),
-    "minijuego:mitin": ("Mitin", "Mira la forma del globo antes de responder: 1 cuadrado, 2 circulo, 3 triangulo."),
-    "minijuego:rueda": ("Rueda de prensa", "Gira primero hacia quien pregunta. Si no investigaste esa prueba, "
-                                           "di que no puedes afirmarlo (Espacio)."),
+    "minijuego:mitin": ("Mitin", "Apunta con el raton o WASD, elige la municion por la forma del globo (1 cuadrado, "
+                                 "2 circulo, 3 triangulo) y dispara con clic o Espacio. Adelantate: el disparo tarda."),
+    "minijuego:rueda": ("Rueda de prensa", "Gira (A/D) hacia quien pregunta y responde cuando el marcador pase por "
+                                           "la zona verde. A una trampa X, Espacio: no lo afirmes."),
     "minijuego:boca": ("De boca en boca", "Ve primero a quien tiene mas vecinos. Sin evidencia, no sueltes E a medias."),
 }
 
