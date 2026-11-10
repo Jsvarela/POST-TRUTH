@@ -22,8 +22,7 @@ LEYENDA = [
                          ("circulo", "bueno", "3 testimonio"), ("x", "malo", "trampa: Espacio")]),
     ("De boca en boca", [("cuadrado_vacio", "texto_off", "no sabe"), ("triangulo", "malo", "lo cree"),
                          ("circulo", "bueno", "convencido"), ("x", "malo", "enojado")]),
-    ("En la calle (sobre la cabeza)", [("triangulo", "malo", "lleva un rumor"), ("circulo", "bueno", "testigo"),
-                                       ("cuadrado", "detalle", "enojado")]),
+    ("En la calle (sobre la cabeza)", [("circulo", "bueno", "personaje del dia: tiene algo que decir")]),
 ]
 
 

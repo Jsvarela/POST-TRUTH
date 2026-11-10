@@ -46,7 +46,7 @@ formas" de la ayuda las dibuja todas:
 - Mitin de la Plaza: cuadrado dato, circulo pregunta, triangulo calma (y el numero de la tecla dentro del globo).
 - Rueda de prensa: triangulo pista, cuadrado evidencia, circulo testimonio, X trampa.
 - De boca en boca: cuadrado vacio no sabe, triangulo lo cree, circulo convencido, X enojado.
-- En la calle (sobre la cabeza): triangulo lleva un rumor, circulo es testigo, cuadrado esta enojado.
+- En la calle (sobre la cabeza): circulo, un personaje del dia que tiene algo que decir.
 - Mitin (la multitud): circulo animada, cuadrado molesta.
 - Mapa: las zonas en obras, en crisis o aisladas llevan franjas, no solo un tinte; una calle cerrada es una valla.
 - HUD: cada indicador tiene su icono y su numero, no solo la barra de color.
@@ -116,7 +116,8 @@ El volumen general, el de los pasos (el sonido que mas se repite) y el silencio 
   credibilidad, los indicadores, como ganar, el multijugador y la accesibilidad. Los numeros (dias, segundos del
   reloj, recargas) salen de las constantes del juego, asi que no se desactualizan.
 - **Mensajes guia**: una pista corta la primera vez que pasa algo (empezar el dia, entrar a un lugar, el primer
-  transeunte, la primera vez en el telefono, cada minijuego, una protesta, la credibilidad baja). Cada una sale una
+  transeunte, la primera vez en el telefono, una protesta, la credibilidad baja; cada minijuego trae su explicacion
+  en pantalla). Cada una sale una
   sola vez y se pueden apagar.
 
 Atienden la carga cognitiva de un juego con varias mecanicas y ayudan a quien juega por primera vez.
