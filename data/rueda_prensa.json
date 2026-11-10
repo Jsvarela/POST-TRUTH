@@ -40,6 +40,6 @@
  "qte": {
   "periodo": 1.8,
   "zona": 0.22,
-  "total": 8
+  "total": 8, "limite": 90
  }
 }

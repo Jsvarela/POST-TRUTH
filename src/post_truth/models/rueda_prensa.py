@@ -3,7 +3,7 @@ icono dice que prueba pide: pista (triangulo), evidencia (cuadrado), testimonio 
 gira el foco (A/D o flechas) hacia el y se responde con 1 pista, 2 evidencia, 3 testimonio o Espacio "no puedo
 afirmarlo sin pruebas", pero SOLO cuenta si se pulsa cuando el marcador que va y vuelve por su barra esta dentro de
 la zona marcada. Sin reloj por pregunta: a destiempo cuesta un poco de credito y el marcador vuelve a pasar. Termina
-tras `total` respuestas. Lo investigado es la MUNICION: cada respuesta gasta una prueba de ese tipo. Con tiempo
+tras `total` respuestas (o al llegar a `limite` segundos). Lo investigado es la MUNICION: cada respuesta gasta una prueba de ese tipo. Con tiempo
 extendido la zona es mas ancha, el marcador mas lento y nunca preguntan dos a la vez."""
 from __future__ import annotations
 
@@ -63,6 +63,11 @@ class RuedaPrensa(Minijuego):
     @property
     def total(self) -> int:
         return datos()["qte"]["total"] + 3 * self.contexto.extra   # en multijugador, mas preguntas
+
+    @property
+    def limite(self) -> float:
+        """Segundos que dura la rueda como mucho: sin esto, quien nunca acierta la zona no sale nunca."""
+        return (datos()["qte"]["limite"] + 30 * self.contexto.extra) * (1.5 if self.contexto.extendido else 1.0)
 
     @property
     def a_la_vez(self) -> int:
@@ -164,7 +169,7 @@ class RuedaPrensa(Minijuego):
 
     @property
     def terminado(self) -> bool:
-        return self.respondidas >= self.total
+        return self.respondidas >= self.total or self.t >= self.limite
 
     def resultado(self) -> ResultadoMinijuego:
         buenas = self.resultados.count("acierto") + self.resultados.count("trampa_bien")
