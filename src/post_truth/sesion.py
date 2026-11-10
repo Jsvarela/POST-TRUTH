@@ -944,11 +944,18 @@ class PartidaSesion:
         if (d.nombre != "minijuego" or d.minijuego in c.minijuegos_hoy or d.minijuego not in self.mapa
                 or j.zona not in self.mapa or d.minijuego in self.mapa.saltos(j.zona)):
             return
+        self.perder_minijuego(f"Sin camino a {d.minijuego.capitalize()}",
+                              "Las calles cerradas lo dejaron aislado: no llegaste y el rumor se rego.")
+
+    def perder_minijuego(self, titulo: str, texto: str) -> None:
+        """El minijuego del dia no se juega: cuenta como perdido y lo que alli no se aclaro se riega."""
+        d, c = self.director, self.campana
+        if d is None or d.nombre != "minijuego" or d.minijuego in c.minijuegos_hoy:
+            return
         c.minijuegos_hoy.append(d.minijuego)
         self.ciudad.apply(RUMOR_SUELTO)
         self._sumar_desinformacion(RUMOR_SUELTO.misinformation)
-        self.notificar("malo", f"Sin camino a {d.minijuego.capitalize()}",
-                       "Las calles cerradas lo dejaron aislado: no llegaste y el rumor se rego.")
+        self.notificar("malo", titulo, texto)
 
     def _paso_cumplido(self, paso: str) -> bool:
         d = self.director

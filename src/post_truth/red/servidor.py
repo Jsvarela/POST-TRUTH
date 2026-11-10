@@ -523,7 +523,17 @@ class Servidor:
                 s.aplicar()
                 self._espera = 0.0
         elif s.fase == DECIDIENDO:
-            if not self._conectado(s.jugador_actual.id) and (s.director is None or s.director.nombre == "noticia"):
+            d = s.director
+            if not self._conectado(s.jugador_actual.id) and d is not None and d.nombre in ("objetivo", "minijuego"):
+                self._espera += dt   # L8: sin esto el dia esperaba para siempre al de turno desconectado
+                if self._espera >= self.gracia:
+                    self._espera = 0.0
+                    if d.nombre == "objetivo":   # se da por llegado
+                        s.situar(s.jugador_actual.id, self.mapa.zonas[d.zona].centro, d.zona)
+                    else:
+                        s.perder_minijuego(f"{self._nombre(s.jugador_actual.id)} no esta",
+                                           "Se desconecto en su minijuego: cuenta como perdido.")
+            elif not self._conectado(s.jugador_actual.id) and (d is None or d.nombre == "noticia"):
                 # su turno de decidir la noticia y no esta: se lo espera un rato
                 self._espera += dt
                 if self._espera >= self.gracia:
