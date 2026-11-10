@@ -14,13 +14,6 @@ MENSAJES = {
     "protesta": ("La ciudad cambia", "Una protesta cerro una calle: busca otro camino (G recalcula la ruta)."),
     "telefono": ("Frena el rumor", "Mueve el escudo (WASD o raton) sobre las bolitas rojas para atajarlas; "
                                    "Espacio lanza un desmentido en onda. Tab cambia de pestaña."),
-    "minijuego:chat": ("Chat del Colegio", "Ponte bajo los mensajes de apoyo (circulo) y esquiva los ataques "
-                                           "(triangulo). Con 3 apoyos, Espacio borra los ataques."),
-    "minijuego:mitin": ("Mitin", "Apunta con el raton o WASD, elige la municion por la forma del globo (1 cuadrado, "
-                                 "2 circulo, 3 triangulo) y dispara con clic o Espacio. Adelantate: el disparo tarda."),
-    "minijuego:rueda": ("Rueda de prensa", "Gira (A/D) hacia quien pregunta y responde cuando el marcador pase por "
-                                           "la zona verde. A una trampa X, Espacio: no lo afirmes."),
-    "minijuego:boca": ("De boca en boca", "Ve primero a quien tiene mas vecinos. Sin evidencia, no sueltes E a medias."),
 }
 
 

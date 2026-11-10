@@ -222,7 +222,7 @@ class MundoState(BaseState):
             self.aviso, self._t_aviso = f"Esperando a que los demas terminen la escena ({listos[0]} de {listos[1]})", 0.5
         for anuncio in ("anuncio", "toast"):
             a = getattr(self, anuncio)
-            if a is not None:
+            if a is not None and (anuncio == "anuncio" or self.anuncio is None):   # el toast espera al anuncio
                 a.avanzar(dt)
                 if a.terminado:
                     setattr(self, anuncio, None)
@@ -423,6 +423,6 @@ class MundoState(BaseState):
             if self.menu_pausa is not None:
                 self.menu_pausa.draw(pantalla, self.app.fuentes, tema)
             return
-        for a in (self.toast, self.anuncio):
+        for a in (self.toast, self.anuncio) if self.anuncio is None else (self.anuncio,):   # uno a la vez
             if a is not None:
                 dibujar_anuncio(pantalla, self.app.fuentes, tema, a)

@@ -2,7 +2,6 @@
 import pygame
 
 from post_truth.controllers.base_state import BaseState
-from post_truth.models import guia
 from post_truth.models import minijuego as mj
 from post_truth.models.tutorial import Tutorial, tiene_tutorial
 from post_truth.views import sonido
@@ -37,8 +36,7 @@ class MinijuegoState(BaseState):
         vistos = getattr(self.app, "tutoriales_vistos", set())
         if tiene_tutorial(self.minijuego.id) and self.minijuego.id not in vistos:   # la primera vez: como se juega
             self.abrir_tutorial()
-        m = guia.mensaje(f"minijuego:{self.minijuego.id}", self.app.guias_vistas, self.app.guias)
-        self.toast = None if m is None else Anuncio(m[0], m[1], "info", grande=False, duracion=5.0)
+        self.toast = None   # sin guia aparte: la explicacion del minijuego ya esta en pantalla (y la tapaba)
 
     def _vivo(self):
         v = getattr(self.app.partida, "minijuego_vivo", None)

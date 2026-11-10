@@ -43,15 +43,20 @@ class TelefonoState(BaseState):
         self.menu_aliados = False
         self.paso_visto = ""
         self.eleccion = getattr(self, "eleccion", None) or {p: 0 for p in posts.PIEZAS}   # se recuerda lo armado
-        m = guia.mensaje("telefono", self.app.guias_vistas, self.app.guias)
-        if m is not None:
-            self._avisar(m[0], m[1], "info")
-        if s.novedad == "crisis":   # la crisis abre el telefono sola, con su reloj
+        if s.novedad == "crisis":   # la crisis abre el telefono sola, con su reloj (el anillo cuenta los segundos)
             s.novedad = ""
             self.modal = Modal("Crisis viral!", f"\"{s.arbol.event.title}\" se esta regando en "
-                               f"{s.zona_noticia.capitalize()}. Tienes {round(s.tiempo_restante or 0)} s: frenala "
-                               "desde la red.", ("Defender la red",), "crisis")
+                               f"{s.zona_noticia.capitalize()}. Frenala desde la red antes de que se acabe el tiempo.",
+                               ("Defender la red",), "crisis")
             self.modal.cuenta = (s.tiempo_restante or 0.0, s.tiempo_viral_total)
+        self._guia_pendiente = guia.mensaje("telefono", self.app.guias_vistas, self.app.guias)
+        self._guiar()
+
+    def _guiar(self) -> None:
+        """La guia sale cuando no hay un modal encima (si no, se tapan)."""
+        if self.modal is None and self._guia_pendiente is not None:
+            self._avisar(self._guia_pendiente[0], self._guia_pendiente[1], "info")
+            self._guia_pendiente = None
 
     @property
     def en_pausa(self) -> bool:
@@ -98,6 +103,7 @@ class TelefonoState(BaseState):
         if self.modal is not None:
             if self.modal.handle_event(event) is not None:
                 self.modal = None
+                self._guiar()
             return
         if event.type == pygame.KEYDOWN:
             era, self.menu_aliados, aviso = roles_teclas.tecla(self.app.partida, self.menu_aliados, event.key)
