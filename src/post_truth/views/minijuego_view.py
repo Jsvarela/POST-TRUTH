@@ -9,8 +9,10 @@ from post_truth.models import rueda_prensa as rp
 from post_truth.models.chat import CALMA_LLENA, CARRILES, FILA_SOFI, Chat
 from post_truth.models.minijuego import Ensayo, Minijuego, ResultadoMinijuego
 from post_truth.models.mitin import CANON as CANON_MITIN, Mitin
+from post_truth.models.personaje import Genero, Personaje, Role
 from post_truth.views.componentes import Boton, Fuentes, ajustar_texto, panel, recortar
 from post_truth.views.escena_view import _dibujar_consecuencias
+from post_truth.views.pixel_sprites import cuadro_personaje
 from post_truth.views.theme import Tema
 
 
@@ -107,6 +109,19 @@ def _texto_corto(fuentes: Fuentes, texto: str, ancho: int, color) -> pygame.Surf
     return fuentes.chica.render(recortar(texto, fuentes.chica, ancho), True, color)   # sin escalar: letra pixel
 
 
+def _pj(pantalla: pygame.Surface, tema: Tema, rol: Role, k: int, pies: tuple[int, int], t: float = 0.0,
+        animacion: str = "idle_abajo", animo: int = 0, escala: int = 2) -> pygame.Rect:
+    """Un personaje pixel (el mismo arte del mundo) con los pies en `pies`; `k` varia genero y apariencia."""
+    quien = Personaje(rol, Genero.MUJER if k % 2 else Genero.HOMBRE, (k // 2) % 2)
+    img = cuadro_personaje(quien, tema, animacion, int(t * 2) % 2, max(1, round(px(escala))), animo)
+    return pantalla.blit(img, img.get_rect(midbottom=pies))
+
+
+def _rol(m: Minijuego) -> Role:
+    """El rol de quien juega (el contexto lo guarda por su nombre)."""
+    return next((r for r in Role if r.value == m.contexto.rol), Role.CITIZEN)
+
+
 def _dibujar_chat(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Chat) -> None:
     """Tres carriles; los mensajes caen y Sofi (abajo) los atrapa o los esquiva."""
     panel(pantalla, tema, AREA, 255)
@@ -128,11 +143,12 @@ def _dibujar_chat(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Cha
             pygame.draw.polygon(pantalla, tema.malo, [(icono[0], icono[1] - px(9)), (icono[0] + px(9), icono[1] + px(7)),
                                                       (icono[0] - px(9), icono[1] + px(7))])
         _dos_lineas(pantalla, fuentes, texto, caja.w - px(34), tema.texto, caja.x + px(28), caja.centery)
-    sofi = pygame.Rect(0, 0, ancho - px(40), px(34))
-    sofi.center = (AREA.x + m.carril * ancho + ancho // 2, AREA.y + round(FILA_SOFI * AREA.h))
-    pygame.draw.rect(pantalla, tema.acento, sofi)
-    img = fuentes.normal.render("Sofi", True, tema.boton_texto)
-    pantalla.blit(img, img.get_rect(center=sofi.center))
+    pies = (AREA.x + m.carril * ancho + ancho // 2, AREA.y + round(FILA_SOFI * AREA.h) + px(40))
+    pygame.draw.rect(pantalla, tema.acento, (pies[0] - ancho // 2 + px(20), pies[1] + px(2), ancho - px(40), px(4)))
+    sofi = _pj(pantalla, tema, Role.CITIZEN, 1, pies, m.t, animo=1 if m.apoyos > m.golpes else -1 if m.golpes else 0,
+               escala=3)
+    img = fuentes.chica.render("Sofi", True, tema.texto)
+    pantalla.blit(img, img.get_rect(midbottom=(sofi.centerx, sofi.top - px(2))))
     _contador(pantalla, fuentes, tema, f"Apoyos {m.apoyos}   Ataques que llegaron {m.golpes}   Borrados {m.borrados}")
     _medidor(pantalla, fuentes, tema, "Calma (Espacio)", m.calma / CALMA_LLENA)
     _barra_tiempo(pantalla, tema, pygame.Rect(AREA.x, AREA.bottom + px(8), AREA.w, px(8)),
@@ -202,11 +218,14 @@ def _dibujar_mitin(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Mi
     pantalla.blit(img, img.get_rect(center=escenario.center))
     animadas = round(16 * m.animo / 100)
     for k in range(16):   # la multitud: animada (circulo) o molesta (cuadrado)
-        cx, cy = AREA.x + px(30) + k * px(36), AREA.bottom - px(18)
+        cx, cy = AREA.x + px(30) + k * px(36), AREA.bottom - px(4)
+        gente = _pj(pantalla, tema, (Role.CITIZEN, Role.INFLUENCER, Role.JOURNALIST)[k % 3], k, (cx, cy), m.t + k * 0.3,
+                    animo=1 if k < animadas else -1)
+        marca = (gente.centerx, gente.top - px(7))   # ademas de la cara: circulo animada, cuadrado molesta
         if k < animadas:
-            pygame.draw.circle(pantalla, tema.bueno, (cx, cy), px(9))
+            pygame.draw.circle(pantalla, tema.bueno, marca, px(4))
         else:
-            pygame.draw.rect(pantalla, tema.malo, (cx - px(8), cy - px(8), px(16), px(16)))
+            pygame.draw.rect(pantalla, tema.malo, (marca[0] - px(4), marca[1] - px(4), px(8), px(8)))
     for g in m.globos:
         cx, cy = mitin_a_pantalla(*m.posicion(g))
         _forma_globo(pantalla, tema, g[2], (cx, cy), px(18))
@@ -288,16 +307,18 @@ def _dibujar_rueda(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: rp
         pygame.draw.circle(pantalla, tema.panel, c, px(30))
         pygame.draw.circle(pantalla, tema.borde, c, px(30), px(2))
         p = preguntas.get(i)
+        _pj(pantalla, tema, Role.JOURNALIST, i, (c[0], c[1] + px(34)), m.t + i * 0.4, escala=3)   # el periodista
         if p is None:
-            pygame.draw.circle(pantalla, tema.texto_off, c, px(8))                     # periodista esperando
             continue
-        _icono_prueba(pantalla, tema, p[1], c, px(16))
+        globo = (c[0], c[1] - px(60))                                                  # lo que pide, sobre su cabeza
+        pygame.draw.circle(pantalla, tema.fondo, globo, px(18))
+        pygame.draw.circle(pantalla, tema.borde, globo, px(18), px(2))
+        _icono_prueba(pantalla, tema, p[1], globo, px(10))
         _qte(pantalla, tema, m, p, pygame.Rect(c[0] - px(40), c[1] + px(36), px(80), px(10)))
         if p is apuntada:
             pygame.draw.circle(pantalla, tema.texto, c, px(38), px(3))
-    pygame.draw.circle(pantalla, tema.boton, atril, px(22))
-    img = fuentes.chica.render("Tu", True, tema.boton_texto)
-    pantalla.blit(img, img.get_rect(center=atril))
+    _pj(pantalla, tema, _rol(m), 1, (atril[0], atril[1] + px(10)), m.t, "idle_arriba", escala=3)   # quien responde
+    pygame.draw.rect(pantalla, tema.boton, (atril[0] - px(22), atril[1] + px(6), px(44), px(14)))   # el atril
     if apuntada is not None:                                       # lo que pregunta el apuntado y su barra en grande
         caja = pygame.Rect(AREA.x + px(16), AREA.y + px(8), AREA.w - px(32), px(50))
         pygame.draw.rect(pantalla, tema.fondo, caja)
@@ -345,7 +366,15 @@ def _cabe(fuentes: Fuentes, texto: str, ancho: int, color) -> pygame.Surface:
 def _casa(pantalla: pygame.Surface, tema: Tema, estado: str, c: tuple[int, int]) -> None:
     """Casa por forma segun lo que cree: cuadrado vacio no sabe, triangulo lo cree, circulo convencida, X enojada."""
     x, y = c
-    r = px(18)
+    pared = pygame.Rect(x - px(20), y - px(4), px(40), px(24))   # la casa pixel; encima, su estado por forma
+    pygame.draw.rect(pantalla, tema.boton, pared)
+    pygame.draw.rect(pantalla, tema.fondo, pared, px(2))
+    for k in range(5):   # techo escalonado
+        pygame.draw.rect(pantalla, tema.borde, (x - px(24) + k * px(5), y - px(8) - k * px(4), px(48) - k * px(10), px(4)))
+    pygame.draw.rect(pantalla, tema.fondo, (x - px(4), y + px(8), px(8), px(12)))   # la puerta
+    y -= px(40)
+    c = (x, y)
+    r = px(11)
     if estado == bb.SIN:
         pygame.draw.rect(pantalla, tema.texto_off, (x - r, y - r, 2 * r, 2 * r), px(3))
     elif estado == bb.CREE:
@@ -377,15 +406,13 @@ def _dibujar_boca(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: bb.
         pantalla.blit(img, img.get_rect(midtop=(c[0], c[1] + px(22))))
     yo = _en_area(m.jugador)
     pygame.draw.circle(pantalla, tema.borde, yo, round(bb.datos()["radio"] * (AREA.w - px(60))), 1)   # hasta donde se habla
-    pygame.draw.circle(pantalla, tema.acento, yo, px(14))
-    img = fuentes.chica.render("Tu", True, tema.boton_texto)
-    pantalla.blit(img, img.get_rect(center=yo))
+    _pj(pantalla, tema, _rol(m), 1, (yo[0], yo[1] + px(20)), m.t)
     if m.charla is not None:
         casa, pers = m.charla
         c = centros[casa]
         caja = pygame.Rect(AREA.x + px(16), AREA.bottom - px(84), AREA.w - px(32), px(74))
         pygame.draw.rect(pantalla, tema.fondo, caja)
-        pygame.draw.circle(pantalla, tema.acento, c, px(26), px(3))   # con quien hablas
+        pygame.draw.circle(pantalla, tema.acento, (c[0], c[1] - px(10)), px(40), px(3))   # con quien hablas
         nodo, opcion = pers.nodo, pers.opcion
         if nodo is not None and opcion is not None:
             fuerza = {"evidencia": "con evidencia: rapido", "credibilidad": "por tu credibilidad",
