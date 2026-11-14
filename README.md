@@ -19,31 +19,28 @@ pip install -r requirements.txt
 python src/main.py
 ```
 
+## Como se juega
+
+La campaña dura cuatro dias y cada dia es un capitulo con pasos en orden, uno a la vez: una escena de apertura, ir al lugar de la noticia, investigarla y decidir, defender la red mientras el rumor corre (el telefono se abre solo), jugar el minijuego del lugar y una escena de cierre. Una cuenta anonima, @VerdadNova, riega un rumor cada dia; al final se revela quien es, se elige al alcalde y el final de la historia depende de como quedo la ciudad (informada, dividida o engañada).
+
 ## Controles
 
-- Seleccion: cada jugador (1 a 4) elige un rol distinto y su personaje; 1 agrega otro jugador y Enter inicia la partida cuando todos tienen rol
-- WASD o flechas: caminar libre por la ciudad (8 direcciones)
-- E: entrar al lugar donde estas (la evidencia aparece sola); adentro, 1-3 o clic: ver la noticia, jugar el minijuego o volver a la calle
-- F3: superposicion de depuracion (zonas, colisiones y fronteras del grafo de la ciudad)
-- F1 (en cualquier pantalla): modo sustentacion con el arbol de decisiones, el grafo social, el grafo de la ciudad y el arbol de dialogo en crudo (BFS, DFS y Dijkstra); el juego queda en pausa
-- Menu: flechas y Enter o clic; O abre las opciones (tema, volumen, volumen de los pasos, silencio, tiempo extendido y mensajes guia); R multijugador; A ayuda
-- F2 (en cualquier pantalla): ayuda completa, abierta en la seccion de donde estas; el juego queda en pausa
-- G: mostrar la guia hacia la noticia
+- Menu: flechas y Enter o clic; R multijugador; A ayuda; O opciones (tema, volumen, volumen de los pasos, silencio, tiempo extendido, mensajes guia y avance manual de las escenas); I vuelve a ver la introduccion; X tiempo extendido
+- Seleccion: cada jugador (1 a 4) elige un rol distinto y su personaje; 1 agrega otro jugador y Enter inicia cuando todos tienen rol
+- Escenas: Enter avanza el dialogo, ESC salta la escena
+- WASD o flechas: caminar libre por la ciudad (8 direcciones). Arriba se ve el dia, el objetivo y la credibilidad; una flecha apunta al lugar
+- E: entrar al lugar donde estas (la evidencia aparece sola); adentro, 1-3 o clic: ver la noticia, jugar el minijuego o volver a la calle. Junto a un personaje del dia (circulo sobre la cabeza), mantener E para escucharlo
+- G: dibuja el camino mas corto hasta el objetivo
+- P o ESC (en la calle): menu de pausa con los indicadores y el minimapa (seguir, ayuda o salir al menu; salir pide confirmacion). P en un minijuego: pausa
+- En la noticia: 1-4 decidir; I abre la investigacion. Publicacion: mueve la lupa (raton o flechas) y mantenla sobre algo raro para revelarlo. Testigos: flechas o clic para elegir, Enter para hablar, 1-4 para preguntar. Conclusion: F falsa, V verdadera, N no concluyente
+- Telefono Civitas (se abre solo despues de decidir): mueve el escudo (WASD, flechas o raton) para atajar las bolitas rojas y Espacio lanza el desmentido en onda; Tab cambia de pestaña. El dia que la historia lo pide aparece Publicar: flechas o clic para armar el post y Enter para publicarlo
+- H: habilidad de tu rol (Periodista: verificar a distancia; Influencer: desmentido viral; Candidato: comunicado; Ciudadano: convivencia vecinal). Y: menu de aliados, 1-3 les pide ayuda. Solo en el paso donde sirven; un aviso lo dice
 - Chat bajo presion (Colegio): flechas o A/D mueven a Sofi para atrapar el apoyo y esquivar los ataques; Espacio usa la calma
-- Mitin (Plaza): revienta los globos de rumor con 1 dato, 2 pregunta o 3 calma segun su forma
-- Rueda de prensa (Alcaldia): A/D o flechas giran el foco hacia el periodista que pregunta; responde con la prueba que pide su icono (1 pista, triangulo; 2 evidencia, cuadrado; 3 testimonio, circulo) y a una trampa (X) con Espacio, "sin pruebas". Lo que investigaste es tu municion
-- De boca en boca (Barrio): WASD o flechas para correr hasta quien cree el chisme y mantener E cerca para convencerlo; con evidencia o credibilidad alta convences mas rapido, y si sueltas un argumento debil se enoja
-- En la calle: los transeuntes caminan de zona en zona. Junto a uno con rumor (triangulo) manten E y siguele el paso para convencerlo; junto a un testigo de la noticia (circulo), mantenla para escucharlo. Para esquivarlos, sigue de largo
-- P o ESC (en la calle): menu de pausa (seguir, ayuda o salir al menu; salir pide confirmacion). P en un minijuego: pausa
-- T: abrir o cerrar el telefono Civitas (la red en vivo; el mundo corre al 25%). Frena el rumor: mueve el escudo (WASD, flechas o raton) para atajar las bolitas rojas y Espacio lanza el desmentido en onda; Tab cambia de pestaña
-- Pestaña Publicar del telefono: flechas o clic para armar el post (formato segun el rol, titular, imagen, fuente y tono) y Enter para publicarlo
-- H: usar la habilidad de tu rol (Periodista: verificar a distancia; Influencer: desmentido viral; Candidato: comunicado; Ciudadano: convivencia vecinal)
-- Y: menu de aliados (los roles que no elegiste); 1-3 les pide ayuda
-- 1-4: decidir sobre una publicacion
-- I (en la noticia): ventana de investigacion. Publicacion: mueve la lupa (raton o flechas) y mantenla sobre algo raro para revelarlo. Testigos: flechas o clic para elegir, Enter para hablar, 1-4 para preguntar. Conclusion: F falsa, V verdadera, N no concluyente
-- I (en el menu): ver la introduccion
-- X (en el menu): tiempo extendido (dias y relojes mas largos)
-- ESC: saltar una escena
+- Mitin (Plaza y Registraduria): apunta con el raton o WASD, elige la municion por la forma del globo (1 dato, cuadrado; 2 pregunta, circulo; 3 calma, triangulo) y dispara con clic o Espacio; el disparo tarda en llegar
+- Rueda de prensa (Alcaldia y Auditorio): A/D o flechas giran el foco hacia quien pregunta; responde con la prueba que pide (1 pista, 2 evidencia, 3 testimonio; Espacio a una trampa X) cuando el marcador esta en la zona verde. Lo que investigaste es tu municion; dura 90 segundos como mucho
+- De boca en boca (Barrio): WASD o flechas para correr hasta quien cree el chisme y mantener E cerca para convencerlo
+- La primera vez, la rueda y el mitin empiezan con "Como se juega" (demostracion y practica); C lo repite, ESC lo salta
+- F1: modo sustentacion con el arbol de decisiones, el grafo social, el grafo de la ciudad y el arbol de dialogo en crudo (BFS, DFS y Dijkstra). F2: ayuda completa, en la seccion de donde estas. Los dos pausan el juego. F3: depuracion del mapa (zonas, colisiones y fronteras)
 
 ## Inclusividad
 
@@ -73,25 +70,26 @@ El servidor guarda la unica `PartidaSesion` y es la autoridad: simula el dia, el
 El servidor es dueño del director del dia (los pasos del capitulo) y avisa cada cambio de paso a todos:
 - Escenas: la apertura, el cierre de cada dia y la revelacion con el final se ven en todos a la vez. Cada jugador puede saltarlas en su equipo; el dia sigue cuando todos los conectados terminaron o tras 90 segundos. El final lo calcula el servidor, asi que todos ven el mismo.
 - Turnos: cada dia tiene un jugador de turno, rotando por orden de llegada a la sala. El decide la noticia (una decision por dia) y juega el minijuego del dia; los demas lo ven en vivo. En la consecuencia todos defienden la red juntos. Los roles sin jugador siguen siendo aliados.
-- En red los minijuegos son mas grandes y dificiles: la rueda tiene 3 preguntas mas por cada jugador extra y una zona mas angosta, el mitin dura mas y sus globos salen mas seguido, y todos van algo mas rapido. El tiempo extendido sigue compensando.
+- En red los minijuegos son mas grandes y dificiles: la rueda tiene 3 preguntas mas por cada jugador extra y una zona mas angosta, el mitin dura mas y sus globos salen mas seguido, y todos van algo mas rapido. El tiempo extendido es de cada equipo: alarga los minijuegos de quien lo activo; el dia y el reloj de defensa son del servidor y valen igual para todos.
 
 Protocolo: mensajes JSON (UTF-8) sobre TCP, cada uno precedido por 4 bytes big-endian con su largo (maximo 64 KB). Todo mensaje lleva `tipo`; las acciones llevan ademas un numero `n` creciente.
 - Cliente -> servidor: `unirse` (nombre o token para reconectar), `elegir_rol`, `iniciar` (solo el anfitrion), `posicion` y `escudo` (unas 10 por segundo), `ver` (abrio la noticia: corre su reloj), `evidencia`, `decidir` (solo el de turno), `aplicar` (vio la propagacion), `continuar`, `investigar`, `concluir`, `testimonio`, `onda`, `publicar`, `habilidad`, `ayuda`, `minijuego` (solo el de turno: `progreso` con su estado unas 5 veces por segundo mientras juega, y `terminar` con su estado al final), `cinematica_fin` (termino o salto la escena), `salir`.
 - Servidor -> cliente: `bienvenida` (token), `sala` (con cual es el), `inicio` (la sesion completa), `estado` (foto: la sesion completa con el director, posiciones, eventos numerados y `ack`, el ultimo `n` ya procesado de ese cliente; una foto con `ack` menor al ultimo enviado no pisa la prediccion; ademas `minijuego_vivo` con el minijuego del de turno, `cine` con la escena en curso y `cine_listos` con cuantos ya la terminaron), `paso` (dia, paso del director y jugador de turno), `cinematica` (ids de la escena que todos ven ahora y su espera maxima), `corregir` (posicion rechazada: muro, salto imposible o frontera cerrada), `error` (con `motivo`), `fin` (ganador y puntos).
-- Si un jugador se cae, su rol pasa a un aliado; si era su turno, tras una espera se decide Ignorar por el. Al volver con su token recupera su rol. Si el cliente pierde la conexion, vuelve a la pantalla de conectar con el aviso.
+- Si un jugador se cae, su rol pasa a un aliado y el dia no se detiene: si era su turno, tras una espera de 10 segundos el servidor lo da por llegado al lugar del dia, decide Ignorar por el en la noticia o cuenta su minijuego como perdido. Las escenas solo esperan a los conectados. Al volver con su token recupera su rol. Si el cliente pierde la conexion, vuelve a la pantalla de conectar con el aviso.
 
 ## Arte y creditos
 
-- Mapa, edificios, personajes y decorado: pixel art original del proyecto, dibujado en codigo. El mapa sale de `tools/generar_arte.py` (lee `data/mapa.json`, `zonas.png` y `colisiones.png`, asi que respeta exactamente donde se camina); para regenerarlo: `python tools/generar_arte.py` (requiere numpy, solo para esta herramienta). Los personajes y el decorado se construyen al vuelo en `src/post_truth/views/pixel_sprites.py` con los colores del tema activo.
+- Mapa, edificios, personajes y decorado: pixel art original del proyecto, dibujado en codigo. El mapa (`assets/mapa/`) se genero con una herramienta de desarrollo que no hace falta para jugar y no esta en el repositorio; parte de `data/mapa.json`, `zonas.png` y `colisiones.png`, asi que respeta exactamente donde se camina. Los personajes y el decorado se construyen al vuelo en `src/post_truth/views/pixel_sprites.py` con los colores del tema activo.
 - Fuentes: Pixelify Sans y Jersey 10 (Google Fonts), bajo la SIL Open Font License 1.1; las licencias estan en `assets/fuentes/`.
 
 ## Estructura
 
 - `src/post_truth/decision_tree.py`: arbol n-ario de decisiones
-- `src/post_truth/structures/`: grafo social, grafo de la ciudad y propagacion
+- `src/post_truth/structures/`: grafo social y su propagacion (por olas y en vivo), grafo de la ciudad y rutas, arbol de dialogo y arbol de finales
+- `src/post_truth/sesion.py`: la partida (estado y reglas, sin pygame y serializable); `models/director.py` ordena los pasos de cada dia y `models/cinematica.py` interpreta las escenas
 - `src/post_truth/models/`, `views/`, `controllers/`: logica, dibujo y estados del juego
 - `src/post_truth/red/`: protocolo, servidor, conexion del cliente (hilos y colas) y sesion espejo
-- `data/`: publicaciones, grafos, mapa e introduccion en JSON
+- `data/`: publicaciones, grafos, mapa, fases, historia de la campaña, escenas, minijuegos y ayuda en JSON
 - `assets/mapa/`: el mapa por capas (mapa.png se ve; zonas.png y colisiones.png son mascaras invisibles)
 
 ## Desarrollo con asistente de IA
