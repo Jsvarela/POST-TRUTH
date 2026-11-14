@@ -182,6 +182,78 @@
    "segundos": 0.8
   }
  ],
+ "campana_corta": [
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 0
+  },
+  {
+   "cmd": "actor",
+   "id": "nico",
+   "nombre": "Nico",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 1,
+   "en": [
+    1220,
+    940
+   ],
+   "dir": "derecha"
+  },
+  {
+   "cmd": "actor",
+   "id": "yo",
+   "jugador": true,
+   "nombre": "Tu",
+   "en": [
+    1280,
+    950
+   ],
+   "dir": "arriba"
+  },
+  {
+   "cmd": "fundido",
+   "a": "claro",
+   "segundos": 0.8
+  },
+  {
+   "cmd": "cartel",
+   "texto": "Ciudad Nova",
+   "sub": "Faltan cuatro dias para elegir alcalde",
+   "segundos": 2.2
+  },
+  {
+   "cmd": "sonido",
+   "nombre": "alerta"
+  },
+  {
+   "cmd": "sacudir",
+   "segundos": 0.4,
+   "fuerza": 6
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "Lo que los candidatos no quieren que sepas. Mañana, la primera prueba. #NoTeDejesEngañar"
+  },
+  {
+   "cmd": "decir",
+   "quien": "Nico",
+   "retrato": "nico",
+   "texto": "Nadie sabe quien es esa cuenta, pero todos la comparten. Miremos de donde sale cada noticia. Juntos."
+  },
+  {
+   "cmd": "fundido",
+   "a": "negro",
+   "segundos": 0.8
+  }
+ ],
  "dia1_apertura": [
   {
    "cmd": "fundido",

@@ -26,7 +26,7 @@ class MenuState(BaseState):
         if self.app.intro_vista:
             self.app.estados.cambiar("seleccion")
         else:   # la primera vez, la apertura de la campana (L4)
-            self.app.estados.estado("cinematica").reproducir("campana", "seleccion", self._intro_vista)
+            self.app.estados.estado("cinematica").reproducir("campana_corta", "seleccion", self._intro_vista)
 
     def _intro_vista(self) -> None:
         self.app.intro_vista = True
