@@ -3,8 +3,9 @@ import pygame
 
 from post_truth.controllers.base_state import BaseState
 from post_truth.models import reparto
+from post_truth.models.eleccion import puntaje_final
 from post_truth.views.theme import NEGRO
-from post_truth.views.final_view import dibujar_dia, dibujar_votos
+from post_truth.views.final_view import dibujar_dia, dibujar_medalla, dibujar_votos
 from post_truth.views.resultado_view import dibujar_resultado
 
 DURACION_CONTEO = 3.0   # segundos del conteo animado
@@ -38,9 +39,9 @@ class ResultadoState(BaseState):
 
     @property
     def paginas(self) -> int:
-        """Cuantas diapositivas hay despues del conteo (un dia cada una y la grafica); 0 sin bitacora."""
+        """Cuantas diapositivas hay despues del conteo (un dia cada una, la grafica y la medalla); 0 sin bitacora."""
         b = self.app.partida.bitacora
-        return len(b) + 1 if b else 0
+        return len(b) + 2 if b else 0
 
     def update(self, dt: float) -> None:
         self.cubrir = self.app.estados.estado("cinematica").si_toca(self.NOMBRE)   # L4: primero su cinematica
@@ -59,6 +60,11 @@ class ResultadoState(BaseState):
         if 1 <= self.pagina <= len(s.bitacora):
             dibujar_dia(pantalla, self.app.fuentes, self.app.temas.actual, s.bitacora[self.pagina - 1], self.candidatos,
                         self.pagina - 1, self.paginas)
+            return
+        if self.pagina > len(s.bitacora) + 1:   # la ultima: puntaje y medalla de la campaña
+            j = s.jugador_actual
+            dibujar_medalla(pantalla, self.app.fuentes, self.app.temas.actual,
+                            *puntaje_final(s.ciudad, j.credibilidad, s.bitacora), self.pagina - 1, self.paginas)
             return
         if self.pagina > len(s.bitacora):
             dibujar_votos(pantalla, self.app.fuentes, self.app.temas.actual, self.resultado, self.candidatos, s.final(),

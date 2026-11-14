@@ -188,3 +188,52 @@ def dibujar_votos(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, r: Res
     pygame.draw.rect(pantalla, tema.texto, (CAJA.x + px(180), ley - px(2), px(28), px(18)), px(2))
     pantalla.blit(fuentes.chica.render("sin los rumores falsos", True, tema.texto), (CAJA.x + px(216), ley - px(2)))
     _pie(pantalla, fuentes, tema, i, total)
+
+
+ESTRELLAS = {"oro": 3, "plata": 2, "bronce": 1}
+
+
+def _estrella(pantalla, color, c: tuple[int, int], r: int) -> None:
+    """Estrella pixel: un rombo con cuatro puntas (forma, no solo color)."""
+    x, y = c
+    pygame.draw.polygon(pantalla, color, [(x, y - r), (x + r // 3, y - r // 3), (x + r, y), (x + r // 3, y + r // 3),
+                                          (x, y + r), (x - r // 3, y + r // 3), (x - r, y), (x - r // 3, y - r // 3)])
+
+
+def dibujar_medalla(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, total: int, medalla: str,
+                    desglose: list[tuple[str, int, int]], i: int, paginas: int) -> None:
+    """La ultima diapositiva: el puntaje de la campaña, su medalla (1 a 3 estrellas) y de donde salio cada punto."""
+    pantalla.fill(tema.fondo)
+    titulo = fuentes.titulo.render("Tu campaña", True, tema.acento)
+    pantalla.blit(titulo, titulo.get_rect(midtop=(ANCHO // 2, px(28))))
+    panel(pantalla, tema, CAJA, TOKENS.alfa_panel)
+    cx, cy = CAJA.x + px(190), CAJA.y + px(190)
+    color = {"oro": tema.acento, "plata": tema.texto, "bronce": tema.detalle}.get(medalla, tema.borde)
+    pygame.draw.rect(pantalla, tema.borde, (cx - px(26), cy - px(150), px(52), px(70)))   # la cinta
+    for k in range(6):   # disco escalonado, de pixel
+        ancho = px(150) - abs(k - 2.5) * px(24)
+        pygame.draw.rect(pantalla, color, (cx - ancho // 2, cy - px(72) + k * px(24), ancho, px(24)))
+    num = fuentes.enorme.render(str(total), True, tema.fondo)
+    pantalla.blit(num, num.get_rect(center=(cx, cy)))
+    estrellas = ESTRELLAS.get(medalla, 0)
+    for k in range(3):   # 3 oro, 2 plata, 1 bronce; las que faltan, en contorno
+        c = (cx + (k - 1) * px(54), cy + px(118))
+        _estrella(pantalla, tema.acento if k < estrellas else tema.borde, c, px(20))
+    nombre = {"oro": "Medalla de oro", "plata": "Medalla de plata", "bronce": "Medalla de bronce"}.get(
+        medalla, "Sin medalla: la ciudad necesita que verifiques mas")
+    img = fuentes.normal.render(recortar(nombre, fuentes.normal, px(360)), True, tema.texto)
+    pantalla.blit(img, img.get_rect(midtop=(cx, cy + px(150))))
+    x, largo = CAJA.x + px(430), CAJA.right - px(40) - (CAJA.x + px(430))
+    pantalla.blit(fuentes.normal.render("De donde salieron tus puntos (de 100)", True, tema.acento), (x, CAJA.y + px(40)))
+    for k, (que, puntos, de) in enumerate(desglose):
+        y = CAJA.y + px(96) + k * px(78)
+        pantalla.blit(fuentes.normal.render(que, True, tema.texto), (x, y))
+        valor = fuentes.normal.render(f"{puntos} de {de}", True, tema.texto)
+        pantalla.blit(valor, valor.get_rect(topright=(x + largo, y)))
+        barra = pygame.Rect(x, y + px(30), largo, px(18))
+        pygame.draw.rect(pantalla, tema.fondo, barra)
+        pygame.draw.rect(pantalla, tema.bueno if puntos * 2 >= de else tema.malo,
+                         (barra.x, barra.y, round(barra.w * puntos / de), barra.h))
+        pygame.draw.rect(pantalla, tema.borde, barra, px(2))
+    _pie(pantalla, fuentes, tema, i, paginas)
+

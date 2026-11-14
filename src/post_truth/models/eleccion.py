@@ -96,6 +96,23 @@ VEREDICTO = {   # (falsa, accion) -> si estuvo bien o mal y por que: lo que el j
 }
 
 
+MEDALLAS = ((75, "oro"), (55, "plata"), (35, "bronce"))   # puntos minimos (de 100) de cada una
+
+
+def puntaje_final(ciudad, credibilidad: int, bitacora: list[dict]) -> tuple[int, str, list[tuple[str, int, int]]]:
+    """(puntos de 0 a 100, medalla o "", desglose [(que, puntos, de cuantos)]): que tan bien se cuido la campaña."""
+    dias = len(bitacora) or 1
+    buenas = sum(VEREDICTO[(b["falsa"], b["accion"])].startswith("Bien") for b in bitacora)
+    creyeron = [b["creyeron"] for b in bitacora if b.get("creyeron") is not None]
+    frenado = 1 - sum(creyeron) / (100 * len(creyeron)) if creyeron else 0.0
+    desglose = [("Ciudad informada", round(40 * (100 - ciudad.misinformation) / 100), 40),
+                ("Tu credibilidad", round(25 * credibilidad / 100), 25),
+                ("Decisiones acertadas", round(20 * buenas / dias), 20),
+                ("Rumores frenados", round(15 * frenado), 15)]
+    total = sum(puntos for _, puntos, _ in desglose)
+    return total, next((nombre for minimo, nombre in MEDALLAS if total >= minimo), ""), desglose
+
+
 def explicar(bitacora: list[dict], r: "ResultadoEleccion", nombres: dict[str, str]) -> list[str]:
     """Una linea por dia (que publico @VerdadNova, que hiciste, a quien afecto y que dejo) y una de resumen:
     que peso mas en el ganador. Sin cifras del grafo: palabras como "mucho" o "algo"."""
