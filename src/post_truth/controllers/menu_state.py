@@ -7,6 +7,7 @@ from post_truth.views import sonido
 from post_truth.views.componentes import Boton
 from post_truth.views.menu_view import dibujar_menu, rect_boton, rect_opcion
 
+ESPERA = 40.0   # segundos quieto en el menu antes de mostrar la introduccion sola
 NOMBRES_TEMA = {"normal": "Normal", "alto_contraste": "Alto contraste", "daltonismo": "Daltonismo"}
 
 
@@ -20,6 +21,7 @@ class MenuState(BaseState):
 
     def al_entrar(self) -> None:
         self.t, self.foco, self.en_opciones, self.fila = 0.0, 0, False, 0
+        self.quieto = 0.0   # segundos sin que nadie toque nada
 
     # --- acciones ------------------------------------------------------------------------------------
     def _jugar(self) -> None:
@@ -55,6 +57,7 @@ class MenuState(BaseState):
                 ("Silencio", "Si" if sonido.SILENCIO[0] else "No"),
                 ("Mensajes guia", "Si" if app.guias else "No"),
                 ("Avance manual", "Si" if app.avance_manual else "No"),
+                ("Partida corta", "Si (2 dias)" if app.partida_corta else "No"),
                 ("Cerrar", "")]
 
     def _cambiar_opcion(self, paso: int) -> None:
@@ -77,11 +80,14 @@ class MenuState(BaseState):
             app.guias = not app.guias
         elif self.fila == 6:
             app.avance_manual = not app.avance_manual
+        elif self.fila == 7:   # para ferias: una campaña de dos dias
+            app.partida_corta = not app.partida_corta
         if self.fila in (1, 3):   # se escucha como queda
             sonido.tocar("acierto" if self.fila == 1 else "pasos")
 
     # --- eventos -------------------------------------------------------------------------------------
     def handle_event(self, event: pygame.event.Event) -> None:
+        self.quieto = 0.0
         if self.en_opciones:
             self._evento_opciones(event)
             return
@@ -134,6 +140,10 @@ class MenuState(BaseState):
 
     def update(self, dt: float) -> None:
         self.t += dt
+        self.quieto += dt
+        if self.quieto >= ESPERA and self.app.cinematicas and not self.en_opciones:
+            self.quieto = 0.0   # pantalla de espera: si nadie toca nada, el juego se muestra solo
+            self.app.estados.estado("cinematica").reproducir("campana", "menu", espera=True)
         for i, b in enumerate(self.botones):
             b.foco = i == self.foco
 

@@ -85,7 +85,8 @@ class MundoState(BaseState):
             self.app.partida = PartidaSesion.nueva_campana(
                 getattr(self.app, "personajes", None) or [self.personaje], load_trees(RUTA_EVENTOS), GrafoSocial.cargar(RUTA_GRAFO_SOCIAL),
                 GrafoCiudad.cargar(RUTA_GRAFO_CIUDAD), self.rng, extendido=self.app.tiempo_extendido,
-                minijuegos=mj.cargar_lugares(RUTA_MINIJUEGOS), cinematicas=self.app.cinematicas)
+                minijuegos=mj.cargar_lugares(RUTA_MINIJUEGOS), cinematicas=self.app.cinematicas,
+                **({"dias": 2} if self.app.partida_corta else {}))
             self._dia = -1
         if self.sesion.campana.dia != self._dia:   # amanece: de vuelta en la Plaza
             self._dia = self.sesion.campana.dia

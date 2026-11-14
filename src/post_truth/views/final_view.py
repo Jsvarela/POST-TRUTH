@@ -201,7 +201,8 @@ def _estrella(pantalla, color, c: tuple[int, int], r: int) -> None:
 
 
 def dibujar_medalla(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, total: int, medalla: str,
-                    desglose: list[tuple[str, int, int]], i: int, paginas: int) -> None:
+                    desglose: list[tuple[str, int, int]], i: int, paginas: int, tabla: list[dict] | None = None,
+                    iniciales: str | None = None) -> None:
     """La ultima diapositiva: el puntaje de la campaña, su medalla (1 a 3 estrellas) y de donde salio cada punto."""
     pantalla.fill(tema.fondo)
     titulo = fuentes.titulo.render("Tu campaña", True, tema.acento)
@@ -226,7 +227,7 @@ def dibujar_medalla(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, tota
     x, largo = CAJA.x + px(430), CAJA.right - px(40) - (CAJA.x + px(430))
     pantalla.blit(fuentes.normal.render("De donde salieron tus puntos (de 100)", True, tema.acento), (x, CAJA.y + px(40)))
     for k, (que, puntos, de) in enumerate(desglose):
-        y = CAJA.y + px(96) + k * px(78)
+        y = CAJA.y + px(84) + k * px(62)
         pantalla.blit(fuentes.normal.render(que, True, tema.texto), (x, y))
         valor = fuentes.normal.render(f"{puntos} de {de}", True, tema.texto)
         pantalla.blit(valor, valor.get_rect(topright=(x + largo, y)))
@@ -235,5 +236,15 @@ def dibujar_medalla(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, tota
         pygame.draw.rect(pantalla, tema.bueno if puntos * 2 >= de else tema.malo,
                          (barra.x, barra.y, round(barra.w * puntos / de), barra.h))
         pygame.draw.rect(pantalla, tema.borde, barra, px(2))
+    y = CAJA.y + px(84) + len(desglose) * px(62) + px(8)   # la tabla de los mejores y las iniciales de quien jugo
+    pantalla.blit(fuentes.normal.render("Mejores puntajes", True, tema.acento), (x, y))
+    mejores = "   ".join(f"{k + 1}. {d['nombre']} {d['puntos']}" for k, d in enumerate((tabla or [])[:5]))
+    pantalla.blit(fuentes.chica.render(recortar(mejores or "Todavia nadie: se el primero.", fuentes.chica, largo), True,
+                                       tema.texto), (x, y + px(28)))
+    if iniciales is None:
+        pide = "Puntaje guardado."
+    else:
+        pide = f"Tus iniciales: {iniciales}{'_' * (3 - len(iniciales))}   (letras y Enter para guardarlo)"
+    pantalla.blit(fuentes.chica.render(pide, True, tema.bueno if iniciales is None else tema.texto), (x, y + px(52)))
     _pie(pantalla, fuentes, tema, i, paginas)
 

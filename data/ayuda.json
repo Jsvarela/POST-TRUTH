@@ -80,7 +80,7 @@
    "- Lo que se decidio: compartir un rumor falso sobre un candidato le quita apoyo injustamente; verificarlo o reportarlo lo protege.",
    "- Como quedo la ciudad: cada candidato gana con una ciudad distinta (menos conflictos, mas convivencia, mas bienestar o mas informacion verificada y confianza).",
    "La pantalla final cuenta los votos, dice si un rumor falso cambio al ganador y muestra el puntaje de la ciudad y de cada jugador.",
-   "Despues, Enter pasa por una diapositiva de cada dia (que hiciste con el rumor, si estuvo bien o mal, a quien afecto, cuantos lo creyeron y como cambio la ciudad) y una grafica con los votos de cada candidato junto a los que habria tenido sin los rumores falsos. Al final ves tu puntaje de 0 a 100 y tu medalla (bronce, plata u oro): sale de que tan informada quedo la ciudad, tu credibilidad, tus decisiones acertadas y los rumores que frenaste.",
+   "Despues, Enter pasa por una diapositiva de cada dia (que hiciste con el rumor, si estuvo bien o mal, a quien afecto, cuantos lo creyeron y como cambio la ciudad) y una grafica con los votos de cada candidato junto a los que habria tenido sin los rumores falsos. Al final ves tu puntaje de 0 a 100 y tu medalla (bronce, plata u oro): sale de que tan informada quedo la ciudad, tu credibilidad, tus decisiones acertadas y los rumores que frenaste. Escribe tres iniciales y Enter para anotarlo en la tabla de mejores puntajes de este equipo.",
    "Ganas cuando la ciudad termina sana y ningun rumor decidio la eleccion."]},
   {"id": "multijugador", "titulo": "Multijugador", "texto": [
    "De 2 a 4 jugadores en red local. Un equipo abre el servidor; cada jugador elige Multijugador en el menu (R) y escribe la IP y el puerto.",

@@ -42,6 +42,12 @@ La campaña dura cuatro dias y cada dia es un capitulo con pasos en orden, uno a
 - La primera vez, la rueda y el mitin empiezan con "Como se juega" (demostracion y practica); C lo repite, ESC lo salta
 - F1: modo sustentacion con el arbol de decisiones, el grafo social, el grafo de la ciudad y el arbol de dialogo en crudo (BFS, DFS y Dijkstra). F2: ayuda completa, en la seccion de donde estas. Los dos pausan el juego. F3: depuracion del mapa (zonas, colisiones y fronteras)
 
+## Para ferias y demostraciones
+
+- Partida corta: en Opciones (O), "Partida corta" deja la campaña en dos dias (unos 5 minutos) con su eleccion y su final.
+- Pantalla de espera: si nadie toca el menu durante 40 segundos, el juego muestra solo la introduccion; cualquier tecla vuelve al menu.
+- Tabla de puntajes: al final cada partida da un puntaje de 0 a 100 con medalla; se escriben tres iniciales y Enter lo guarda. La tabla queda en el equipo, en `.post_truth_puntajes.json` de la carpeta del usuario (borrar ese archivo la reinicia).
+
 ## Inclusividad
 
 Temas de alto contraste y daltonismo, formas que no dependen del color, tiempo extendido, pausa, avisos visuales de cada sonido, volumen y silencio, ayuda y mensajes guia. Que dificultad atiende cada una: [docs/inclusividad.md](docs/inclusividad.md).

@@ -12,11 +12,14 @@ class CinematicaState(BaseState):
     def __init__(self, app) -> None:
         super().__init__(app)
         self.ids, self.destino, self.al_terminar = [], "menu", None
+        self.espera = False
         self.interprete: Interprete | None = None
 
-    def reproducir(self, ids: str | list[str], destino: str, al_terminar=None) -> None:
-        """Una o varias cinematicas seguidas (la revelacion y el final van juntas)."""
+    def reproducir(self, ids: str | list[str], destino: str, al_terminar=None, espera: bool = False) -> None:
+        """Una o varias cinematicas seguidas (la revelacion y el final van juntas). `espera`: es la pantalla de
+        espera del menu y cualquier tecla la corta."""
         self.ids, self.destino, self.al_terminar = [ids] if isinstance(ids, str) else list(ids), destino, al_terminar
+        self.espera = espera
         self.app.estados.cambiar("cinematica", fundido=True)
 
     def si_toca(self, destino: str) -> bool:
@@ -42,7 +45,9 @@ class CinematicaState(BaseState):
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type != pygame.KEYDOWN or self.interprete is None:
             return
-        if event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_e, pygame.K_KP_ENTER):
+        if self.espera:
+            self.interprete.saltar()
+        elif event.key in (pygame.K_RETURN, pygame.K_SPACE, pygame.K_e, pygame.K_KP_ENTER):
             self.interprete.avanzar()
         elif event.key == pygame.K_ESCAPE:
             self.interprete.saltar()

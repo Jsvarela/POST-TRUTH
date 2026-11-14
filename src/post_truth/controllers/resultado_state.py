@@ -2,7 +2,7 @@
 import pygame
 
 from post_truth.controllers.base_state import BaseState
-from post_truth.models import reparto
+from post_truth.models import puntajes, reparto
 from post_truth.models.eleccion import puntaje_final
 from post_truth.views.theme import NEGRO
 from post_truth.views.final_view import dibujar_dia, dibujar_medalla, dibujar_votos
@@ -22,9 +22,13 @@ class ResultadoState(BaseState):
     def al_entrar(self) -> None:
         self.t, self.cubrir, self.pagina = 0.0, True, 0   # 0 el conteo; 1..N un dia cada una; N+1 la grafica
         self.resultado = self.app.partida.resultado_eleccion()
+        self.iniciales: str | None = ""   # las que se escriben en la medalla; None cuando ya se guardo el puntaje
+        self.tabla = puntajes.cargar()
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type != pygame.KEYDOWN:
+            return
+        if self.pagina == self.paginas and self.paginas and self._iniciales(event):
             return
         if event.key == pygame.K_SPACE or (self.t < DURACION_CONTEO and event.key == pygame.K_RETURN):
             self.t = DURACION_CONTEO   # saltar el conteo (accesibilidad)
@@ -36,6 +40,23 @@ class ResultadoState(BaseState):
             self.app.salir_de_red()
             self.app.partida = None
             self.app.estados.cambiar("menu")
+
+    def _iniciales(self, event: pygame.event.Event) -> bool:
+        """En la medalla: tres letras y Enter anotan el puntaje en la tabla. True si la tecla era para eso."""
+        if self.iniciales is None:
+            return False
+        letra = getattr(event, "unicode", "") or (pygame.key.name(event.key) if event.key < 128 else "")
+        if event.key == pygame.K_BACKSPACE:
+            self.iniciales = self.iniciales[:-1]
+        elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER) and self.iniciales:
+            s = self.app.partida
+            total, medalla, _ = puntaje_final(s.ciudad, s.jugador_actual.credibilidad, s.bitacora)
+            self.tabla, self.iniciales = puntajes.agregar(self.iniciales, total, medalla), None
+        elif len(letra) == 1 and letra.isalpha() and len(self.iniciales) < 3:
+            self.iniciales += letra.upper()
+        else:
+            return False
+        return True
 
     @property
     def paginas(self) -> int:
@@ -64,7 +85,8 @@ class ResultadoState(BaseState):
         if self.pagina > len(s.bitacora) + 1:   # la ultima: puntaje y medalla de la campaña
             j = s.jugador_actual
             dibujar_medalla(pantalla, self.app.fuentes, self.app.temas.actual,
-                            *puntaje_final(s.ciudad, j.credibilidad, s.bitacora), self.pagina - 1, self.paginas)
+                            *puntaje_final(s.ciudad, j.credibilidad, s.bitacora), self.pagina - 1, self.paginas,
+                            self.tabla, self.iniciales)
             return
         if self.pagina > len(s.bitacora):
             dibujar_votos(pantalla, self.app.fuentes, self.app.temas.actual, self.resultado, self.candidatos, s.final(),

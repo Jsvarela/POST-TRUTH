@@ -49,6 +49,7 @@ class App:
         self.volumen = 0.7              # de 0 a 1 (Opciones del menu)
         self.guias = True               # mensajes guia de la primera vez (Opciones del menu)
         self.avance_manual = False      # accesibilidad: el dialogo de las cinematicas solo avanza con Enter
+        self.partida_corta = False      # para ferias: campaña de dos dias
         self.tutoriales_vistos: set[str] = set()   # minijuegos cuyo "Como se juega" ya se vio (C lo repite)
         self.cinematicas = os.environ.get("POSTTRUTH_CINEMATICAS", "1") != "0"   # las pruebas las apagan
         self.guias_vistas: set[str] = set()

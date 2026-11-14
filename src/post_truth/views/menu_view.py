@@ -13,11 +13,11 @@ def rect_boton(i: int) -> pygame.Rect:
     return pygame.Rect(ANCHO // 2 - px(170), px(262) + i * px(58), px(340), px(50))
 
 
-RECT_OPCIONES = pygame.Rect(ANCHO // 2 - px(260), px(110), px(520), px(480))
+RECT_OPCIONES = pygame.Rect(ANCHO // 2 - px(260), px(78), px(520), px(540))
 
 
 def rect_opcion(i: int) -> pygame.Rect:
-    return pygame.Rect(RECT_OPCIONES.x + esp(4), RECT_OPCIONES.y + px(64) + i * px(54), RECT_OPCIONES.w - 2 * esp(4),
+    return pygame.Rect(RECT_OPCIONES.x + esp(4), RECT_OPCIONES.y + px(64) + i * px(49), RECT_OPCIONES.w - 2 * esp(4),
                        px(44))
 
 
