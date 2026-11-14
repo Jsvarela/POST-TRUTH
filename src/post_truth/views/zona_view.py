@@ -9,8 +9,20 @@ Pintor = Callable[[pygame.Surface, Tema, pygame.Rect, int], None]
 HORIZONTE = 0.80
 
 
-def dibujar_fondo_zona(pantalla: pygame.Surface, zona_id: str, tema: Tema, rect: pygame.Rect) -> None:
-    """Cielo, suelo y los elementos propios de la zona."""
+_PIXELADOS: dict[tuple, pygame.Surface] = {}
+
+
+def dibujar_fondo_zona(pantalla: pygame.Surface, zona_id: str, tema: Tema, rect: pygame.Rect, pixel: int = 1) -> None:
+    """Cielo, suelo y los elementos propios de la zona. Con `pixel` > 1 la escena se pinta en chico y se amplia
+    sin suavizar: queda de pixeles gruesos, como el resto del juego."""
+    if pixel > 1:
+        clave = (zona_id, id(tema), rect.size, pixel)
+        if clave not in _PIXELADOS:
+            chico = pygame.Surface((rect.w // pixel + 1, rect.h // pixel + 1))
+            dibujar_fondo_zona(chico, zona_id, tema, chico.get_rect())
+            _PIXELADOS[clave] = pygame.transform.scale(chico, (chico.get_width() * pixel, chico.get_height() * pixel))
+        pantalla.blit(_PIXELADOS[clave], rect.topleft, (0, 0, rect.w, rect.h))
+        return
     horizonte = rect.y + round(rect.height * HORIZONTE)
     pygame.draw.rect(pantalla, tema.cielo, (rect.x, rect.y, rect.width, horizonte - rect.y))
     pygame.draw.rect(pantalla, tema.suelo, (rect.x, horizonte, rect.width, rect.bottom - horizonte))

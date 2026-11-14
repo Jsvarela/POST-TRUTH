@@ -3,7 +3,7 @@ import pygame
 
 from post_truth.config import ALTO, ANCHO, px
 from post_truth.views.componentes import Boton, Fuentes, Tarjeta, panel
-from post_truth.views.escena_view import RECT_ESCENA
+from post_truth.views.escena_view import PIXEL_FONDO, RECT_ESCENA
 from post_truth.views.theme import TOKENS, Tema, esp
 from post_truth.views.zona_view import dibujar_fondo_zona
 
@@ -18,7 +18,7 @@ def dibujar_lugar(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, zona: 
                   tarjetas: list[tuple[str, str, str]], botones: list[Boton], t: float) -> None:
     """`tarjetas`: (titulo, texto, tipo) de lo que hay aqui (evidencia hallada, la noticia del dia...)."""
     pantalla.fill(tema.fondo)
-    dibujar_fondo_zona(pantalla, zona, tema, pygame.Rect(0, RECT_ESCENA.y, ANCHO, ALTO - RECT_ESCENA.y))
+    dibujar_fondo_zona(pantalla, zona, tema, pygame.Rect(0, RECT_ESCENA.y, ANCHO, ALTO - RECT_ESCENA.y), PIXEL_FONDO)
     entrada = min(1.0, t / TOKENS.dur_media)
     caja = RECT_PANEL.move(0, round(px(30) * (1 - entrada) ** 2))   # el panel sube suave al entrar
     panel(pantalla, tema, caja, TOKENS.alfa_panel)

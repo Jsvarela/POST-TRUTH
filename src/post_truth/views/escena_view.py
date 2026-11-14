@@ -26,6 +26,7 @@ RECT_HUD = pygame.Rect(0, 0, ANCHO, px(56))   # franja del HUD en fila (lo dibuj
 RECT_PERSONAJE = pygame.Rect(px(40), px(138), px(260), px(262))   # el pixel art llena el alto: deja libre el reloj viral
 RECT_PANEL = pygame.Rect(px(330), px(68), px(664), px(328))
 RECT_ESCENA = pygame.Rect(0, px(57), ANCHO, px(404) - px(57))
+PIXEL_FONDO = max(2, px(4))   # lado del pixel del fondo de los interiores
 RECT_TARJETA = pygame.Rect(RECT_PANEL.x + px(12), RECT_PANEL.y + px(8), px(346), px(312))
 RECT_MAPA = pygame.Rect(RECT_PANEL.right - px(10) - px(290), RECT_PANEL.y + px(8), px(290), px(312))
 AYUDA_INTERIOR = "Investigar: I (lupa y testigos)   |   Decidir: 1-4   |   ESC: volver a la calle"
@@ -162,7 +163,7 @@ def dibujar_escena(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, perso
                    reloj: tuple[float, float] | None = None, presentes: EstadoPresentes | None = None,
                    reaccion_jugador: tuple[int, float] | None = None, credibilidad: int | None = None) -> None:
     pantalla.fill(tema.fondo)
-    dibujar_fondo_zona(pantalla, zona_id, tema, RECT_ESCENA)
+    dibujar_fondo_zona(pantalla, zona_id, tema, RECT_ESCENA, PIXEL_FONDO)
     dx, dy = desplazamiento_reaccion(*reaccion_jugador) if reaccion_jugador else (0, 0)
     dibujar_personaje(pantalla, personaje, tema, RECT_PERSONAJE.move(dx, dy), animo)
     if nombre_zona:
