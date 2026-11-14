@@ -214,6 +214,11 @@ class TelefonoState(BaseState):
             self._avisar(titulo, texto, tipo)
         vencida = s.transcurrir(dt * RITMO_TELEFONO)
         s.avanzar_rumor(dt * (RITMO_RUMOR_TELEFONO - RITMO_TELEFONO))   # transcurrir ya lo movio al 25%
+        if s.novedad == "jefe":   # el ultimo dia @VerdadNova vuelve a publicar
+            s.novedad = ""
+            self.alerta = ALERTA
+            sonido.alerta()
+            self._avisar("@VerdadNova contraataca", "Volvio a publicar: el rumor prende en mas cuentas.", "malo")
         if s.novedad == "viral":
             s.novedad = ""
             self.alerta = ALERTA

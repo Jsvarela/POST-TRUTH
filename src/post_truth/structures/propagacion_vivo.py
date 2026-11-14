@@ -64,8 +64,17 @@ class PropagacionEnVivo:
         self.t, self._acumulado, self.pasos = 0.0, 0.0, 0
         self.viajes: list[tuple[str, str]] = []   # rumores en camino (origen, destino): llegan al paso siguiente
         self.frenados = 0                          # atajados por el escudo o la onda
+        self.reavivado = False                     # el ultimo dia @VerdadNova vuelve a publicar una vez
         self.estado[autor] = COMPARTIO
         self.rumor[autor] = ACTIVO
+
+    def encender(self, n: int) -> list[str]:
+        """Otros focos del rumor: `n` ciudadanos que aun no son inmunes (ni el jugador) empiezan a regarlo."""
+        libres = sorted(c for c, e in self.estado.items() if e in (SIN_ENTERARSE, ENTERADO) and c != self.jugador)
+        focos = self.rng.sample(libres, min(n, len(libres)))
+        for c in focos:
+            self.estado[c], self.rumor[c] = COMPARTIO, ACTIVO
+        return focos
 
     # --- reloj --------------------------------------------------------------------------------
     @property
@@ -252,7 +261,7 @@ class PropagacionEnVivo:
                 "credibilidad_jugador": self.credibilidad_jugador, "estado": self.estado, "rumor": self.rumor,
                 "desmentido": self.desmentido, "enfriando": self.enfriando, "limitadas": self.limitadas,
                 "alerta": self.alerta, "t": self.t, "acumulado": self._acumulado, "pasos": self.pasos,
-                "viajes": [list(v) for v in self.viajes], "frenados": self.frenados,
+                "viajes": [list(v) for v in self.viajes], "frenados": self.frenados, "reavivado": self.reavivado,
                 "rng": [s[0], list(s[1]), s[2]]}
 
     @classmethod
@@ -266,6 +275,7 @@ class PropagacionEnVivo:
         p.estado, p.rumor, p.desmentido = dict(d["estado"]), dict(d["rumor"]), dict(d["desmentido"])
         p.enfriando, p.limitadas = {a: 0.0 for a in ENFRIAMIENTO} | dict(d["enfriando"]), list(d["limitadas"])
         p.viajes, p.frenados = [tuple(v) for v in d.get("viajes", [])], int(d.get("frenados", 0))
+        p.reavivado = bool(d.get("reavivado", False))
         p.alerta, p.t, p._acumulado, p.pasos = float(d["alerta"]), float(d["t"]), float(d["acumulado"]), int(d["pasos"])
         p.rng = random.Random()
         p.rng.setstate((d["rng"][0], tuple(d["rng"][1]), d["rng"][2]))

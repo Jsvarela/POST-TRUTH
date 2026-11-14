@@ -35,7 +35,8 @@
   {"id": "telefono", "titulo": "Telefono Civitas", "texto": [
    "Se abre solo despues de decidir la noticia del dia y dura lo que dura la defensa. Fuera de ese momento no corre nada en la red.",
    "Pestañas (Tab): Red (la red social en vivo) y Notificaciones (lo que paso en la ciudad). El dia que la historia lo pide aparece Publicar.",
-   "Un rumor se vuelve viral cuando lo cree el {viral}% de la red: suena una alerta y sale un aviso."]},
+   "Un rumor se vuelve viral cuando lo cree el {viral}% de la red: suena una alerta y sale un aviso.",
+   "Cada dia el rumor corre mas fuerte y nace en mas cuentas a la vez. El ultimo dia, a mitad de la defensa, @VerdadNova vuelve a publicar: guarda el desmentido en onda para ese momento."]},
   {"id": "red", "titulo": "Defensa de la red", "texto": [
    "En la pestaña Red el rumor viaja de persona en persona como bolitas rojas por las conexiones.",
    "- Escudo: muevelo con WASD, flechas o raton. Si una bolita pasa por el, la atajas.",

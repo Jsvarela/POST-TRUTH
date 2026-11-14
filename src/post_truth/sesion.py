@@ -46,6 +46,7 @@ AVISO_VENCIDO = "Se te acabo el tiempo: la publicacion siguio circulando sin que
 DIAS = DIAS_CAMPANA                   # campana: un capitulo por dia (data/historia.json)
 DURACION_DIA = 80.0                   # segundos de un dia (calle, decision y minijuegos): 4 dias = 5.3 min de reloj
 FACTOR_TIEMPO_EXTENDIDO = 1.5         # accesibilidad: dias y relojes mas largos
+ESCALADA = ((1.0, 0), (1.1, 1), (1.2, 1), (1.3, 1))   # por dia: (fuerza del rumor, focos de mas al empezar)
 RITMO_TELEFONO = 0.25                 # con el telefono abierto el mundo corre al 25%...
 RITMO_RUMOR_TELEFONO = 0.6            # ...pero el rumor al 60%, para que atajarlo sea un juego de reflejos
 RUMOR_SUELTO = Impact(misinformation=6, trust=-2)   # un minijuego que deja un rumor sin aclarar (L1)
@@ -312,6 +313,7 @@ class PartidaSesion:
         if not self.reloj_activo or self.tiempo_restante is None:
             return None
         self.tiempo_restante = max(0.0, self.tiempo_restante - dt)
+        self._jefe_final()
         if self.tiempo_restante > 0:
             return None
         if self.director is not None and self.director.nombre == "consecuencia":   # se acabo el tiempo de defender
@@ -321,6 +323,17 @@ class PartidaSesion:
             self._avanzar_director()
             return None
         return self.decidir_por_tiempo()
+
+    def _jefe_final(self) -> None:
+        """El ultimo dia, a mitad de la defensa, @VerdadNova vuelve a publicar: el rumor prende en dos sitios mas."""
+        c, v, d = self.campana, self.en_vivo, self.director
+        if (c is None or v is None or d is None or d.nombre != "consecuencia" or v.reavivado
+                or c.dia != len(c.dias) - 1 or self.tiempo_restante > self.tiempo_viral_total / 2):
+            return
+        v.reavivado = True
+        if v.encender(2):
+            self.novedad = "jefe"
+            self.notificar("crisis", "@VerdadNova contraataca", "Volvio a publicar: el rumor prende en mas cuentas.")
 
     def decidir_por_tiempo(self) -> ResultadoDecision:
         """Nadie decidio a tiempo: cuenta como Ignorar y ademas nadie freno la publicacion."""
@@ -1025,9 +1038,11 @@ class PartidaSesion:
         propios = {j.id for j in self.jugadores}
         autores = sorted(v.id for v in self.grafo.vertices() if v.id not in propios)
         j = self.jugador_actual
+        fuerza, focos = ESCALADA[min(c.dia, len(ESCALADA) - 1)]   # cada dia el rumor corre mas y nace en mas sitios
         self.en_vivo = PropagacionEnVivo(self.grafo, autores[semilla % len(autores)], j.id, j.credibilidad, semilla,
                                          es_falsa(evento.truth_level),
-                                         c.velocidades[c.dia] if c.dia < len(c.velocidades) else 1.0)
+                                         fuerza * (c.velocidades[c.dia] if c.dia < len(c.velocidades) else 1.0))
+        self.en_vivo.encender(focos)
         self.en_vivo_viral = False
         self.tiempo_restante, self.reloj_activo = self.tiempo_viral_total, True
         self.novedad = "crisis"
