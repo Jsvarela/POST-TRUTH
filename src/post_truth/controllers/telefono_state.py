@@ -13,7 +13,7 @@ from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
 from post_truth.views.componentes import Modal
 from post_truth.views.roles_view import dibujar_habilidad, dibujar_menu_aliados
-from post_truth.views.telefono_view import (AREA_RED, ASPECTO, CERRAR, ONDA, PESTANAS, RADIO_ESCUDO,
+from post_truth.views.telefono_view import (AREA_RED, ASPECTO, CERRAR, CHISPA, ONDA, PESTANAS, RADIO_ESCUDO,
                                             RECT_PUBLICAR, VistaPublicar, VistaTelefono, de_pantalla,
                                             dibujar_telefono, rect_fila, rect_pestana)
 
@@ -39,6 +39,8 @@ class TelefonoState(BaseState):
         self.teclas: set[int] = set()
         self.ondas: list[list] = []   # [centro, edad]
         self.atajo = 0.0
+        self.chispas: list[list] = []   # [centro, edad]: estallido donde se atajo un rumor
+        self.racha, self._t_racha = 0, 0.0   # atajadas seguidas (se corta a los 2 s sin atajar)
         self.fila = 0
         self.menu_aliados = False
         self.paso_visto = ""
@@ -187,8 +189,14 @@ class TelefonoState(BaseState):
                            min(1.0, max(0.0, y + dy * VELOCIDAD_ESCUDO * dt)))
         v = self.app.partida.en_vivo
         self.atajo = max(0.0, self.atajo - dt)
-        if self.app.partida.escudo(self.escudo, self.radio):
+        self.chispas = [[c, e + dt] for c, e in self.chispas if e + dt < CHISPA]
+        self._t_racha = max(0.0, self._t_racha - dt)
+        if self._t_racha == 0:
+            self.racha = 0
+        if (n := self.app.partida.escudo(self.escudo, self.radio)):
             self.atajo = 0.35   # destello del escudo: lo atajaste
+            self.chispas.append([self.escudo, 0.0])
+            self.racha, self._t_racha = self.racha + int(n), 2.0
             sonido.tocar("acierto")
         if v is not None:   # a quien le acaba de llegar algo: pulso
             for id, estado in v.estado.items():
@@ -229,7 +237,8 @@ class TelefonoState(BaseState):
         return VistaTelefono(s.grafo, s.en_vivo, self.pestana, self.escudo, s.notificaciones, s.leidas,
                              (s.tiempo_restante, s.tiempo_viral_total) if s.reloj_activo else None,
                              s.campana.factor > 1, self.alerta, self.t, publicar, self.pulsos, s.campana.fraccion,
-                             tuple((tuple(c), e) for c, e in self.ondas), self.atajo, self.pestanas)
+                             tuple((tuple(c), e) for c, e in self.ondas), self.atajo, self.pestanas,
+                             tuple((tuple(c), e) for c, e in self.chispas), self.racha)
 
     def datos_hud(self) -> DatosHud | None:
         return None   # el telefono tapa el centro: lleva su propia barra de estado y la cuenta de la crisis

@@ -17,6 +17,7 @@ from post_truth.views.theme import Tema, mezclar
 
 PESTANAS = ("Red", "Notificaciones", "Publicar")
 ONDA = 0.6            # segundos que dura la animacion de la onda
+CHISPA = 0.45         # segundos que dura el estallido de un rumor atajado
 RADIO = px(11)
 SUBIDA = 0.25   # segundos que tarda el telefono en subir
 PULSO = 0.8     # segundos que dura el anillo de un ciudadano al que le acaba de llegar la noticia
@@ -72,6 +73,8 @@ class VistaTelefono:
     ondas: tuple = ()                         # (centro normalizado, edad) de los desmentidos en onda
     atajo: float = 0.0                        # destello del escudo cuando acaba de atajar un rumor
     pestanas: int = len(PESTANAS)             # Publicar solo cuando la historia lo ofrece (L2)
+    chispas: tuple = ()                       # (centro normalizado, edad) de cada rumor atajado
+    racha: int = 0                            # atajadas seguidas
 
 
 def dibujar_telefono(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) -> None:
@@ -178,6 +181,20 @@ def _red(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) ->
     pygame.draw.circle(sup, color, escudo, r, px(3))
     pygame.draw.line(sup, tema.acento, (escudo[0] - px(6), escudo[1]), (escudo[0] + px(6), escudo[1]), px(2))
     pygame.draw.line(sup, tema.acento, (escudo[0], escudo[1] - px(6)), (escudo[0], escudo[1] + px(6)), px(2))
+    for centro, edad in v.chispas:   # estallido pixel: ocho cuadritos que salen del punto donde se atajo
+        f = edad / CHISPA
+        cx, cy = a_pantalla(centro)
+        lado = max(px(2), round(px(6) * (1 - f)))
+        for k in range(8):
+            d = px(12) + px(46) * f
+            x, y = cx + d * math.cos(k * math.pi / 4), cy + d * math.sin(k * math.pi / 4)
+            pygame.draw.rect(sup, tema.bueno, (round(x) - lado // 2, round(y) - lado // 2, lado, lado))
+    if v.racha >= 2:   # racha: se lee ademas del color
+        img = fuentes.grande.render(f"x{v.racha}", True, tema.bueno)
+        sombra = fuentes.grande.render(f"x{v.racha}", True, tema.fondo)
+        donde = img.get_rect(midbottom=(escudo[0], escudo[1] - r - px(6)))
+        sup.blit(sombra, donde.move(px(2), px(2)))
+        sup.blit(img, donde)
     _leyenda(sup, fuentes, tema)
     caja = pygame.Rect(TELEFONO.x + px(18), TELEFONO.y + px(404), TELEFONO.w - px(36), px(120))
     pygame.draw.rect(sup, tema.fondo, caja)
