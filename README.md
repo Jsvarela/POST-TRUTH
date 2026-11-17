@@ -86,6 +86,7 @@ Protocolo: mensajes JSON (UTF-8) sobre TCP, cada uno precedido por 4 bytes big-e
 ## Arte y creditos
 
 - Mapa, edificios, personajes y decorado: pixel art original del proyecto, dibujado en codigo. El mapa (`assets/mapa/`) se genero con una herramienta de desarrollo que no hace falta para jugar y no esta en el repositorio; parte de `data/mapa.json`, `zonas.png` y `colisiones.png`, asi que respeta exactamente donde se camina. Los personajes y el decorado se construyen al vuelo en `src/post_truth/views/pixel_sprites.py` con los colores del tema activo.
+- Musica: tres pistas de "15 Melodic RPG Chiptunes" de Aureolus_Omicron (OpenGameArt, https://opengameart.org/content/15-melodic-rpg-chiptunes), licencia CC0, en `assets/musica/`: `menu.ogg` (title screen), `calle.ogg` (town) y `tension.ogg` (battle 1). Los efectos de sonido son tonos generados por codigo.
 - Fuentes: Pixelify Sans y Jersey 10 (Google Fonts), bajo la SIL Open Font License 1.1; las licencias estan en `assets/fuentes/`.
 
 ## Estructura

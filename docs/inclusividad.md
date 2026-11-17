@@ -107,6 +107,8 @@ silencio sin errores. Cada sonido tiene un equivalente visual, asi que nadie pie
 | Error | Mala decision, fallo en un minijuego, alguien que se enoja | Reaccion de los presentes, los contadores del minijuego y el aviso del resultado |
 
 El volumen general, el de los pasos (el sonido que mas se repite) y el silencio total se cambian en Opciones.
+La musica de fondo no lleva informacion del juego: sigue el volumen general, va mas baja que los efectos y el
+silencio tambien la apaga.
 
 ## Ayuda y mensajes guia
 

@@ -1,0 +1,9 @@
+Musica de fondo de Post & Truth
+
+Pistas de "15 Melodic RPG Chiptunes", de Aureolus_Omicron.
+https://opengameart.org/content/15-melodic-rpg-chiptunes
+Licencia: CC0 (dominio publico). "CC0. No credit required."
+
+menu.ogg     rpgchip01_title_screen
+calle.ogg    rpgchip03_town
+tension.ogg  rpgchip13_battle_1
