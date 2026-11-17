@@ -75,8 +75,8 @@
         "lugar": "barrio",
         "tipo": "testigo",
         "titulo": "Una vecina del barrio",
-        "hallazgo": "Reconoce la foto: son unas obras de mantenimiento de hace años.",
-        "senal": "falsa"
+        "hallazgo": "Jura que su cuñada vio un aviso de cierre en la puerta del colegio, aunque ella no fue a mirarlo.",
+        "senal": "verdadera"
       }
     ],
     "title": "Rumor sobre el colegio",
@@ -314,9 +314,9 @@
         "id": "testigo-guardaparques",
         "lugar": "parque",
         "tipo": "testigo",
-        "titulo": "El guardaparques",
-        "hallazgo": "Asegura que el parque abre como siempre y que nadie le aviso de ningun cierre.",
-        "senal": "falsa"
+        "titulo": "Un paseador de perros",
+        "hallazgo": "Cree que si van a cerrar: oyo a unos obreros hablar de vallas, pero no ha visto ningun aviso.",
+        "senal": "verdadera"
       },
       {
         "id": "registro-de-decretos",
@@ -700,9 +700,9 @@
         "id": "testigo-del-debate",
         "lugar": "barrio",
         "tipo": "testigo",
-        "titulo": "Una vecina que estuvo en el debate",
-        "hallazgo": "Dice que nadie insulto a ningun barrio en ese debate.",
-        "senal": "falsa"
+        "titulo": "Una vecina que oyo del debate",
+        "hallazgo": "No estuvo, pero le contaron que el candidato si insulto al barrio y que todos salieron indignados.",
+        "senal": "verdadera"
       }
     ],
     "title": "Video editado del debate",
@@ -905,9 +905,9 @@
         "id": "testigo-organizadora",
         "lugar": "barrio",
         "tipo": "testigo",
-        "titulo": "La organizadora",
-        "hallazgo": "Confirma la reunion de esta semana y que esta abierta a todos los vecinos.",
-        "senal": "verdadera"
+        "titulo": "Un vecino del barrio",
+        "hallazgo": "Dice que esa reunion es puro cuento: a el nadie lo invito y en su grupo nadie la menciona.",
+        "senal": "falsa"
       },
       {
         "id": "acta-reunion",
@@ -1080,9 +1080,9 @@
         "id": "tecnico-del-piloto",
         "lugar": "parque",
         "tipo": "testigo",
-        "titulo": "El tecnico del piloto",
-        "hallazgo": "Instalo la prueba en un parque: confirma que nadie paga nada.",
-        "senal": "falsa"
+        "titulo": "Un usuario del parque",
+        "hallazgo": "Asegura que a un primo le llego un recibo por el wifi, aunque el no lo ha visto.",
+        "senal": "verdadera"
       }
     ],
     "title": "Internet gratis con recibo",
@@ -1314,9 +1314,9 @@
         "id": "profesor-de-estadistica",
         "lugar": "colegio",
         "tipo": "testigo",
-        "titulo": "Un profesor de estadistica",
-        "hallazgo": "Explica que sin ficha tecnica un porcentaje no significa nada.",
-        "senal": "falsa"
+        "titulo": "Un estudiante del colegio",
+        "hallazgo": "Dice que la encuesta tiene que ser cierta: todo su salon la compartio.",
+        "senal": "verdadera"
       }
     ],
     "title": "Encuesta que hunde a Lucia",
@@ -1533,8 +1533,8 @@
         "lugar": "barrio",
         "tipo": "testigo",
         "titulo": "El tendero de la esquina",
-        "hallazgo": "Dice que el agua llega limpia y que vende la misma de siempre.",
-        "senal": "falsa"
+        "hallazgo": "Dice que dos clientes se quejaron del sabor del agua y que el ya no la toma, por si acaso.",
+        "senal": "verdadera"
       },
       {
         "id": "control-de-calidad",
@@ -1774,9 +1774,9 @@
         "id": "conductor-del-barrio",
         "lugar": "barrio",
         "tipo": "testigo",
-        "titulo": "Un conductor del Barrio",
-        "hallazgo": "Dice que ninguna empresa de buses acepto regalar pasajes por votar.",
-        "senal": "falsa"
+        "titulo": "Un pasajero del Barrio",
+        "hallazgo": "Cuenta que en la parada todos dicen que el pasaje sera gratis si votan; lo leyeron en un grupo.",
+        "senal": "verdadera"
       }
     ],
     "title": "Pasajes gratis por votar",
@@ -2001,9 +2001,9 @@
         "id": "fotografo-local",
         "lugar": "plaza",
         "tipo": "testigo",
-        "titulo": "El fotografo local",
-        "hallazgo": "Fue quien tomo la foto: dice que habia 50 personas alrededor.",
-        "senal": "falsa"
+        "titulo": "Un vendedor de la plaza",
+        "hallazgo": "Dice que vio al candidato muy cerca del contratista, como si fueran socios de toda la vida.",
+        "senal": "verdadera"
       }
     ],
     "title": "Foto de Andres con un contratista",
@@ -2234,9 +2234,9 @@
         "id": "concejal-testigo",
         "lugar": "colegio",
         "tipo": "testigo",
-        "titulo": "Una concejal",
-        "hallazgo": "Confirma las ausencias y dice que Juan justifico solo dos.",
-        "senal": "verdadera"
+        "titulo": "Un asesor de Juan",
+        "hallazgo": "Asegura que Juan casi nunca falta y que esas cifras son un invento de sus rivales.",
+        "senal": "falsa"
       }
     ],
     "title": "Lucia dice que Juan falto a 6 de 10 sesiones",
@@ -2425,9 +2425,9 @@
         "id": "directora-confirma",
         "lugar": "colegio",
         "tipo": "testigo",
-        "titulo": "La directora del colegio",
-        "hallazgo": "Confirma el debate del jueves y que la entrada es libre.",
-        "senal": "verdadera"
+        "titulo": "Un estudiante del colegio",
+        "hallazgo": "Escucho en el recreo que el debate se cancelo, aunque el aviso sigue en la cartelera.",
+        "senal": "falsa"
       },
       {
         "id": "permiso-del-evento",
@@ -3481,9 +3481,9 @@
         "id": "profesora-del-colegio",
         "lugar": "colegio",
         "tipo": "testigo",
-        "titulo": "Una profesora",
-        "hallazgo": "Confirma que el colegio presto el auditorio para la firma.",
-        "senal": "verdadera"
+        "titulo": "Un padre de familia",
+        "hallazgo": "Dice que esa firma es puro show y que en el colegio nadie sabe nada de eso.",
+        "senal": "falsa"
       },
       {
         "id": "acta-del-pacto",
