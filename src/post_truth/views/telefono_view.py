@@ -199,7 +199,7 @@ def _red(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, v: VistaTelefono) ->
     caja = pygame.Rect(TELEFONO.x + px(18), TELEFONO.y + px(404), TELEFONO.w - px(36), px(120))
     pygame.draw.rect(sup, tema.fondo, caja)
     pygame.draw.rect(sup, tema.borde, caja, px(2))
-    for k, linea in enumerate(("Mueve el escudo y ataja las bolitas rojas antes de que lleguen.",
+    for k, linea in enumerate(("Si es falsa, ataja las bolitas con el escudo; si es cierta, dejalas llegar.",
                                "Espacio: desmentido en onda (vuelve inmunes a los que toca).")):
         sup.blit(fuentes.chica.render(linea, True, tema.texto), (caja.x + px(14), caja.y + px(10) + k * px(22)))
     falta = p.enfriando["onda"] if p is not None else 0.0

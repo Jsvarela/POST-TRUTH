@@ -47,9 +47,9 @@ class TelefonoState(BaseState):
         self.eleccion = getattr(self, "eleccion", None) or {p: 0 for p in posts.PIEZAS}   # se recuerda lo armado
         if s.novedad == "crisis":   # la crisis abre el telefono sola, con su reloj (el anillo cuenta los segundos)
             s.novedad = ""
-            self.modal = Modal("Crisis viral!", f"\"{s.arbol.event.title}\" se esta regando en "
-                               f"{s.zona_noticia.capitalize()}. Frenala desde la red antes de que se acabe el tiempo.",
-                               ("Defender la red",), "crisis")
+            self.modal = Modal("Se esta regando!", f"\"{s.arbol.event.title}\" corre por la red. Si concluiste que es "
+                               "falsa, atajala con el escudo; si es cierta, dejala llegar.",
+                               ("A la red",), "crisis")
             self.modal.cuenta = (s.tiempo_restante or 0.0, s.tiempo_viral_total)
         self._guia_pendiente = guia.mensaje("telefono", self.app.guias_vistas, self.app.guias)
         self._guiar()
@@ -218,7 +218,7 @@ class TelefonoState(BaseState):
             s.novedad = ""
             self.alerta = ALERTA
             sonido.alerta()
-            self._avisar("Se volvio viral!", "El rumor ya llega a mucha gente.", "malo")
+            self._avisar("Se volvio viral!", "La publicacion ya llega a mucha gente.", "malo")
         if self.pestana == 1:
             s.leidas = len(s.notificaciones)
         if vencida is not None:                 # se acabo el reloj de la crisis: se ve adentro lo que paso

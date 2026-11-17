@@ -240,7 +240,11 @@ class PartidaSesion:
         if len(historia) < dias:
             raise ValueError(f"La historia tiene {len(historia)} dias, no {dias}")
         por_id = {a.event.event_id: a for a in todos}
-        elegidas = [por_id[rng.choice(d.noticias)] for d in historia]
+        ciertos = set(rng.sample(range(dias), dias // 2))   # la mitad de los dias la publicacion es cierta
+        elegidas = []
+        for i, d in enumerate(historia):
+            del_tipo = [n for n in d.noticias if es_falsa(por_id[n].event.truth_level) != (i in ciertos)]
+            elegidas.append(por_id[rng.choice(del_tipo or list(d.noticias))])
         campana = Campana([[d] for d in range(dias)], FACTOR_TIEMPO_EXTENDIDO if extendido else 1.0,
                           semillas=[rng.randrange(2 ** 31) for _ in historia],
                           velocidades=[round(rng.uniform(0.8, 1.2), 2) for _ in historia])
@@ -327,7 +331,7 @@ class PartidaSesion:
     def _jefe_final(self) -> None:
         """El ultimo dia, a mitad de la defensa, @VerdadNova vuelve a publicar: el rumor prende en dos sitios mas."""
         c, v, d = self.campana, self.en_vivo, self.director
-        if (c is None or v is None or d is None or d.nombre != "consecuencia" or v.reavivado
+        if (c is None or v is None or d is None or d.nombre != "consecuencia" or v.reavivado or not v.es_falsa
                 or c.dia != len(c.dias) - 1 or self.tiempo_restante > self.tiempo_viral_total / 2):
             return
         v.reavivado = True
@@ -1036,7 +1040,7 @@ class PartidaSesion:
         self.en_vivo_viral = False
         self.tiempo_restante, self.reloj_activo = self.tiempo_viral_total, True
         self.novedad = "crisis"
-        self.notificar("crisis", "Se esta regando!", f"\"{evento.title}\" corre por la red. Defiendela.")
+        self.notificar("crisis", "Se esta regando!", f"\"{evento.title}\" corre por la red.")
 
     # --- fases que cambian el grafo de la ciudad (R9) ----------------------------------------------
     @property

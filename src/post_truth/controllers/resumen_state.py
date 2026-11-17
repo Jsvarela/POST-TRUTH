@@ -21,7 +21,7 @@ class ResumenState(BaseState):
         b = s.bitacora[-1] if s.bitacora and s.campana and s.bitacora[-1]["dia"] == s.campana.dia + 1 else {}
         if b.get("creyeron") is None:
             return ""
-        return f"El {b['creyeron']}% de la red creyo el rumor. Frenaste {b.get('frenados', 0)}."
+        return f"El {b['creyeron']}% de la red creyo la publicacion. Atajaste {b.get('frenados', 0)}."
 
     def al_entrar(self) -> None:
         self.cubrir = True

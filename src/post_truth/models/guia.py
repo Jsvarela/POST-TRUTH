@@ -12,8 +12,8 @@ MENSAJES = {
     "credibilidad": ("Tu credibilidad baja", "Con poca credibilidad tus desmentidos pesan menos. Verifica antes "
                                              "de compartir y no reportes sin pruebas."),
     "protesta": ("La ciudad cambia", "Una protesta cerro una calle: busca otro camino (G recalcula la ruta)."),
-    "telefono": ("Frena el rumor", "Mueve el escudo (WASD o raton) sobre las bolitas rojas para atajarlas; "
-                                   "Espacio lanza un desmentido en onda. Tab cambia de pestaña."),
+    "telefono": ("La red en vivo", "Si la publicacion es falsa, mueve el escudo (WASD o raton) sobre las bolitas para "
+                                   "atajarlas y Espacio lanza un desmentido. Si es cierta, dejala llegar."),
 }
 
 

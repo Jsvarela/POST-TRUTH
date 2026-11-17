@@ -21,7 +21,7 @@ python src/main.py
 
 ## Como se juega
 
-La campaña dura cuatro dias y cada dia es un capitulo con pasos en orden, uno a la vez: una escena de apertura, ir al lugar de la noticia, investigarla y decidir, defender la red mientras el rumor corre (el telefono se abre solo), jugar el minijuego del lugar y una escena de cierre. Una cuenta anonima, @VerdadNova, riega un rumor cada dia; al final se revela quien es, se elige al alcalde y el final de la historia depende de como quedo la ciudad (informada, dividida o engañada).
+La campaña dura cuatro dias y cada dia es un capitulo con pasos en orden, uno a la vez: una escena de apertura, ir al lugar de la noticia, investigarla y decidir, defender la red mientras el rumor corre (el telefono se abre solo), jugar el minijuego del lugar y una escena de cierre. Cada dia hay una publicacion que todos comparten: la mitad de los dias es un rumor falso de la cuenta anonima @VerdadNova y la otra mitad una noticia cierta sobre la que esa cuenta siembra dudas, y en cada una hay una pista que engaña; al final se revela quien es, se elige al alcalde y el final de la historia depende de como quedo la ciudad (informada, dividida o engañada).
 
 ## Controles
 

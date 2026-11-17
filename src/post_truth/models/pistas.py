@@ -220,7 +220,11 @@ class Investigacion:
         """Que tan respaldada esta una accion con lo descubierto. La conclusion de la ventana de investigacion
         manda: equivocarse la deja sin respaldo; acertar la sube (mas si la evidencia era buena), y para reportar
         solo cuenta si se concluyo que es falsa."""
+        campo = {e.senal for e in self.evidencias} - {Senal.NEUTRA}   # las evidencias de los lugares no engañan
+
         def apoya(h: Hallazgo) -> bool:
+            if isinstance(h, Pista) and len(campo) == 1 and h.senal not in (*campo, Senal.NEUTRA):
+                return False   # la pista engañosa de la tarjeta (va contra las evidencias) no respalda nada
             return h.senal is Senal.FALSA if accion == "reportar" else h.senal is not Senal.NEUTRA
         hallazgos = self.pistas_descubiertas()
         if any(isinstance(h, Evidencia) and apoya(h) for h in hallazgos):

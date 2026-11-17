@@ -103,12 +103,13 @@ def puntaje_final(ciudad, credibilidad: int, bitacora: list[dict]) -> tuple[int,
     """(puntos de 0 a 100, medalla o "", desglose [(que, puntos, de cuantos)]): que tan bien se cuido la campaña."""
     dias = len(bitacora) or 1
     buenas = sum(VEREDICTO[(b["falsa"], b["accion"])].startswith("Bien") for b in bitacora)
-    creyeron = [b["creyeron"] for b in bitacora if b.get("creyeron") is not None]
-    frenado = 1 - sum(creyeron) / (100 * len(creyeron)) if creyeron else 0.0
+    # lo bueno es que pocos crean lo falso y muchos lo cierto
+    bien = [(100 - b["creyeron"]) if b["falsa"] else b["creyeron"] for b in bitacora if b.get("creyeron") is not None]
+    frenado = sum(bien) / (100 * len(bien)) if bien else 0.0
     desglose = [("Ciudad informada", round(40 * (100 - ciudad.misinformation) / 100), 40),
                 ("Tu credibilidad", round(25 * credibilidad / 100), 25),
                 ("Decisiones acertadas", round(20 * buenas / dias), 20),
-                ("Rumores frenados", round(15 * frenado), 15)]
+                ("La red creyo lo correcto", round(15 * frenado), 15)]
     total = sum(puntos for _, puntos, _ in desglose)
     return total, next((nombre for minimo, nombre in MEDALLAS if total >= minimo), ""), desglose
 

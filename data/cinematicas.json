@@ -404,9 +404,66 @@
   },
   {
    "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "Vecinos unidos propone una campaña para debatir sin ataques personales durante la eleccion.",
+   "si": [
+    "noticia:campana-convivencia"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "'Vecinos unidos'? Eso lo paga un candidato. No firmen nada. #NoTeDejesEngañar",
+   "si": [
+    "noticia:campana-convivencia"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": "barrio",
+   "segundos": 1.4,
+   "si": [
+    "noticia:campana-convivencia"
+   ]
+  },
+  {
+   "cmd": "actor",
+   "id": "tomas",
+   "nombre": "Tomas",
+   "rol": "CITIZEN",
+   "genero": "HOMBRE",
+   "variante": 0,
+   "en": [
+    500,
+    1220
+   ],
+   "dir": "abajo",
+   "si": [
+    "noticia:campana-convivencia"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Tomas",
+   "retrato": "tomas",
+   "texto": "A mi me invitaron a firmar. Unos dicen que es de los vecinos, otros que es politica disfrazada.",
+   "si": [
+    "noticia:campana-convivencia"
+   ]
+  },
+  {
+   "cmd": "camara",
+   "a": "plaza",
+   "segundos": 1.2,
+   "si": [
+    "noticia:campana-convivencia"
+   ]
+  },
+  {
+   "cmd": "decir",
    "quien": "Nico",
    "retrato": "nico",
-   "texto": "Primera publicacion de @VerdadNova y ya la comparten cientos. Hay que ver si es cierta."
+   "texto": "Todo el mundo comparte lo de hoy. Hay que ver si es cierto antes de creerlo... o de negarlo."
   },
   {
    "cmd": "decir",
@@ -478,7 +535,7 @@
    "cmd": "decir",
    "quien": "Nico",
    "retrato": "nico",
-   "texto": "Mucha gente se trago el rumor. Mañana va a ser peor si no lo frenamos.",
+   "texto": "Hoy mucha gente quedo mal informada. Mañana va a ser peor si no hacemos algo.",
    "si": [
     "desinformacion>=50"
    ]
@@ -615,6 +672,32 @@
    ]
   },
   {
+   "cmd": "decir",
+   "quien": "Lucia Barrera",
+   "retrato": "lucia",
+   "texto": "Juan Ardila falto a 6 de las 10 ultimas sesiones del concejo. Esta en las actas.",
+   "si": [
+    "noticia:faltas-de-juan"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Juan Ardila",
+   "retrato": "juan",
+   "texto": "Eso esta sacado de contexto. Es campaña sucia.",
+   "si": [
+    "noticia:faltas-de-juan"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "Actas? Las actas se inventan. No le crean a ninguno. #NoTeDejesEngañar",
+   "si": [
+    "noticia:faltas-de-juan"
+   ]
+  },
+  {
    "cmd": "camara",
    "a": "plaza",
    "segundos": 1.4
@@ -649,7 +732,7 @@
    "cmd": "decir",
    "quien": "Camila",
    "retrato": "camila",
-   "texto": "Soy Camila, periodista. Llevo dias detras de @VerdadNova. Esta vez el montaje es profesional."
+   "texto": "Soy Camila, periodista. Llevo dias detras de @VerdadNova. Hoy no se si lo que circula es montaje o es cierto."
   },
   {
    "cmd": "decir",
@@ -729,7 +812,7 @@
    "cmd": "decir",
    "quien": "Camila",
    "retrato": "camila",
-   "texto": "Con lo que averiguaste encontre algo: el video lo subieron desde una agencia de 'alcance' del Parque.",
+   "texto": "Con lo que averiguaste encontre algo: lo de hoy lo movio una agencia de 'alcance' del Parque.",
    "si": [
     "acierto"
    ]
@@ -858,6 +941,31 @@
    ]
   },
   {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "Radio Nova anuncia: Lucia Barrera y Juan Ardila debatiran el jueves en el colegio. Entrada libre.",
+   "si": [
+    "noticia:debate-en-el-colegio"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "MENTIRA: el debate lo cancelaron. No pierdan el viaje. #NoTeDejesEngañar",
+   "si": [
+    "noticia:debate-en-el-colegio"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "Isabela",
+   "retrato": "isabela",
+   "texto": "Soy enfermera aqui. Vi que alistan el salon, pero los papas ya no saben si venir.",
+   "si": [
+    "noticia:debate-en-el-colegio"
+   ]
+  },
+  {
    "cmd": "camara",
    "a": "plaza",
    "segundos": 1.2
@@ -890,13 +998,13 @@
    "cmd": "decir",
    "quien": "Nico",
    "retrato": "nico",
-   "texto": "Esto ya es miedo, no informacion. Hoy no basta con frenarlo: hay que contar lo que sabemos."
+   "texto": "Hoy no basta con mirar: cuando sepamos que es cierto y que no, hay que contarlo."
   },
   {
    "cmd": "decir",
    "quien": "Nico",
    "retrato": "nico",
-   "texto": "Cuando la red se llene del rumor, publica tu. Con fuente, sin gritar."
+   "texto": "Cuando la red se llene, publica tu. Con fuente, sin gritar."
   },
   {
    "cmd": "fundido",
@@ -1056,6 +1164,22 @@
    ]
   },
   {
+   "cmd": "decir",
+   "quien": "Civitas",
+   "texto": "Radios de Nova: los cuatro candidatos firmaron el pacto 'Nova sin insultos'.",
+   "si": [
+    "noticia:nova-sin-insultos"
+   ]
+  },
+  {
+   "cmd": "decir",
+   "quien": "@VerdadNova",
+   "texto": "Pacto? Puro show. Mañana se sacan los ojos. No vale la pena votar. #NoTeDejesEngañar",
+   "si": [
+    "noticia:nova-sin-insultos"
+   ]
+  },
+  {
    "cmd": "camara",
    "a": "plaza",
    "segundos": 1.4
@@ -1083,7 +1207,7 @@
    "cmd": "decir",
    "quien": "Nico",
    "retrato": "nico",
-   "texto": "Ultimo rumor antes de votar. Y el peor: le dice a la gente que no vale la pena ir."
+   "texto": "Ultima publicacion antes de votar. Y @VerdadNova otra vez diciendole a la gente que no vale la pena ir."
   },
   {
    "cmd": "camara",
@@ -1226,7 +1350,7 @@
    "cmd": "decir",
    "quien": "Camila",
    "retrato": "camila",
-   "texto": "La encuesta falsa salio de la misma red que el video del debate: la del estudio de Esteban Lara.",
+   "texto": "Lo de anoche salio de la misma red que lo del debate: la del estudio de Esteban Lara.",
    "si": [
     "verdad:4"
    ]
@@ -1291,6 +1415,12 @@
    "quien": "Esteban Lara",
    "retrato": "esteban",
    "texto": "La indignacion se comparte sola. Cada rumor me dejaba miles de visitas. Y las visitas son plata."
+  },
+  {
+   "cmd": "decir",
+   "quien": "Esteban Lara",
+   "retrato": "esteban",
+   "texto": "Y cuando la noticia era cierta, bastaba con sembrar la duda. Dudar de todo tambien se comparte."
   },
   {
    "cmd": "decir",

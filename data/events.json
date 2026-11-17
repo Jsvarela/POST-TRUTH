@@ -46,11 +46,11 @@
         "hallazgo": "Muchos comentarios son copias casi identicas: parecen cuentas automaticas."
       },
       {
-        "id": "hora-normal",
+        "id": "plan-real",
         "zona": "fecha",
-        "titulo": "Hora normal",
-        "senal": "neutra",
-        "hallazgo": "Se publico esta mañana; la hora no tiene nada raro."
+        "titulo": "Hay un plan real",
+        "senal": "verdadera",
+        "hallazgo": "Esa mañana la campaña si publico un plan que menciona el colegio central."
       }
     ],
     "evidencias": [
@@ -302,11 +302,11 @@
         "hallazgo": "La alcaldia no ha publicado ningun decreto de cierre de parques."
       },
       {
-        "id": "muy-viral",
+        "id": "vecinos-reales",
         "zona": "estadisticas",
-        "titulo": "Muy viral",
-        "senal": "neutra",
-        "hallazgo": "Que tenga muchas reacciones no prueba que sea cierto."
+        "titulo": "Lo comparten vecinos reales",
+        "senal": "verdadera",
+        "hallazgo": "Entre quienes lo comparten hay vecinos conocidos, no solo cuentas nuevas."
       }
     ],
     "evidencias": [
@@ -680,11 +680,11 @@
         "hallazgo": "Decenas de comentarios identicos aparecieron en pocos minutos."
       },
       {
-        "id": "debate-de-ayer",
+        "id": "debate-real",
         "zona": "fecha",
-        "titulo": "Debate de ayer",
-        "senal": "neutra",
-        "hallazgo": "El debate fue ayer; que sea reciente no lo vuelve cierto."
+        "titulo": "El debate si ocurrio",
+        "senal": "verdadera",
+        "hallazgo": "El debate fue ayer y la candidata si hablo de ese barrio: el clip sale de un video real."
       }
     ],
     "evidencias": [
@@ -886,11 +886,11 @@
         "hallazgo": "No apoya a ningun candidato."
       },
       {
-        "id": "poca-difusion",
+        "id": "pocas-firmas",
         "zona": "estadisticas",
-        "titulo": "Poca difusion",
-        "senal": "neutra",
-        "hallazgo": "Tiene pocos comentarios; eso no la hace falsa."
+        "titulo": "Pocas firmas todavia",
+        "senal": "falsa",
+        "hallazgo": "Lleva pocas firmas y comentarios: parece una campaña sin gente detras."
       },
       {
         "id": "convocatoria-de-hoy",
@@ -1060,11 +1060,11 @@
         "hallazgo": "Casi todas las reacciones llegaron en los mismos 10 minutos."
       },
       {
-        "id": "hora-normal",
+        "id": "anuncio-real",
         "zona": "fecha",
-        "titulo": "Hora normal",
-        "senal": "neutra",
-        "hallazgo": "Se publico a una hora normal; eso no dice nada."
+        "titulo": "Sale con el anuncio real",
+        "senal": "verdadera",
+        "hallazgo": "Se publico el mismo dia en que la campaña si anuncio el wifi de los parques."
       }
     ],
     "evidencias": [
@@ -1294,11 +1294,11 @@
         "hallazgo": "No informa: solo pide que nadie vote por una candidata."
       },
       {
-        "id": "dos-horas",
+        "id": "semana-de-encuestas",
         "zona": "fecha",
-        "titulo": "Publicada hace 2 horas",
-        "senal": "neutra",
-        "hallazgo": "Es reciente, pero eso no la vuelve cierta."
+        "titulo": "Semana de encuestas",
+        "senal": "verdadera",
+        "hallazgo": "Esta semana si salieron encuestas de verdad: una mas no llama la atencion."
       }
     ],
     "evidencias": [
@@ -1520,11 +1520,11 @@
         "hallazgo": "La foto del agua turbia circulo hace tres años en otra ciudad."
       },
       {
-        "id": "hora-de-la-manana",
+        "id": "corte-real",
         "zona": "fecha",
-        "titulo": "Hora de la mañana",
-        "senal": "neutra",
-        "hallazgo": "Salio temprano; no dice nada sobre si es cierto."
+        "titulo": "Hubo un corte real",
+        "senal": "verdadera",
+        "hallazgo": "Ese dia el acueducto si corto el agua dos horas por mantenimiento: por eso suena creible."
       }
     ],
     "evidencias": [
@@ -1754,11 +1754,11 @@
         "hallazgo": "La foto de la candidata esta pegada sobre un bus que no es de Nova."
       },
       {
-        "id": "poca-gente-real",
+        "id": "propuesta-real",
         "zona": "estadisticas",
-        "titulo": "Pocos comentarios reales",
-        "senal": "neutra",
-        "hallazgo": "Hay pocos comentarios: eso no prueba nada."
+        "titulo": "Citan su propuesta real",
+        "senal": "verdadera",
+        "hallazgo": "Los comentarios citan su propuesta real de mas buses: por eso muchos lo dan por hecho."
       }
     ],
     "evidencias": [
@@ -1981,11 +1981,11 @@
         "hallazgo": "Dice 'a escondidas', pero no muestra nada que lo pruebe."
       },
       {
-        "id": "ayer-de-noche",
+        "id": "acto-real",
         "zona": "fecha",
-        "titulo": "Ayer de noche",
-        "senal": "neutra",
-        "hallazgo": "Hora poco comun, pero no demuestra nada."
+        "titulo": "El encuentro si existio",
+        "senal": "verdadera",
+        "hallazgo": "Esa noche si hubo un acto con contratistas y el candidato estuvo: la foto no es un montaje."
       }
     ],
     "evidencias": [
@@ -2207,11 +2207,11 @@
         "hallazgo": "Da cifras y fechas que se pueden comprobar, no insultos."
       },
       {
-        "id": "foto-generica",
+        "id": "foto-de-archivo",
         "zona": "imagen",
-        "titulo": "Foto generica",
-        "senal": "neutra",
-        "hallazgo": "Es una foto de la sala: no prueba ni desmiente."
+        "titulo": "Foto de archivo",
+        "senal": "falsa",
+        "hallazgo": "La foto de la sala vacia es de otro año: parece puesta para exagerar."
       },
       {
         "id": "muchas-reacciones",
@@ -2406,11 +2406,11 @@
         "hallazgo": "El jueves es esta misma semana, como dice el mensaje."
       },
       {
-        "id": "foto-del-auditorio",
+        "id": "foto-vieja",
         "zona": "imagen",
-        "titulo": "Foto del auditorio",
-        "senal": "neutra",
-        "hallazgo": "Es una foto del auditorio de siempre; no prueba nada."
+        "titulo": "Foto de otro evento",
+        "senal": "falsa",
+        "hallazgo": "La foto es de un evento anterior, no del debate: da para dudar."
       },
       {
         "id": "pocas-reacciones",
@@ -2786,11 +2786,11 @@
         "hallazgo": "Las fechas coinciden con el cronograma de obras del drenaje."
       },
       {
-        "id": "foto-de-la-plaza",
+        "id": "sin-vallas",
         "zona": "imagen",
-        "titulo": "Foto de la plaza",
-        "senal": "neutra",
-        "hallazgo": "La foto muestra la plaza, sin vallas todavia."
+        "titulo": "La foto no muestra obras",
+        "senal": "falsa",
+        "hallazgo": "En la foto la plaza esta abierta y sin vallas: parece que no pasa nada."
       },
       {
         "id": "pocas-interacciones",
@@ -3462,11 +3462,11 @@
         "hallazgo": "Dice que se moderaran los insultos y como se reportan."
       },
       {
-        "id": "poco-ruido",
+        "id": "casi-nadie",
         "zona": "estadisticas",
-        "titulo": "Poco ruido",
-        "senal": "neutra",
-        "hallazgo": "Tiene pocos comentarios; eso no la hace falsa."
+        "titulo": "Casi nadie lo comenta",
+        "senal": "falsa",
+        "hallazgo": "Para ser un pacto de los cuatro candidatos, casi nadie lo comenta: suena raro."
       },
       {
         "id": "esta-semana",
