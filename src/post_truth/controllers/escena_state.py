@@ -233,11 +233,6 @@ class EscenaState(BaseState):
             if zona is not None:
                 self._viajar(zona)
 
-    def _cargar_evento(self) -> None:
-        """Abre la publicacion actual y prepara la pantalla."""
-        self.sesion.abrir_evento()
-        self._preparar_turno()
-
     def _preparar_turno(self) -> None:
         """Pantalla del jugador de turno: la noticia y sus botones."""
         self.impacto, self.animo = None, 0

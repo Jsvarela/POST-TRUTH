@@ -7,7 +7,7 @@ from post_truth.config import ANCHO, px
 from post_truth.models import boca_en_boca as bb
 from post_truth.models import rueda_prensa as rp
 from post_truth.models.chat import CALMA_LLENA, CARRILES, FILA_SOFI, Chat
-from post_truth.models.minijuego import Ensayo, Minijuego, ResultadoMinijuego
+from post_truth.models.minijuego import Minijuego, ResultadoMinijuego
 from post_truth.models.mitin import CANON as CANON_MITIN, Mitin
 from post_truth.models.personaje import Genero, Personaje, Role
 from post_truth.views.componentes import Boton, Fuentes, ajustar_texto, panel, recortar
@@ -37,7 +37,7 @@ def dibujar_minijuego(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m:
             pantalla.blit(velo, (0, 0))
             img = fuentes.titulo.render("Pausa (P para seguir)", True, tema.texto)
             pantalla.blit(img, img.get_rect(center=pantalla.get_rect().center))
-    teclas = {"ensayo": "1-2: responder", "chat": "Flechas o A/D: mover a Sofi   |   Espacio: calma",
+    teclas = {"chat": "Flechas o A/D: mover a Sofi   |   Espacio: calma",
               "mitin": "Raton o WASD: apuntar   |   1 dato  2 pregunta  3 calma   |   Clic o Espacio: disparar",
               "rueda": "A/D: girar   |   con el marcador en la zona: 1 pista  2 evidencia  3 testimonio  Espacio",
               "boca": "WASD o flechas: moverte   |   Manten E: convencer"}.get(m.id, "1-3: responder")
@@ -55,33 +55,6 @@ def _dibujar_resultado(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, r
     color = tema.bueno if r.credibilidad > 0 else tema.malo if r.credibilidad < 0 else tema.texto
     img = fuentes.normal.render(f"Credibilidad {r.credibilidad:+}", True, color)
     pantalla.blit(img, (caja.x + px(20), caja.bottom - px(44)))
-
-
-def _dibujar_ensayo(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: Ensayo) -> None:
-    actual = m.mensaje_actual
-    if actual is None:
-        return
-    texto, (calma, impulso) = actual
-    globo = pygame.Rect(px(140), px(170), px(744), px(100))
-    pygame.draw.rect(pantalla, tema.panel, globo)
-    pygame.draw.rect(pantalla, tema.borde, globo, px(2))
-    y = globo.y + px(16)
-    for linea in ajustar_texto(texto, fuentes.normal, globo.w - px(40)):
-        pantalla.blit(fuentes.normal.render(linea, True, tema.texto), (globo.x + px(20), y))
-        y += fuentes.normal.get_linesize()
-    for i, opcion in enumerate((calma, impulso)):
-        boton = pygame.Rect(px(140) + i * px(384), px(310), px(360), px(80))
-        pygame.draw.rect(pantalla, tema.boton, boton)
-        pygame.draw.rect(pantalla, tema.borde, boton, px(2))
-        img = fuentes.normal.render(f"{i + 1}. {opcion}", True, tema.boton_texto)
-        pantalla.blit(img, img.get_rect(center=boton.center))
-    barra = pygame.Rect(px(140), px(420), px(744), px(10))
-    pygame.draw.rect(pantalla, tema.panel, barra)
-    resto = max(0.0, 1 - m.t / m.limite)
-    color = tema.malo if resto < 0.35 else tema.acento
-    pygame.draw.rect(pantalla, color, (barra.x, barra.y, round(barra.w * resto), barra.h))
-    progreso = fuentes.chica.render(f"Mensaje {len(m.respuestas) + 1} de {len(m.mensajes)}", True, tema.texto)
-    pantalla.blit(progreso, (barra.x, barra.bottom + px(8)))
 
 
 def _barra_tiempo(pantalla: pygame.Surface, tema: Tema, rect: pygame.Rect, resto: float) -> None:
@@ -431,5 +404,5 @@ def _dibujar_boca(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: bb.
                   max(0.0, 1 - m.t / m.duracion))
 
 
-DIBUJOS = {"ensayo": _dibujar_ensayo, "chat": _dibujar_chat, "mitin": _dibujar_mitin, "rueda": _dibujar_rueda,
+DIBUJOS = {"chat": _dibujar_chat, "mitin": _dibujar_mitin, "rueda": _dibujar_rueda,
            "boca": _dibujar_boca}   # cada minijuego nuevo agrega aqui su dibujo

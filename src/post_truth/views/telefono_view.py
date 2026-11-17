@@ -337,22 +337,3 @@ def _texto_centrado(sup: pygame.Surface, fuentes: Fuentes, tema: Tema, texto: st
         img = fuentes.normal.render(linea, True, tema.texto_off)
         sup.blit(img, img.get_rect(midtop=(TELEFONO.centerx, y)))
         y += fuentes.normal.get_linesize()
-
-
-def dibujar_icono(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, rect: pygame.Rect, sin_leer: int,
-                  alerta: float, t: float) -> None:
-    """Telefono en el HUD del mundo: con globo de no leidas y un latido cuando algo se vuelve viral."""
-    late = alerta > 0 and math.sin(t * 12) > 0
-    pygame.draw.rect(pantalla, tema.panel, rect)
-    pygame.draw.rect(pantalla, tema.malo if late else tema.borde, rect, px(4 if late else 2))
-    cuerpo = pygame.Rect(0, 0, px(18), px(28))
-    cuerpo.center = (rect.x + px(22), rect.centery)
-    pygame.draw.rect(pantalla, tema.texto, cuerpo, px(2))
-    pygame.draw.circle(pantalla, tema.texto, (cuerpo.centerx, cuerpo.bottom - px(5)), px(2))
-    img = fuentes.chica.render("T: telefono", True, tema.texto)
-    pantalla.blit(img, img.get_rect(midleft=(cuerpo.right + px(8), rect.centery)))
-    if sin_leer:
-        globo = (rect.right - px(4), rect.y + px(4))
-        pygame.draw.circle(pantalla, tema.malo, globo, px(11))
-        n = fuentes.chica.render(str(min(sin_leer, 9)), True, tema.fondo)
-        pantalla.blit(n, n.get_rect(center=globo))

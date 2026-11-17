@@ -60,11 +60,6 @@ class TelefonoState(BaseState):
             self._avisar(self._guia_pendiente[0], self._guia_pendiente[1], "info")
             self._guia_pendiente = None
 
-    @property
-    def en_pausa(self) -> bool:
-        """El modal de la crisis detiene todo mientras se lee."""
-        return self.modal is not None
-
     def _cerrar(self) -> None:
         self.app.estados.cambiar("mundo")
 

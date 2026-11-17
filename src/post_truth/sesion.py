@@ -696,16 +696,6 @@ class PartidaSesion:
         return como
 
     # --- propagacion en vivo -------------------------------------------------------------------
-    def iniciar_en_vivo(self, autor: str | None = None, es_falsa: bool = True) -> PropagacionEnVivo:
-        """Un rumor empieza a correr solo por el grafo social desde `autor` (al azar si no se dice)."""
-        propios = {j.id for j in self.jugadores}
-        if autor is None:
-            autor = self.rng.choice([c.id for c in self.grafo.vertices() if c.id not in propios])
-        j = self.jugador_actual
-        self.en_vivo = PropagacionEnVivo(self.grafo, autor, j.id, j.credibilidad, self.rng.randrange(2 ** 31), es_falsa)
-        self.en_vivo_viral = False
-        return self.en_vivo
-
     def cerrar_en_vivo(self) -> Impact:
         """Lo que dejo el rumor entra a la ciudad y a los puntos de quien lo enfrento."""
         if self.en_vivo is None:
