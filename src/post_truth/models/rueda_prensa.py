@@ -3,8 +3,8 @@ icono dice que prueba pide: pista (triangulo), evidencia (cuadrado), testimonio 
 gira el foco (A/D o flechas) hacia el y se responde con 1 pista, 2 evidencia, 3 testimonio o Espacio "no puedo
 afirmarlo sin pruebas", pero SOLO cuenta si se pulsa cuando el marcador que va y vuelve por su barra esta dentro de
 la zona marcada. Sin reloj por pregunta: a destiempo cuesta un poco de credito y el marcador vuelve a pasar. Termina
-tras `total` respuestas (o al llegar a `limite` segundos). Lo investigado es la MUNICION: cada respuesta gasta una prueba de ese tipo. Con tiempo
-extendido la zona es mas ancha, el marcador mas lento y nunca preguntan dos a la vez."""
+tras `total` respuestas (o al llegar a `limite` segundos). Solo se puede afirmar con las pruebas que se
+investigaron (no se gastan). Con tiempo extendido la zona es mas ancha, el marcador mas lento y nunca preguntan dos a la vez."""
 from __future__ import annotations
 
 import json
@@ -37,7 +37,7 @@ class RuedaPrensa(Minijuego):
     nombre = "Rueda de prensa"
     ayuda = ("Gira el foco (A/D o flechas) hacia el periodista que pregunta y responde con la prueba que pide "
              "cuando el marcador este en la zona verde: 1 pista (triangulo), 2 evidencia (cuadrado), 3 testimonio "
-             "(circulo). A una trampa (X), Espacio: no se afirma sin pruebas. Lo que investigaste es tu municion.")
+             "(circulo). A una trampa (X), o si no investigaste esa prueba, Espacio: no se afirma sin pruebas.")
     pasos_tutorial = ("Un periodista pregunta: su icono dice que prueba pide.",
                       "Gira el foco con A/D (o las flechas) hasta apuntarle.",
                       "Mira su barra: el marcador va y vuelve sin parar.",
@@ -145,8 +145,7 @@ class RuedaPrensa(Minijuego):
             self._marcar("equivocada")
         elif self.municion[tipo] == 0:
             self._marcar("sin_municion")
-        else:
-            self.municion[tipo] -= 1
+        else:   # la prueba no se gasta: si la investigaste, la tienes para toda la rueda
             self._marcar("acierto")
 
     def demo(self) -> list[str]:

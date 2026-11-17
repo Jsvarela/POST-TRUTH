@@ -299,14 +299,14 @@ def _dibujar_rueda(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, m: rp
         pantalla.blit(img, img.get_rect(midtop=(caja.centerx, caja.y + px(4))))
         _qte(pantalla, tema, m, apuntada, pygame.Rect(caja.centerx - px(180), caja.bottom - px(16), px(360), px(10)))
     leyenda = pygame.Rect(AREA.x, AREA.bottom + px(22), AREA.w, px(24))
-    for i, (tipo, nombre) in enumerate((("pista", f"1 pista x{m.municion['pista']}"),
-                                        ("evidencia", f"2 evidencia x{m.municion['evidencia']}"),
-                                        ("testimonio", f"3 testimonio x{m.municion['testimonio']}"),
+    for i, (tipo, nombre) in enumerate((("pista", "1 pista"), ("evidencia", "2 evidencia"), ("testimonio", "3 testimonio"),
                                         ("trampa", "Espacio: sin pruebas"))):
         x = leyenda.x + i * leyenda.w // 4 + px(14)
-        _icono_prueba(pantalla, tema, tipo, (x, leyenda.centery), px(8))
-        pantalla.blit(fuentes.chica.render(nombre, True, tema.texto), (x + px(14), leyenda.y + px(2)))
-    _contador(pantalla, fuentes, tema, "Tu municion es lo que investigaste: cada respuesta gasta una prueba")
+        tengo = tipo == "trampa" or m.municion[tipo] > 0   # lo que no investigaste se ve apagado y dice "no la tienes"
+        _icono_prueba(pantalla, tema, tipo, (x, leyenda.centery), px(8), None if tengo else tema.texto_off)
+        texto = nombre if tengo else f"{nombre}: no la tienes"
+        pantalla.blit(fuentes.chica.render(texto, True, tema.texto if tengo else tema.texto_off), (x + px(14), leyenda.y + px(2)))
+    _contador(pantalla, fuentes, tema, "Responde con lo que investigaste; si no tienes esa prueba, Espacio: no la afirmes")
     _medidor(pantalla, fuentes, tema, "Credito ante la prensa", m.credito / 100)
     _barra_tiempo(pantalla, tema, pygame.Rect(AREA.x, AREA.bottom + px(8), AREA.w, px(8)),
                   1 - m.respondidas / m.total)                     # sin reloj: lo que falta por responder
