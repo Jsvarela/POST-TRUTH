@@ -35,6 +35,9 @@ def posicion(i: int) -> float:
 class RuedaPrensa(Minijuego):
     id = "rueda"
     nombre = "Rueda de prensa"
+    simbolismo = ("Publicar es afirmar delante de todos. Cada pregunta pide una prueba: si la investigaste, respondes; "
+                  "si no, lo responsable es decir que no puedes afirmarlo. El marcador es el momento de pensar antes "
+                  "de hablar: responder por impulso cuesta credibilidad.")
     ayuda = ("Gira el foco (A/D o flechas) hacia el periodista que pregunta y responde con la prueba que pide "
              "cuando el marcador este en la zona verde: 1 pista (triangulo), 2 evidencia (cuadrado), 3 testimonio "
              "(circulo). A una trampa (X), o si no investigaste esa prueba, Espacio: no se afirma sin pruebas.")

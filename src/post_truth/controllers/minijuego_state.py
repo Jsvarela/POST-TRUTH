@@ -6,6 +6,7 @@ from post_truth.models import minijuego as mj
 from post_truth.models.tutorial import Tutorial, tiene_tutorial
 from post_truth.views import sonido
 from post_truth.views.anuncio_view import Anuncio, dibujar_anuncio
+from post_truth.views.componentes import Modal
 from post_truth.views import hud
 from post_truth.views.hud import DatosHud
 from post_truth.views.minijuego_view import dibujar_minijuego, dibujar_tutorial, pantalla_a_mitin
@@ -24,6 +25,7 @@ class MinijuegoState(BaseState):
         self.resultado = None
         self.pausado = False
         self.tutorial: Tutorial | None = None
+        self.intro: Modal | None = None
         self._t_progreso = 0.0
         if self.minijuego is None:   # no hay nada que ver (ya termino): de vuelta a la calle
             self.app.estados.cambiar("mundo", fundido=True)
@@ -33,6 +35,9 @@ class MinijuegoState(BaseState):
             self.toast = Anuncio(f"Juega {s.nombre(self.minijuego.contexto.jugador)}", "Lo estas viendo. ESC: volver.",
                                  "info", grande=False, duracion=4.0)
             return
+        if getattr(self.app, "cinematicas", False) and self.minijuego.simbolismo:   # antes de jugar: que representa
+            self.intro = Modal(f"{self.minijuego.nombre}: que representa", self.minijuego.simbolismo, ("Jugar",),
+                               ancho=760)
         vistos = getattr(self.app, "tutoriales_vistos", set())
         if tiene_tutorial(self.minijuego.id) and self.minijuego.id not in vistos:   # la primera vez: como se juega
             self.abrir_tutorial()
@@ -75,6 +80,10 @@ class MinijuegoState(BaseState):
             if event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_RETURN):
                 self.app.estados.cambiar("mundo", fundido=True)
             return
+        if self.intro is not None:
+            if self.intro.handle_event(event) is not None or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                self.intro = None
+            return
         if self.tutorial is not None:
             self._tutorial(event)
             return
@@ -107,6 +116,9 @@ class MinijuegoState(BaseState):
             else:
                 self.minijuego = vivo
             return
+        if self.intro is not None:   # leyendo que representa: nada corre
+            self.intro.update(dt)
+            return
         if self.tutorial is not None:   # la demo y la practica no gastan el dia ni tocan la partida
             self.tutorial.update(dt)
             return
@@ -134,6 +146,11 @@ class MinijuegoState(BaseState):
         return hud.minimo(s, s.jugador(self.minijuego.contexto.jugador).credibilidad, "barra")
 
     def draw(self, pantalla: pygame.Surface) -> None:
+        self._dibujar(pantalla)
+        if self.intro is not None:
+            self.intro.draw(pantalla, self.app.fuentes, self.app.temas.actual)
+
+    def _dibujar(self, pantalla: pygame.Surface) -> None:
         if self.tutorial is not None:
             dibujar_tutorial(pantalla, self.app.fuentes, self.app.temas.actual, self.tutorial)
             return

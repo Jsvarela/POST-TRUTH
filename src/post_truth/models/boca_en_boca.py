@@ -29,6 +29,9 @@ def datos() -> dict:
 class BocaEnBoca(Minijuego):
     id = "boca"
     nombre = "De boca en boca"
+    simbolismo = ("Un chisme va de casa en casa como un reenviado va de chat en chat. No se frena publicando mas: se "
+                  "frena hablando con quien ya lo cree, con pruebas y hasta el final. Quien queda convencido deja de "
+                  "pasarlo; a quien dejas a medias, lo pierdes.")
     ayuda = ("El chisme salta de casa en casa. Corre hasta quien lo cree (WASD o flechas) y manten E cerca para "
              "convencerlo. Con evidencia y credibilidad convences mas rapido; si sueltas un argumento debil, se enoja.")
 

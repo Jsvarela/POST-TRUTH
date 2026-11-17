@@ -47,6 +47,9 @@ def textos() -> dict[str, list[str]]:
 class Chat(Minijuego):
     id = "chat"
     nombre = "Chat bajo presion"
+    simbolismo = ("En un grupo, cada mensaje empuja hacia un lado. El apoyo protege a quien atacan; los ataques crecen "
+                  "cuando nadie los frena. Atrapar el apoyo y esquivar el ataque es decidir a que le das eco: en "
+                  "redes, callar o reenviar tambien es tomar partido.")
     ayuda = ("Atacan a Sofi en el chat del curso. Muevela con las flechas (o A/D) para atrapar los mensajes de apoyo "
              "(circulos verdes) y esquivar los ataques (triangulos rojos). Con 3 apoyos, Espacio borra los ataques.")
 

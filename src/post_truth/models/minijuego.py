@@ -57,6 +57,7 @@ class Minijuego(ABC):
     id = ""
     nombre = ""
     ayuda = ""   # que hacer y con que teclas: se muestra en pantalla
+    simbolismo = ""   # que representa sobre el uso de las redes: se lee antes de jugar
     pasos_tutorial: tuple[str, ...] = ()   # subtitulos de "Como se juega" (models/tutorial.py); vacio: sin tutorial
 
     def __init__(self, contexto: ContextoMinijuego) -> None:

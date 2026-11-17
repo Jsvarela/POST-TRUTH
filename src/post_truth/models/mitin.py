@@ -36,6 +36,9 @@ def distancia(a, b) -> float:
 class Mitin(Minijuego):
     id = "mitin"
     nombre = "Mitin"
+    simbolismo = ("Cada globo es un rumor dicho en publico. Gritar mas fuerte no lo revienta: hay que responder lo que "
+                  "pide. Un dato si afirma algo, una pregunta si acusa sin pruebas, calma si solo provoca. En redes "
+                  "pasa igual: la respuesta equivocada rebota y el rumor sigue subiendo.")
     usa_raton = True
     ayuda = ("Los rumores suben como globos. Apunta con el raton (o WASD), elige la municion que pide su forma "
              "(1 dato cuadrado, 2 pregunta circulo, 3 calma triangulo) y dispara con clic o Espacio: el disparo "
