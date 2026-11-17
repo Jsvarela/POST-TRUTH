@@ -4,7 +4,7 @@ import pygame
 from post_truth.config import ANCHO, px
 from post_truth.models.eleccion import ResultadoEleccion
 from post_truth.models.reparto import Candidato
-from post_truth.views.componentes import Fuentes
+from post_truth.views.componentes import Fuentes, recortar
 from post_truth.views.retrato_view import dibujar_retrato
 from post_truth.views.theme import Tema
 
@@ -63,12 +63,18 @@ def dibujar_resultado(pantalla: pygame.Surface, fuentes: Fuentes, tema: Tema, r:
     lineas = [(explicacion(r, nombres), tema.texto),
               (f"Participacion: {r.participacion}% de la ciudad voto.  Ciudad: {r.titulo_jugador}, puntaje {puntos}",
                tema.texto)]
-    lineas += [(f"{rol}: {p} puntos, credibilidad {c}", tema.acento) for rol, p, c in jugadores]
     y = px(472)
     for texto, color in lineas:
         img = fuentes.normal.render(texto, True, color)
         pantalla.blit(img, img.get_rect(midtop=(ANCHO // 2, y)))
         y += fuentes.normal.get_linesize() + px(8)
+    columnas = 2 if len(jugadores) > 2 else 1   # con 3 o 4 jugadores van de a dos por fila: no tapan la ayuda de abajo
+    ancho = px(460)
+    for k, (rol, p, c) in enumerate(jugadores):
+        texto = recortar(f"{rol}: {p} puntos, credibilidad {c}", fuentes.chica, ancho - px(20))
+        img = fuentes.chica.render(texto, True, tema.acento)
+        x = ANCHO // 2 + (k % columnas - (columnas - 1) / 2) * ancho
+        pantalla.blit(img, img.get_rect(midtop=(round(x), y + (k // columnas) * (fuentes.chica.get_linesize() + px(8)))))
     texto = "Enter: como decidiste la eleccion, dia por dia" if bitacora else "Enter: volver al menu"
     ayuda = fuentes.chica.render(texto, True, tema.acento if bitacora else tema.texto)
     pantalla.blit(ayuda, ayuda.get_rect(midbottom=(ANCHO // 2, pantalla.get_height() - px(14))))
