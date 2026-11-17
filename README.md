@@ -26,7 +26,7 @@ La campaña dura cuatro dias y cada dia es un capitulo con pasos en orden, uno a
 ## Controles
 
 - Menu: flechas y Enter o clic; R multijugador; A ayuda; O opciones (tema, volumen, volumen de los pasos, silencio, tiempo extendido, mensajes guia y avance manual de las escenas); I muestra la introduccion completa (al dar Jugar sale una corta); X tiempo extendido
-- Seleccion: cada jugador (1 a 4) elige un rol distinto y su personaje; 1 agrega otro jugador y Enter inicia cuando todos tienen rol
+- Seleccion: eliges tu rol (1-4) y tu personaje (1-2) y la partida empieza; los otros roles los juegan aliados. Para jugar de 2 a 4 personas, Multijugador
 - Escenas: Enter avanza el dialogo, ESC salta la escena
 - WASD o flechas: caminar libre por la ciudad (8 direcciones). Arriba se ve el dia, el objetivo y la credibilidad; una flecha apunta al lugar
 - E: entrar al lugar donde estas (la evidencia aparece sola); adentro, 1-3 o clic: ver la noticia, jugar el minijuego o volver a la calle. Junto a un personaje del dia (circulo sobre la cabeza), mantener E para escucharlo
