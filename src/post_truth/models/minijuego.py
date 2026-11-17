@@ -127,3 +127,6 @@ def cargar_lugares(ruta: str | Path) -> dict[str, str]:
     if desconocidos:
         raise ValueError(f"Minijuegos desconocidos: {sorted(desconocidos)}")
     return lugares
+
+
+from post_truth.models import boca_en_boca, chat, mitin, rueda_prensa  # noqa: E402,F401  (al importarse registran sus minijuegos)
