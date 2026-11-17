@@ -1,4 +1,4 @@
-"""Sonidos hechos con codigo (tonos generados, sin archivos). Cada sonido tiene un aviso visual equivalente
+"""Sonidos hechos con codigo (tonos generados, sin archivos) y musica de fondo (assets/musica, CC0). Cada sonido tiene un aviso visual equivalente
 (docs/inclusividad.md), asi que si no hay audio, o el jugador lo apaga, no se pierde informacion: no suena y el
 juego sigue igual. Ninguna funcion de aqui lanza errores."""
 import math
@@ -6,6 +6,8 @@ import os
 from array import array
 
 import pygame
+
+from post_truth.config import RUTA_MUSICA
 
 VOLUMEN = [0.7]      # general; lo cambia el menu de opciones (listas: se comparten sin reimportar)
 PASOS = [0.4]        # los pasos aparte: es el sonido que mas se repite
@@ -57,6 +59,41 @@ def tocar(nombre: str) -> None:
         _cache[nombre].set_volume(v)
         _cache[nombre].play()
     except (pygame.error, OSError, ValueError, TypeError):   # sin tarjeta de sonido o mixer roto: mudo y sigue
+        _sin_audio[0] = True
+
+
+MUSICA = 0.45   # la musica va mas baja que los efectos
+PISTAS = {      # pantalla -> pista de assets/musica (las que no estan aqui dejan la que venia sonando)
+    "MenuState": "menu", "SeleccionState": "menu", "ConectarState": "menu", "SalaState": "menu",
+    "MundoState": "calle", "LugarState": "calle", "EscenaState": "calle", "InvestigacionState": "calle",
+    "ResumenState": "calle", "FaseState": "calle", "TelefonoState": "tension", "MinijuegoState": "tension",
+    "ResultadoState": "menu",
+}
+sonando: list[str] = [""]   # la pista pedida (las pruebas la leen; sirve igual sin audio)
+_cargada = [""]
+
+
+def musica(pantalla: str) -> None:
+    """Pone en bucle la pista de esa pantalla si cambio. Sin archivo o sin audio no suena y el juego sigue."""
+    pista = PISTAS.get(pantalla)
+    if pista is None:
+        return
+    sonando[0] = pista
+    if _sin_audio[0] or os.environ.get("SDL_VIDEODRIVER") == "dummy":   # sin ventana (pruebas): mudo
+        return
+    try:
+        if pista != _cargada[0]:
+            _cargada[0] = pista
+            archivo = RUTA_MUSICA / f"{pista}.ogg"
+            if not archivo.exists():
+                return
+            if not pygame.mixer.get_init():
+                pygame.mixer.init()
+            pygame.mixer.music.load(str(archivo))
+            pygame.mixer.music.play(-1, fade_ms=600)
+        if pygame.mixer.get_init():   # el volumen y el silencio de Opciones valen al instante
+            pygame.mixer.music.set_volume(0.0 if SILENCIO[0] else VOLUMEN[0] * MUSICA)
+    except (pygame.error, OSError):
         _sin_audio[0] = True
 
 

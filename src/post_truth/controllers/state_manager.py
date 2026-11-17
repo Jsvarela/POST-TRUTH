@@ -4,6 +4,7 @@ from typing import Callable
 import pygame
 
 from post_truth.controllers.base_state import BaseState
+from post_truth.views import sonido
 
 DURACION_FUNDIDO = 0.2
 
@@ -76,6 +77,7 @@ class StateManager:
             self._actual.handle_event(event)
 
     def update(self, dt: float) -> None:
+        sonido.musica(type(self._actual).__name__)
         if any(c is not None and c.activo for c in (self.sustentacion, self.ayuda)):
             return
         if self._fase == "salida":
