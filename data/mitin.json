@@ -3,8 +3,8 @@
  "efectos": {
   "acierto": 8,
   "sin_pruebas": 2,
-  "fallo": -8,
-  "llega": -12
+  "fallo": -4,
+  "llega": -8
  },
  "interrupciones": [
   {
@@ -64,13 +64,13 @@
   }
  ],
  "duracion": 26,
- "intervalo": 1.6,
- "subida": 0.17,
+ "intervalo": 2.1,
+ "subida": 0.12,
  "disparo": {
-  "velocidad": 1.5,
+  "velocidad": 2.6,
   "cadencia": 0.4,
-  "radio": 0.06,
-  "zigzag": 0.07,
+  "radio": 0.1,
+  "zigzag": 0.03,
   "mira": 1.1
  }
 }
