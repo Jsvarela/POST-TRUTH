@@ -17,7 +17,7 @@
    "- G: dibuja el camino mas corto hasta tu objetivo.",
    "- P: pausa (tambien ESC). En la calle muestra todos los indicadores y el minimapa; desde ahi sigues, abres la ayuda o sales al menu (salir pide confirmacion).",
    "- H: habilidad de tu rol.   Y: pedir ayuda a los aliados (1-3). Solo cuando la historia te los ofrece; un aviso te lo dice.",
-   "- F1: modo sustentacion (estructuras en crudo).   F2: esta ayuda.   F3: depuracion del mapa.   ESC: volver (en la calle, pausa).",
+   "- F1: modo sustentacion (estructuras en crudo).   F2: esta ayuda.   F3: depuracion del mapa.   F11: pantalla completa.   ESC: volver (en la calle, pausa).",
    "- En la noticia: 1-4 decidir, I abrir la investigacion."]},
   {"id": "mapa", "titulo": "Mapa y fases", "texto": [
    "La ciudad son zonas unidas por calles. Por dentro es un grafo: cada zona es un vertice y cada calle entre zonas, una arista.",

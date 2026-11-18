@@ -33,7 +33,10 @@ class App:
     def __init__(self) -> None:
         pygame.init()
         pygame.display.set_caption(TITULO)
-        self.pantalla = pygame.display.set_mode((ANCHO, ALTO))
+        try:   # SCALED: en pantalla completa (F11) estira la imagen sin cambiar el tamaño logico ni el raton
+            self.pantalla = pygame.display.set_mode((ANCHO, ALTO), pygame.SCALED)
+        except pygame.error:
+            self.pantalla = pygame.display.set_mode((ANCHO, ALTO))
         self.reloj = pygame.time.Clock()
         self.fuente = fuente("PixelifySans.ttf", 20)
         self.fuentes = Fuentes.crear()
@@ -80,6 +83,9 @@ class App:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.corriendo = False
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+                    pygame.display.toggle_fullscreen()
+                    continue
                 self.estados.handle_event(event)
             self.atender_red(dt)
             self.estados.update(dt)

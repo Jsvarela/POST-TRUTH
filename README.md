@@ -40,7 +40,7 @@ La campaña dura cuatro dias y cada dia es un capitulo con pasos en orden, uno a
 - Rueda de prensa (Alcaldia y Auditorio): A/D o flechas giran el foco hacia quien pregunta; responde con la prueba que pide (1 pista, 2 evidencia, 3 testimonio; Espacio a una trampa X) cuando el marcador esta en la zona verde. Solo puedes afirmar con las pruebas que investigaste; si no tienes la que piden, Espacio; dura 90 segundos como mucho
 - De boca en boca (Barrio): WASD o flechas para correr hasta quien cree el chisme y mantener E cerca para convencerlo
 - La primera vez, la rueda y el mitin empiezan con "Como se juega" (demostracion y practica); C lo repite, ESC lo salta
-- F1: modo sustentacion con el arbol de decisiones, el grafo social, el grafo de la ciudad y el arbol de dialogo en crudo (BFS, DFS y Dijkstra). F2: ayuda completa, en la seccion de donde estas. Los dos pausan el juego. F3: depuracion del mapa (zonas, colisiones y fronteras)
+- F1: modo sustentacion con el arbol de decisiones, el grafo social, el grafo de la ciudad y el arbol de dialogo en crudo (BFS, DFS y Dijkstra). F2: ayuda completa, en la seccion de donde estas. Los dos pausan el juego. F3: depuracion del mapa (zonas, colisiones y fronteras). F11: pantalla completa
 
 ## Para ferias y demostraciones
 
